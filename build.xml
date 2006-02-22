@@ -53,7 +53,6 @@
     <ant target="defaultProjectInstall"/>
 
     <move file="${targetDir}/lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${targetDir}/wsf-lib/java" />
-    <delete file="${targetDir}/lib/java/WSF-Plugin.jar" />
   </target>
 
 
@@ -62,11 +61,15 @@
   <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WSF-Installation">
     <!-- before starting the installation, copy necessary jars -->
     <copy file="${targetDir}/wsf-lib/java/WSF-Plugin.jar" todir="${targetDir}/lib/java" />
+    <move file="${targetDir}/lib/java/WSF-Client.jar" todir="${targetDir}/wsf-lib/java" />
 
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService"/>
       <property name="component" value="WSFPlugin"/>
     </ant>
+    
+    <delete file="${targetDir}/lib/java/WSF-Plugin.jar" />
+    <move file="${targetDir}/wsf-lib/java/WSF-Client.jar" todir="${targetDir}/lib/java" />
  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
