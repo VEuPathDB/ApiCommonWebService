@@ -54,7 +54,6 @@
 
     <move file="${targetDir}/lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${targetDir}/wsf-lib/java" />
     <delete file="${targetDir}/lib/java/WSF-Plugin.jar" />
-    <delete file="${targetDir}/lib/java/WSF-Service.jar" />
   </target>
 
 
