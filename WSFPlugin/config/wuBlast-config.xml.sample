@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>The configuration file for NCBI-BLAST Processor.</comment>
+<entry key="AppPath">(the absolute path to the bin directory of your WU-BLAST application)</entry>
+<entry key="DataPath">(the absolute path to BLAST database directory)</entry>
+<entry key="MaxTime">(time out limit, in seconds)</entry>
+</properties>

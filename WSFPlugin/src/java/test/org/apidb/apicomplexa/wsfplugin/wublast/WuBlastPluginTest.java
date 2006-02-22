@@ -5,15 +5,20 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.Logger;
+import org.apidb.apicomplexa.wsfplugin.ncbiblast.NcbiBlastPlugin;
 import org.apidb.apicomplexa.wsfplugin.wublast.WuBlastPlugin;
-import org.gusdb.wsf.IWsfPlugin;
-import org.gusdb.wsf.WsfServiceException;
+import org.gusdb.wsf.plugin.IWsfPlugin;
+import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * @author Jerric
  * @created Nov 2, 2005
  */
 public class WuBlastPluginTest extends TestCase {
+
+    private static Logger logger = Logger.getLogger(WuBlastPluginTest.class);
 
     /*
      * @see TestCase#setUp()
@@ -27,17 +32,22 @@ public class WuBlastPluginTest extends TestCase {
      */
     public static void testInvoke() {
         // prepare parameters
-        String[] params = { WuBlastPlugin.PARAM_APPLICATION,
-                WuBlastPlugin.PARAM_DATABASE, WuBlastPlugin.PARAM_SEQUENCE };
-        String[] values = {
-                "blastn",
-                "Cparvum_nt.fsa",
-                "ATGTACGGATTTATTAAGTTTTTTGTTGGGTTTTGCATTCCAGCATACCATTCCATTCTT"
-                        + "GCTTTAAAAACTCAAAATCATCATTTAATTAAAATATGGCTAGTATATTTTTTTACAGTT"
-                        + "GTCTTTTATGAGCTAATTTTATCATTCATTTTGGACCCTGTCTTTAAAGTTATAGATCCC"
-                        + "AGGCTTCTACACTTTAAGACTTTATTTGTTGTATTATATATCTTCCCTGAAACAGGATTT"
-                        + "CAAGAATCATATTTCAGTTTTTTTAGTAATTATTTAAGTAAATTATTTATTCAAGTATTT"
-                        + "GAGTAC" };
+        Map<String, String> params = new HashMap<String, String>();
+        params.put(NcbiBlastPlugin.PARAM_APPLICATION, "blastn");
+        params.put(
+                NcbiBlastPlugin.PARAM_SEQUENCE,
+                "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTG"
+                        + "ATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAAATTTTATTGA"
+                        + "CTTAGGTCACTAAATACTTTAACCAATATAGGCATAGCGCACAGACAGATAA"
+                        + "AAATTACAGAGTACACAACATCCATGAAACGCATTAGCACCACCATTACCAC"
+                        + "CACCATCACCATTACCACAGGTAACGGTGCGGGCTGACGCGTACAGGAAACA"
+                        + "CAGAAAAAAGCCCGCACCTGACAGTGCGGGCTTTTTTTTTCGACCAAAGGTA"
+                        + "ACGAGGTAACAACCATGCGAGTGTTGAAGTTCGGCGGTACATCAGTGGCAAA"
+                        + "TGCAGAACGTTTTCTGCGTGTTGCCGATATTCTGGAAAGCAATGCCAGGCAG"
+                        + "GGGCAGGTGGCCACCGTCCTCTCTGCCCCCGCCAAAATCACCAACCACCTGG"
+                        + "TGGCGATGATTGAAAAAACCATTAGCGGCCAGGATGCTTTACCCAATATCAG"
+                        + "CGATGCCGAACGTATTTTTGCCGAACTTTT");
+        params.put(WuBlastPlugin.PARAM_DATABASE, "Cparvum_nt.fsa");
 
         // prepare the columns
         String[] columns = { WuBlastPlugin.COLUMN_ID, WuBlastPlugin.COLUMN_ROW,
@@ -49,25 +59,16 @@ public class WuBlastPluginTest extends TestCase {
         }
 
         // invoke the blast process
-        IWsfPlugin processor = new WuBlastPlugin();
         try {
-            String[][] result = processor.invoke(params, values, columns);
+            IWsfPlugin processor = new WuBlastPlugin();
+            String[][] result = processor.invoke(params, columns);
 
             // print out the result
-            System.out.println("");
-            for (int i = 0; i < result.length; i++) {
-                System.out.println("================ " + result[i][0]
-                        + " ================");
-                for (String col : columns) {
-                    System.out.println("------------ " + col + " ------------");
-                    System.out.println(result[i][map.get(col)]);
-                }
-                System.out.println();
-            }
+            System.out.println(WsfPlugin.printArray(columns));
+            System.out.println(WsfPlugin.printArray(result));
         } catch (WsfServiceException ex) {
-            // TODO Auto-generated catch block
+            logger.error(ex);
             ex.printStackTrace();
-            // System.err.println(ex);
             assertTrue(false);
         }
     }

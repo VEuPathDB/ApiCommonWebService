@@ -2,23 +2,18 @@ package org.apidb.apicomplexa.wsfplugin.wublast;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.gusdb.wsf.IWsfPlugin;
-import org.gusdb.wsf.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * 
@@ -28,7 +23,9 @@ import org.gusdb.wsf.WsfServiceException;
  * @author Jerric
  * @created Nov 2, 2005
  */
-public class WuBlastPlugin implements IWsfPlugin {
+public class WuBlastPlugin extends WsfPlugin {
+
+    private static final String PROPERTY_FILE = "wuBlast-config.xml";
 
     // column definitions
     public static final String COLUMN_ID = "Id";
@@ -36,200 +33,113 @@ public class WuBlastPlugin implements IWsfPlugin {
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";
     public static final String COLUMN_BLOCK = "Alignment";
-    public static final String[] COLUMNS = { COLUMN_ID, COLUMN_HEADER,
-            COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK };
 
     // required parameter definitions
     public static final String PARAM_APPLICATION = "Application";
     public static final String PARAM_SEQUENCE = "Sequence";
     public static final String PARAM_DATABASE = "Database";
-    public static final String[] REQUIRED_PARAMS = { PARAM_APPLICATION,
-            PARAM_DATABASE, PARAM_SEQUENCE };
 
-    private static final boolean DEBUG = true;
+    // field definitions in the config file
+    private static final String FIELD_APP_PATH = "AppPath";
+    private static final String FIELD_DATA_PATH = "DataPath";
+    private static final String FIELD_TIMEOUT = "Timeout";
 
-    private static final String TEMP_FILE_PREFIX = "wu_tmp";
-    /**
-     * The root dir for saving temp files. It must be ended with delimiter
-     */
-    private static Long identifier = new Long(0);
+    private static final String TEMP_FILE_PREFIX = "wuBlastPlugin";
 
-    private static String tempDir;
     private static String appPath;
     private static String dataPath;
-    private static long maxTime;
-
-    static {
-        // load configurations
-        Properties prop = new Properties();
-        String root = System.getProperty("webservice.home");
-        File rootDir;
-        if (root == null) {
-            root = System.getProperty("catalina.home");
-            rootDir = new File(root, "webapps/axis");
-        } else rootDir = new File(root);
-        File configFile = new File(rootDir, "WEB-INF/wuBlast-config.xml");
-
-        try {
-            // TEST
-            if (DEBUG) System.out.println(configFile.getAbsolutePath());
-
-            prop.loadFromXML(new FileInputStream(configFile));
-            tempDir = prop.getProperty("TempDir");
-
-            if (DEBUG)
-                System.out.println((new File(tempDir).getAbsolutePath()));
-
-            appPath = prop.getProperty("AppPath");
-            dataPath = prop.getProperty("DataPath");
-            maxTime = Long.parseLong(prop.getProperty("MaxTime"));
-        } catch (IOException ex) {
-            tempDir = "";
-            appPath = "";
-            dataPath = "";
-            maxTime = 5 * 60 * 1000;
-        }
-
-        // at class initialization step, remove all temp files
-        File dir = new File(tempDir);
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.getName().startsWith(TEMP_FILE_PREFIX)) file.delete();
-            }
-        }
-    }
+    private static long timeout;
 
     /**
+     * @throws WsfServiceException
+     * @throws IOException
+     * @throws InvalidPropertiesFormatException
      * 
      */
-    public WuBlastPlugin() {}
+    public WuBlastPlugin() throws WsfServiceException {
+        super(PROPERTY_FILE);
+        // load properties
+        appPath = getProperty(FIELD_APP_PATH);
+        dataPath = getProperty(FIELD_DATA_PATH);
+        if (appPath == null || dataPath == null)
+            throw new WsfServiceException(
+                    "The required fields in property file are missing: "
+                            + FIELD_APP_PATH + ", " + FIELD_DATA_PATH);
+        String max = getProperty(FIELD_TIMEOUT);
+        if (max == null) timeout = 60; // by default, set timeout as 60 seconds
+        else timeout = Integer.parseInt(max);
+    }
 
     /*
      * (non-Javadoc)
      * 
-     * @see IProcessor#invoke(java.lang.String[], java.lang.String[],
-     *      java.lang.String[])
+     * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    // the order of wublast command is: blastp/blastn/blastx "database1
-    // database2 database3" querySeq.aa -option
-    // the first's param is "Application", the second one is "Database", the
-    // third one is "Sequence", the others are option
-    public String[][] invoke(String[] params, String[] values, String[] cols)
+    @Override
+    protected String[] getRequiredParameterNames() {
+        return new String[] { PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_DATABASE };
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.WsfPlugin#getColumns()
+     */
+    @Override
+    protected String[] getColumns() {
+        return new String[] { COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
+                COLUMN_ROW, COLUMN_BLOCK };
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
+     */
+    @Override
+    protected void validateParameters(Map<String, String> params)
             throws WsfServiceException {
-        if (DEBUG)
-            System.out.println("WuBlastPlugin - Validating parameters.");
+    // do nothing in this plugin
+    }
 
-        // validate parameters
-        if (!validate(params, values, cols))
-            throw new WsfServiceException(
-                    "Invalid parameters or column definitions");
-
-        // create a map for parameter key-value pairs, and column name-index
-        // pairs
-        Map<String, String> parameters = new LinkedHashMap<String, String>();
-        for (int i = 0; i < params.length; i++) {
-            parameters.put(params[i].trim(), values[i]);
-        }
-        Map<String, Integer> columns = new HashMap<String, Integer>();
-        for (int i = 0; i < cols.length; i++) {
-            columns.put(cols[i], i);
-        }
-
-        // increment the identifier to make sure the temp file has a unique name
-        String prefix;
-        synchronized (identifier) {
-            File seqFile, outFile;
-            do {
-                prefix = tempDir + TEMP_FILE_PREFIX + "_" + (identifier++);
-                seqFile = new File(prefix + ".in");
-                outFile = new File(prefix + ".out");
-            } while (seqFile.exists() || outFile.exists());
-            try {
-                seqFile.createNewFile();
-                outFile.createNewFile();
-            } catch (IOException ex) {
-                if (seqFile.exists()) seqFile.delete();
-                throw new WsfServiceException(ex);
-            }
-        }
-        String seqFileName = prefix + ".in";
-        String outFileName = prefix + ".out";
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
+     */
+    @Override
+    protected String[][] execute(Map<String, String> params,
+            String[] orderedColumns) throws WsfServiceException {
+        logger.info("Invoking WuBlastPlugin...");
 
         try {
-            // now prepare the arguments
-            String command = prepareParameters(parameters, seqFileName,
-                    outFileName);
+            // create temporary files for input sequence and output report
+            File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in");
+            File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out");
 
-            // TEST
-            // command = "cmd /C copy ncbi_tmp_0.out temp\\";
+            // prepare the arguments
+            String command = prepareParameters(params, seqFile, outFile);
+            logger.debug("Command prepared: " + command);
 
-            // now invoke the process and block until the process finishes
-            if (!invokeProcess(command))
-                throw new WsfServiceException(
-                        "The execution of process is failed.");
+            // invoke the command
+            String output = invokeCommand(command, timeout);
+            if (exitValue != 0)
+                throw new WsfServiceException("The invocation is failed: "
+                        + output);
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
-            String[][] result = prepareResult(columns, outFileName);
-
-            // delete temp file
-            File seqFile = new File(seqFileName);
-            if (seqFile.exists()) seqFile.delete();
-            File outFile = new File(outFileName);
-            if (outFile.exists()) outFile.delete();
+            logger.debug("Preparing the result");
+            String[][] result = prepareResult(orderedColumns, outFile);
             return result;
         } catch (IOException ex) {
-            // delete temp file
-            File seqFile = new File(seqFileName);
-            if (seqFile.exists()) seqFile.delete();
-            File outFile = new File(outFileName);
-            if (outFile.exists()) outFile.delete();
-
+            logger.error(ex);
             throw new WsfServiceException(ex);
         }
     }
 
-    private boolean validate(String[] params, String[] values, String[] cols) {
-        // param names and values should have the same numbers
-        if (params.length != values.length) return false;
-
-        // check if the required parameters present
-        for (String param : REQUIRED_PARAMS) {
-            boolean exist = false;
-            for (String name : params) {
-                if (name.equals(param)) {
-                    exist = true;
-                    break;
-                }
-            }
-            if (!exist) return false;
-        }
-
-        // check if the columns match
-        if (cols.length != COLUMNS.length) return false;
-        for (String col : COLUMNS) {
-            boolean exist = false;
-            for (String name : cols) {
-                if (name.equals(col)) {
-                    exist = true;
-                    break;
-                }
-            }
-            if (!exist) return false;
-        }
-
-        // validation passed
-        return true;
-    }
-
-    private String prepareParameters(Map<String, String> params,
-            String seqFileName, String outFileName) throws IOException {
-        // create an input file to store sequence information, in FASTA format
-        File seqFile = new File(seqFileName);
-        if (seqFile.exists()) seqFile.delete();
-        seqFile.createNewFile();
-
+    private String prepareParameters(Map<String, String> params, File seqFile,
+            File outFile) throws IOException {
         // get sequence
         String seq = params.get(PARAM_SEQUENCE);
 
@@ -248,11 +158,9 @@ public class WuBlastPlugin implements IWsfPlugin {
 
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
-        // append program
-        // params.put("-o", outFileName);
         sb.append(appPath + params.get(PARAM_APPLICATION));
         sb.append(" " + dataPath + params.get(PARAM_DATABASE));
-        sb.append(" " + seqFileName);
+        sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
             if (!param.equals(PARAM_APPLICATION)
@@ -261,85 +169,28 @@ public class WuBlastPlugin implements IWsfPlugin {
                 sb.append(" -" + param + " " + params.get(param));
             }
         }
-        // sb.append(" >"+outFileName);
-        sb.append(" O=" + outFileName);
+        sb.append(" O=" + outFile.getAbsolutePath());
         return sb.toString();
     }
 
-    //
-    // private String getDB(String line) {
-    // String[] dbs = line.split(" ");
-    // StringBuffer result1 = new StringBuffer("\"");
-    // for (int i = 0; i < dbs.length; i++) {
-    // result1.append(dataPath + dbs[i] + " ");
-    // }
-    // String result = result1.toString().trim();
-    // result = result + "\"";
-    // return result;
-    // }
-
-    private boolean invokeProcess(String command) {
-        try {
-            // invoke the command
-            Process process = Runtime.getRuntime().exec(command);
-            long start = System.currentTimeMillis();
-            // check the exit value of the process; if the process is not
-            // finished yet, an IllegalThreadStateException is thrown out
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-
-                    int value = process.exitValue();
-
-                    // TEST
-                    if (value != 0) {
-                        System.err.println(command);
-                        BufferedReader in = new BufferedReader(
-                                new InputStreamReader(process.getErrorStream()));
-                        String line;
-                        while ((line = in.readLine()) != null) {
-                            System.err.println(line);
-                        }
-                    }
-
-                    // an exception will be thrown before reaching here if the
-                    // process is still running
-                    return (value == 0) ? true : false;
-                } catch (IllegalThreadStateException ex) {
-                    // check if time's up
-                    long time = System.currentTimeMillis() - start;
-                    if (time > maxTime) {
-                        process.destroy();
-                        return false;
-                    }
-                } catch (InterruptedException ex) {
-                    // do nothing, keep looping
-                }
-            }
-        } catch (IOException ex) {
-            // TODO Auto-generated catch block
-            ex.printStackTrace();
-            // System.err.println(ex);
-            return false;
+    private String[][] prepareResult(String[] orderedColumns, File outFile)
+            throws IOException {
+        // create a map of <column/position>
+        Map<String, Integer> columns = new HashMap<String, Integer>(
+                orderedColumns.length);
+        for (int i = 0; i < orderedColumns.length; i++) {
+            columns.put(orderedColumns[i], i);
         }
-    }
 
-    private String[][] prepareResult(Map<String, Integer> columns,
-            String outFileName) throws IOException {
-        // open output file
-        File outFile = new File(outFileName);
-        BufferedReader in = new BufferedReader(new FileReader(outFile));
-
-        String cr = System.getProperty("line.separator");
+        // open output file, and read it
         String line;
-
-        // read header part
+        BufferedReader in = new BufferedReader(new FileReader(outFile));
         StringBuffer header = new StringBuffer();
         do {
             line = in.readLine();
             if (line == null)
                 throw new IOException("Invalid BLAST output format");
-            header.append(line + cr);
+            header.append(line + newline);
         } while (!line.startsWith("Sequence"));
 
         // read tabular part, which starts after the second empty line
@@ -348,7 +199,6 @@ public class WuBlastPlugin implements IWsfPlugin {
         while ((line = in.readLine()) != null) {
             if (line.trim().length() == 0) break;
             rows.put(extractID(line), line);
-
         }
 
         line = in.readLine(); // skip an empty line
@@ -375,26 +225,26 @@ public class WuBlastPlugin implements IWsfPlugin {
                     blocks.add(alignment);
                 }
                 // create a new alignment and block
-                alignment = new String[COLUMNS.length];
+                alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
                 // obtain the ID of it, which is the rest of this line
                 alignment[columns.get(COLUMN_ID)] = line.substring(1).trim();
             }
             // add this line to the block
-            block.append(line + cr);
+            block.append(line + newline);
         }
 
         // get the rest as the footer part
         StringBuffer footer = new StringBuffer();
-        footer.append(line + cr);
+        footer.append(line + newline);
         while ((line = in.readLine()) != null) {
-            footer.append(line + cr);
+            footer.append(line + newline);
         }
 
         // now reconstruct the result
         int size = Math.max(1, blocks.size());
-        String[][] results = new String[size][COLUMNS.length];
+        String[][] results = new String[size][orderedColumns.length];
         for (int i = 0; i < blocks.size(); i++) {
             alignment = blocks.get(i);
             // copy ID
@@ -415,7 +265,6 @@ public class WuBlastPlugin implements IWsfPlugin {
         // copy the header and footer
         results[0][columns.get(COLUMN_HEADER)] = header.toString();
         results[size - 1][columns.get(COLUMN_FOOTER)] = footer.toString();
-
         return results;
     }
 
@@ -429,18 +278,5 @@ public class WuBlastPlugin implements IWsfPlugin {
          */
         String ID = pieces[0];
         return ID;
-    }
-
-    private String[] tokenize(String line) {
-        Pattern pattern = Pattern.compile("\\b[\\w\\.]+\\b");
-        Matcher match = pattern.matcher(line);
-        List<String> tokens = new ArrayList<String>();
-        while (match.find()) {
-            String token = line.substring(match.start(), match.end());
-            tokens.add(token);
-        }
-        String[] sArray = new String[tokens.size()];
-        tokens.toArray(sArray);
-        return sArray;
     }
 }

@@ -1,4 +1,4 @@
-<project name="ApiCommonWebServer" default="Installation" basedir=".">
+<project name="ApiCommonWebService" default="Installation" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
@@ -7,45 +7,74 @@
   <target name="WSF-Installation">
     <ant antfile="../WSF/build.xml" target="WSF-Installation">
       <property name="project" value="WSF"/>
-      <property name="version" value="2.1.2"/>
+      <property name="version" value="??"/>
     </ant>
   </target>  
+
+  <target name="WSF-WebInstallation">
+    <ant antfile="../WSF/build.xml" target="WSF-WebInstallation">
+      <property name="project" value="WSF"/>
+      <property name="version" value="??"/>
+    </ant>
+  </target>  
+    
+  <target name="WSF-Checkout" unless="WSF.present"> 
+    <ant target="defaultProjectCheckout" inheritAll="false">
+      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/WSF"/>
+      <property name="project" value="WSF"/>
+      <property name="version" value="??"/>
+    </ant>
+  </target>
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <target name="ApiCommonWebService-ChildCheckout">
+    <available file="../WSF" type="dir"  property="WSF.present" />
+    <antcall target="WSF-Checkout"/>
+  </target>
+  
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <target name="ApiCommonWebService-ChildUpdate">
+    <ant target="defaultProjectUpdate">
+      <property name="project" value="WSF"/>
+    </ant>
+  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ApiCommonWebService-Installation" depends="WSF-Installation,
-                                                       ApiCommonWebService/WSFPlugin-Installation">
+                                                  ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultProjectInstall"/>
 
+    <move file="${targetDir}/lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${targetDir}/wsf-lib/java" />
+    <delete file="${targetDir}/lib/java/WSF-Plugin.jar" />
+    <delete file="${targetDir}/lib/java/WSF-Service.jar" />
   </target>
 
 
  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="ProjectTree">
+  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WSF-Installation">
+    <!-- before starting the installation, copy necessary jars -->
+    <copy file="${targetDir}/wsf-lib/java/WSF-Plugin.jar" todir="${targetDir}/lib/java" />
+
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService"/>
       <property name="component" value="WSFPlugin"/>
     </ant>
-  </target>
+ </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation,
-                                                          WSF-WebInstallation,
-                                                          ApiCommonWebService/WSFPlugin-WebInstallation">
- </target>
-
-  <target name="ApiCommonWebService/WSFPlugin-WebInstallation" depends="ProjectTree">
-    <ant target="defaultWebComponentInstall">
-      <property name="project" value="ApiCommonWebService"/>
-      <property name="component" value="WSFPlugin"/>
-    </ant>
+  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation">
   </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -63,23 +92,13 @@
   <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Distributable" depends="ProjectTree">
+  <target name="ApiCommonWebService-Distributable">
 
     <copy todir="${targetDir}">
       <fileset dir="${projectsDir}" >
         <exclude name="**/CVS/*" />
       </fileset>
     </copy>  
-  </target>  
-
-
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  ProjectTree  ooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ProjectTree" if="${checkout}">
-    <ant target="projectCheckOut"/>
   </target>  
 
 </project>
