@@ -28,7 +28,7 @@ public class WuBlastPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "wuBlast-config.xml";
 
     // column definitions
-    public static final String COLUMN_ID = "Id";
+    public static final String COLUMN_ID = "Identifier";
     public static final String COLUMN_HEADER = "Header";
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";

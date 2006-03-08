@@ -28,7 +28,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "ncbiBlast-config.xml";
 
     // column definitions
-    public static final String COLUMN_ID = "Id";
+    public static final String COLUMN_ID = "Identifier";
     public static final String COLUMN_HEADER = "Header";
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";
@@ -37,6 +37,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
     // required parameter definitions
     public static final String PARAM_APPLICATION = "Application";
     public static final String PARAM_SEQUENCE = "Sequence";
+    public static final String PARAM_DATABASE = "Database";
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
@@ -165,7 +166,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
                 sb.append(" -p " + params.get(PARAM_APPLICATION));
             } else if (param.equals(PARAM_SEQUENCE)) {
                 sb.append(" -i " + seqFile.getAbsolutePath());
-            } else if (param.equals("-d")) {
+            } else if (param.equals(PARAM_DATABASE) || param.equals("-d")) {
                 sb.append(" -d " + dataPath + params.get(param));
             } else {
                 sb.append(" " + param + " " + params.get(param));
