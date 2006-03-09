@@ -33,7 +33,7 @@ public class WuBlastPluginTest extends TestCase {
     public static void testInvoke() {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
-        params.put(NcbiBlastPlugin.PARAM_APPLICATION, "blastn");
+        params.put(WuBlastPlugin.PARAM_APPLICATION, "blastn");
         params.put(
                 NcbiBlastPlugin.PARAM_SEQUENCE,
                 "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTG"

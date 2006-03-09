@@ -35,21 +35,17 @@ public class NcbiBlastPluginTest extends TestCase {
     public void testInvoke() {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
-        params.put(NcbiBlastPlugin.PARAM_APPLICATION, "blastn");
+        params.put(NcbiBlastPlugin.PARAM_QUERY_TYPE, "dna");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "dna");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "test");
+        params.put("-e", "0.5");
+        params.put("-v", "5");
+        params.put("-b", "5");
         params.put(
                 NcbiBlastPlugin.PARAM_SEQUENCE,
-                "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTG"
-                        + "ATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAAATTTTATTGA"
-                        + "CTTAGGTCACTAAATACTTTAACCAATATAGGCATAGCGCACAGACAGATAA"
-                        + "AAATTACAGAGTACACAACATCCATGAAACGCATTAGCACCACCATTACCAC"
-                        + "CACCATCACCATTACCACAGGTAACGGTGCGGGCTGACGCGTACAGGAAACA"
-                        + "CAGAAAAAAGCCCGCACCTGACAGTGCGGGCTTTTTTTTTCGACCAAAGGTA"
-                        + "ACGAGGTAACAACCATGCGAGTGTTGAAGTTCGGCGGTACATCAGTGGCAAA"
-                        + "TGCAGAACGTTTTCTGCGTGTTGCCGATATTCTGGAAAGCAATGCCAGGCAG"
-                        + "GGGCAGGTGGCCACCGTCCTCTCTGCCCCCGCCAAAATCACCAACCACCTGG"
-                        + "TGGCGATGATTGAAAAAACCATTAGCGGCCAGGATGCTTTACCCAATATCAG"
-                        + "CGATGCCGAACGTATTTTTGCCGAACTTTT");
-        params.put("-d", "c.parvum.nt");
+                "CACGAGCTGGACTCTGCCCCAGGCAGTGAGAAGCAGCGGCTTCTTGAGAAGGCGCTTGGGAA"
+                        + "GATCCCCTTGAGGGGATAGACTTGAGTATCCCAGAAGACTGCGAGGAGGTGG"
+                        + "CAATGAAGAACGG");
 
         // prepare the columns
         String[] columns = { NcbiBlastPlugin.COLUMN_ID,

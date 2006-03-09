@@ -9,8 +9,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -35,9 +37,10 @@ public class NcbiBlastPlugin extends WsfPlugin {
     public static final String COLUMN_BLOCK = "Alignment";
 
     // required parameter definitions
-    public static final String PARAM_APPLICATION = "Application";
-    public static final String PARAM_SEQUENCE = "Sequence";
-    public static final String PARAM_DATABASE = "Database";
+    public static final String PARAM_QUERY_TYPE = "BlastQueryType";
+    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseType";
+    public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
+    public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
@@ -45,6 +48,23 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private static final String FIELD_TIMEOUT = "Timeout";
 
     private static final String TEMP_FILE_PREFIX = "ncbiBlastPlugin";
+
+    private static Set<String> validBlastDBs = new LinkedHashSet<String>();
+    static {
+        validBlastDBs.add("Pfalciparum_CDS");
+        validBlastDBs.add("Pfalciparum_proteins");
+        validBlastDBs.add("Pfalciparum_genomic");
+        validBlastDBs.add("Pvivax_CDS");
+        validBlastDBs.add("Pvivax_proteins");
+        validBlastDBs.add("Pvivax_genomic");
+        validBlastDBs.add("Pyoelii_CDS");
+        validBlastDBs.add("Pyoelii_proteins");
+        validBlastDBs.add("Pyoelii_genomic");
+        validBlastDBs.add("Plasmodium_CDS");
+        validBlastDBs.add("Plasmodium_proteins");
+        validBlastDBs.add("Plasmodium_genomic");
+        validBlastDBs.add("test_dna");
+    }
 
     private String appPath;
     private String dataPath;
@@ -77,7 +97,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_APPLICATION, PARAM_SEQUENCE };
+        return new String[] { PARAM_QUERY_TYPE, PARAM_DATABASE_TYPE,
+                PARAM_DATABASE_ORGANISM, PARAM_SEQUENCE };
     }
 
     /*
@@ -139,9 +160,10 @@ public class NcbiBlastPlugin extends WsfPlugin {
     }
 
     private String prepareParameters(Map<String, String> params, File seqFile,
-            File outFile) throws IOException {
+            File outFile) throws IOException, WsfServiceException {
         // get sequence
         String seq = params.get(PARAM_SEQUENCE);
+        params.remove(PARAM_SEQUENCE);
 
         // write the sequence into the temporary fasta file, with sequence
         // wrapped for every 60 characters
@@ -157,22 +179,87 @@ public class NcbiBlastPlugin extends WsfPlugin {
         out.close();
 
         // now prepare the commandline
-        StringBuffer sb = new StringBuffer();
-        // append program
-        params.put("-o", outFile.getAbsolutePath());
-        sb.append(appPath + "blastall");
+        StringBuffer sb = new StringBuffer(appPath + "blastall");
+
+        String qType = params.get(PARAM_QUERY_TYPE);
+        params.remove(PARAM_QUERY_TYPE);
+        String dbType = params.get(PARAM_DATABASE_TYPE);
+        params.remove(PARAM_DATABASE_TYPE);
+        String dbOrg = params.get(PARAM_DATABASE_ORGANISM);
+        params.remove(PARAM_DATABASE_ORGANISM);
+
+        String blastApp = getBlastProgram(qType, dbType);
+        String blastDbFile = dataPath + getBlastDatabase(dbType, dbOrg);
+        sb.append(" -p " + blastApp);
+        sb.append(" -d " + blastDbFile);
+        sb.append(" -i " + seqFile.getAbsolutePath());
+        sb.append(" -o " + outFile.getAbsolutePath());
+
         for (String param : params.keySet()) {
-            if (param.equals(PARAM_APPLICATION)) {
-                sb.append(" -p " + params.get(PARAM_APPLICATION));
-            } else if (param.equals(PARAM_SEQUENCE)) {
-                sb.append(" -i " + seqFile.getAbsolutePath());
-            } else if (param.equals(PARAM_DATABASE) || param.equals("-d")) {
-                sb.append(" -d " + dataPath + params.get(param));
-            } else {
+            if (!param.equals("-p") && !param.equals("-d")
+                    && !param.equals("-i") && !param.equals("-o"))
                 sb.append(" " + param + " " + params.get(param));
+        }
+        logger.debug(blastDbFile + " inferred from (" + dbType + ", " + dbOrg
+                + ")");
+        logger.debug(blastApp + " inferred from (" + qType + ", " + dbType
+                + ")");
+        return sb.toString();
+    }
+
+    private String getBlastProgram(String qType, String dbType)
+            throws WsfServiceException {
+        String bp = null;
+        if ("dna".equalsIgnoreCase(qType)) {
+            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+                    || "dna".equals(dbType)) {
+                bp = "blastn";
+            } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
+                bp = "tblastx";
+            } else if ("proteins".equals(dbType)) {
+                bp = "blastx";
+            }
+        } else if ("protein".equalsIgnoreCase(qType)) {
+            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+                    || dbType.toLowerCase().indexOf("translated") >= 0) {
+                bp = "tblastn";
+            } else if ("proteins".equals(dbType)) {
+                bp = "blastp";
             }
         }
-        return sb.toString();
+
+        if (bp != null) {
+            return bp;
+        }
+        throw new WsfServiceException("invalid blast query or database types ("
+                + qType + ", " + dbType + ")");
+    }
+
+    private String getBlastDatabase(String dbType, String dbOrg)
+            throws WsfServiceException {
+        int x = dbType.toLowerCase().indexOf("translated");
+        if (x >= 0) {
+            dbType = dbType.substring(0, x) + dbType.substring(x + 10);
+            dbType = dbType.replaceAll(" ", "");
+        }
+
+        if (dbOrg.toLowerCase().matches("^p\\.?\\s?f")) {
+            dbOrg = "Pfalciparum";
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?v")) {
+            dbOrg = "Pvivax";
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?y")) {
+            dbOrg = "Pyoelii";
+        } else if ("any".equals(dbOrg)) {
+            dbOrg = "Plasmodium";
+        }
+        String blastDb = dbOrg + "_" + dbType;
+
+        if (!validBlastDBs.contains(blastDb)) {
+            throw new WsfServiceException(
+                    "invalid blast database type or organism (" + dbType + ", "
+                            + dbOrg + ")");
+        }
+        return blastDb;
     }
 
     private String[][] prepareResult(String[] orderedColumns, File outFile)
