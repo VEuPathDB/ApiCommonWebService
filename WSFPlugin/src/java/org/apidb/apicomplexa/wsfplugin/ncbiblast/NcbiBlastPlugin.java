@@ -38,7 +38,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
     // required parameter definitions
     public static final String PARAM_QUERY_TYPE = "BlastQueryType";
-    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseType";
+    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseTypeGene";
     public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
@@ -97,8 +97,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_QUERY_TYPE, PARAM_DATABASE_TYPE,
-                PARAM_DATABASE_ORGANISM, PARAM_SEQUENCE };
+        return new String[] { PARAM_QUERY_TYPE, PARAM_DATABASE_ORGANISM,
+                PARAM_SEQUENCE };
     }
 
     /*
@@ -120,7 +120,16 @@ public class NcbiBlastPlugin extends WsfPlugin {
     @Override
     protected void validateParameters(Map<String, String> params)
             throws WsfServiceException {
-    // do nothing in this plugin
+        boolean dbTypePresent = false;
+        for (String param : params.keySet()) {
+            if (param.startsWith(PARAM_DATABASE_TYPE)) {
+                dbTypePresent = true;
+                break;
+            }
+        }
+        if (!dbTypePresent)
+            throw new WsfServiceException(
+                    "The required database type parameter is not presented.");
     }
 
     /*
@@ -168,7 +177,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
         // write the sequence into the temporary fasta file, with sequence
         // wrapped for every 60 characters
         PrintWriter out = new PrintWriter(new FileWriter(seqFile));
-        out.println(">Seq1");
+        if (!seq.startsWith(">")) out.println(">MySeq1");
         int pos = 0;
         while (pos < seq.length()) {
             int end = Math.min(pos + 60, seq.length());
@@ -183,10 +192,20 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
         String qType = params.get(PARAM_QUERY_TYPE);
         params.remove(PARAM_QUERY_TYPE);
-        String dbType = params.get(PARAM_DATABASE_TYPE);
-        params.remove(PARAM_DATABASE_TYPE);
         String dbOrg = params.get(PARAM_DATABASE_ORGANISM);
         params.remove(PARAM_DATABASE_ORGANISM);
+        
+        // get database type parameter
+        String dbType = null;
+        String dbTypeName = null;
+        for (String param : params.keySet()) {
+            if (param.startsWith(PARAM_DATABASE_TYPE)) {
+                dbTypeName = param;
+                dbType = params.get(param);
+                break;
+            }
+        }
+        params.remove(dbTypeName);
 
         String blastApp = getBlastProgram(qType, dbType);
         String blastDbFile = dataPath + getBlastDatabase(dbType, dbOrg);
@@ -333,7 +352,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
                 block = new StringBuffer();
 
                 // obtain the ID of it, which is the rest of this line
-                alignment[columns.get(COLUMN_ID)] = line.substring(1).trim();
+                String[] words = line.split("\\s+");
+                alignment[columns.get(COLUMN_ID)] = words[0].substring(1).trim();
             }
             // add this line to the block
             block.append(line + newline);
@@ -374,11 +394,13 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
     private String extractID(String row) {
         // remove last two pieces
-        String[] pieces = tokenize(row);
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < pieces.length - 2; i++) {
-            sb.append(pieces[i] + " ");
-        }
-        return sb.toString().trim();
+        // String[] pieces = tokenize(row);
+        // StringBuffer sb = new StringBuffer();
+        // for (int i = 0; i < pieces.length - 2; i++) {
+        // sb.append(pieces[i] + " ");
+        // }
+        // return sb.toString().trim();
+        String[] pieces = row.split(" ");
+        return (pieces.length < 3) ? pieces[0] : pieces[2];
     }
 }
