@@ -13,6 +13,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -35,6 +37,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";
     public static final String COLUMN_BLOCK = "Alignment";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
 
     // required parameter definitions
     public static final String PARAM_QUERY_TYPE = "BlastQueryType";
@@ -43,10 +46,15 @@ public class NcbiBlastPlugin extends WsfPlugin {
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
     // field definitions in the config file
+    private static final String MAP_PREFIX = "Map_";
+
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TIMEOUT = "Timeout";
-
+    private static final String FIELD_PROJECT_ID = "ProjectId";
+    private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex";
+    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
+    private static final String FIELD_MAP_OTHER = MAP_PREFIX + "Others";
     private static final String TEMP_FILE_PREFIX = "ncbiBlastPlugin";
 
     private static Set<String> validBlastDBs = new LinkedHashSet<String>();
@@ -69,6 +77,11 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private String appPath;
     private String dataPath;
     private long timeout;
+    private String projectId;
+    private String sourceIdRegex;
+    private String organismRegex;
+
+    private String mapOthers;
 
     /**
      * @throws WsfServiceException
@@ -85,9 +98,16 @@ public class NcbiBlastPlugin extends WsfPlugin {
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
                             + FIELD_APP_PATH + ", " + FIELD_DATA_PATH);
+
         String max = getProperty(FIELD_TIMEOUT);
         if (max == null) timeout = 60; // by default, set timeout as 60 seconds
         else timeout = Integer.parseInt(max);
+
+        projectId = getProperty(FIELD_PROJECT_ID);
+        sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX).trim();
+        organismRegex = getProperty(FIELD_ORGANISM_REGEX).trim();
+
+        mapOthers = getProperty(FIELD_MAP_OTHER);
     }
 
     /*
@@ -108,8 +128,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
-                COLUMN_ROW, COLUMN_BLOCK };
+        return new String[] { COLUMN_PROJECT_ID, COLUMN_ID, COLUMN_HEADER,
+                COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK };
     }
 
     /*
@@ -188,13 +208,13 @@ public class NcbiBlastPlugin extends WsfPlugin {
         out.close();
 
         // now prepare the commandline
-        StringBuffer sb = new StringBuffer(appPath + "blastall");
+        StringBuffer sb = new StringBuffer(appPath + "/blastall");
 
         String qType = params.get(PARAM_QUERY_TYPE);
         params.remove(PARAM_QUERY_TYPE);
         String dbOrg = params.get(PARAM_DATABASE_ORGANISM);
         params.remove(PARAM_DATABASE_ORGANISM);
-        
+
         // get database type parameter
         String dbType = null;
         String dbTypeName = null;
@@ -208,7 +228,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
         params.remove(dbTypeName);
 
         String blastApp = getBlastProgram(qType, dbType);
-        String blastDbFile = dataPath + getBlastDatabase(dbType, dbOrg);
+        String blastDbFile = dataPath + "/" + getBlastDatabase(dbType, dbOrg);
         sb.append(" -p " + blastApp);
         sb.append(" -d " + blastDbFile);
         sb.append(" -i " + seqFile.getAbsolutePath());
@@ -307,6 +327,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
                     footer.append(line + newline);
                 }
                 String[][] result = new String[1][columns.size()];
+                result[0][columns.get(COLUMN_PROJECT_ID)] = projectId;
                 result[0][columns.get(COLUMN_ID)] = "";
                 result[0][columns.get(COLUMN_ROW)] = "";
                 result[0][columns.get(COLUMN_BLOCK)] = "";
@@ -318,11 +339,15 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
         // read tabular part, which starts after the second empty line
         line = in.readLine(); // skip an empty line
+        // map of <source_id, tabular_row>
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
             if (line.trim().length() == 0) break;
-            rows.put(extractID(line), line);
-
+            // extract source id
+            String sourceId = extractField(line, sourceIdRegex);
+            // insert the organism url
+            line = insertOrganismUrl(line);
+            rows.put(sourceId, line);
         }
 
         // extract alignment blocks
@@ -351,9 +376,11 @@ public class NcbiBlastPlugin extends WsfPlugin {
                 alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
-                // obtain the ID of it, which is the rest of this line
-                String[] words = line.split("\\s+");
-                alignment[columns.get(COLUMN_ID)] = words[0].substring(1).trim();
+                // extract source id
+                String sourceId = extractField(line, sourceIdRegex);
+                // insert the organism url
+                line = insertOrganismUrl(line);
+                alignment[columns.get(COLUMN_ID)] = sourceId;
             }
             // add this line to the block
             block.append(line + newline);
@@ -371,6 +398,9 @@ public class NcbiBlastPlugin extends WsfPlugin {
         String[][] results = new String[size][orderedColumns.length];
         for (int i = 0; i < blocks.size(); i++) {
             alignment = blocks.get(i);
+            // copy project id
+            int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
+            results[i][projectIdIndex] = projectId;
             // copy ID
             int idIndex = columns.get(COLUMN_ID);
             results[i][idIndex] = alignment[idIndex];
@@ -392,15 +422,42 @@ public class NcbiBlastPlugin extends WsfPlugin {
         return results;
     }
 
-    private String extractID(String row) {
-        // remove last two pieces
-        // String[] pieces = tokenize(row);
-        // StringBuffer sb = new StringBuffer();
-        // for (int i = 0; i < pieces.length - 2; i++) {
-        // sb.append(pieces[i] + " ");
-        // }
-        // return sb.toString().trim();
-        String[] pieces = row.split(" ");
-        return (pieces.length < 3) ? pieces[0] : pieces[2];
+    private String extractField(String defline, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(defline);
+        if (matcher.find()) {
+            // the match is located at group 1
+            return matcher.group(1);
+        } else return null;
+    }
+
+    private String insertOrganismUrl(String defline) {
+        // extract organism from the defline
+        String organism = extractField(defline, organismRegex);
+
+        // get the url mapping for this organsim
+        String mapkey = MAP_PREFIX + organism;
+        String mapurl = getProperty(mapkey);
+        if (mapurl == null) mapurl = mapOthers; // use default url
+        mapurl = mapurl.trim();
+
+        // replace the url into the defline
+        Pattern pattern = Pattern.compile(organismRegex);
+        Matcher matcher = pattern.matcher(defline);
+        if (matcher.find()) {
+            // the organism is located at group 1
+            int start = matcher.start(1);
+            int end = matcher.end(1);
+
+            // insert a link tag into the data
+            StringBuffer sb = new StringBuffer(defline.substring(0, start));
+            sb.append("<a href=\"");
+            sb.append(mapurl);
+            sb.append("\">");
+            sb.append(organism);
+            sb.append("</a>");
+            sb.append(defline.substring(end));
+            return sb.toString();
+        } else return defline;
     }
 }

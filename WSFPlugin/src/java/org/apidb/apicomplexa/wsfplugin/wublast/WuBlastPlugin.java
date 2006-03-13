@@ -158,8 +158,8 @@ public class WuBlastPlugin extends WsfPlugin {
 
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
-        sb.append(appPath + params.get(PARAM_APPLICATION));
-        sb.append(" " + dataPath + params.get(PARAM_DATABASE));
+        sb.append(appPath + "/" + params.get(PARAM_APPLICATION));
+        sb.append(" " + dataPath + "/" + params.get(PARAM_DATABASE));
         sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {

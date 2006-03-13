@@ -36,21 +36,20 @@ public class NcbiBlastPluginTest extends TestCase {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
         params.put(NcbiBlastPlugin.PARAM_QUERY_TYPE, "dna");
-        params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "dna");
-        params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "test");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "genomic");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "Pfalciparum");
         params.put("-e", "0.5");
         params.put("-v", "5");
         params.put("-b", "5");
         params.put(
                 NcbiBlastPlugin.PARAM_SEQUENCE,
-                "CACGAGCTGGACTCTGCCCCAGGCAGTGAGAAGCAGCGGCTTCTTGAGAAGGCGCTTGGGAA"
-                        + "GATCCCCTTGAGGGGATAGACTTGAGTATCCCAGAAGACTGCGAGGAGGTGG"
-                        + "CAATGAAGAACGG");
+                "AGAAATGAAGAAGCTCAAGCATTGATTAAATCGTCCTATGATTATGCCAATAAA");
 
         // prepare the columns
         String[] columns = { NcbiBlastPlugin.COLUMN_ID,
-                NcbiBlastPlugin.COLUMN_ROW, NcbiBlastPlugin.COLUMN_BLOCK,
-                NcbiBlastPlugin.COLUMN_HEADER, NcbiBlastPlugin.COLUMN_FOOTER };
+                NcbiBlastPlugin.COLUMN_PROJECT_ID, NcbiBlastPlugin.COLUMN_ROW,
+                NcbiBlastPlugin.COLUMN_BLOCK, NcbiBlastPlugin.COLUMN_HEADER,
+                NcbiBlastPlugin.COLUMN_FOOTER };
 
         // invoke the blast process
         try {
