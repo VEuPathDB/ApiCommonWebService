@@ -41,7 +41,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
     // required parameter definitions
     public static final String PARAM_QUERY_TYPE = "BlastQueryType";
-    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseTypeGene";
+    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseType";
     public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
@@ -142,6 +142,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             throws WsfServiceException {
         boolean dbTypePresent = false;
         for (String param : params.keySet()) {
+            logger.debug("Param - name=" + param + ", value=" + params.get(param));
             if (param.startsWith(PARAM_DATABASE_TYPE)) {
                 dbTypePresent = true;
                 break;
