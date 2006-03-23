@@ -79,6 +79,9 @@
   <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation">
 
     <copy file="${targetDir}/wsf-lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${webappTargetDir}/WEB-INF/lib" />
+    <copy todir="${webappTargetDir}/WEB-INF/wsf-config">
+       <fileset dir="${targetDir}/config/*"/>
+    </copy>
 
   </target>
 
