@@ -182,6 +182,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             // prepare results for failure scenario
             logger.debug("Preparing the result");
             String[][] result = prepareResult(orderedColumns, outFile);
+	    logger.debug(printArray(result));
             return result;
         } catch (IOException ex) {
             logger.error(ex);
@@ -271,6 +272,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
         if (bp != null) {
             return bp;
         }
+
         throw new WsfServiceException("invalid blast query or database types ("
                 + qType + ", " + dbType + ")");
     }
@@ -283,16 +285,18 @@ public class NcbiBlastPlugin extends WsfPlugin {
             dbType = dbType.replaceAll(" ", "");
         }
 
-        if (dbOrg.toLowerCase().matches("^p\\.?\\s?f")) {
+        if (dbOrg.toLowerCase().matches("^p\\.?\\s?f.*$")) {
             dbOrg = "Pfalciparum";
-        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?v")) {
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?v.*$")) {
             dbOrg = "Pvivax";
-        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?y")) {
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?y.*$")) {
             dbOrg = "Pyoelii";
         } else if ("any".equals(dbOrg)) {
             dbOrg = "Plasmodium";
         }
         String blastDb = dbOrg + "_" + dbType;
+
+	logger.debug("blastDb=" + blastDb);
 
         if (!validBlastDBs.contains(blastDb)) {
             throw new WsfServiceException(
