@@ -5,20 +5,26 @@
 <entry key="AppPath">(the absolute path to the bin directory of your NCBI-BLAST application)</entry>
 <entry key="DataPath">(the absolute path to BLAST database directory)</entry>
 <entry key="Timeout">(time out limit, in seconds)</entry>
-<entry key="ProjectId">(Define a project id constant for the blast result)</entry>
+<entry key="UseProjectId">(Yes/No, whether to use project id or not)</entry>
 
 <!-- the matching part should be the group#1 in the first match, eg. ^\S+?\|\S+?\|(\S+?)\| --> 
 <entry key="SourceIdRegex"><![CDATA[the regular expression for parsing out source id, eg: ^\S+?\|\S+?\|(\S+?)\| ]]></entry>
 <entry key="OrganismRegex"><![CDATA[the regular expression for parsing out organism]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
-<entry key="Map_pfa3D7">
+<entry key="UrlMap_pfa3D7">
 	<![CDATA[http://www.plasmodb.org/plasmodb/servlet/sv?page=gene&source_id=\$\$source_id\$\$]]>
 </entry>
-<entry key="Map_Cryptosporidium">
+<entry key="UrlMap_Cryptosporidium">
 	<![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=\$\$source_id\$\$]]>
 </entry>
-<entry key="Map_Others">
+<entry key="UrlMap_Others">
 	<![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=\$\$source_id\$\$]]>
 </entry>
+
+<!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
+<entry key="ProjectMap_pfa3D7">PlasmoDB</entry>
+<entry key="ProjectUrlMap_Cryptosporidium">CryptoDB</entry>
+<entry key="ProjectUrlMap_Others">Others</entry>
+
 </properties>

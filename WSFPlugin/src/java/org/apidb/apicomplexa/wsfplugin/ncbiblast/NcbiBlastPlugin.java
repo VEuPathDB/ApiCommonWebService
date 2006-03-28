@@ -46,15 +46,19 @@ public class NcbiBlastPlugin extends WsfPlugin {
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
     // field definitions in the config file
-    private static final String MAP_PREFIX = "Map_";
-
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TIMEOUT = "Timeout";
-    private static final String FIELD_PROJECT_ID = "ProjectId";
+    private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
     private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex";
     private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
-    private static final String FIELD_MAP_OTHER = MAP_PREFIX + "Others";
+
+    private static final String URL_MAP_PREFIX = "UrlMap_";
+    private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others";
+    private static final String PROJECT_MAP_PREFIX = "ProjectMap_";
+    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX
+            + "Others";
+
     private static final String TEMP_FILE_PREFIX = "ncbiBlastPlugin";
 
     private static Set<String> validBlastDBs = new LinkedHashSet<String>();
@@ -77,11 +81,12 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private String appPath;
     private String dataPath;
     private long timeout;
-    private String projectId;
+    private boolean useProjectId;
     private String sourceIdRegex;
     private String organismRegex;
 
-    private String mapOthers;
+    private String urlMapOthers;
+    private String projectMapOthers;
 
     /**
      * @throws WsfServiceException
@@ -103,11 +108,14 @@ public class NcbiBlastPlugin extends WsfPlugin {
         if (max == null) timeout = 60; // by default, set timeout as 60 seconds
         else timeout = Integer.parseInt(max);
 
-        projectId = getProperty(FIELD_PROJECT_ID);
+        String useProject = getProperty(FIELD_USE_PROJECT_ID);
+        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
+
         sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX).trim();
         organismRegex = getProperty(FIELD_ORGANISM_REGEX).trim();
 
-        mapOthers = getProperty(FIELD_MAP_OTHER);
+        urlMapOthers = getProperty(FIELD_URL_MAP_OTHER);
+        projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
     }
 
     /*
@@ -117,7 +125,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_QUERY_TYPE, PARAM_DATABASE_ORGANISM,
+        return new String[]{ PARAM_QUERY_TYPE, PARAM_DATABASE_ORGANISM,
                 PARAM_SEQUENCE };
     }
 
@@ -128,8 +136,10 @@ public class NcbiBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_PROJECT_ID, COLUMN_ID, COLUMN_HEADER,
-                COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK };
+        if (useProjectId) return new String[]{ COLUMN_PROJECT_ID, COLUMN_ID,
+                COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK };
+        else return new String[]{ COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
+                COLUMN_ROW, COLUMN_BLOCK };
     }
 
     /*
@@ -142,7 +152,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
             throws WsfServiceException {
         boolean dbTypePresent = false;
         for (String param : params.keySet()) {
-            logger.debug("Param - name=" + param + ", value=" + params.get(param));
+            logger.debug("Param - name=" + param + ", value="
+                    + params.get(param));
             if (param.startsWith(PARAM_DATABASE_TYPE)) {
                 dbTypePresent = true;
                 break;
@@ -182,7 +193,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             // prepare results for failure scenario
             logger.debug("Preparing the result");
             String[][] result = prepareResult(orderedColumns, outFile);
-	    logger.debug(printArray(result));
+            logger.debug(printArray(result));
             return result;
         } catch (IOException ex) {
             logger.error(ex);
@@ -296,7 +307,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
         }
         String blastDb = dbOrg + "_" + dbType;
 
-	logger.debug("blastDb=" + blastDb);
+        logger.debug("blastDb=" + blastDb);
 
         if (!validBlastDBs.contains(blastDb)) {
             throw new WsfServiceException(
@@ -332,27 +343,30 @@ public class NcbiBlastPlugin extends WsfPlugin {
                     footer.append(line + newline);
                 }
                 String[][] result = new String[1][columns.size()];
-                result[0][columns.get(COLUMN_PROJECT_ID)] = projectId;
                 result[0][columns.get(COLUMN_ID)] = "";
                 result[0][columns.get(COLUMN_ROW)] = "";
                 result[0][columns.get(COLUMN_BLOCK)] = "";
                 result[0][columns.get(COLUMN_HEADER)] = header.toString();
                 result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
+
+                if (useProjectId)
+                    result[0][columns.get(COLUMN_PROJECT_ID)] = "";
                 return result;
             }
         } while (!line.startsWith("Sequence"));
 
         // read tabular part, which starts after the second empty line
         line = in.readLine(); // skip an empty line
-        // map of <source_id, tabular_row>
-        Map<String, String> rows = new HashMap<String, String>();
+        // map of <source_id, [organism,tabular_row]>
+        Map<String, String[]> rows = new HashMap<String, String[]>();
         while ((line = in.readLine()) != null) {
             if (line.trim().length() == 0) break;
             // extract source id
             String sourceId = extractField(line, sourceIdRegex);
+            String organism = extractField(line, organismRegex);
             // insert the organism url
             line = insertOrganismUrl(line);
-            rows.put(sourceId, line);
+            rows.put(sourceId, new String[]{ organism, line });
         }
 
         // extract alignment blocks
@@ -404,8 +418,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
         for (int i = 0; i < blocks.size(); i++) {
             alignment = blocks.get(i);
             // copy project id
-            int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
-            results[i][projectIdIndex] = projectId;
+            // HACK
+            // results[i][projectIdIndex] = projectId;
             // copy ID
             int idIndex = columns.get(COLUMN_ID);
             results[i][idIndex] = alignment[idIndex];
@@ -416,7 +430,15 @@ public class NcbiBlastPlugin extends WsfPlugin {
             int rowIndex = columns.get(COLUMN_ROW);
             for (String id : rows.keySet()) {
                 if (alignment[idIndex].startsWith(id)) {
-                    results[i][rowIndex] = rows.get(id);
+                    String[] parts = rows.get(id);
+                    String organism = parts[0];
+                    String tabularRow = parts[1];
+                    results[i][rowIndex] = tabularRow;
+                    if (useProjectId) {
+                        int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
+                        String projectId = getProjectId(organism);
+                        results[i][projectIdIndex] = projectId;
+                    }
                     break;
                 }
             }
@@ -441,9 +463,9 @@ public class NcbiBlastPlugin extends WsfPlugin {
         String organism = extractField(defline, organismRegex);
 
         // get the url mapping for this organsim
-        String mapkey = MAP_PREFIX + organism;
+        String mapkey = URL_MAP_PREFIX + organism;
         String mapurl = getProperty(mapkey);
-        if (mapurl == null) mapurl = mapOthers; // use default url
+        if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim();
 
         // replace the url into the defline
@@ -464,5 +486,12 @@ public class NcbiBlastPlugin extends WsfPlugin {
             sb.append(defline.substring(end));
             return sb.toString();
         } else return defline;
+    }
+
+    private String getProjectId(String organism) {
+        String mapKey = PROJECT_MAP_PREFIX + organism;
+        String projectId = getProperty(mapKey);
+        if (projectId == null) projectId = projectMapOthers;
+        return projectId;
     }
 }
