@@ -364,6 +364,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             // extract source id
             String sourceId = extractField(line, sourceIdRegex);
             String organism = extractField(line, organismRegex);
+	    logger.info("Organism extracted from defline is: " + organism);
             // insert the organism url
             line = insertUrl(line);
             rows.put(sourceId, new String[]{ organism, line });
@@ -461,10 +462,12 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private String insertUrl(String defline) {
         // extract organism from the defline
         String sourceId = extractField(defline, sourceIdRegex);
+        String organism = extractField(defline, organismRegex);
 
         // get the url mapping for this organsim
-        String mapkey = URL_MAP_PREFIX + sourceId;
+        String mapkey = URL_MAP_PREFIX + organism;
         String mapurl = getProperty(mapkey);
+	logger.info("mapkey=" + mapkey + ", mapurl=" + mapurl);
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
 
