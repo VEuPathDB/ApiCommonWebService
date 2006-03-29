@@ -50,14 +50,15 @@ public class NcbiBlastPlugin extends WsfPlugin {
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TIMEOUT = "Timeout";
     private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
-    private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex";
-    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
+
+    private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex_";
+    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex_";
 
     private static final String URL_MAP_PREFIX = "UrlMap_";
-    private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others";
+    private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others_";
     private static final String PROJECT_MAP_PREFIX = "ProjectMap_";
     private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX
-            + "Others";
+            + "Others_";
 
     private static final String TEMP_FILE_PREFIX = "ncbiBlastPlugin";
 
@@ -110,12 +111,6 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
         useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
-
-        sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX).trim();
-        organismRegex = getProperty(FIELD_ORGANISM_REGEX).trim();
-
-        urlMapOthers = getProperty(FIELD_URL_MAP_OTHER);
-        projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
     }
 
     /*
@@ -179,8 +174,29 @@ public class NcbiBlastPlugin extends WsfPlugin {
             File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in");
             File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out");
 
+            // get database type parameter
+            String dbType = null;
+            String dbTypeName = null;
+            for (String param : params.keySet()) {
+                if (param.startsWith(PARAM_DATABASE_TYPE)) {
+                    dbTypeName = param;
+                    dbType = params.get(param);
+                    break;
+                }
+            }
+            params.remove(dbTypeName);
+            
+            // get the proper regular expression
+
+            sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX+dbType);
+            organismRegex = getProperty(FIELD_ORGANISM_REGEX+dbType);
+
+            urlMapOthers = getProperty(FIELD_URL_MAP_OTHER+dbType);
+            projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER + dbType);
+            
+
             // prepare the arguments
-            String command = prepareParameters(params, seqFile, outFile);
+            String command = prepareParameters(params, seqFile, outFile, dbType);
             logger.debug("Command prepared: " + command);
 
             // invoke the command
@@ -192,7 +208,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
             logger.debug("Preparing the result");
-            String[][] result = prepareResult(orderedColumns, outFile);
+            String[][] result = prepareResult(orderedColumns, outFile, dbType);
             logger.debug(printArray(result));
             return result;
         } catch (IOException ex) {
@@ -202,7 +218,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
     }
 
     private String prepareParameters(Map<String, String> params, File seqFile,
-            File outFile) throws IOException, WsfServiceException {
+            File outFile, String dbType) throws IOException,
+            WsfServiceException {
         // get sequence
         String seq = params.get(PARAM_SEQUENCE);
         params.remove(PARAM_SEQUENCE);
@@ -227,18 +244,6 @@ public class NcbiBlastPlugin extends WsfPlugin {
         params.remove(PARAM_QUERY_TYPE);
         String dbOrg = params.get(PARAM_DATABASE_ORGANISM);
         params.remove(PARAM_DATABASE_ORGANISM);
-
-        // get database type parameter
-        String dbType = null;
-        String dbTypeName = null;
-        for (String param : params.keySet()) {
-            if (param.startsWith(PARAM_DATABASE_TYPE)) {
-                dbTypeName = param;
-                dbType = params.get(param);
-                break;
-            }
-        }
-        params.remove(dbTypeName);
 
         String blastApp = getBlastProgram(qType, dbType);
         String blastDbFile = dataPath + "/" + getBlastDatabase(dbType, dbOrg);
@@ -317,8 +322,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
         return blastDb;
     }
 
-    private String[][] prepareResult(String[] orderedColumns, File outFile)
-            throws IOException {
+    private String[][] prepareResult(String[] orderedColumns, File outFile,
+            String dbType) throws IOException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -364,9 +369,9 @@ public class NcbiBlastPlugin extends WsfPlugin {
             // extract source id
             String sourceId = extractField(line, sourceIdRegex);
             String organism = extractField(line, organismRegex);
-	    logger.info("Organism extracted from defline is: " + organism);
+            logger.info("Organism extracted from defline is: " + organism);
             // insert the organism url
-            line = insertUrl(line);
+            line = insertUrl(line, dbType);
             rows.put(sourceId, new String[]{ organism, line });
         }
 
@@ -399,7 +404,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
                 // extract source id
                 String sourceId = extractField(line, sourceIdRegex);
                 // insert the organism url
-                line = insertUrl(line);
+                line = insertUrl(line, dbType);
                 alignment[columns.get(COLUMN_ID)] = sourceId;
             }
             // add this line to the block
@@ -459,15 +464,15 @@ public class NcbiBlastPlugin extends WsfPlugin {
         } else return null;
     }
 
-    private String insertUrl(String defline) {
+    private String insertUrl(String defline, String dbType) {
         // extract organism from the defline
         String sourceId = extractField(defline, sourceIdRegex);
         String organism = extractField(defline, organismRegex);
 
         // get the url mapping for this organsim
-        String mapkey = URL_MAP_PREFIX + organism;
+        String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-	logger.info("mapkey=" + mapkey + ", mapurl=" + mapurl);
+        logger.info("mapkey=" + mapkey + ", mapurl=" + mapurl);
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
 

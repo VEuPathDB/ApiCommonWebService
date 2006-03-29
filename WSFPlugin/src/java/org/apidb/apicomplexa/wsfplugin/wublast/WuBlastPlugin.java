@@ -77,7 +77,7 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_DATABASE };
+        return new String[]{ PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_DATABASE };
     }
 
     /*
@@ -87,7 +87,7 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
+        return new String[]{ COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
                 COLUMN_ROW, COLUMN_BLOCK };
     }
 
