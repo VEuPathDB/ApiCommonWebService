@@ -47,7 +47,7 @@ public class NcbiBlastPluginTest extends TestCase {
 
         // prepare the columns
         String[] columns = { NcbiBlastPlugin.COLUMN_ID,
-          /*      NcbiBlastPlugin.COLUMN_PROJECT_ID, */
+                NcbiBlastPlugin.COLUMN_PROJECT_ID, 
                 NcbiBlastPlugin.COLUMN_ROW,
                 NcbiBlastPlugin.COLUMN_BLOCK, NcbiBlastPlugin.COLUMN_HEADER,
                 NcbiBlastPlugin.COLUMN_FOOTER };

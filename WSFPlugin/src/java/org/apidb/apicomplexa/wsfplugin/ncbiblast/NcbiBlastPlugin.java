@@ -365,7 +365,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             String sourceId = extractField(line, sourceIdRegex);
             String organism = extractField(line, organismRegex);
             // insert the organism url
-            line = insertOrganismUrl(line);
+            line = insertUrl(line);
             rows.put(sourceId, new String[]{ organism, line });
         }
 
@@ -398,7 +398,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
                 // extract source id
                 String sourceId = extractField(line, sourceIdRegex);
                 // insert the organism url
-                line = insertOrganismUrl(line);
+                line = insertUrl(line);
                 alignment[columns.get(COLUMN_ID)] = sourceId;
             }
             // add this line to the block
@@ -458,18 +458,18 @@ public class NcbiBlastPlugin extends WsfPlugin {
         } else return null;
     }
 
-    private String insertOrganismUrl(String defline) {
+    private String insertUrl(String defline) {
         // extract organism from the defline
-        String organism = extractField(defline, organismRegex);
+        String sourceId = extractField(defline, sourceIdRegex);
 
         // get the url mapping for this organsim
-        String mapkey = URL_MAP_PREFIX + organism;
+        String mapkey = URL_MAP_PREFIX + sourceId;
         String mapurl = getProperty(mapkey);
         if (mapurl == null) mapurl = urlMapOthers; // use default url
-        mapurl = mapurl.trim();
+        mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
 
         // replace the url into the defline
-        Pattern pattern = Pattern.compile(organismRegex);
+        Pattern pattern = Pattern.compile(sourceIdRegex);
         Matcher matcher = pattern.matcher(defline);
         if (matcher.find()) {
             // the organism is located at group 1
@@ -481,7 +481,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
             sb.append("<a href=\"");
             sb.append(mapurl);
             sb.append("\">");
-            sb.append(organism);
+            sb.append(sourceId);
             sb.append("</a>");
             sb.append(defline.substring(end));
             return sb.toString();
