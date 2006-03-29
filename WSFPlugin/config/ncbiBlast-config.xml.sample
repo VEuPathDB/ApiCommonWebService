@@ -23,7 +23,7 @@
 </entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
-<entry key="ProjectMap_pfa3D7">PlasmoDB</entry>
+<entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
 <entry key="ProjectMap_Others">Others</entry>
 
