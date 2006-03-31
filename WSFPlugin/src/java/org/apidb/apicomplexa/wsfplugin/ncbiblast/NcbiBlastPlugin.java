@@ -70,6 +70,12 @@ public class NcbiBlastPlugin extends WsfPlugin {
         validBlastDBs.add("Pvivax_CDS");
         validBlastDBs.add("Pvivax_proteins");
         validBlastDBs.add("Pvivax_genomic");
+        validBlastDBs.add("Pberghei_CDS");
+        validBlastDBs.add("Pberghei_proteins");
+        validBlastDBs.add("Pberghei_genomic");
+        validBlastDBs.add("Pchabaudi_CDS");
+        validBlastDBs.add("Pchabaudi_proteins");
+        validBlastDBs.add("Pchabaudi_genomic");
         validBlastDBs.add("Pyoelii_CDS");
         validBlastDBs.add("Pyoelii_proteins");
         validBlastDBs.add("Pyoelii_genomic");
@@ -307,6 +313,10 @@ public class NcbiBlastPlugin extends WsfPlugin {
             dbOrg = "Pvivax";
         } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?y.*$")) {
             dbOrg = "Pyoelii";
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?b.*$")) {
+            dbOrg = "Pberghei";
+        } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?c.*$")) {
+            dbOrg = "Pchabaudi";
         } else if ("any".equals(dbOrg)) {
             dbOrg = "Plasmodium";
         }
