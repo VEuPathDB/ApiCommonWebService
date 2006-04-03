@@ -28,16 +28,24 @@ public class WuBlastPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "wuBlast-config.xml";
 
     // column definitions
-    public static final String COLUMN_ID = "Identifier";
+    public static final String COLUMN_ID = "Id";
     public static final String COLUMN_HEADER = "Header";
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";
     public static final String COLUMN_BLOCK = "Alignment";
+    public static final String COLUMN_PROJECT = "Project";
 
     // required parameter definitions
     public static final String PARAM_APPLICATION = "Application";
     public static final String PARAM_SEQUENCE = "Sequence";
-    public static final String PARAM_DATABASE = "Database";
+    public static final String PARAM_ORGANISM = "Organism";
+    public static final String PARAM_DATATYPE = "DataType";
+//    public static final String PARAM_BLAST_E = "-e";
+//    public static final String PARAM_BLAST_S = "-s";
+//    public static final String PARAM_BLAST_V = "-v";
+//    public static final String PARAM_BLAST_B = "-b";
+//    public static final String PARAM_BLAST_WORDMASK = "wordmask";
+//    public static final String PARAM_STRAND = "Strand";   note that this must be a checkbox only for individual selections.
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
@@ -49,6 +57,9 @@ public class WuBlastPlugin extends WsfPlugin {
     private static String appPath;
     private static String dataPath;
     private static long timeout;
+    private static String dtype;
+    private static int uranus;
+    private static boolean useProjectId;
 
     /**
      * @throws WsfServiceException
@@ -61,6 +72,7 @@ public class WuBlastPlugin extends WsfPlugin {
         // load properties
         appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
+        //Remove when we have new parameters passing through;
         if (appPath == null || dataPath == null)
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
@@ -77,7 +89,7 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[]{ PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_DATABASE };
+        return new String[] { PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_ORGANISM, PARAM_DATATYPE };
     }
 
     /*
@@ -87,8 +99,8 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[]{ COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
-                COLUMN_ROW, COLUMN_BLOCK };
+           return new String[] { COLUMN_PROJECT, COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
+                   COLUMN_ROW, COLUMN_BLOCK };
     }
 
     /*
@@ -142,6 +154,15 @@ public class WuBlastPlugin extends WsfPlugin {
             File outFile) throws IOException {
         // get sequence
         String seq = params.get(PARAM_SEQUENCE);
+        dtype = params.get(PARAM_DATATYPE);
+
+        String seqType = "p";
+        if (dtype.equals("genomic")) {
+               seqType = "n";
+        }       
+        if (dtype.equals("CDS")) {
+               seqType = "t";
+        }       
 
         // output sequence in fasta format, with sequence wrapped for every 60
         // characters
@@ -156,20 +177,26 @@ public class WuBlastPlugin extends WsfPlugin {
         out.flush();
         out.close();
 
+        //Parse-out any blast options
+        StringBuffer bv = new StringBuffer();
+
+        String blastVariables = bv.toString();
+       
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
-        sb.append(appPath + "/" + params.get(PARAM_APPLICATION));
-        sb.append(" " + dataPath + "/" + params.get(PARAM_DATABASE));
+        sb.append(appPath + params.get(PARAM_APPLICATION));
+        sb.append(" " + dataPath + seqType + "/" + params.get(PARAM_ORGANISM) + "/" + params.get(PARAM_ORGANISM));
         sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
             if (!param.equals(PARAM_APPLICATION)
-                    && !param.equals(PARAM_DATABASE)
+                    && !param.equals(PARAM_ORGANISM)
+                    && !param.equals(PARAM_DATATYPE)
                     && !param.equals(PARAM_SEQUENCE)) {
-                sb.append(" -" + param + " " + params.get(param));
+                sb.append(" " + param + "=" + params.get(param));
             }
         }
-        sb.append(" O=" + outFile.getAbsolutePath());
+        sb.append(" O=" + outFile.getAbsolutePath() + blastVariables);
         return sb.toString();
     }
 
@@ -195,8 +222,24 @@ public class WuBlastPlugin extends WsfPlugin {
 
         // read tabular part, which starts after the second empty line
         line = in.readLine(); // skip an empty line
+        line = in.readLine(); // skip an empty line
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
+          // check if no hit in the result
+            if (line.indexOf("NONE") >= 0) {
+                // no hits found, next are footer
+                StringBuffer footer = new StringBuffer();
+                while ((line = in.readLine()) != null) {
+                    footer.append(line + newline);
+                }
+                String[][] result = new String[1][columns.size()];
+                result[0][columns.get(COLUMN_ID)] = "";
+                result[0][columns.get(COLUMN_ROW)] = "";
+                result[0][columns.get(COLUMN_BLOCK)] = "";
+                result[0][columns.get(COLUMN_HEADER)] = header.toString();
+                result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
+                return result;
+            }
             if (line.trim().length() == 0) break;
             rows.put(extractID(line), line);
         }
@@ -241,7 +284,6 @@ public class WuBlastPlugin extends WsfPlugin {
         while ((line = in.readLine()) != null) {
             footer.append(line + newline);
         }
-
         // now reconstruct the result
         int size = Math.max(1, blocks.size());
         String[][] results = new String[size][orderedColumns.length];
@@ -276,7 +318,10 @@ public class WuBlastPlugin extends WsfPlugin {
          * pieces.length - 2; i++) { sb.append(pieces[i] + " "); } return
          * sb.toString().trim();
          */
-        String ID = pieces[0];
+        String ID = pieces[2];
+        if (dtype == "genomic") {
+           ID = pieces[1];
+        }
         return ID;
     }
 }
