@@ -48,6 +48,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
+    private static final String FIELD_TEMP_PATH = "TempPath";
     private static final String FIELD_TIMEOUT = "Timeout";
     private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
 
@@ -87,6 +88,7 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
     private String appPath;
     private String dataPath;
+    private String tempPath;
     private long timeout;
     private boolean useProjectId;
     private String sourceIdRegex;
@@ -106,10 +108,11 @@ public class NcbiBlastPlugin extends WsfPlugin {
         // load properties
         appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
-        if (appPath == null || dataPath == null)
+        tempPath = getProperty(FIELD_TEMP_PATH);
+        if (appPath == null || dataPath == null || tempPath == null)
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
-                            + FIELD_APP_PATH + ", " + FIELD_DATA_PATH);
+                            + FIELD_APP_PATH + ", " + FIELD_DATA_PATH + ", " + FIELD_TEMP_PATH);
 
         String max = getProperty(FIELD_TIMEOUT);
         if (max == null) timeout = 60; // by default, set timeout as 60 seconds
@@ -177,8 +180,9 @@ public class NcbiBlastPlugin extends WsfPlugin {
 
         try {
             // create temporary files for input sequence and output report
-            File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in");
-            File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out");
+	    File dir = new File(tempPath);
+            File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in", dir);
+            File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out", dir);
 
             // get database type parameter
             String dbType = null;
@@ -230,16 +234,11 @@ public class NcbiBlastPlugin extends WsfPlugin {
         String seq = params.get(PARAM_SEQUENCE);
         params.remove(PARAM_SEQUENCE);
 
-        // write the sequence into the temporary fasta file, with sequence
-        // wrapped for every 60 characters
+        // write the sequence into the temporary fasta file,
+        // do not reformat the sequence - easy to introduce problem
         PrintWriter out = new PrintWriter(new FileWriter(seqFile));
         if (!seq.startsWith(">")) out.println(">MySeq1");
-        int pos = 0;
-        while (pos < seq.length()) {
-            int end = Math.min(pos + 60, seq.length());
-            out.println(seq.substring(pos, end));
-            pos = end;
-        }
+	out.println(seq);
         out.flush();
         out.close();
 

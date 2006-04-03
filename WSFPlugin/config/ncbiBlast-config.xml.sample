@@ -4,6 +4,7 @@
 <comment>The configuration file for WU-BLAST Processor.</comment>
 <entry key="AppPath">(the absolute path to the bin directory of your NCBI-BLAST application)</entry>
 <entry key="DataPath">(the absolute path to BLAST database directory)</entry>
+<entry key="TempPath">(the temporary path for BLAST to make input files and save output files)</entry>
 <entry key="Timeout">(time out limit, in seconds)</entry>
 <entry key="UseProjectId">(Yes/No, whether to use project id or not)</entry>
 
