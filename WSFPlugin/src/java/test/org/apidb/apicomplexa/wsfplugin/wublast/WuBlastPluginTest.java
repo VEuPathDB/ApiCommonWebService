@@ -47,7 +47,7 @@ public class WuBlastPluginTest extends TestCase {
                         + "GGGCAGGTGGCCACCGTCCTCTCTGCCCCCGCCAAAATCACCAACCACCTGG"
                         + "TGGCGATGATTGAAAAAACCATTAGCGGCCAGGATGCTTTACCCAATATCAG"
                         + "CGATGCCGAACGTATTTTTGCCGAACTTTT");
-        params.put(WuBlastPlugin.PARAM_DATABASE, "Cparvum_nt.fsa");
+        params.put(WuBlastPlugin.PARAM_DATATYPE, "Cparvum_nt.fsa");
 
         // prepare the columns
         String[] columns = { WuBlastPlugin.COLUMN_ID, WuBlastPlugin.COLUMN_ROW,
