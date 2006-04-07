@@ -83,6 +83,9 @@ public class NcbiBlastPlugin extends WsfPlugin {
         validBlastDBs.add("Plasmodium_CDS");
         validBlastDBs.add("Plasmodium_proteins");
         validBlastDBs.add("Plasmodium_genomic");
+        validBlastDBs.add("Tgondii_CDS");
+        validBlastDBs.add("Tgondii_proteins");
+        validBlastDBs.add("Tgondii_genomic");
         validBlastDBs.add("test_dna");
     }
 
@@ -316,6 +319,8 @@ public class NcbiBlastPlugin extends WsfPlugin {
             dbOrg = "Pberghei";
         } else if (dbOrg.toLowerCase().matches("^p\\.?\\s?c.*$")) {
             dbOrg = "Pchabaudi";
+        } else if (dbOrg.toLowerCase().matches("^t\\.?\\s?g.*$")) {
+            dbOrg = "Tgondii";
         } else if ("any".equals(dbOrg)) {
             dbOrg = "Plasmodium";
         }
