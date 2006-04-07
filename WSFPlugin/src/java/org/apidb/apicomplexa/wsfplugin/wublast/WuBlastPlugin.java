@@ -36,16 +36,10 @@ public class WuBlastPlugin extends WsfPlugin {
     public static final String COLUMN_PROJECT = "Project";
 
     // required parameter definitions
-    public static final String PARAM_APPLICATION = "Application";
     public static final String PARAM_SEQUENCE = "Sequence";
+    public static final String PARAM_QUERY_TYPE = "QueryType";
     public static final String PARAM_ORGANISM = "Organism";
     public static final String PARAM_DATATYPE = "DataType";
-//    public static final String PARAM_BLAST_E = "-e";
-//    public static final String PARAM_BLAST_S = "-s";
-//    public static final String PARAM_BLAST_V = "-v";
-//    public static final String PARAM_BLAST_B = "-b";
-//    public static final String PARAM_BLAST_WORDMASK = "wordmask";
-//    public static final String PARAM_STRAND = "Strand";   note that this must be a checkbox only for individual selections.
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
@@ -58,8 +52,9 @@ public class WuBlastPlugin extends WsfPlugin {
     private static String dataPath;
     private static long timeout;
     private static String dtype;
-    private static int uranus;
     private static boolean useProjectId;
+    private static String projectId;
+    private static String application;
 
     /**
      * @throws WsfServiceException
@@ -89,7 +84,7 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_APPLICATION, PARAM_SEQUENCE, PARAM_ORGANISM, PARAM_DATATYPE };
+        return new String[] { PARAM_QUERY_TYPE, PARAM_SEQUENCE, PARAM_ORGANISM, PARAM_DATATYPE };
     }
 
     /*
@@ -155,13 +150,17 @@ public class WuBlastPlugin extends WsfPlugin {
         // get sequence
         String seq = params.get(PARAM_SEQUENCE);
         dtype = params.get(PARAM_DATATYPE);
+        String org = params.get(PARAM_ORGANISM);
+        projectId = getProjectId(org);
+
 
         String seqType = "p";
         if (dtype.equals("genomic")) {
                seqType = "n";
         }       
         if (dtype.equals("CDS")) {
-               seqType = "t";
+               //seqType = "t";
+               seqType = "n";
         }       
 
         // output sequence in fasta format, with sequence wrapped for every 60
@@ -184,12 +183,16 @@ public class WuBlastPlugin extends WsfPlugin {
        
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
-        sb.append(appPath + params.get(PARAM_APPLICATION));
-        sb.append(" " + dataPath + seqType + "/" + params.get(PARAM_ORGANISM) + "/" + params.get(PARAM_ORGANISM));
+                                                                                                    
+
+        String qType = params.get(PARAM_QUERY_TYPE);
+        String blastApp = getBlastProgram(qType, dtype);
+        sb.append(appPath + blastApp);
+        sb.append(" " + dataPath + seqType + "/" + params.get(PARAM_ORGANISM) + params.get(PARAM_DATATYPE) + "/" + params.get(PARAM_ORGANISM) + params.get(PARAM_DATATYPE));
         sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
-            if (!param.equals(PARAM_APPLICATION)
+            if (!param.equals(PARAM_QUERY_TYPE)
                     && !param.equals(PARAM_ORGANISM)
                     && !param.equals(PARAM_DATATYPE)
                     && !param.equals(PARAM_SEQUENCE)) {
@@ -233,6 +236,7 @@ public class WuBlastPlugin extends WsfPlugin {
                     footer.append(line + newline);
                 }
                 String[][] result = new String[1][columns.size()];
+                result[0][columns.get(COLUMN_PROJECT)] = projectId;
                 result[0][columns.get(COLUMN_ID)] = "";
                 result[0][columns.get(COLUMN_ROW)] = "";
                 result[0][columns.get(COLUMN_BLOCK)] = "";
@@ -272,7 +276,11 @@ public class WuBlastPlugin extends WsfPlugin {
                 block = new StringBuffer();
 
                 // obtain the ID of it, which is the rest of this line
-                alignment[columns.get(COLUMN_ID)] = line.substring(1).trim();
+                //alignment[columns.get(COLUMN_ID)] = extractID(line);
+                String rawId = extractID(line);
+                alignment[columns.get(COLUMN_ID)] = getSourceUrl(projectId, rawId);
+
+
             }
             // add this line to the block
             block.append(line + newline);
@@ -305,23 +313,83 @@ public class WuBlastPlugin extends WsfPlugin {
             }
         }
         // copy the header and footer
+        results[0][columns.get(COLUMN_PROJECT)] = projectId;
         results[0][columns.get(COLUMN_HEADER)] = header.toString();
         results[size - 1][columns.get(COLUMN_FOOTER)] = footer.toString();
         return results;
     }
 
-    private String extractID(String row) {
-        // remove last two pieces
-        String[] pieces = tokenize(row);
-        /*
-         * StringBuffer sb = new StringBuffer(); for (int i = 0; i <
-         * pieces.length - 2; i++) { sb.append(pieces[i] + " "); } return
-         * sb.toString().trim();
-         */
-        String ID = pieces[2];
-        if (dtype == "genomic") {
-           ID = pieces[1];
+    private String getBlastProgram(String qType, String dbType) {
+              // throws WsfServiceException{
+        String bp = null;
+        if ("dna".equalsIgnoreCase(qType)) {
+            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+                    || "dna".equals(dbType)) {
+                bp = "blastn";
+            } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
+                bp = "tblastx";
+            } else if ("proteins".equals(dbType)) {
+                bp = "blastx";
+            }
+        } else if ("protein".equalsIgnoreCase(qType)) {
+            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+                    || dbType.toLowerCase().indexOf("translated") >= 0) {
+                bp = "tblastn";
+            } else if ("proteins".equals(dbType)) {
+                bp = "blastp";
+            }
         }
-        return ID;
+                                                                                                                             
+        //if (bp == null) {
+         //  throw new WsfServiceException("invalid blast query or database types ("
+           //     + qType + ", " + dbType + ")");
+        //}
+
+       return bp;
     }
+
+
+    private String getProjectId(String org) {
+
+        String projectId = "apiDb";
+
+        if (org.startsWith("C")) {
+           projectId = "cryptodb";
+        }
+        else if (org.startsWith("P")) {
+           projectId = "plasmodb";
+        }
+        else if (org.startsWith("T")) {
+           projectId = "toxodb";
+        }
+        return projectId;
+    }
+
+    private String extractID(String row) {
+        String[] pieces = tokenize(row);
+
+        String srcid = pieces[2];
+        if (dtype == "genomic") {
+           srcid = pieces[1];
+        }
+        return srcid;
+    }
+
+    private String getSourceUrl(String projectId, String sourceId) {
+        String sourceUrl = sourceId + " - (no link)";   
+
+     if ("cryptodb".equals(projectId)) {
+         sourceUrl = ("<a href=http://dev1.cryptodb.org/cryptodb/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+       }
+       else if ("plasmodb".equals(projectId)) {
+           sourceUrl = ("<a href=http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+       }
+       else if ("toxodb".equals(projectId)) {
+           sourceUrl = ("<a href=http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+       }
+
+    return sourceUrl;
+      
+    }
+
 }
