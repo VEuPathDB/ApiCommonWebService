@@ -383,13 +383,13 @@ public class WuBlastPlugin extends WsfPlugin {
         String sourceUrl = sourceId + " - (no link)";   
 
      if ("cryptodb".equals(projectId)) {
-         sourceUrl = ("<a href=http://dev1.cryptodb.org/cryptodb/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+         sourceUrl = ("<a href=http://dev1.cryptodb.org/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
        }
        else if ("plasmodb".equals(projectId)) {
-           sourceUrl = ("<a href=http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+           sourceUrl = ("<a href=http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
        }
        else if ("toxodb".equals(projectId)) {
-           sourceUrl = ("<a href=http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=Class.recordset.Clas.Something&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+           sourceUrl = ("<a href=http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
        }
 
     return sourceUrl;
