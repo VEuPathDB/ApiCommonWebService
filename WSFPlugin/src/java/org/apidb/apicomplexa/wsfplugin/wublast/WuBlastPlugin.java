@@ -230,19 +230,23 @@ public class WuBlastPlugin extends WsfPlugin {
         while ((line = in.readLine()) != null) {
           // check if no hit in the result
             if (line.indexOf("NONE") >= 0) {
-                // no hits found, next are footer
-                StringBuffer footer = new StringBuffer();
-                while ((line = in.readLine()) != null) {
-                    footer.append(line + newline);
-                }
-                String[][] result = new String[1][columns.size()];
-                result[0][columns.get(COLUMN_PROJECT)] = projectId;
-                result[0][columns.get(COLUMN_ID)] = "";
-                result[0][columns.get(COLUMN_ROW)] = "";
-                result[0][columns.get(COLUMN_BLOCK)] = "";
-                result[0][columns.get(COLUMN_HEADER)] = header.toString();
-                result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
-                return result;
+                // Commented by Jerric
+                // return an empty array if there's no hit found
+                
+//                // no hits found, next are footer
+//                StringBuffer footer = new StringBuffer();
+//                while ((line = in.readLine()) != null) {
+//                    footer.append(line + newline);
+//                }
+//                String[][] result = new String[1][columns.size()];
+//                result[0][columns.get(COLUMN_PROJECT)] = projectId;
+//                result[0][columns.get(COLUMN_ID)] = "";
+//                result[0][columns.get(COLUMN_ROW)] = "";
+//                result[0][columns.get(COLUMN_BLOCK)] = "";
+//                result[0][columns.get(COLUMN_HEADER)] = header.toString();
+//                result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
+//                return result;
+                return new String[0][columns.size()];
             }
             if (line.trim().length() == 0) break;
             rows.put(extractID(line), line);
