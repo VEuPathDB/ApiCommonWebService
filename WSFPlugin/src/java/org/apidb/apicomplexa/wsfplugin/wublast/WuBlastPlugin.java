@@ -36,10 +36,10 @@ public class WuBlastPlugin extends WsfPlugin {
     public static final String COLUMN_PROJECT = "Project";
 
     // required parameter definitions
-    public static final String PARAM_SEQUENCE = "Sequence";
-    public static final String PARAM_QUERY_TYPE = "QueryType";
-    public static final String PARAM_ORGANISM = "Organism";
-    public static final String PARAM_DATATYPE = "DataType";
+    public static final String PARAM_SEQUENCE = "BlastQuerySequence";
+    public static final String PARAM_QUERY_TYPE = "BlastQueryType";
+    public static final String PARAM_ORGANISM = "BlastDatabaseOrganism";
+    public static final String PARAM_DATATYPE = "BlastDatabaseTypeGene";
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
