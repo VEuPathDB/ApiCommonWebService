@@ -45,11 +45,13 @@ public class WuBlastPlugin extends WsfPlugin {
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TIMEOUT = "Timeout";
+    private static final String FIELD_TEMP_PATH = "TempPath";
 
     private static final String TEMP_FILE_PREFIX = "wuBlastPlugin";
 
     private static String appPath;
     private static String dataPath;
+    private static String tempPath;
     private static long timeout;
     private static String dtype;
     private static boolean useProjectId;
@@ -64,14 +66,19 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     public WuBlastPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
+
         // load properties
         appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
+        tempPath = getProperty(FIELD_TEMP_PATH);
+
         //Remove when we have new parameters passing through;
-        if (appPath == null || dataPath == null)
+	if (appPath == null || dataPath == null || tempPath == null)
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
-                            + FIELD_APP_PATH + ", " + FIELD_DATA_PATH);
+                            + FIELD_APP_PATH + ", " + FIELD_DATA_PATH + ", " + FIELD_TEMP_PATH);
+
+       
         String max = getProperty(FIELD_TIMEOUT);
         if (max == null) timeout = 60; // by default, set timeout as 60 seconds
         else timeout = Integer.parseInt(max);
@@ -121,8 +128,9 @@ public class WuBlastPlugin extends WsfPlugin {
 
         try {
             // create temporary files for input sequence and output report
-            File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in");
-            File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out");
+	    File dir = new File(tempPath);
+            File seqFile = File.createTempFile(TEMP_FILE_PREFIX, "in",dir);
+            File outFile = File.createTempFile(TEMP_FILE_PREFIX, "out",dir);
 
             // prepare the arguments
             String command = prepareParameters(params, seqFile, outFile);
@@ -226,8 +234,10 @@ public class WuBlastPlugin extends WsfPlugin {
         // read tabular part, which starts after the second empty line
         line = in.readLine(); // skip an empty line
         line = in.readLine(); // skip an empty line
+
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
+
           // check if no hit in the result
             if (line.indexOf("NONE") >= 0) {
                 // Commented by Jerric
@@ -247,12 +257,16 @@ public class WuBlastPlugin extends WsfPlugin {
 //                result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
 //                return result;
                 return new String[0][columns.size()];
-            }
+	    }//endif NONE
+
             if (line.trim().length() == 0) break;
             rows.put(extractID(line), line);
         }
 
         line = in.readLine(); // skip an empty line
+
+	//we need to deal with WARNINGs?
+
         // extract alignment blocks
         List<String[]> blocks = new ArrayList<String[]>();
         StringBuffer block = null;
@@ -296,8 +310,10 @@ public class WuBlastPlugin extends WsfPlugin {
         while ((line = in.readLine()) != null) {
             footer.append(line + newline);
         }
+
         // now reconstruct the result
         int size = Math.max(1, blocks.size());
+
         String[][] results = new String[size][orderedColumns.length];
         for (int i = 0; i < blocks.size(); i++) {
             alignment = blocks.get(i);
@@ -307,7 +323,8 @@ public class WuBlastPlugin extends WsfPlugin {
             // copy block
             int blockIndex = columns.get(COLUMN_BLOCK);
             results[i][blockIndex] = alignment[blockIndex];
-            // copy tabular row
+
+            // copy tabular row --CHECK THIS
             int rowIndex = columns.get(COLUMN_ROW);
             for (String id : rows.keySet()) {
                 if (alignment[idIndex].startsWith(id)) {
