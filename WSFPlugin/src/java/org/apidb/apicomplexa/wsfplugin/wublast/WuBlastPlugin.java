@@ -9,8 +9,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -28,24 +32,29 @@ public class WuBlastPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "wuBlast-config.xml";
 
     // column definitions
-    public static final String COLUMN_ID = "Id";
+    public static final String COLUMN_ID = "Identifier";
     public static final String COLUMN_HEADER = "Header";
     public static final String COLUMN_FOOTER = "Footer";
     public static final String COLUMN_ROW = "TabularRow";
     public static final String COLUMN_BLOCK = "Alignment";
-    public static final String COLUMN_PROJECT = "Project";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
 
     // required parameter definitions
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
     public static final String PARAM_QUERY_TYPE = "BlastQueryType";
-    public static final String PARAM_ORGANISM = "BlastDatabaseOrganism";
-    public static final String PARAM_DATATYPE = "BlastDatabaseTypeGene";
+    public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
+    public static final String PARAM_DATABASE_TYPE = "BlastDatabaseTypeGene";
 
     // field definitions in the config file
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TIMEOUT = "Timeout";
     private static final String FIELD_TEMP_PATH = "TempPath";
+    private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
+
+    //ncbi seems to have these dependent on dbtype
+    private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex";
+    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
 
     private static final String TEMP_FILE_PREFIX = "wuBlastPlugin";
 
@@ -53,10 +62,15 @@ public class WuBlastPlugin extends WsfPlugin {
     private static String dataPath;
     private static String tempPath;
     private static long timeout;
-    private static String dtype;
     private static boolean useProjectId;
+    private static String sourceIdRegex;
+    private static String organismRegex;
+
+    //parameter database type and column projectid, ncbi does not use global
+    private static String dbType;
+    private static String org;
     private static String projectId;
-    private static String application;
+
 
     /**
      * @throws WsfServiceException
@@ -71,18 +85,22 @@ public class WuBlastPlugin extends WsfPlugin {
         appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
         tempPath = getProperty(FIELD_TEMP_PATH);
+	sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX);
+	organismRegex = getProperty(FIELD_ORGANISM_REGEX);
 
-        //Remove when we have new parameters passing through;
 	if (appPath == null || dataPath == null || tempPath == null)
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
                             + FIELD_APP_PATH + ", " + FIELD_DATA_PATH + ", " + FIELD_TEMP_PATH);
 
-       
-        String max = getProperty(FIELD_TIMEOUT);
+	String max = getProperty(FIELD_TIMEOUT);
         if (max == null) timeout = 60; // by default, set timeout as 60 seconds
         else timeout = Integer.parseInt(max);
+
+	String useProject = getProperty(FIELD_USE_PROJECT_ID);
+        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
     }
+
 
     /*
      * (non-Javadoc)
@@ -91,7 +109,7 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_QUERY_TYPE, PARAM_SEQUENCE, PARAM_ORGANISM, PARAM_DATATYPE };
+        return new String[] { PARAM_QUERY_TYPE, PARAM_SEQUENCE, PARAM_DATABASE_ORGANISM, PARAM_DATABASE_TYPE };
     }
 
     /*
@@ -101,9 +119,12 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-           return new String[] { COLUMN_PROJECT, COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
-                   COLUMN_ROW, COLUMN_BLOCK };
-    }
+	if (useProjectId) return new String[]{COLUMN_HEADER,COLUMN_PROJECT_ID,COLUMN_ID,
+					      COLUMN_ROW,COLUMN_BLOCK,COLUMN_FOOTER};
+        else return new String[]{COLUMN_HEADER,COLUMN_ID,COLUMN_ROW,COLUMN_BLOCK,COLUMN_FOOTER};
+     }
+
+
 
     /*
      * (non-Javadoc)
@@ -113,7 +134,7 @@ public class WuBlastPlugin extends WsfPlugin {
     @Override
     protected void validateParameters(Map<String, String> params)
             throws WsfServiceException {
-    // do nothing in this plugin
+    // do nothing in this plugin ?? check sequence empty or too short?
     }
 
     /*
@@ -124,7 +145,7 @@ public class WuBlastPlugin extends WsfPlugin {
     @Override
     protected String[][] execute(Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
-        logger.info("Invoking WuBlastPlugin...");
+        logger.info("Invoking WuBlastPlugin...\n\n");
 
         try {
             // create temporary files for input sequence and output report
@@ -134,47 +155,47 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // prepare the arguments
             String command = prepareParameters(params, seqFile, outFile);
-            logger.debug("Command prepared: " + command);
+            logger.info("\nCommand prepared: " + command+"\n");
 
             // invoke the command
             String output = invokeCommand(command, timeout);
             if (exitValue != 0)
-                throw new WsfServiceException("The invocation is failed: "
+                throw new WsfServiceException("\nThe invocation is failed: "
                         + output);
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
-            logger.debug("Preparing the result");
+            logger.info("\nPreparing the result\n");
             String[][] result = prepareResult(orderedColumns, outFile);
             return result;
         } catch (IOException ex) {
-            logger.error(ex);
+            logger.error("\nPreparing the result:" + ex);
             throw new WsfServiceException(ex);
         }
     }
 
     private String prepareParameters(Map<String, String> params, File seqFile,
             File outFile) throws IOException {
-        // get sequence
+
+        // get parameters
         String seq = params.get(PARAM_SEQUENCE);
-        dtype = params.get(PARAM_DATATYPE);
-        String org = params.get(PARAM_ORGANISM);
-        projectId = getProjectId(org);
+        dbType = params.get(PARAM_DATABASE_TYPE);
+        org = params.get(PARAM_DATABASE_ORGANISM);
+	String qType = params.get(PARAM_QUERY_TYPE);
 
+        String blastApp = getBlastProgram(qType, dbType);
 
-        String seqType = "p";
-        if (dtype.equals("genomic")) {
-               seqType = "n";
-        }       
-        if (dtype.equals("CDS")) {
-               //seqType = "t";
-               seqType = "n";
+	String seqType = "n/";
+        if (dbType.equals("Proteins")) {
+               seqType = "p/";
         }       
 
+	//ncbi plugin does this differently...
         // output sequence in fasta format, with sequence wrapped for every 60
         // characters
         PrintWriter out = new PrintWriter(new FileWriter(seqFile));
-        out.println(">Seq1");
+	if (qType.equals("protein"))  out.println(">Protein Sequence");
+	else  out.println(">DNA Sequence");
         int pos = 0;
         while (pos < seq.length()) {
             int end = Math.min(pos + 60, seq.length());
@@ -186,23 +207,18 @@ public class WuBlastPlugin extends WsfPlugin {
 
         //Parse-out any blast options
         StringBuffer bv = new StringBuffer();
-
         String blastVariables = bv.toString();
        
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
-                                                                                                    
-
-        String qType = params.get(PARAM_QUERY_TYPE);
-        String blastApp = getBlastProgram(qType, dtype);
         sb.append(appPath + blastApp);
-        sb.append(" " + dataPath + seqType + "/" + params.get(PARAM_ORGANISM) + params.get(PARAM_DATATYPE) + "/" + params.get(PARAM_ORGANISM) + params.get(PARAM_DATATYPE));
+	sb.append(" " + dataPath + seqType + org + dbType + "/" + org + dbType);
         sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
             if (!param.equals(PARAM_QUERY_TYPE)
-                    && !param.equals(PARAM_ORGANISM)
-                    && !param.equals(PARAM_DATATYPE)
+                    && !param.equals(PARAM_DATABASE_ORGANISM)
+                    && !param.equals(PARAM_DATABASE_TYPE)
                     && !param.equals(PARAM_SEQUENCE)) {
                 sb.append(" " + param + "=" + params.get(param));
             }
@@ -231,49 +247,60 @@ public class WuBlastPlugin extends WsfPlugin {
             header.append(line + newline);
         } while (!line.startsWith("Sequence"));
 
-        // read tabular part, which starts after the second empty line
+        // read tabular part, which starts after the ONE empty line
         line = in.readLine(); // skip an empty line
-        line = in.readLine(); // skip an empty line
+	logger.info("\nLine skipped: " + line+"\n");
+	
 
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
+	    logger.info("\nUnless no hits, this should be a tabular row line: " + line+"\n");
+            if (line.trim().length() == 0) {
+		logger.info("\nLine length 0!!, we finished with tabular rows: " + line+"\n");
+		break;}
 
-          // check if no hit in the result
-            if (line.indexOf("NONE") >= 0) {
-                // Commented by Jerric
-                // return an empty array if there's no hit found
-                
-//                // no hits found, next are footer
-//                StringBuffer footer = new StringBuffer();
-//                while ((line = in.readLine()) != null) {
-//                    footer.append(line + newline);
-//                }
-//                String[][] result = new String[1][columns.size()];
-//                result[0][columns.get(COLUMN_PROJECT)] = projectId;
-//                result[0][columns.get(COLUMN_ID)] = "";
-//                result[0][columns.get(COLUMN_ROW)] = "";
-//                result[0][columns.get(COLUMN_BLOCK)] = "";
-//                result[0][columns.get(COLUMN_HEADER)] = header.toString();
-//                result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
-//                return result;
-                return new String[0][columns.size()];
-	    }//endif NONE
+	    //TODO: before adding the line to rows, insert:
+	    //-  link to gene page, in source_id, and
+	    //- link to alignment block name=#source_id, in score
 
-            if (line.trim().length() == 0) break;
             rows.put(extractID(line), line);
-        }
 
+        }//end while
+
+	//we need to deal with WARNINGs
         line = in.readLine(); // skip an empty line
+	logger.info("\nThis line is supposed to be empty or could have a WARNING or NONE: " + line+"\n");
 
-	//we need to deal with WARNINGs?
+	if (line.indexOf("NONE") >= 0)    return new String[0][columns.size()];
+
+	if (line.trim().startsWith("WARNING")) {
+	    line = in.readLine(); // skip
+	    logger.info("\nThis line is continuation of warning line: " + line+"\n");
+	    line = in.readLine(); // skip
+	    logger.info("\nThis line is supposed to be empty: " + line+"\n");
+	    line = in.readLine(); // skip
+	    logger.info("\nThis line is supposed to be empty: " + line+"\n");
+	}
+
 
         // extract alignment blocks
+	String hit_sourceId, hit_organism, hit_projectId = "";
+
         List<String[]> blocks = new ArrayList<String[]>();
         StringBuffer block = null;
         String[] alignment = null;
         while ((line = in.readLine()) != null) {
+	    // found a warning before parameters
+            if (line.trim().startsWith("WARNING")) {
+		logger.info("\nFound warning, skip: " + line+"\n");
+		line = in.readLine(); // skip
+		line = in.readLine(); // skip
+		line = in.readLine(); // skip
+	    }
+
             // reach the footer part
             if (line.trim().startsWith("Parameters")) {
+		logger.info("\nFound Parameters: " + line+"\n");
                 // output the last block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
@@ -284,6 +311,8 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // reach a new start of alignment block
             if (line.length() > 0 && line.charAt(0) == '>') {
+		logger.info("\nThis should be a new block: " + line+"\n");
+
                 // output the previous block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
@@ -294,13 +323,27 @@ public class WuBlastPlugin extends WsfPlugin {
                 block = new StringBuffer();
 
                 // obtain the ID of it, which is the rest of this line
-                //alignment[columns.get(COLUMN_ID)] = extractID(line);
-                String rawId = extractID(line);
-                alignment[columns.get(COLUMN_ID)] = getSourceUrl(projectId, rawId);
+		hit_sourceId = extractID(line);
+		logger.info("\n         sourceId : " + hit_sourceId+"\n");
+ 
+		//TODO: insert <a name=#source_id></a> in the beginning of the line
+		// and insert link to gene page, in source_id,	   
+
+		alignment[columns.get(COLUMN_ID)] = hit_sourceId; 
+
+		//as long we cannot select more than one database we dont need to use regex...
+		hit_organism = org; 
+		//logger.info("\n         organism : " + hit_organism+"\n");
+		hit_projectId = getProjectId(hit_organism);
+		//logger.info("\n         projectId : " + hit_projectId+"\n\n");
+		alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
 
 
             }
-            // add this line to the block
+            // add the line to the block
+
+	    
+
             block.append(line + newline);
         }
 
@@ -320,50 +363,57 @@ public class WuBlastPlugin extends WsfPlugin {
             // copy ID
             int idIndex = columns.get(COLUMN_ID);
             results[i][idIndex] = alignment[idIndex];
+	    // copy PROJECT_ID
+            int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
+            results[i][projectIdIndex] = alignment[projectIdIndex];
             // copy block
             int blockIndex = columns.get(COLUMN_BLOCK);
             results[i][blockIndex] = alignment[blockIndex];
 
-            // copy tabular row --CHECK THIS
+            // copy tabular row
             int rowIndex = columns.get(COLUMN_ROW);
             for (String id : rows.keySet()) {
-                if (alignment[idIndex].startsWith(id)) {
+		if (alignment[idIndex].startsWith(id)) {
                     results[i][rowIndex] = rows.get(id);
                     break;
                 }
             }
         }
         // copy the header and footer
-        results[0][columns.get(COLUMN_PROJECT)] = projectId;
-        results[0][columns.get(COLUMN_HEADER)] = header.toString();
+	results[0][columns.get(COLUMN_HEADER)] = header.toString();
         results[size - 1][columns.get(COLUMN_FOOTER)] = footer.toString();
+	logger.info("\n  WuBlastPlugin, ready to return result: result[0][0] is : " + results[0][0] + "\n\n");
         return results;
     }
+
+
+
+    //----------------------------------------------------------
 
     private String getBlastProgram(String qType, String dbType) {
               // throws WsfServiceException{
         String bp = null;
         if ("dna".equalsIgnoreCase(qType)) {
-            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+            if ("CDS".equals(dbType) || "Genomic".equals(dbType)
                     || "dna".equals(dbType)) {
                 bp = "blastn";
             } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
                 bp = "tblastx";
-            } else if ("proteins".equals(dbType)) {
+            } else if ("Proteins".equals(dbType)) {
                 bp = "blastx";
             }
         } else if ("protein".equalsIgnoreCase(qType)) {
-            if ("CDS".equals(dbType) || "genomic".equals(dbType)
+            if ("CDS".equals(dbType) || "Genomic".equals(dbType)
                     || dbType.toLowerCase().indexOf("translated") >= 0) {
                 bp = "tblastn";
-            } else if ("proteins".equals(dbType)) {
+            } else if ("Proteins".equals(dbType)) {
                 bp = "blastp";
             }
         }
                                                                                                                              
         //if (bp == null) {
-         //  throw new WsfServiceException("invalid blast query or database types ("
-           //     + qType + ", " + dbType + ")");
+	//  throw new WsfServiceException("invalid blast query or database types ("
+	//     + qType + ", " + dbType + ")");
         //}
 
        return bp;
@@ -390,11 +440,18 @@ public class WuBlastPlugin extends WsfPlugin {
         String[] pieces = tokenize(row);
 
         String srcid = pieces[2];
-        if (dtype == "genomic") {
+        if (dbType == "Genomic") {
            srcid = pieces[1];
         }
         return srcid;
     }
+
+   private String extractOrganism(String row) {
+        String[] pieces = tokenize(row);
+        String srcid = pieces[0];
+        return srcid;
+    }
+
 
     private String getSourceUrl(String projectId, String sourceId) {
         String sourceUrl = sourceId + " - (no link)";   
