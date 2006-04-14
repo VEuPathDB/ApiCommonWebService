@@ -55,6 +55,7 @@ public class WuBlastPlugin extends WsfPlugin {
     //ncbi seems to have these dependent on dbtype
     private static final String FIELD_SOURCE_ID_REGEX = "SourceIdRegex";
     private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
+    private static final String FIELD_SCORE_REGEX = "ScoreRegex";
 
     private static final String TEMP_FILE_PREFIX = "wuBlastPlugin";
 
@@ -65,11 +66,12 @@ public class WuBlastPlugin extends WsfPlugin {
     private static boolean useProjectId;
     private static String sourceIdRegex;
     private static String organismRegex;
+    private static String scoreRegex;
 
-    //parameter database type and column projectid, ncbi does not use global
+    //parameters database type and organism
     private static String dbType;
-    private static String org;
-    private static String projectId;
+    private static String orgParam;
+    
 
 
     /**
@@ -87,6 +89,7 @@ public class WuBlastPlugin extends WsfPlugin {
         tempPath = getProperty(FIELD_TEMP_PATH);
 	sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX);
 	organismRegex = getProperty(FIELD_ORGANISM_REGEX);
+	scoreRegex = getProperty(FIELD_SCORE_REGEX);
 
 	if (appPath == null || dataPath == null || tempPath == null)
             throw new WsfServiceException(
@@ -145,7 +148,7 @@ public class WuBlastPlugin extends WsfPlugin {
     @Override
     protected String[][] execute(Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
-        logger.info("Invoking WuBlastPlugin...\n\n");
+        logger.info("WB execute\n\n");
 
         try {
             // create temporary files for input sequence and output report
@@ -155,7 +158,7 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // prepare the arguments
             String command = prepareParameters(params, seqFile, outFile);
-            logger.info("\nCommand prepared: " + command+"\n");
+            logger.info("\n\nWB execute: command prepared: " + command+"\n");
 
             // invoke the command
             String output = invokeCommand(command, timeout);
@@ -165,11 +168,13 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
-            logger.info("\nPreparing the result\n");
+            logger.info("\n\nWB preparing the result\n");
             String[][] result = prepareResult(orderedColumns, outFile);
+
+	    logger.info("\n  WB result RETURNED\n\n");
             return result;
         } catch (IOException ex) {
-            logger.error("\nPreparing the result:" + ex);
+            logger.error("\n\nERROR preparing the result:" + ex);
             throw new WsfServiceException(ex);
         }
     }
@@ -180,7 +185,7 @@ public class WuBlastPlugin extends WsfPlugin {
         // get parameters
         String seq = params.get(PARAM_SEQUENCE);
         dbType = params.get(PARAM_DATABASE_TYPE);
-        org = params.get(PARAM_DATABASE_ORGANISM);
+        orgParam = params.get(PARAM_DATABASE_ORGANISM);
 	String qType = params.get(PARAM_QUERY_TYPE);
 
         String blastApp = getBlastProgram(qType, dbType);
@@ -212,7 +217,7 @@ public class WuBlastPlugin extends WsfPlugin {
         // now prepare the commandline
         StringBuffer sb = new StringBuffer();
         sb.append(appPath + blastApp);
-	sb.append(" " + dataPath + seqType + org + dbType + "/" + org + dbType);
+	sb.append(" " + dataPath + seqType + orgParam + dbType + "/" + orgParam + dbType);
         sb.append(" " + seqFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
@@ -229,6 +234,9 @@ public class WuBlastPlugin extends WsfPlugin {
 
     private String[][] prepareResult(String[] orderedColumns, File outFile)
             throws IOException {
+
+	String hit_sourceId = "";
+
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -249,42 +257,43 @@ public class WuBlastPlugin extends WsfPlugin {
 
         // read tabular part, which starts after the ONE empty line
         line = in.readLine(); // skip an empty line
-	logger.info("\nLine skipped: " + line+"\n");
+	logger.info("\nWB prepareResult: Line skipped: " + line+"\n");
 	
 
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
-	    logger.info("\nUnless no hits, this should be a tabular row line: " + line+"\n");
+	    logger.info("\nWB prepareResult: Unless no hits, this should be a tabular row line: " + line+"\n");
             if (line.trim().length() == 0) {
-		logger.info("\nLine length 0!!, we finished with tabular rows: " + line+"\n");
+		logger.info("\nWB prepareResult: Line length 0!!, we finished with tabular rows: " + line+"\n");
 		break;}
 
 	    //TODO: before adding the line to rows, insert:
 	    //-  link to gene page, in source_id, and
 	    //- link to alignment block name=#source_id, in score
-
-            rows.put(extractID(line), line);
+	    hit_sourceId = extractID(line);
+	    line = insertUrl(line);
+            rows.put(hit_sourceId, line);
 
         }//end while
 
 	//we need to deal with WARNINGs
         line = in.readLine(); // skip an empty line
-	logger.info("\nThis line is supposed to be empty or could have a WARNING or NONE: " + line+"\n");
+	logger.info("\nWB prepareResult: This line is supposed to be empty or could have a WARNING or NONE: " + line+"\n");
 
 	if (line.indexOf("NONE") >= 0)    return new String[0][columns.size()];
 
 	if (line.trim().startsWith("WARNING")) {
 	    line = in.readLine(); // skip
-	    logger.info("\nThis line is continuation of warning line: " + line+"\n");
+	    logger.info("\nWB prepareResult: This line is continuation of warning line: " + line+"\n");
 	    line = in.readLine(); // skip
-	    logger.info("\nThis line is supposed to be empty: " + line+"\n");
+	    logger.info("\nWB prepareResult: This line is supposed to be empty: " + line+"\n");
 	    line = in.readLine(); // skip
-	    logger.info("\nThis line is supposed to be empty: " + line+"\n");
+	    logger.info("\nWB prepareResult: This line is supposed to be empty: " + line+"\n");
 	}
 
 
         // extract alignment blocks
-	String hit_sourceId, hit_organism, hit_projectId = "";
+	String hit_organism, hit_projectId = "";
 
         List<String[]> blocks = new ArrayList<String[]>();
         StringBuffer block = null;
@@ -292,7 +301,7 @@ public class WuBlastPlugin extends WsfPlugin {
         while ((line = in.readLine()) != null) {
 	    // found a warning before parameters
             if (line.trim().startsWith("WARNING")) {
-		logger.info("\nFound warning, skip: " + line+"\n");
+		logger.info("\nWB prepareResult: Found WARNING, skip: " + line+"\n");
 		line = in.readLine(); // skip
 		line = in.readLine(); // skip
 		line = in.readLine(); // skip
@@ -300,7 +309,7 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // reach the footer part
             if (line.trim().startsWith("Parameters")) {
-		logger.info("\nFound Parameters: " + line+"\n");
+		logger.info("\nWB prepareResult: Found Parameters: " + line+"\n");
                 // output the last block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
@@ -311,7 +320,7 @@ public class WuBlastPlugin extends WsfPlugin {
 
             // reach a new start of alignment block
             if (line.length() > 0 && line.charAt(0) == '>') {
-		logger.info("\nThis should be a new block: " + line+"\n");
+		logger.info("\nWB prepareResult: This should be a new block: " + line+"\n");
 
                 // output the previous block, if have
                 if (alignment != null) {
@@ -324,26 +333,22 @@ public class WuBlastPlugin extends WsfPlugin {
 
                 // obtain the ID of it, which is the rest of this line
 		hit_sourceId = extractID(line);
-		logger.info("\n         sourceId : " + hit_sourceId+"\n");
+		logger.info("\nWB prepareResult: hit_sourceId : " + hit_sourceId+"\n");
  
 		//TODO: insert <a name=#source_id></a> in the beginning of the line
 		// and insert link to gene page, in source_id,	   
-
+line = insertUrl(line);
 		alignment[columns.get(COLUMN_ID)] = hit_sourceId; 
 
 		//as long we cannot select more than one database we dont need to use regex...
-		hit_organism = org; 
+		hit_organism = orgParam; 
 		//logger.info("\n         organism : " + hit_organism+"\n");
 		hit_projectId = getProjectId(hit_organism);
 		//logger.info("\n         projectId : " + hit_projectId+"\n\n");
 		alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
 
-
             }
             // add the line to the block
-
-	    
-
             block.append(line + newline);
         }
 
@@ -382,7 +387,7 @@ public class WuBlastPlugin extends WsfPlugin {
         // copy the header and footer
 	results[0][columns.get(COLUMN_HEADER)] = header.toString();
         results[size - 1][columns.get(COLUMN_FOOTER)] = footer.toString();
-	logger.info("\n  WuBlastPlugin, ready to return result: result[0][0] is : " + results[0][0] + "\n\n");
+	
         return results;
     }
 
@@ -420,17 +425,17 @@ public class WuBlastPlugin extends WsfPlugin {
     }
 
 
-    private String getProjectId(String org) {
+    private String getProjectId(String organism) {
 
         String projectId = "apiDb";
 
-        if (org.startsWith("C")) {
+        if (organism.startsWith("C")) {
            projectId = "cryptodb";
         }
-        else if (org.startsWith("P")) {
+        else if (organism.startsWith("P")) {
            projectId = "plasmodb";
         }
-        else if (org.startsWith("T")) {
+        else if (organism.startsWith("T")) {
            projectId = "toxodb";
         }
         return projectId;
@@ -439,17 +444,17 @@ public class WuBlastPlugin extends WsfPlugin {
     private String extractID(String row) {
         String[] pieces = tokenize(row);
 
-        String srcid = pieces[2];
+        String hit_srcid = pieces[2];
         if (dbType == "Genomic") {
-           srcid = pieces[1];
+           hit_srcid = pieces[1];
         }
-        return srcid;
+        return hit_srcid;
     }
 
    private String extractOrganism(String row) {
         String[] pieces = tokenize(row);
-        String srcid = pieces[0];
-        return srcid;
+        String hit_org = pieces[0];
+        return hit_org;
     }
 
 
@@ -457,17 +462,78 @@ public class WuBlastPlugin extends WsfPlugin {
         String sourceUrl = sourceId + " - (no link)";   
 
      if ("cryptodb".equals(projectId)) {
-         sourceUrl = ("<a href=http://dev1.cryptodb.org/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+         sourceUrl = ("<a href=\"http://dev1.cryptodb.org/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
        }
        else if ("plasmodb".equals(projectId)) {
-           sourceUrl = ("<a href=http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+           sourceUrl = ("<a href=\"http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
        }
        else if ("toxodb".equals(projectId)) {
-           sourceUrl = ("<a href=http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + ">" + sourceId + "</a>");
+           sourceUrl = ("<a href=\"http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
        }
 
     return sourceUrl;
       
     }
+
+
+ private String extractField(String defline, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(defline);
+        if (matcher.find()) {
+            // the match is located at group 1
+            return matcher.group(1);
+        } else return null;
+    }
+ 
+private String insertUrl(String defline) {
+        // extract organism from the defline
+        String hit_sourceId = extractField(defline, sourceIdRegex);
+        String hit_projectId = getProjectId(orgParam);
+        String linkedSourceId = getSourceUrl(hit_projectId,hit_sourceId);
+ 
+        // replace the url into the defline
+        Pattern pattern = Pattern.compile(sourceIdRegex);
+        Matcher matcher = pattern.matcher(defline);
+        if (matcher.find()) {
+            // the organism is located at group 1
+            int start = matcher.start(1);
+            int end = matcher.end(1);
+ 
+            // insert a link tag into the data
+            StringBuffer sb = new StringBuffer(defline.substring(0, start));
+            sb.append(linkedSourceId);
+            sb.append(defline.substring(end));
+            return sb.toString();
+        } else return defline;
+    }
+
+
+private String insertLinkToBlock(String defline) {
+        // extract organism from the defline
+        String hit_score = extractField(defline, scoreRegex);
+	String hit_sourceId = extractField(defline, sourceIdRegex);
+ 
+        // replace the url into the defline
+        Pattern pattern = Pattern.compile(sourceIdRegex);
+        Matcher matcher = pattern.matcher(defline);
+        if (matcher.find()) {
+            // the organism is located at group 1
+            int start = matcher.start(1);
+            int end = matcher.end(1);
+ 
+            // insert a link tag into the data
+            StringBuffer sb = new StringBuffer(defline.substring(0, start));
+	    sb.append("<a href=\"#");
+            sb.append(hit_sourceId);
+            sb.append("\">");
+            sb.append(hit_score);
+            sb.append("</a>");
+
+
+            sb.append(defline.substring(end));
+            return sb.toString();
+        } else return defline;
+    }
+
 
 }
