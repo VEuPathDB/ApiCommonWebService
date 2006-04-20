@@ -68,9 +68,9 @@ public class WuBlastPlugin extends WsfPlugin {
     private static String organismRegex;
     private static String scoreRegex;
 
-    //parameters database type and organism
+    //parameter: database type (CDS,Proteins,Genomic)
     private static String dbType;
-    private static String orgParam;
+    // private static String orgParam;
     
 
 
@@ -185,7 +185,7 @@ public class WuBlastPlugin extends WsfPlugin {
         // get parameters
         String seq = params.get(PARAM_SEQUENCE);
         dbType = params.get(PARAM_DATABASE_TYPE);
-        orgParam = params.get(PARAM_DATABASE_ORGANISM);
+        String orgParam = params.get(PARAM_DATABASE_ORGANISM);
 	String qType = params.get(PARAM_QUERY_TYPE);
 
         String blastApp = getBlastProgram(qType, dbType);
@@ -271,6 +271,7 @@ public class WuBlastPlugin extends WsfPlugin {
 	    //-  link to gene page, in source_id, and
 	    //- link to alignment block name=#source_id, in score
 	    hit_sourceId = extractID(line);
+	    line = insertLinkToBlock(line);
 	    line = insertUrl(line);
             rows.put(hit_sourceId, line);
 
@@ -335,22 +336,29 @@ public class WuBlastPlugin extends WsfPlugin {
 		hit_sourceId = extractID(line);
 		logger.info("\nWB prepareResult: hit_sourceId : " + hit_sourceId+"\n");
  
-		//TODO: insert <a name=#source_id></a> in the beginning of the line
-		// and insert link to gene page, in source_id,	   
-line = insertUrl(line);
-		alignment[columns.get(COLUMN_ID)] = hit_sourceId; 
-
 		//as long we cannot select more than one database we dont need to use regex...
-		hit_organism = orgParam; 
+		//hit_organism = orgParam; 
+		hit_organism = extractOrganism(line);
+
 		//logger.info("\n         organism : " + hit_organism+"\n");
 		hit_projectId = getProjectId(hit_organism);
 		//logger.info("\n         projectId : " + hit_projectId+"\n\n");
 		alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
 
+
+		//TODO: insert <a name="source_id"></a> in the beginning of the line
+		// and insert link to gene page, in source_id,	   
+		line = insertUrl(line);
+		line = "<a name=\"" + hit_sourceId + "\"></a>" + line;
+		alignment[columns.get(COLUMN_ID)] = hit_sourceId; 
+
+		
+		
             }
             // add the line to the block
             block.append(line + newline);
-        }
+	    
+        }//end while
 
         // get the rest as the footer part
         StringBuffer footer = new StringBuffer();
@@ -462,13 +470,13 @@ line = insertUrl(line);
         String sourceUrl = sourceId + " - (no link)";   
 
      if ("cryptodb".equals(projectId)) {
-         sourceUrl = ("<a href=\"http://dev1.cryptodb.org/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
+         sourceUrl = ("<a href=\"http://cryptodb.org/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\" target=\"_blank\" >" + sourceId + "</a>");
        }
        else if ("plasmodb".equals(projectId)) {
-           sourceUrl = ("<a href=\"http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
+           sourceUrl = ("<a href=\"http://v5-0.plasmodb.org/plasmo-release5-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\" target=\"_blank\" >" + sourceId + "</a>");
        }
        else if ("toxodb".equals(projectId)) {
-           sourceUrl = ("<a href=\"http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\">" + sourceId + "</a>");
+           sourceUrl = ("<a href=\"http://v4-0.toxodb.org/toxo-release4-0/showRecord.do?name=GeneRecordClasses.GeneRecordClass&projectId=" + projectId + "&primary_key=" + sourceId + "\" target=\"_blank\" >" + sourceId + "</a>");
        }
 
     return sourceUrl;
@@ -488,7 +496,8 @@ line = insertUrl(line);
 private String insertUrl(String defline) {
         // extract organism from the defline
         String hit_sourceId = extractField(defline, sourceIdRegex);
-        String hit_projectId = getProjectId(orgParam);
+	String hit_organism = extractField(defline, organismRegex);
+        String hit_projectId = getProjectId(hit_organism);
         String linkedSourceId = getSourceUrl(hit_projectId,hit_sourceId);
  
         // replace the url into the defline
@@ -514,7 +523,7 @@ private String insertLinkToBlock(String defline) {
 	String hit_sourceId = extractField(defline, sourceIdRegex);
  
         // replace the url into the defline
-        Pattern pattern = Pattern.compile(sourceIdRegex);
+        Pattern pattern = Pattern.compile(scoreRegex);
         Matcher matcher = pattern.matcher(defline);
         if (matcher.find()) {
             // the organism is located at group 1
