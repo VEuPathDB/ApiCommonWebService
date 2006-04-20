@@ -338,11 +338,11 @@ public class WuBlastPlugin extends WsfPlugin {
  
 		//as long we cannot select more than one database we dont need to use regex...
 		//hit_organism = orgParam; 
-		hit_organism = extractOrganism(line);
-
-		//logger.info("\n         organism : " + hit_organism+"\n");
+		//hit_organism = extractOrganism(line);
+		hit_organism = extractField(line, organismRegex);
+		logger.info("\n         organism : " + hit_organism+"\n");
 		hit_projectId = getProjectId(hit_organism);
-		//logger.info("\n         projectId : " + hit_projectId+"\n\n");
+		logger.info("\n         projectId : " + hit_projectId+"\n\n");
 		alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
 
 
@@ -436,7 +436,7 @@ public class WuBlastPlugin extends WsfPlugin {
     private String getProjectId(String organism) {
 
         String projectId = "apiDb";
-
+	/*
         if (organism.startsWith("C")) {
            projectId = "cryptodb";
         }
@@ -446,6 +446,18 @@ public class WuBlastPlugin extends WsfPlugin {
         else if (organism.startsWith("T")) {
            projectId = "toxodb";
         }
+	*/
+	//with current organismRegex organism could start with > in block line
+	if (organism.contains("Crypto")) {
+	    projectId = "cryptodb";
+        }
+        else if (organism.contains("Plasmo")) {
+	    projectId = "plasmodb";
+        }
+        else if (organism.contains("Toxo")) {
+	    projectId = "toxodb";
+        }
+
         return projectId;
     }
 
