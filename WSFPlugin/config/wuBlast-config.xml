@@ -6,4 +6,8 @@
 <entry key="DataPath">/var/www/dev1.apidb.org/data/blast/</entry>
 <entry key="Timeout">120</entry>
 <entry key="TempPath">/var/www/dev1.apidb.org/tmp/blast/</entry>
+<entry key="UseProjectId">yes</entry>
+<entry key="SourceIdRegex"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
+<entry key="OrganismRegex"><![CDATA[^(\S+?)\|]]></entry>
+<entry key="ScoreRegex"><![CDATA[^\S+\s+(?:[+-]\d\s+)?(\d+)]]></entry>
 </properties>
