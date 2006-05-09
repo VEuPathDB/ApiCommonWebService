@@ -37,7 +37,7 @@ public class NcbiBlastPluginTest extends TestCase {
         Map<String, String> params = new HashMap<String, String>();
         params.put(NcbiBlastPlugin.PARAM_QUERY_TYPE, "dna");
         params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "genomic");
-        params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "Pfalciparum");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "Pfalciparum,Pberghei");
         params.put("-e", "0.5");
         params.put("-v", "5");
         params.put("-b", "5");
