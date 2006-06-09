@@ -196,6 +196,7 @@ public class WuBlastPlugin extends WsfPlugin {
                seqType = "p/";
         }       
 
+	/*
 	//ncbi plugin does this differently...
         // output sequence in fasta format, with sequence wrapped for every 60
         // characters
@@ -208,6 +209,15 @@ public class WuBlastPlugin extends WsfPlugin {
             out.println(seq.substring(pos, end));
             pos = end;
         }
+	*/
+
+	// write the sequence into the temporary fasta file,
+	// do not reformat the sequence - easy to introduce problem
+	PrintWriter out = new PrintWriter(new FileWriter(seqFile));
+	if (!seq.startsWith(">")) out.println(">MySeq1");
+	out.println(seq);
+
+
         out.flush();
         out.close();
 
