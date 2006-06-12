@@ -191,6 +191,9 @@ public class WuBlastPlugin extends WsfPlugin {
 
         String blastApp = getBlastProgram(qType, dbType);
 
+	//so database name is built correctly for the Translated case back in prepareParameters()
+	if (dbType.contains("CDS")) dbType="CDS";
+
 	String seqType = "n/";
         if (dbType.equals("Proteins")) {
                seqType = "p/";
@@ -421,19 +424,22 @@ public class WuBlastPlugin extends WsfPlugin {
             if ("CDS".equals(dbType) || "Genomic".equals(dbType)
                     || "dna".equals(dbType)) {
                 bp = "blastn";
-            } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
+		//           } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
+           } else if (dbType.contains("Translated")) {
                 bp = "tblastx";
             } else if ("Proteins".equals(dbType)) {
                 bp = "blastx";
             }
         } else if ("protein".equalsIgnoreCase(qType)) {
             if ("CDS".equals(dbType) || "Genomic".equals(dbType)
-                    || dbType.toLowerCase().indexOf("translated") >= 0) {
+                    || dbType.contains("Translated")) {
                 bp = "tblastn";
             } else if ("Proteins".equals(dbType)) {
                 bp = "blastp";
             }
         }
+
+
                                                                                                                              
         //if (bp == null) {
 	//  throw new WsfServiceException("invalid blast query or database types ("
