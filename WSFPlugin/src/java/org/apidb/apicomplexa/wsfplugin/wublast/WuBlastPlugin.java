@@ -101,7 +101,8 @@ public class WuBlastPlugin extends WsfPlugin {
         else timeout = Integer.parseInt(max);
 
 	String useProject = getProperty(FIELD_USE_PROJECT_ID);
-        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
+	useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
+        logger.info("\nconstructor(): useProjectId is " + useProjectId  + "\n");
     }
 
 
@@ -122,6 +123,8 @@ public class WuBlastPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
+	logger.info("getColumns(): useProjectId is " + useProjectId  + "\n");
+
 	if (useProjectId) return new String[]{COLUMN_HEADER,COLUMN_PROJECT_ID,COLUMN_ID,
 					      COLUMN_ROW,COLUMN_BLOCK,COLUMN_FOOTER};
         else return new String[]{COLUMN_HEADER,COLUMN_ID,COLUMN_ROW,COLUMN_BLOCK,COLUMN_FOOTER};
@@ -149,7 +152,7 @@ public class WuBlastPlugin extends WsfPlugin {
     protected String[][] execute(Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("WB execute\n\n");
-        logger.info("orderedcolumns are: " + orderedColumns[0] + "," + orderedColumns[1] + "," + orderedColumns[2] + "," + orderedColumns[3] + "," + orderedColumns[4] + "," + orderedColumns[5] + "\n\n");
+        logger.info("orderedcolumns are: " + orderedColumns[0] + "," + orderedColumns[1] + "," + orderedColumns[2] + "," + orderedColumns[3] + "," + orderedColumns[4] + "\n\n");
 
         try {
             // create temporary files for input sequence and output report
@@ -276,12 +279,12 @@ public class WuBlastPlugin extends WsfPlugin {
 
         Map<String, String> rows = new HashMap<String, String>();
         while ((line = in.readLine()) != null) {
-	    logger.info("\nWB prepareResult: Unless no hits, this should be a tabular row line: " + line+"\n");
+	    logger.info("\nWB prepareResult: Unless no hits, this should be a tabular row line: " + line + "\n");
             if (line.trim().length() == 0) {
-		logger.info("\nWB prepareResult: Line length 0!!, we finished with tabular rows: " + line+"\n");
+		logger.info("\nWB prepareResult: Line length 0!!, we finished with tabular rows: " + line + "\n--------------\n");
 		break;}
 
-	    //TODO: before adding the line to rows, insert:
+	    //Before adding the line to rows, insert:
 	    //-  link to gene page, in source_id, and
 	    //- link to alignment block name=#source_id, in score
 	    hit_sourceId = extractID(line);
@@ -293,7 +296,7 @@ public class WuBlastPlugin extends WsfPlugin {
 
 	//we need to deal with WARNINGs
         line = in.readLine(); // skip an empty line
-	logger.info("\nWB prepareResult: This line is supposed to be empty or could have a WARNING or NONE: " + line+"\n");
+	logger.info("\nWB prepareResult: This line is supposed to be empty or could have a WARNING or keyword NONE: " + line+"\n");
 
 	if (line.indexOf("NONE") >= 0)    return new String[0][columns.size()];
 
@@ -349,24 +352,20 @@ public class WuBlastPlugin extends WsfPlugin {
                 // obtain the ID of it, which is the rest of this line
 		hit_sourceId = extractID(line);
 		logger.info("\nWB prepareResult: hit_sourceId : " + hit_sourceId+"\n");
- 
-		//as long we cannot select more than one database we dont need to use regex...
-		//hit_organism = orgParam; 
-		//hit_organism = extractOrganism(line);
-		hit_organism = extractField(line, organismRegex);
+ 		hit_organism = extractField(line, organismRegex);
 		logger.info("\n         organism : " + hit_organism+"\n");
-		hit_projectId = getProjectId(hit_organism);
-		logger.info("\n         projectId : " + hit_projectId+"\n\n");
-		alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
+		
+		if (useProjectId) {
+		    hit_projectId = getProjectId(hit_organism);
+		    logger.info("\n         projectId : " + hit_projectId+"\n\n");
+		    alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
+		}
 
-
-		//TODO: insert <a name="source_id"></a> in the beginning of the line
+		//Insert <a name="source_id"></a> in the beginning of the line
 		// and insert link to gene page, in source_id,	   
 		line = insertUrl(line);
 		line = "<a name=\"" + hit_sourceId + "\"></a>" + line;
 		alignment[columns.get(COLUMN_ID)] = hit_sourceId; 
-
-		
 		
             }
             // add the line to the block
@@ -387,12 +386,17 @@ public class WuBlastPlugin extends WsfPlugin {
         String[][] results = new String[size][orderedColumns.length];
         for (int i = 0; i < blocks.size(); i++) {
             alignment = blocks.get(i);
+
             // copy ID
             int idIndex = columns.get(COLUMN_ID);
             results[i][idIndex] = alignment[idIndex];
-	    // copy PROJECT_ID
-            int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
-            results[i][projectIdIndex] = alignment[projectIdIndex];
+
+	    if (useProjectId) {
+		// copy PROJECT_ID
+		int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
+		results[i][projectIdIndex] = alignment[projectIdIndex];
+	    }
+
             // copy block
             int blockIndex = columns.get(COLUMN_BLOCK);
             results[i][blockIndex] = alignment[blockIndex];
