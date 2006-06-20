@@ -80,7 +80,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
         tempPath = getProperty(FIELD_TEMP_PATH);
-        filePathPattern = getProjectId(FIELD_FILE_PATH_PATTERN);
+        filePathPattern = getProperty(FIELD_FILE_PATH_PATTERN);
         if (appPath == null || dataPath == null || tempPath == null)
             throw new WsfServiceException(
                     "The required fields in property file are missing: "
