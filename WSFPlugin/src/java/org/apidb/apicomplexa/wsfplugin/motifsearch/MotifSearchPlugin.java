@@ -76,6 +76,8 @@ public class MotifSearchPlugin extends WsfPlugin {
                     "The required field in property file is missing: "
                             + FIELD_DATA_DIR);
         dataDir = new File(dir);
+logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
+
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
     }
 
@@ -86,7 +88,7 @@ public class MotifSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_EXPRESSION, PARAM_DATASET };
+        return new String[] { PARAM_EXPRESSION }; // , PARAM_DATASET };
     }
 
     /*
@@ -109,8 +111,22 @@ public class MotifSearchPlugin extends WsfPlugin {
     protected void validateParameters(Map<String, String> params)
             throws WsfServiceException {
     // do nothing in this plugin
-    }
 
+	boolean datasetPresent = false;
+        for (String param : params.keySet()) {
+            logger.debug("Param - name=" + param + ", value="
+			 + params.get(param));
+            if (param.startsWith(PARAM_DATASET)) {
+                datasetPresent = true;
+                break;
+            }
+        }
+        if (!datasetPresent)
+            throw new WsfServiceException(
+					  "The required dataset parameter is not presented.");
+	
+    }
+    
     /*
      * (non-Javadoc)
      * 
@@ -122,7 +138,17 @@ public class MotifSearchPlugin extends WsfPlugin {
         logger.info("Invoking MotifSearchPlugin...");
 
         // get parameters
-        String datasetIDs = params.get(PARAM_DATASET);
+	//        String datasetIDs = params.get(PARAM_DATASET);
+        String datasetIDs = null;
+	String datasetName = null;
+	for (String paramName : params.keySet()) {
+	    if (paramName.startsWith(PARAM_DATASET)) {
+		datasetName = paramName;
+		datasetIDs = params.get(paramName);
+		break;
+	    }
+	}
+
         String expression = params.get(PARAM_EXPRESSION);
 
         // get optional parameters
@@ -144,8 +170,11 @@ public class MotifSearchPlugin extends WsfPlugin {
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
+		logger.info("execute(): dsId: " + dsId + "\n");
                 matches.addAll(findMatches(dsId.trim(), regex, colorCode,
                         contextLength));
+		logger.info("execute(): foundMatch for " + dsId + "\n");
+
             }
 
             // construct results
@@ -205,6 +234,8 @@ public class MotifSearchPlugin extends WsfPlugin {
      * @throws IOException
      */
     private File openDataFile(String datasetID) throws IOException {
+	logger.info("openDataFile(): dataDir: " + dataDir.getName() + ", datasetID: " + datasetID + "\n");
+
         File dataFile = new File(dataDir, datasetID);
         if (!dataFile.exists()) throw new IOException("The dataset \""
                 + datasetID + "\" cannot be found.");
