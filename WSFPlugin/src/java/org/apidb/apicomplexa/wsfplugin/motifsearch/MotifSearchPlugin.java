@@ -76,7 +76,7 @@ public class MotifSearchPlugin extends WsfPlugin {
                     "The required field in property file is missing: "
                             + FIELD_DATA_DIR);
         dataDir = new File(dir);
-logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
+        logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
 
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
     }
@@ -110,12 +110,12 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
     @Override
     protected void validateParameters(Map<String, String> params)
             throws WsfServiceException {
-    // do nothing in this plugin
+        // do nothing in this plugin
 
-	boolean datasetPresent = false;
+        boolean datasetPresent = false;
         for (String param : params.keySet()) {
             logger.debug("Param - name=" + param + ", value="
-			 + params.get(param));
+                    + params.get(param));
             if (param.startsWith(PARAM_DATASET)) {
                 datasetPresent = true;
                 break;
@@ -123,10 +123,10 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
         }
         if (!datasetPresent)
             throw new WsfServiceException(
-					  "The required dataset parameter is not presented.");
-	
+                    "The required dataset parameter is not presented.");
+
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -138,16 +138,14 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
         logger.info("Invoking MotifSearchPlugin...");
 
         // get parameters
-	//        String datasetIDs = params.get(PARAM_DATASET);
+        // String datasetIDs = params.get(PARAM_DATASET);
         String datasetIDs = null;
-	String datasetName = null;
-	for (String paramName : params.keySet()) {
-	    if (paramName.startsWith(PARAM_DATASET)) {
-		datasetName = paramName;
-		datasetIDs = params.get(paramName);
-		break;
-	    }
-	}
+        for (String paramName : params.keySet()) {
+            if (paramName.startsWith(PARAM_DATASET)) {
+                datasetIDs = params.get(paramName);
+                break;
+            }
+        }
 
         String expression = params.get(PARAM_EXPRESSION);
 
@@ -170,10 +168,10 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
-		logger.info("execute(): dsId: " + dsId + "\n");
+                logger.info("execute(): dsId: " + dsId + "\n");
                 matches.addAll(findMatches(dsId.trim(), regex, colorCode,
                         contextLength));
-		logger.info("execute(): foundMatch for " + dsId + "\n");
+                logger.info("execute(): foundMatch for " + dsId + "\n");
 
             }
 
@@ -234,7 +232,8 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
      * @throws IOException
      */
     private File openDataFile(String datasetID) throws IOException {
-	logger.info("openDataFile(): dataDir: " + dataDir.getName() + ", datasetID: " + datasetID + "\n");
+        logger.info("openDataFile(): dataDir: " + dataDir.getName()
+                + ", datasetID: " + datasetID + "\n");
 
         File dataFile = new File(dataDir, datasetID);
         if (!dataFile.exists()) throw new IOException("The dataset \""
@@ -266,9 +265,7 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
             sb.append(regex.substring(prev, matcher.start()));
             // replace '(' to '{'
             sb.append('{');
-            sb
-                    .append(regex.subSequence(matcher.start() + 1, matcher
-                            .end() - 1));
+            sb.append(regex.subSequence(matcher.start() + 1, matcher.end() - 1));
             sb.append('}');
             prev = matcher.end();
         }
@@ -369,11 +366,11 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
         Matcher matcher = pattern.matcher(sequence);
         while (matcher.find()) {
             // add locations
-            if (sbLoc.length() != 0) sbLoc.append("; ");
+            if (sbLoc.length() != 0) sbLoc.append(",");
             sbLoc.append('(');
             sbLoc.append(matcher.start());
-            sbLoc.append(", ");
-            sbLoc.append(matcher.end());
+            sbLoc.append("-");
+            sbLoc.append(matcher.end() - 1);
             sbLoc.append(')');
 
             // abtain the context sequence
@@ -382,9 +379,7 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
                 sbSeq.append(sequence.substring(prev, matcher.start()));
             } else { // need to trim some
                 if (prev != 0)
-                    sbSeq
-                            .append(sequence.substring(prev, prev
-                                    + contextLength));
+                    sbSeq.append(sequence.substring(prev, prev + contextLength));
                 sbSeq.append("......");
                 sbSeq.append(sequence.substring(
                         matcher.start() - contextLength, matcher.start()));
@@ -421,8 +416,7 @@ logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
 
             result[i][orders.get(COLUMN_GENE_ID)] = match.geneID;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
-            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer
-                    .toString(match.matchCount);
+            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
             result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
         }
         return result;
