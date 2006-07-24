@@ -59,9 +59,11 @@ public class MotifSearchPlugin extends WsfPlugin {
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
     private static final String FIELD_SOURCEID_REGEX = "SourceIdRegex";
+    private static final String FIELD_MAX_LENGTH = "MaxLength";
 
     private File dataDir;
     private String sourceIdRegex;
+    private int maxLen;
 
     /**
      * @throws WsfServiceException
@@ -79,6 +81,10 @@ public class MotifSearchPlugin extends WsfPlugin {
         logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
 
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
+
+        String maxLength = getProperty(FIELD_MAX_LENGTH);
+        if (maxLength != null) maxLen = Integer.parseInt(maxLength);
+        else maxLen = 4000; // default value
     }
 
     /*
@@ -320,7 +326,8 @@ public class MotifSearchPlugin extends WsfPlugin {
     }
 
     private List<Match> findMatches(String datasetID, String regex,
-            String colorCode, int contextLength) throws IOException {
+            String colorCode, int contextLength) throws IOException,
+            WsfServiceException {
         File datasetFile = openDataFile(datasetID);
         BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 
@@ -356,7 +363,8 @@ public class MotifSearchPlugin extends WsfPlugin {
     }
 
     private Match findLocations(String geneID, Pattern pattern,
-            String sequence, String colorCode, int contextLength) {
+            String sequence, String colorCode, int contextLength)
+            throws WsfServiceException {
         Match match = new Match();
         match.geneID = geneID;
         StringBuffer sbLoc = new StringBuffer();
@@ -380,7 +388,7 @@ public class MotifSearchPlugin extends WsfPlugin {
             } else { // need to trim some
                 if (prev != 0)
                     sbSeq.append(sequence.substring(prev, prev + contextLength));
-                sbSeq.append("......");
+                sbSeq.append("...");
                 sbSeq.append(sequence.substring(
                         matcher.start() - contextLength, matcher.start()));
             }
@@ -395,10 +403,17 @@ public class MotifSearchPlugin extends WsfPlugin {
         // grab the last context
         if ((prev + contextLength) < sequence.length()) {
             sbSeq.append(sequence.substring(prev, prev + contextLength));
-            sbSeq.append("......");
+            sbSeq.append("...");
         } else {
             sbSeq.append(sequence.substring(prev));
         }
+        // check if the match is too unspecific, that is, the length is bigger
+        // than 400 characters (the maximum length of varchar in Oracle); if so,
+        // throw an exception to state that
+        if (sbSeq.length() > maxLen || sbLoc.length() > maxLen)
+            throw new WsfServiceException("The expression hits too many "
+                    + "locations than the system can handle. Please make it "
+                    + "more specific.");
         match.locations = sbLoc.toString();
         match.sequence = sbSeq.toString();
         return match;
