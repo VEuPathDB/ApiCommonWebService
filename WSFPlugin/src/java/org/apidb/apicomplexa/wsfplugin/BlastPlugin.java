@@ -163,8 +163,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         try {
             // create temporary files for input sequence and output report
             File dir = new File(tempPath);
-            seqFile = File.createTempFile(pluginName + "_", "in", dir);
-            outFile = File.createTempFile(pluginName + "_", "out", dir);
+            seqFile = File.createTempFile(pluginName + "_", ".in", dir);
+            outFile = File.createTempFile(pluginName + "_", ".out", dir);
 
             // get database type parameter
             String dbType = null;
@@ -259,7 +259,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         // separated by a comma
         String[] organisms = dbOrgs.split(",");
         StringBuffer sb = new StringBuffer();
-        for (int i = 1; i < organisms.length; i++) {
+        for (int i = 0; i < organisms.length; i++) {
             // construct file path pattern
             String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$", organisms[i]);
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
