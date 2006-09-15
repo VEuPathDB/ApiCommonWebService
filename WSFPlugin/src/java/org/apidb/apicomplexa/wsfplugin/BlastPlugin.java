@@ -204,6 +204,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
             // invoke the command
             String output = invokeCommand(command, timeout);
+            
             if (exitValue != 0)
                 throw new WsfServiceException("The invocation is failed: "
                         + output);

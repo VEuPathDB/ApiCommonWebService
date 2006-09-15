@@ -134,25 +134,22 @@ public class WuBlastPlugin extends BlastPlugin {
 
         // we need to deal with WARNINGs
         line = in.readLine(); // skip an empty line
-        logger
-                .debug("\nWB prepareResult: This line is supposed to be empty or could have a WARNING or NONE: "
-                        + line + "\n");
+        logger.debug("\nWB prepareResult: This line is supposed to be empty or " +
+                "could have a WARNING or NONE: "
+                + line + "\n");
 
         if (line.indexOf("NONE") >= 0) return new String[0][columns.size()];
 
         if (line.trim().startsWith("WARNING")) {
             line = in.readLine(); // skip
-            logger
-                    .debug("\nWB prepareResult: This line is continuation of warning line: "
-                            + line + "\n");
+            logger.debug("\nWB prepareResult: This line is continuation of "
+                    + "warning line: " + line + "\n");
             line = in.readLine(); // skip
-            logger
-                    .debug("\nWB prepareResult: This line is supposed to be empty: "
-                            + line + "\n");
+            logger.debug("\nWB prepareResult: This line is supposed to be "
+                    + "empty: " + line + "\n");
             line = in.readLine(); // skip
-            logger
-                    .debug("\nWB prepareResult: This line is supposed to be empty: "
-                            + line + "\n");
+            logger.debug("\nWB prepareResult: This line is supposed to be "
+                    + "empty: " + line + "\n");
         }
 
         // extract alignment blocks

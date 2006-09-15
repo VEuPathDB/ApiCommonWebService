@@ -90,30 +90,18 @@ public class NcbiBlastPlugin extends BlastPlugin {
         StringBuffer header = new StringBuffer();
         do {
             line = in.readLine();
+            
             if (line == null)
                 throw new IOException("Invalid BLAST output format");
             header.append(line + newline);
 
             // check if no hit in the result
             if (line.indexOf("No hits found") >= 0) {
-                // no hits found, next are footer
-                // StringBuffer footer = new StringBuffer();
-                // while ((line = in.readLine()) != null) {
-                // footer.append(line + newline);
-                // }
-                // String[][] result = new String[1][columns.size()];
-                // result[0][columns.get(COLUMN_ID)] = "";
-                // result[0][columns.get(COLUMN_ROW)] = "";
-                // result[0][columns.get(COLUMN_BLOCK)] = "";
-                // result[0][columns.get(COLUMN_HEADER)] = header.toString();
-                // result[0][columns.get(COLUMN_FOOTER)] = footer.toString();
-                //
-                // if (useProjectId)
-                // result[0][columns.get(COLUMN_PROJECT_ID)] = "";
-                // return result;
-
-                // instead of returning a row with header & footer, return no
-                // row
+                // no hits found, then read everything into message
+                 while ((line = in.readLine()) != null) {
+                     header.append(line + newline);
+                 }
+                this.message = header.toString();
                 return new String[0][columns.size()];
             }
         } while (!line.startsWith("Sequence"));

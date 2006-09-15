@@ -38,12 +38,12 @@ public class NcbiBlastPluginTest extends TestCase {
         params.put(NcbiBlastPlugin.PARAM_QUERY_TYPE, "dna");
         params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "genomic");
         params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "Pfalciparum");
-        params.put("-e", "0.5");
+        params.put("-e", "0.1");
         params.put("-v", "5");
         params.put("-b", "5");
         params.put(
                 NcbiBlastPlugin.PARAM_SEQUENCE,
-                "AGAAATGAAGAAGCTCAAGCATTGATTAAATCGTCCTATGATTATGCCAATAAA");
+                "AGAAATGAAGAAGCTCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCGATTATGCCAATAAA");
 
         // prepare the columns
         String[] columns = { NcbiBlastPlugin.COLUMN_ID,
