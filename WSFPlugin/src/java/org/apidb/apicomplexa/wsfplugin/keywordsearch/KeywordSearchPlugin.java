@@ -113,7 +113,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         // get parameters
         String datasets = params.get(PARAM_DATASETS);
-        String keywordExpression = params.get(PARAM_KEYWORD_EXPRESSION);
+        String keywordExpression = rewriteExpression(params.get(PARAM_KEYWORD_EXPRESSION));
         String caseIndependent = params.get(PARAM_CASE_INDEPENDENT);
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
@@ -125,7 +125,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	for (String dataset : ds) {
 	    cmd.append(scriptDir + "/filterByValue -n " + maxPvalue + " < " + dataDir
 		       + "/" + dataset + " | " + scriptDir + "/filterByValue -s '"
-		       + species_name + "' | grep " + caseIndependent + " '" + keywordExpression
+		       + species_name + "' | egrep " + caseIndependent + " '" + keywordExpression
 		       + "';");
 	}
 
@@ -172,6 +172,20 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     }
 
+    private String rewriteExpression(String expression) {
+	String newExpression;
+
+	if (expression.substring(0, 1).equals("^")) {
+	    newExpression = "	" + expression.substring(1);
+	} else {
+	    newExpression = "	.*" + expression;
+	}
+
+        logger.info("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
+
+	return newExpression;
+
+    }
 
     private String[][] prepareResult(List<Match> matches, String[] cols) {
         String[][] result = new String[matches.size()][cols.length];
