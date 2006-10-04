@@ -59,11 +59,9 @@ public class MotifSearchPlugin extends WsfPlugin {
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
     private static final String FIELD_SOURCEID_REGEX = "SourceIdRegex";
-    private static final String FIELD_MAX_LENGTH = "MaxLength";
 
     private File dataDir;
     private String sourceIdRegex;
-    private int maxLen;
 
     /**
      * @throws WsfServiceException
@@ -81,10 +79,6 @@ public class MotifSearchPlugin extends WsfPlugin {
         logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
 
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
-
-        String maxLength = getProperty(FIELD_MAX_LENGTH);
-        if (maxLength != null) maxLen = Integer.parseInt(maxLength);
-        else maxLen = 4000; // default value
     }
 
     /*
@@ -331,6 +325,10 @@ public class MotifSearchPlugin extends WsfPlugin {
         File datasetFile = openDataFile(datasetID);
         BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 
+        // check if the user use c-terminus
+        if (regex.endsWith("$") && !regex.endsWith("\\**$"))
+            regex = regex.substring(0, regex.length() - 1) + "\\**$";
+
         List<Match> matches = new ArrayList<Match>();
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 
@@ -407,13 +405,6 @@ public class MotifSearchPlugin extends WsfPlugin {
         } else {
             sbSeq.append(sequence.substring(prev));
         }
-        // check if the match is too unspecific, that is, the length is bigger
-        // than 400 characters (the maximum length of varchar in Oracle); if so,
-        // throw an exception to state that
-        if (sbSeq.length() > maxLen || sbLoc.length() > maxLen)
-            throw new WsfServiceException("The expression hits too many "
-                    + "locations than the system can handle. Please make it "
-                    + "more specific.");
         match.locations = sbLoc.toString();
         match.sequence = sbSeq.toString();
         return match;

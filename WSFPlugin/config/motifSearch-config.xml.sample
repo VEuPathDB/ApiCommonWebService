@@ -4,5 +4,4 @@
 <comment>The configuration file for MotifSearch WSF Plugin.</comment>
 <entry key="DataDir">(your flatfile database dir)</entry>
 <entry key="SourceIdRegex">(The regular expression to extract source ID)</entry>
-<entry key="MaxLength">(Optional, The maximum length to be allowed for the sequence snapshot. If expression generates longer snapshot than the number, an WsfServiceException is thrown out to require user to refine the expression to be more specific. Default is 4000)</entry>
 </properties>
