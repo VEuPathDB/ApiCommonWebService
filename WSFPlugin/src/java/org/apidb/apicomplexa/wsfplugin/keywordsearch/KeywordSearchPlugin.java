@@ -39,6 +39,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String PARAM_DATASETS = "datasets";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
     public static final String PARAM_SPECIES_NAME = "species_name";
+    public static final String PARAM_WHOLE_WORDS = "whole_words";
 
     public static final String COLUMN_GENE_ID = "GeneID";
 
@@ -113,7 +114,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         // get parameters
         String datasets = params.get(PARAM_DATASETS);
-        String keywordExpression = rewriteExpression(params.get(PARAM_KEYWORD_EXPRESSION));
+	String whole_words = params.get(PARAM_WHOLE_WORDS);
+        String keywordExpression = rewriteExpression(params.get(PARAM_KEYWORD_EXPRESSION), whole_words);
         String caseIndependent = params.get(PARAM_CASE_INDEPENDENT);
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
@@ -172,13 +174,21 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     }
 
-    private String rewriteExpression(String expression) {
+    private String rewriteExpression(String expression, String whole_words) {
 	String newExpression;
 
 	if (expression.substring(0, 1).equals("^")) {
-	    newExpression = "	" + expression.substring(1);
+	    if (whole_words.equals("true")){
+		newExpression = "	" + expression.substring(1) + "\\W";
+	    } else {
+		newExpression = "	" + expression.substring(1);
+	    }
 	} else {
-	    newExpression = "	.*" + expression;
+	    if (whole_words.equals("true")){
+		newExpression = "\\W" + expression + "\\W";
+	    } else {
+		newExpression = "	.*" + expression;
+	    }
 	}
 
         logger.info("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
