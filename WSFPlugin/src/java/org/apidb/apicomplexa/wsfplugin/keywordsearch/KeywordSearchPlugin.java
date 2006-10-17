@@ -179,13 +179,13 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	if (expression.substring(0, 1).equals("^")) {
 	    if (whole_words.equals("true")){
-		newExpression = "	" + expression.substring(1) + "\\W";
+                newExpression = "	" + expression.substring(1) + "[^[:alnum:]]";
 	    } else {
 		newExpression = "	" + expression.substring(1);
 	    }
 	} else {
 	    if (whole_words.equals("true")){
-		newExpression = "\\W" + expression + "\\W";
+		newExpression = "[^[:alnum:]]" + expression + "[^[:alnum:]]";
 	    } else {
 		newExpression = "	.*" + expression;
 	    }
