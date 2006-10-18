@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.apidb.apicomplexa.wsfplugin.keywordsearch;
+package org.apidb.apicomplexa.wsfplugin.textsearch;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -23,7 +23,7 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  * @author John I
  * @created Aug 23, 2006
  */
-public class KeywordSearchPlugin extends WsfPlugin {
+public class TextSearchPlugin extends WsfPlugin {
 
     private class Match {
         public String geneID;
@@ -31,10 +31,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private String scriptDir;
 
-    private static final String PROPERTY_FILE = "keywordSearch-config.xml";
+    private static final String PROPERTY_FILE = "textSearch-config.xml";
 
     // required parameter definition
-    public static final String PARAM_KEYWORD_EXPRESSION = "keyword_expression";
+    public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     public static final String PARAM_CASE_INDEPENDENT = "case_independent";
     public static final String PARAM_DATASETS = "datasets";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
@@ -55,7 +55,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * @throws WsfServiceException
      * 
      */
-    public KeywordSearchPlugin() throws WsfServiceException {
+    public TextSearchPlugin() throws WsfServiceException {
 	super(PROPERTY_FILE);
 	// load properties
 	String dir = getProperty(FIELD_DATA_DIR);
@@ -76,7 +76,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_KEYWORD_EXPRESSION, PARAM_DATASETS, PARAM_SPECIES_NAME };
+        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_SPECIES_NAME };
     }
 
 
@@ -110,12 +110,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
     @Override
     protected String[][] execute(Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
-        logger.info("Invoking KeywordSearchPlugin...");
+        logger.info("Invoking TextSearchPlugin...");
 
         // get parameters
         String datasets = params.get(PARAM_DATASETS);
 	String whole_words = params.get(PARAM_WHOLE_WORDS);
-        String keywordExpression = rewriteExpression(params.get(PARAM_KEYWORD_EXPRESSION), whole_words);
+        String textExpression = rewriteExpression(params.get(PARAM_TEXT_EXPRESSION), whole_words);
         String caseIndependent = params.get(PARAM_CASE_INDEPENDENT);
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
@@ -127,7 +127,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	for (String dataset : ds) {
 	    cmd.append(scriptDir + "/filterByValue -n " + maxPvalue + " < " + dataDir
 		       + "/" + dataset + " | " + scriptDir + "/filterByValue -s '"
-		       + species_name + "' | egrep " + caseIndependent + " '" + keywordExpression
+		       + species_name + "' | egrep " + caseIndependent + " '" + textExpression
 		       + "';");
 	}
 
