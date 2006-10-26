@@ -76,7 +76,7 @@ public class TextSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_SPECIES_NAME };
+        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
 
