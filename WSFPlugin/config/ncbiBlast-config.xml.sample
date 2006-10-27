@@ -14,8 +14,8 @@
 <entry key="ScoreRegex"><![CDATA[\s+(\S+)$]]>></entry>
 
 <!-- the matching part should be the group#1 in the first match, eg. ^\S+?\|\S+?\|(\S+?)\| --> 
-<entry key="SourceIdRegex_CDS"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_CDS"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_transcripts"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
+<entry key="OrganismRegex_transcripts"><![CDATA[>?(\S+?)_]]></entry>
 
 <entry key="SourceIdRegex_genomic"><![CDATA[^\S+?\|(\S+?)\|]]></entry>
 <entry key="OrganismRegex_genomic"><![CDATA[>?(\S+?)_]]></entry>
@@ -29,19 +29,18 @@
 <entry key="SourceIdRegex_CDS Translated"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
 <entry key="OrganismRegex_CDS Translated"><![CDATA[>?(\S+?)_]]></entry>
 
+<entry key="SourceIdRegex_est"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
+<entry key="OrganismRegex_est"><![CDATA[>?(\S+?)_]]></entry>
+
+<entry key="SourceIdRegex_orfs"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
+<entry key="OrganismRegex_orfs"><![CDATA[>?(\S+?)_]]></entry>
+
 <entry key="ScoreRegex"><![CDATA[the regular expression for parsing out the score in the tabular row, which will be linked to the corresponding alignment block]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
-<entry key="UrlMap_Plasmodium_CDS">
-        <![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=&primary_key=$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Cryptosporidium_CDS">
-        <![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Others_CDS">
-        <![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=$$source_id$$]]>
-</entry>
-
+<entry key="UrlMap_Plasmodium_transcripts"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Cryptosporidium_transcripts"><![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]></entry>
+<entry key="UrlMap_Others_transcripts"><![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=$$source_id$$]]></entry>
 
 <entry key="UrlMap_Plasmodium_genomic"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
 <entry key="UrlMap_Cryptosporidium_genomic"><![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]></entry>
@@ -58,6 +57,14 @@
 <entry key="UrlMap_Plasmodium_CDS Translated"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
 <entry key="UrlMap_Cryptosporidium_CDS Translated"><![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]></entry>
 <entry key="UrlMap_Others_CDS Translated"><![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=$$source_id$$]]></entry>
+
+<entry key="UrlMap_Plasmodium_est"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Cryptosporidium_est"><![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]></entry>
+<entry key="UrlMap_Others_est"><![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=$$source_id$$]]></entry>
+
+<entry key="UrlMap_Plasmodium_Orfs"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=OrfsRecordClasses.OrfsRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Cryptosporidium_Orfs"><![CDATA[http://www.cryptodb.org/plasmodb/servlet/sv?page=gene&source_id=$$source_id$$]]></entry>
+<entry key="UrlMap_Others_Orfs"><![CDATA[http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=nucleotide&cmd=search&term=$$source_id$$]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>

@@ -230,9 +230,11 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             throws WsfServiceException {
         String bp = null;
         if ("dna".equalsIgnoreCase(qType)) {
-            if ("CDS".equalsIgnoreCase(dbType)
+            if ("Transcripts".equalsIgnoreCase(dbType)
                     || "Genomic".equalsIgnoreCase(dbType)
-                    || "dna".equalsIgnoreCase(dbType)) {
+                    || "dna".equalsIgnoreCase(dbType)
+                    || "ESTs".equalsIgnoreCase(dbType)
+                    || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "blastn";
             } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
                 bp = "tblastx";
@@ -240,9 +242,11 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
                 bp = "blastx";
             }
         } else if ("protein".equalsIgnoreCase(qType)) {
-            if ("CDS".equalsIgnoreCase(dbType)
+            if ("Transcripts".equalsIgnoreCase(dbType)
                     || "Genomic".equalsIgnoreCase(dbType)
-                    || dbType.toLowerCase().indexOf("translated") >= 0) {
+                    || dbType.toLowerCase().indexOf("translated") >= 0
+                    || "ESTs".equalsIgnoreCase(dbType)
+                    || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "tblastn";
             } else if ("Proteins".equalsIgnoreCase(dbType)) {
                 bp = "blastp";
