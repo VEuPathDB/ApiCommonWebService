@@ -2,6 +2,9 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
 <comment>The configuration file for MotifSearch WSF Plugin.</comment>
-<entry key="DataDir">(your flatfile database dir)</entry>
+<entry key="DataDir_Api">(your flatfile database dir)</entry>
+<entry key="DataDir_Crypto">(your flatfile database dir)</entry>
+<entry key="DataDir_Plasmo">(your flatfile database dir)</entry>
+<entry key="DataDir_Toxo">(your flatfile database dir)</entry>
 <entry key="SourceIdRegex">(The regular expression to extract source ID)</entry>
 </properties>
