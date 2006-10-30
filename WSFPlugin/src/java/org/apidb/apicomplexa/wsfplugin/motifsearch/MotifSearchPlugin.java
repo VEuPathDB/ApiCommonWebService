@@ -57,7 +57,7 @@ public class MotifSearchPlugin extends WsfPlugin {
     public static final String COLUMN_SEQUENCE = "Sequence";
 
     // field definition
-    private static final String FIELD_DATA_DIR = "DataDir";
+    private static final String FIELD_DATA_DIR_PREFIX = "DataDir_";
     private static final String FIELD_SOURCEID_REGEX = "SourceIdRegex";
 
     private File dataDir;
@@ -70,6 +70,8 @@ public class MotifSearchPlugin extends WsfPlugin {
     public MotifSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
         // load properties
+
+	/*  Not here because we need the model name (Crypto, Tcruzi, Api)
         String dir = getProperty(FIELD_DATA_DIR);
         if (dir == null)
             throw new WsfServiceException(
@@ -77,6 +79,7 @@ public class MotifSearchPlugin extends WsfPlugin {
                             + FIELD_DATA_DIR);
         dataDir = new File(dir);
         logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
+	*/
 
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
     }
@@ -146,6 +149,21 @@ public class MotifSearchPlugin extends WsfPlugin {
                 break;
             }
         }
+
+	logger.info("execute(): datasetIDs: " + datasetIDs + "\n");
+	
+	String dir = null;
+	if (datasetIDs.startsWith("C"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Crypto");
+	if (datasetIDs.startsWith("A"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Api");
+	if (datasetIDs.startsWith("Tc"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Tcruzi");
+
+        if (dir == null)
+            throw new WsfServiceException(
+					  "The required field in property file is missing: "
+					  + FIELD_DATA_DIR_PREFIX);
+        dataDir = new File(dir);
+        logger.info("execute(): dataDir: " + dataDir.getName() + "\n");
+
 
         String expression = params.get(PARAM_EXPRESSION);
 
