@@ -155,6 +155,8 @@ public class MotifSearchPlugin extends WsfPlugin {
 	String dir = null;
 	if (datasetIDs.startsWith("C"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Crypto");
 	if (datasetIDs.startsWith("A"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Api");
+	if (datasetIDs.startsWith("P"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Plasmo");
+	if (datasetIDs.startsWith("Tg"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Toxo");
 	if (datasetIDs.startsWith("Tc"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Tcruzi");
 
         if (dir == null)
