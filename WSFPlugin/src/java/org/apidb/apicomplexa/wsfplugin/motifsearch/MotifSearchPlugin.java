@@ -26,6 +26,7 @@ public class MotifSearchPlugin extends WsfPlugin {
     private class Match {
 
         public String geneID;
+        public String projectId;
         public String locations;
         public int matchCount = 0;
         public String sequence;
@@ -51,17 +52,29 @@ public class MotifSearchPlugin extends WsfPlugin {
     public static final String PARAM_DATASET = "Dataset";
     public static final String PARAM_EXPRESSION = "Expression";
 
+    // column definitions for returnd results
     public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_LOCATIONS = "Locations";
     public static final String COLUMN_MATCH_COUNT = "MatchCount";
     public static final String COLUMN_SEQUENCE = "Sequence";
 
     // field definition
-    private static final String FIELD_DATA_DIR_PREFIX = "DataDir_";
+    private static final String FIELD_DATA_DIR = "DataDir";
+    private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
     private static final String FIELD_SOURCEID_REGEX = "SourceIdRegex";
+    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
+    private static final String FIELD_PROJECT_MAP_PREFIX = "ProjectMap_";
+    private static final String FIELD_PROJECT_MAP_OTHER = FIELD_PROJECT_MAP_PREFIX
+            + "Others";
 
     private File dataDir;
+    private boolean useProjectId;
+
     private String sourceIdRegex;
+    private String organismRegex;
+
+    private String projectMapOthers;
 
     /**
      * @throws WsfServiceException
@@ -71,17 +84,21 @@ public class MotifSearchPlugin extends WsfPlugin {
         super(PROPERTY_FILE);
         // load properties
 
-	/*  Not here because we need the model name (Crypto, Tcruzi, Api)
         String dir = getProperty(FIELD_DATA_DIR);
         if (dir == null)
             throw new WsfServiceException(
                     "The required field in property file is missing: "
                             + FIELD_DATA_DIR);
         dataDir = new File(dir);
-        logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
-	*/
+        logger.info("constructor(): dataDir: " + dataDir.getAbsolutePath() + "\n");
+
+        String useProject = getProperty(FIELD_USE_PROJECT_ID);
+        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
 
         sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
+        organismRegex = getProperty(FIELD_ORGANISM_REGEX);
+
+        projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
     }
 
     /*
@@ -101,7 +118,10 @@ public class MotifSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_LOCATIONS,
+        if (useProjectId) return new String[] { COLUMN_GENE_ID,
+                COLUMN_PROJECT_ID, COLUMN_LOCATIONS, COLUMN_MATCH_COUNT,
+                COLUMN_SEQUENCE };
+        else return new String[] { COLUMN_GENE_ID, COLUMN_LOCATIONS,
                 COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
     }
 
@@ -150,22 +170,8 @@ public class MotifSearchPlugin extends WsfPlugin {
             }
         }
 
-	logger.info("execute(): datasetIDs: " + datasetIDs + "\n");
-	
-	String dir = null;
-	if (datasetIDs.startsWith("C"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Crypto");
-	if (datasetIDs.startsWith("A"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Api");
-	if (datasetIDs.startsWith("P"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Plasmo");
-	if (datasetIDs.startsWith("Tg"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Toxo");
-	if (datasetIDs.startsWith("Tc"))  dir = getProperty(FIELD_DATA_DIR_PREFIX + "Tcruzi");
-
-        if (dir == null)
-            throw new WsfServiceException(
-					  "The required field in property file is missing: "
-					  + FIELD_DATA_DIR_PREFIX);
-        dataDir = new File(dir);
+        logger.info("execute(): datasetIDs: " + datasetIDs + "\n");
         logger.info("execute(): dataDir: " + dataDir.getName() + "\n");
-
 
         String expression = params.get(PARAM_EXPRESSION);
 
@@ -252,7 +258,7 @@ public class MotifSearchPlugin extends WsfPlugin {
      * @throws IOException
      */
     private File openDataFile(String datasetID) throws IOException {
-        logger.info("openDataFile(): dataDir: " + dataDir.getName()
+        logger.info("openDataFile(): dataDir: " + dataDir.getAbsolutePath()
                 + ", datasetID: " + datasetID + "\n");
 
         File dataFile = new File(dataDir, datasetID);
@@ -359,6 +365,23 @@ public class MotifSearchPlugin extends WsfPlugin {
             // get first gene id
             line = line.trim().replaceAll("\\s", " ");
             String geneID = extractField(line, sourceIdRegex);
+            
+            // TEST
+            //logger.info("geneID = " + geneID);
+
+            // get project id, if required
+            String projectId = null;
+            if (useProjectId) {
+                String organism = extractField(line, organismRegex);
+                
+                // TEST
+                //logger.info("Organism = " + organism);
+                
+                projectId = getProjectId(organism);
+                
+                // TEST
+                //logger.info("ProjectId = " + projectId);
+            }
 
             StringBuffer seq = new StringBuffer();
             while ((line = in.readLine()) != null) {
@@ -375,7 +398,10 @@ public class MotifSearchPlugin extends WsfPlugin {
             // scan the sequence to find all matched locations
             Match match = findLocations(geneID, pattern, seq.toString(),
                     colorCode, contextLength);
-            if (match != null) matches.add(match);
+            if (match != null) {
+                if (useProjectId) match.projectId = projectId;
+                matches.add(match);
+            }
         }
         return matches;
     }
@@ -444,6 +470,10 @@ public class MotifSearchPlugin extends WsfPlugin {
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
             result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
             result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
+
+            // put project id into result, if required
+            if (useProjectId)
+                result[i][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
         }
         return result;
     }
@@ -455,5 +485,12 @@ public class MotifSearchPlugin extends WsfPlugin {
             // the match is located at group 1
             return matcher.group(1);
         } else return null;
+    }
+
+    protected String getProjectId(String organism) {
+        String mapKey = FIELD_PROJECT_MAP_PREFIX + organism;
+        String projectId = getProperty(mapKey);
+        if (projectId == null) projectId = projectMapOthers;
+        return projectId;
     }
 }

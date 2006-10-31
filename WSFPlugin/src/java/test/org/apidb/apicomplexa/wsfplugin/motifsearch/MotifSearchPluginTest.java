@@ -40,11 +40,12 @@ public class MotifSearchPluginTest extends TestCase {
     public void testInvoke() {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
-        params.put(MotifSearchPlugin.PARAM_EXPRESSION, "ee");
+        params.put(MotifSearchPlugin.PARAM_EXPRESSION, "CC6+RK");
         params.put(MotifSearchPlugin.PARAM_DATASET, "Pfalciparum/PfalciparumAnnotatedProteins_plasmoDB-5.0.fasta");
 
         // prepare columns
         String[] orderedColumns = { MotifSearchPlugin.COLUMN_GENE_ID,
+                //MotifSearchPlugin.COLUMN_PROJECT_ID,
                 MotifSearchPlugin.COLUMN_MATCH_COUNT,
                 MotifSearchPlugin.COLUMN_LOCATIONS,
                 MotifSearchPlugin.COLUMN_SEQUENCE };
