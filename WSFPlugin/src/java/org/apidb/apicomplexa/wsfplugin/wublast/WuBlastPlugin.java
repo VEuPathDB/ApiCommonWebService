@@ -206,9 +206,11 @@ public class WuBlastPlugin extends BlastPlugin {
                 String organism = line
                         .substring(organismPos[0], organismPos[1]);
                 logger.info("\n         organism : " + organism + "\n");
-                String projectId = getProjectId(organism);
-                logger.info("\n         projectId : " + projectId + "\n\n");
-                alignment[columns.get(COLUMN_PROJECT_ID)] = projectId;
+                if (useProjectId) {
+                    String projectId = getProjectId(organism);
+                    logger.info("\n         projectId : " + projectId + "\n\n");
+                    alignment[columns.get(COLUMN_PROJECT_ID)] = projectId;
+                }
             }
             // add the line to the block
             block.append(line + newline);
@@ -230,9 +232,11 @@ public class WuBlastPlugin extends BlastPlugin {
             // copy ID
             int idIndex = columns.get(COLUMN_ID);
             results[i][idIndex] = alignment[idIndex];
-            // copy PROJECT_ID
-            int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
-            results[i][projectIdIndex] = alignment[projectIdIndex];
+            if (useProjectId) {
+                // copy PROJECT_ID
+                int projectIdIndex = columns.get(COLUMN_PROJECT_ID);
+                results[i][projectIdIndex] = alignment[projectIdIndex];
+            }
             // copy block
             int blockIndex = columns.get(COLUMN_BLOCK);
             results[i][blockIndex] = alignment[blockIndex];
