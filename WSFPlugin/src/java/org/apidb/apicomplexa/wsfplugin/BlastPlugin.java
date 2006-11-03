@@ -230,25 +230,27 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             throws WsfServiceException {
         String bp = null;
         if ("dna".equalsIgnoreCase(qType)) {
-            if ("Transcripts".equalsIgnoreCase(dbType)
-                    || "Genomic".equalsIgnoreCase(dbType)
-                    || "dna".equalsIgnoreCase(dbType)
-                    || "ESTs".equalsIgnoreCase(dbType)
-                    || "orfs".equalsIgnoreCase(dbType)) {
+            if ("transcripts".equalsIgnoreCase(dbType)
+                    || "genomic".equalsIgnoreCase(dbType)
+                    || "DNA".equalsIgnoreCase(dbType)
+                    || "ESTs".equalsIgnoreCase(dbType)) {
                 bp = "blastn";
             } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
                 bp = "tblastx";
-            } else if ("Proteins".equalsIgnoreCase(dbType)) {
+            } else if ("proteins".equalsIgnoreCase(dbType)
+                       || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "blastx";
             }
         } else if ("protein".equalsIgnoreCase(qType)) {
             if ("Transcripts".equalsIgnoreCase(dbType)
-                    || "Genomic".equalsIgnoreCase(dbType)
-                    || dbType.toLowerCase().indexOf("translated") >= 0
-                    || "ESTs".equalsIgnoreCase(dbType)
-                    || "orfs".equalsIgnoreCase(dbType)) {
+                || "transcripts".equalsIgnoreCase(dbType)
+                || "ESTs".equalsIgnoreCase(dbType)
+                || "Genomic".equalsIgnoreCase(dbType)
+                || dbType.toLowerCase().indexOf("translated") >= 0
+                || "ESTs".equalsIgnoreCase(dbType)) {
                 bp = "tblastn";
-            } else if ("Proteins".equalsIgnoreCase(dbType)) {
+            } else if ("proteins".equalsIgnoreCase(dbType)
+                       || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "blastp";
             }
         }
