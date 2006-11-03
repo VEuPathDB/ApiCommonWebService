@@ -120,6 +120,10 @@ public class TextSearchPlugin extends WsfPlugin {
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
 
+	if (species_name == null) {
+	    species_name = "";
+	}
+
 	StringBuffer cmd = new StringBuffer("(");
 
 	// iterate through datasets
