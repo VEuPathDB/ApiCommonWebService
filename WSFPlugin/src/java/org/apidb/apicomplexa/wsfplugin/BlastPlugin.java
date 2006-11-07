@@ -282,8 +282,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         if (matcher.find()) {
             // the match is located at group 1
             return new int[] { matcher.start(1), matcher.end(1) };
-        }
-        return null;
+        } else {
+	    logger.warn("Couldn't find pattern \"" + regex + "\" in defline \"" + defline + "\"");
+	    return null;
+	}
     }
 
     protected String insertIdUrl(String defline, String dbType) {
