@@ -151,6 +151,13 @@ public class NcbiBlastPlugin extends BlastPlugin {
                 alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
+		// to handle two-line definitions in ORFs
+		String secondLine = in.readLine();
+		block.append(line + newline);
+		block.append(secondLine + newline);
+
+		line = line.trim() + secondLine.trim();
+
                 // extract source id
                 int[] sourceIdPos = findField(line, sourceIdRegex);
                 String sourceId = line
@@ -159,9 +166,10 @@ public class NcbiBlastPlugin extends BlastPlugin {
                 // insert the organism url
                 line = insertIdUrl(line, dbType);
                 alignment[columns.get(COLUMN_ID)] = sourceId;
-            }
-            // add this line to the block
-            block.append(line + newline);
+            } else {
+		// add this line to the block
+		block.append(line + newline);
+	    }
         }
 
         // get the rest as the footer part
