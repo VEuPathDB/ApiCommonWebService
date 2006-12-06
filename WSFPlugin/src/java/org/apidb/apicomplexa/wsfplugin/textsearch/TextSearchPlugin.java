@@ -147,8 +147,8 @@ public class TextSearchPlugin extends WsfPlugin {
 	// run it
 	try {
             String output = invokeCommand(cmds, 10 * 60);
-	    System.out.println("output is " + output);
-	    logger.info("output is " + output);
+	    //System.out.println("output is " + output);
+	    logger.debug("output is " + output);
 	    //            long end = System.currentTimeMillis();
 	    //            logger.info("Invocation takes: " + ((end - start) / 1000.0)
 	    //                    + " seconds");
