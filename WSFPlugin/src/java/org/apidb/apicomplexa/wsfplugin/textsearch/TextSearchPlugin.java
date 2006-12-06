@@ -64,7 +64,7 @@ public class TextSearchPlugin extends WsfPlugin {
 					  "The required field in property file is missing: "
 					  + FIELD_DATA_DIR);
         dataDir = new File(dir);
-        logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
+        logger.debug("constructor(): dataDir: " + dataDir.getName() + "\n");
 
 	scriptDir = getProperty(FIELD_SCRIPT_DIR);
     }
@@ -163,7 +163,7 @@ public class TextSearchPlugin extends WsfPlugin {
 	    String nameIn;
 	    while ((nameIn = reader.readLine()) != null) {
 
-		logger.info("match GeneID: " + nameIn);
+		logger.debug("match GeneID: " + nameIn);
 
 		Match match = new Match();
 		match.geneID = nameIn;

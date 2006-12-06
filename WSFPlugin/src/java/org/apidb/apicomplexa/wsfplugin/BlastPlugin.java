@@ -298,7 +298,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         // get the url mapping for this organsim
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-        logger.info("mapkey=" + mapkey + ", mapurl=" + mapurl);
+        logger.debug("mapkey=" + mapkey + ", mapurl=" + mapurl);
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
 
