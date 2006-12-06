@@ -36,14 +36,14 @@ public class NcbiBlastPluginTest extends TestCase {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
         params.put(NcbiBlastPlugin.PARAM_QUERY_TYPE, "dna");
-        params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "genomic");
+        params.put(NcbiBlastPlugin.PARAM_DATABASE_TYPE, "ESTs");
         params.put(NcbiBlastPlugin.PARAM_DATABASE_ORGANISM, "Pfalciparum");
         params.put("-e", "0.1");
         params.put("-v", "5");
         params.put("-b", "5");
         params.put(
                 NcbiBlastPlugin.PARAM_SEQUENCE,
-                "AGAAATGAAGAAGCTCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCGATTATGCCAATAAA");
+                "TTGGAAGCTTGTTCAGCCTGTTCAGCAGCTTTTTCAGCTTCTTCAGCAGCTTTTTCA");
 
         // prepare the columns
         String[] columns = { NcbiBlastPlugin.COLUMN_ID,
