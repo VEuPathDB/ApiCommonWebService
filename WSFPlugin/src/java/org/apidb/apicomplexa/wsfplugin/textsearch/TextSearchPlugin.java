@@ -64,7 +64,7 @@ public class TextSearchPlugin extends WsfPlugin {
 					  "The required field in property file is missing: "
 					  + FIELD_DATA_DIR);
         dataDir = new File(dir);
-        logger.info("constructor(): dataDir: " + dataDir.getName() + "\n");
+        logger.debug("constructor(): dataDir: " + dataDir.getName() + "\n");
 
 	scriptDir = getProperty(FIELD_SCRIPT_DIR);
     }
@@ -147,8 +147,8 @@ public class TextSearchPlugin extends WsfPlugin {
 	// run it
 	try {
             String output = invokeCommand(cmds, 10 * 60);
-	    System.out.println("output is " + output);
-	    logger.info("output is " + output);
+	    //System.out.println("output is " + output);
+	    logger.debug("output is " + output);
 	    //            long end = System.currentTimeMillis();
 	    //            logger.info("Invocation takes: " + ((end - start) / 1000.0)
 	    //                    + " seconds");
@@ -163,7 +163,7 @@ public class TextSearchPlugin extends WsfPlugin {
 	    String nameIn;
 	    while ((nameIn = reader.readLine()) != null) {
 
-		logger.info("match GeneID: " + nameIn);
+		logger.debug("match GeneID: " + nameIn);
 
 		Match match = new Match();
 		match.geneID = nameIn;
@@ -195,7 +195,7 @@ public class TextSearchPlugin extends WsfPlugin {
 	    }
 	}
 
-        logger.info("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
+        logger.debug("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
 
 	return newExpression;
 
