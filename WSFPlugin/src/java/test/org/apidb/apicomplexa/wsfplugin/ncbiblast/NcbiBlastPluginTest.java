@@ -54,7 +54,7 @@ public class NcbiBlastPluginTest extends TestCase {
         // invoke the blast process
         try {
             IWsfPlugin processor = new NcbiBlastPlugin();
-            String[][] result = processor.invoke(params, columns);
+            String[][] result = processor.invoke("", params, columns);
 
             // print out the result
             System.out.println(WsfPlugin.printArray(columns));

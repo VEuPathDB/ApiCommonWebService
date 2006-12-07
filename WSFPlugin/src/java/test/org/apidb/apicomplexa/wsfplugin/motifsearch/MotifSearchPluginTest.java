@@ -53,7 +53,7 @@ public class MotifSearchPluginTest extends TestCase {
         try {
             MotifSearchPlugin search = new MotifSearchPlugin();
             // invoke the plugin and get result back
-            String[][] result = search.invoke(params, orderedColumns);
+            String[][] result = search.invoke("", params, orderedColumns);
 
             // print out results
             System.out.println("========= Motif Search JUnit Test ==========");

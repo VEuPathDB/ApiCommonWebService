@@ -152,7 +152,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      *      java.lang.String[])
      */
     @Override
-    protected String[][] execute(Map<String, String> params,
+    protected String[][] execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         // get plugin name
         String pluginName = getClass().getSimpleName();

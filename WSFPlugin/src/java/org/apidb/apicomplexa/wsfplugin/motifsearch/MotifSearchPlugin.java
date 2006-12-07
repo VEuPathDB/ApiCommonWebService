@@ -156,7 +156,7 @@ public class MotifSearchPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected String[][] execute(Map<String, String> params,
+    protected String[][] execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
