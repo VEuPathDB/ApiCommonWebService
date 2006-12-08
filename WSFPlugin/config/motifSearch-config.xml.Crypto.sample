@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>The configuration file for MotifSearch WSF Plugin.</comment>
+
+<entry key="UseProjectId">no</entry>
+<entry key="DataDir">/var/www/CryptoDB/cryptodb3.4/data/motif/</entry>
+<entry key="SourceIdRegex"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
+<entry key="OrganismRegex"><![CDATA[>?(\S+?)_]]></entry>
+
+<!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
+<entry key="ProjectMap_Plasmodium">plasmodb</entry>
+<entry key="ProjectMap_Cryptosporidium">cryptodb</entry>
+<entry key="ProjectMap_Toxoplasma">toxodb</entry>
+<entry key="ProjectMap_Others">Others</entry>
+
+</properties>
