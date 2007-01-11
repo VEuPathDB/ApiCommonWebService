@@ -52,7 +52,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String PROPERTY_FILE = "wdkquery-config.xml";
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
-
+    public static final String SITE_NAME = "SiteName";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -69,15 +69,17 @@ public class WdkQueryPlugin extends WsfPlugin {
     private static File m_xmlSchemaFile    = null;
     private static String modelName;
     private static String gus_home;
+    private static String siteName;
 
     public WdkQueryPlugin() throws WsfServiceException {
 	super(PROPERTY_FILE);
 	modelName = getProperty(MODEL_NAME);
-	logger.info("------------ModelName = "+modelName+"-----------------");
+	//logger.info("------------ModelName = "+modelName+"-----------------");
 	gus_home = getProperty(GUS_HOME);
-	logger.info("------------Gus_Home = "+gus_home+"-----------------");
+	//logger.info("------------Gus_Home = "+gus_home+"-----------------");
 	initial();
-	logger.info("------------Plugin Initialized-----------------");
+	//logger.info("------------Plugin Initialized-----------------");
+	siteName = getProperty(SITE_NAME);
     }
 
     /*
@@ -166,14 +168,15 @@ public class WdkQueryPlugin extends WsfPlugin {
     protected String[][] execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException     
     {
-        logger.info("Invoking WdkQueryPlugin......");
+        //logger.info("Invoking WdkQueryPlugin......");
 	String[][] componentResults = null;
+	int resultSize = 1;
 	ResultList results = null;
 	if(params.containsKey("Query")){
 		invokeKey = params.get("Query");
 		params.remove("Query");
 	}
-	logger.info("QueryName = "+ invokeKey);
+	//logger.info("QueryName = "+ invokeKey);
 
 	//Map<String,Object>SOParams = convertParams(params);
 	//logger.info("Parameters were processed");
@@ -192,18 +195,18 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    String[] queryName = invokeKey.split(":");
 	    QuerySet qs = model.getModel().getQuerySet(queryName[0]);
 	    Query q = qs.getQuery(queryName[1]);
-	    logger.info("Query found : " + q.getFullName());
+	    //logger.info("Query found : " + q.getFullName());
 	
 	    Map<String,Object> SOParams = convertParams(params,getParamsFromQuery(q));
 
 	    //validateQueryParams(params,q);
-	    logger.info("Parameters Validated...");
+	    //logger.info("Parameters Validated...");
 	    validateQueryColumns(orderedColumns,q);
-	    logger.info("Columns Validated...");
+	    //logger.info("Columns Validated...");
 	    
 	    // WS Query processing
 	    if(q instanceof WSQuery) {
-	    	logger.info("Processing WSQuery ...");
+	    	//logger.info("Processing WSQuery ...");
 		WSQuery wsquery = (WSQuery) q;
 		WSQueryInstance wsqi = (WSQueryInstance)wsquery.makeInstance();
 		wsqi.setValues(SOParams);
@@ -212,26 +215,28 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    }
 	    //SQL Query Processing
 	    else {
-		logger.info("Process SqlQuery ...");
+		//logger.info("Process SqlQuery ...");
 	    	SqlQuery sqlquery = (SqlQuery) q;
 		SqlQueryInstance sqlqi = (SqlQueryInstance)sqlquery.makeInstance();
 		sqlqi.setValues(SOParams);
-		ResultFactory resultFactory = 
- sqlquery.getResultFactory();
+		ResultFactory resultFactory = sqlquery.getResultFactory();
 		results = resultFactory.getResult(sqlqi);
 	    }
-	    logger.info("Results set was filled");
+	    //logger.info("Results set was filled");
 	    componentResults = results2StringArray(results);
 
-            logger.info("Results have been processed ...");
+            //logger.info("Results have been processed ...");
 	    } catch(Exception ex){
 		logger.info("ERROR IN execute()" + ex.toString());
 		ex.printStackTrace();
+		resultSize = -1;
 	    }
 	String[][] responseT = null;    
 	if(componentResults == null) {
 	    responseT = new String[1][1];
 	    responseT[0][0] = "ERROR";
+	    if(resultSize != -1)
+		resultSize = 0;
 	}else {
 	    responseT = new String[componentResults.length][orderedColumns.length];
 	    for(int i = 0; i < componentResults.length; i++){
@@ -239,7 +244,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    	     responseT[i][j] = componentResults[i][j];
 	    	}
 	    }
-	}      
+	}
+	if(resultSize > 0)
+	    resultSize = componentResults.length;
+	message = String.valueOf(resultSize);
 	return responseT;
     }
        
@@ -290,7 +298,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 	StringBuffer sb = new StringBuffer();
 	result.write(sb);
 	String s =  sb.toString();
-	logger.info(s);
+	//logger.info("------------------- results2Array() : Results String = " + s + " s.length() == " + s.length());
+	if(s.length() == 0) return null;
 	String nl = System.getProperty("line.separator");
 	String[] rows = s.split(nl);
 	String[][] ans = new String[rows.length][];
@@ -355,9 +364,9 @@ public class WdkQueryPlugin extends WsfPlugin {
     
     private WdkModelBean loadModel()
         { //throws MalformedURLException, WdkModelException {	
-	    logger.info("_______________________________________________________________________");
+	    //logger.info("_______________________________________________________________________");
 	    WdkModel wdkModel = null;
-	    logger.info("_______________________________________________________________________");
+	    //logger.info("_______________________________________________________________________");
 	    try{
 	    CheckFiles();
 	    wdkModel = ModelXmlParser.parseXmlFile(
@@ -365,10 +374,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    m_xmlSchemaFile.toURL(), m_configFile.toURL());
 	    }catch(WdkModelException e){logger.info("ERROR  ERROR : -------" + e.toString());}
 	     catch(MalformedURLException e){logger.info("ERROR  ERROR : -------" + e.toString());}
-        logger.info("_______________________________________________________________________");
+	    //logger.info("_______________________________________________________________________");
         if(wdkModel != null ) logger.info(wdkModel.getName());
 	WdkModelBean model = new WdkModelBean(wdkModel);
-        logger.info("---------Model Loading Completed-----------");
+        //logger.info("---------Model Loading Completed-----------");
 	return model;
 	
     }//end of loadmodel
@@ -376,12 +385,12 @@ public class WdkQueryPlugin extends WsfPlugin {
     private void initial() {
 	if (model == null) {
 	    try {
-		logger.info("------------intial---------------");
+		//logger.info("------------intial---------------");
 		loadConfig(modelName, gus_home);		
-		logger.info("------------Config Loaded---------------");
+		//logger.info("------------Config Loaded---------------");
 		logger.info(m_modelFile.toURL().toString()+"\n"+m_modelPropFile.toURL().toString()+"\n"+m_configFile.toURL().toString()+"\n"+m_schemaFile.toURL().toString()+"\n"+m_xmlSchemaFile.toURL().toString());
 		model = loadModel();
-		logger.info("------------Model Loaded----------------");
+		//logger.info("------------Model Loaded----------------");
 	    } catch (Exception ex) {
 		logger.info("ERROR : "+ex.toString());
 	    }
