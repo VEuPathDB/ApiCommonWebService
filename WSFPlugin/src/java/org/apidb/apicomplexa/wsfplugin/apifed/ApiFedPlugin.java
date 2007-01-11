@@ -34,7 +34,7 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String PARAM_PROCESSNAME = "ProcessName";
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
-    public static final String PARAM_ORGANISMS = "Organism";
+    public static final String PARAM_ORGANISMS = "organism";
     public static final String PARAM_QUERY = "Query";
     
     //Output Parameters
@@ -98,26 +98,30 @@ public class ApiFedPlugin extends WsfPlugin {
     protected String[][] execute(String queryName, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
 	
-	    String[] calls = {"doCrypto","",""};
-	/*
-	    if(params.containsKey(PARAM_ORGANISMS)){
-		String orgsString = params.get(PARAM_ORGANISMS);
+	    String[] calls = {"","",""};
+	    String orgName = hasOrganism(params);
+	    //logger.info("--------------------orgName =====  " + orgName + " ------------------------");
+	    if(orgName != null){
+		String orgsString = params.get(orgName);
 		calls = getRemoteCalls(orgsString);
 	    } else{
 		calls[0] = "doCrypto";
 	        calls[1] = "doPlasmo";
 	        calls[2] = "doToxo";
+		
 	    }
-	*/
+
 	
+	    //for(int i=0;i<3;i++) logger.info("calls "+i+" " + calls[i]);
+
 	    String query = "";	    
 	    String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 	    if(params.containsKey(PARAM_QUERY)){
 		query = params.get(PARAM_QUERY);
 		params.remove(PARAM_QUERY);
 	    } else{query = queryName;}
-	       logger.info("QueryName = "+ query);
-	    String[] arrayParams = getParams(params);
+	    //   logger.info("QueryName = "+ query);
+	    //String[] arrayParams = getParams(params);
 	    String[] componentColumns = removeProjectId(orderedColumns);
 
 	    //String url = "http://mango.ctegd.uga.edu:8081/axis/services/WsfService";
@@ -140,18 +144,21 @@ public class ApiFedPlugin extends WsfPlugin {
 	    //Call only the needed component sites
 	    if(calls[0].equals("")){cryptoThreadStatus.setDone(true);}
 	    else {
+		String[] arrayParams = getParams(params, calls[0], orgName);
 		Thread cryptoThread = 
 		    new WdkQuery(cryptoUrl, processName, queryName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
 		cryptoThread.start();
 	    }
 	    if(calls[1].equals("")){plasmoThreadStatus.setDone(true);}
 	    else {
+		String[] arrayParams = getParams(params, calls[1], orgName);
 		Thread plasmoThread = 
 		    new WdkQuery(plasmoUrl, processName, queryName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
 		plasmoThread.start();
 	    }
 	    if(calls[2].equals("")){toxoThreadStatus.setDone(true);}
 	    else {
+		String[] arrayParams = getParams(params, calls[2], orgName);
 		Thread toxoThread = 
 		    new WdkQuery(toxoUrl, processName, queryName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
 		toxoThread.start();
@@ -159,7 +166,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	   
 	    while(!(cryptoThreadStatus.getDone() && plasmoThreadStatus.getDone() && toxoThreadStatus.getDone())){
 		try{
-		    logger.info(cryptoThreadStatus.getDone());
+		    //logger.info(cryptoThreadStatus.getDone());
 		    Thread.sleep(1000);
 		continue;
 		}catch(InterruptedException e){}
@@ -167,21 +174,38 @@ public class ApiFedPlugin extends WsfPlugin {
 	    
 
 	    String[][] result = null;
-	    result = combineResults(cryptoResult.getAnswer(), plasmoResult.getAnswer(), toxoResult.getAnswer(), orderedColumns);
-	    //result = cryptoResult.getAnswer();
-	    
+	    //result = combineResults(cryptoResult.getAnswer(), plasmoResult.getAnswer(), toxoResult.getAnswer(), orderedColumns);
+	    result = combineResults(cryptoResult, plasmoResult, toxoResult, orderedColumns);
+	   //result = cryptoResult.getAnswer();
+	   //if(orgName==null) message = null;
 	    return result; 
     }
     
-    private String[] getParams (Map<String,String> params)
+    private String hasOrganism(Map<String,String> p)
+    {
+	String orgName = null;
+	for(String pName:p.keySet()){
+	    if(pName.indexOf("organism")!=-1){
+		orgName = pName;
+		break;
+	    }
+	}
+	return orgName;
+    }
+
+    private String[] getParams (Map<String,String> params, String localOrgs, String orgParam)
     {
     	String[] arrParams = new String[params.size()];
 	Iterator it = params.keySet().iterator();
 	int i = 0;
 	while(it.hasNext()){
 		String key = (String)it.next();
-		String val = params.get(key);
-		arrParams[i] = key+"="+val;
+		if(key.equals(orgParam)){
+		    arrParams[i] = key+"="+localOrgs;
+		}else{
+		    String val = params.get(key);
+		    arrParams[i] = key+"="+val;
+		}
 		i++;
 	}
 	return arrParams;
@@ -193,22 +217,32 @@ public class ApiFedPlugin extends WsfPlugin {
 	String[] orgArray = orgs.split(",");
 	for(String organism:orgArray){
 	    if(organism.charAt(0)=='C')
-		calls[0] = "doCrypto";
+		calls[0] = calls[0] + "," + organism;
 	    if(organism.charAt(0)=='P')
-		calls[1] = "doPlasmo";
+		calls[1] = calls[1] + "," + organism;
 	    if(organism.charAt(0)=='T')
-		calls[2] = "doToxo";
+		calls[2] = calls[2] + "," + organism ;
 	}
+	if(calls[0].length() > 0) calls[0] = calls[0].substring(1);
+        if(calls[1].length() > 0) calls[1] = calls[1].substring(1);
+	if(calls[2].length() > 0) calls[2] = calls[2].substring(1);
 	return calls;
     }
 
-    private String[][] combineResults(String[][] crypto, String[][] plasmo, String[][] toxo, String[] cols)
-    {
-	//Determine the length of the new array
+    //private String[][] combineResults(String[][] crypto, String[][] plasmo, String[][] toxo, String[] cols)
+    private String[][] combineResults(CompResult cryptoCR, CompResult plasmoCR, CompResult toxoCR, String[] cols)
+     {
+	 message = "";
+	 	 
+	 String[][] crypto = cryptoCR.getAnswer();
+ 	 String[][] plasmo = plasmoCR.getAnswer();
+	 String[][] toxo = toxoCR.getAnswer();
+	 
+	 //Determine the length of the new array
 	int numrows = 0;
-	if(crypto!=null)numrows = numrows + crypto.length;
-	if(plasmo!=null)numrows = numrows + plasmo.length;
-	if(toxo!=null)numrows = numrows + toxo.length;
+	if(crypto!=null && !crypto[0][0].equals("ERROR"))numrows = numrows + crypto.length;
+	if(plasmo!=null && !plasmo[0][0].equals("ERROR"))numrows = numrows + plasmo.length;
+	if(toxo!=null && !toxo[0][0].equals("ERROR"))numrows = numrows + toxo.length;
 	int i = 0;
 	String[][] combined = new String[numrows][cols.length + 1]; //add one column for the addition of projectId
 
@@ -221,9 +255,10 @@ public class ApiFedPlugin extends WsfPlugin {
 
 	//Add crypto result, if it is not empty, to the final results
 	if(crypto!=null){
+	    message = "cryptodb:"+cryptoCR.getMessage();
 	    if(!crypto[0][0].equals("ERROR")){
 		for(String[] rec:crypto){
-		    logResults(rec);
+		    //logResults(rec);
 		    combined[i] = rec;
 		    combined[i] = insertProjectId(combined[i], projectIndex, "cryptodb");
 		    i++;
@@ -233,6 +268,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
 	//Add plasmo result, if it is not empty, to the final results
 	if(plasmo!=null){
+	    if(message.length()!=0){message = message + ",plasmodb:" + plasmoCR.getMessage();}else{message = "plasmodb:"+plasmoCR.getMessage();}
 	    if(!plasmo[0][0].equals("ERROR")){
 		for(String[] rec:plasmo){
 		    combined[i] = rec;
@@ -244,6 +280,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	
 	//Add toxo result, if it is not empty, to the final results
 	if(toxo!=null){
+	    if(message.length()!=0){message = message + ",toxodb:" + toxoCR.getMessage();}else{message = "toxodb:"+toxoCR.getMessage();}
 	    if(!toxo[0][0].equals("ERROR")){
 		for(String[] rec:toxo){
 		    combined[i] = rec;
@@ -256,8 +293,10 @@ public class ApiFedPlugin extends WsfPlugin {
     }
     
     private void logResults(String[] r){
+	logger.info("-----------------------Results from Thread-----------------------");
+	int i = 0;
 	for(String cr:r){
-	    logger.info("------- Record : " + cr);
+	    logger.info("------- Record :" + i + " " + cr);
 	}
     }
 
@@ -293,7 +332,7 @@ public class ApiFedPlugin extends WsfPlugin {
     {
 	int projectIndex = 0;
 	for(String col:cols){
-	    logger.info("------------"+col+"---"+col.equals("project_id")+"-----------");
+	    //logger.info("------------"+col+"---"+col.equals("project_id")+"-----------");
 	    if(col.equals("project_id")){break;}
 	    else{projectIndex++;}
 	}
@@ -312,13 +351,19 @@ public class ApiFedPlugin extends WsfPlugin {
     //Inner Class to do invokations
     class CompResult {
 	private String[][] answer;
+	private String message;
 	public CompResult(){
 	    answer = null;
+	    message = "";
 	}
 	public void setAnswer(String[][] answer){
 	    this.answer = answer;
 	}
 	public String[][] getAnswer(){return this.answer;}
+	public void setMessage(String message){
+	    this.message = message;
+	}
+	public String getMessage(){return this.message;}
     }
     class Status {
 	private boolean done;
@@ -362,7 +407,7 @@ public class ApiFedPlugin extends WsfPlugin {
          
             WsfResponse response = service.invoke(pluginName, queryName, params, cols);
           
-	    String message = response.getMessage();
+	    result.setMessage(response.getMessage());
             result.setAnswer(response.getResults());
 	    
 	    } catch (MalformedURLException ex) {
@@ -373,7 +418,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    	ex.printStackTrace();
             }
 	status.setDone(true);
-	logger.info("INSDIE THREAD : " + status.getDone());
+	logger.info("The Thread is stopped(" +url+").................. : " + status.getDone());
 	return;
 	}
     }
