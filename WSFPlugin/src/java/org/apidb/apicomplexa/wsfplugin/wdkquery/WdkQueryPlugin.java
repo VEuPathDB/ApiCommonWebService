@@ -236,8 +236,14 @@ public class WdkQueryPlugin extends WsfPlugin {
             //logger.info("Results have been processed ...");
 	    } catch(WdkModelException ex){
 		logger.info("WdkMODELexception in execute()" + ex.toString());
+		String msg = ex.toString();
+		//if(msg.matches("Invalid value"){}
+		if(msg.contains("Invalid value") && msg.contains("parameter")){
+		    resultSize = 0;
+		}else{
 		ex.printStackTrace();
 		resultSize = -1;
+		}
 	    } catch(WdkUserException ex){
 		logger.info("WdkUSERexception IN execute()" + ex.toString());
 		ex.printStackTrace();
