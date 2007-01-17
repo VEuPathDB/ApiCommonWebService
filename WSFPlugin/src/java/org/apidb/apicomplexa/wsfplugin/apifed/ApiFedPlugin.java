@@ -29,6 +29,9 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String CRYPTO_WSF_URL = "CryptoURL";
     public static final String PLASMO_WSF_URL = "PlasmoURL";
     public static final String TOXO_WSF_URL = "ToxoURL";
+    public static final String CRYPTO_MODEL = "CryptoModel";
+    public static final String PLASMO_MODEL = "PlasmoModel";
+    public static final String TOXO_MODEL = "ToxoModel";
 
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
@@ -44,12 +47,18 @@ public class ApiFedPlugin extends WsfPlugin {
     private String cryptoUrl;
     private String plasmoUrl;
     private String toxoUrl;
+    private String cryptoModel;
+    private String plasmoModel;
+    private String toxoModel;
 
     public ApiFedPlugin() throws WsfServiceException {
 	super(PROPERTY_FILE);
 	cryptoUrl = getProperty(CRYPTO_WSF_URL);
 	plasmoUrl = getProperty(PLASMO_WSF_URL);
 	toxoUrl = getProperty(TOXO_WSF_URL);
+	cryptoModel = getProperty(CRYPTO_MODEL);
+	plasmoModel = getProperty(PLASMO_MODEL);
+	toxoModel = getProperty(TOXO_MODEL);
     }
 
     /*
@@ -144,21 +153,23 @@ public class ApiFedPlugin extends WsfPlugin {
 	    //Call only the needed component sites
 	    if(calls[0].equals("")){cryptoThreadStatus.setDone(true);}
 	    else {
-		String[] arrayParams = getParams(params, calls[0], orgName);
+		String[] arrayParams = getParams(params, calls[0], orgName, cryptoModel);
 		Thread cryptoThread = 
 		    new WdkQuery(cryptoUrl, processName, queryName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
 		cryptoThread.start();
 	    }
 	    if(calls[1].equals("")){plasmoThreadStatus.setDone(true);}
 	    else {
-		String[] arrayParams = getParams(params, calls[1], orgName);
+		String[] arrayParams = getParams(params, calls[1], orgName, plasmoModel);
 		Thread plasmoThread = 
 		    new WdkQuery(plasmoUrl, processName, queryName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
 		plasmoThread.start();
 	    }
 	    if(calls[2].equals("")){toxoThreadStatus.setDone(true);}
 	    else {
-		String[] arrayParams = getParams(params, calls[2], orgName);
+		Map<String,String> toxoParams = params;
+		toxoParams.remove(orgName);
+		String[] arrayParams = getParams(toxoParams, calls[2], orgName, toxoModel);
 		Thread toxoThread = 
 		    new WdkQuery(toxoUrl, processName, queryName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
 		toxoThread.start();
@@ -193,9 +204,9 @@ public class ApiFedPlugin extends WsfPlugin {
 	return orgName;
     }
 
-    private String[] getParams (Map<String,String> params, String localOrgs, String orgParam)
+    private String[] getParams (Map<String,String> params, String localOrgs, String orgParam, String modelName)
     {
-    	String[] arrParams = new String[params.size()];
+    	String[] arrParams = new String[params.size()+1];
 	Iterator it = params.keySet().iterator();
 	int i = 0;
 	while(it.hasNext()){
@@ -208,6 +219,7 @@ public class ApiFedPlugin extends WsfPlugin {
 		}
 		i++;
 	}
+	arrParams[params.size()] = "SiteModel="+modelName;
 	return arrParams;
     }
     
