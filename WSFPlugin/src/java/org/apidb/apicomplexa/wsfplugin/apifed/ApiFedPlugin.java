@@ -2,8 +2,18 @@
  * 
  */
 package org.apidb.apicomplexa.wsfplugin.apifed;
+import java.io.*;
+
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Iterator;
+
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.xpath.XPath;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -32,6 +42,7 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String CRYPTO_MODEL = "CryptoModel";
     public static final String PLASMO_MODEL = "PlasmoModel";
     public static final String TOXO_MODEL = "ToxoModel";
+    public static final String MAPPING_FILE = "MappingFile";
 
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
@@ -50,6 +61,7 @@ public class ApiFedPlugin extends WsfPlugin {
     private String cryptoModel;
     private String plasmoModel;
     private String toxoModel;
+    private Document mapDoc = null;
 
     public ApiFedPlugin() throws WsfServiceException {
 	super(PROPERTY_FILE);
@@ -59,6 +71,76 @@ public class ApiFedPlugin extends WsfPlugin {
 	cryptoModel = getProperty(CRYPTO_MODEL);
 	plasmoModel = getProperty(PLASMO_MODEL);
 	toxoModel = getProperty(TOXO_MODEL);
+	String mapfile = getMapFilePath().concat(getProperty(MAPPING_FILE));
+	logger.info("Mapping File ========== " + mapfile);
+	
+	mapDoc = createMap(mapfile);
+	
+    }
+
+    //Mapping Functions
+
+
+    private String getMapFilePath(){
+	 String root = System.getProperty("webservice.home");
+        File rootDir;
+        if (root == null) {
+            // if the webservice.home is not specified, by default, we assume
+            // the Axis is installed under ${tomcat_home}/webapps
+            //root = System.getProperty("catalina.home");
+           root = System.getProperty("catalina.base");
+	   root = root+"/webapps/axis/WEB-INF/wsf-config/";
+        } else root = root + "WEB-INF/wsf-config/";
+    return root;
+    }
+
+    private Document createMap(String mapFile){
+	
+	logger.info("Creating The Maping Document");
+
+	Document doc = null;
+	try{
+	    doc = new SAXBuilder().build(new File(mapFile));
+	}catch (JDOMException e) {
+	    logger.info(e.toString());
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    logger.info(e.toString());
+	    e.printStackTrace();
+	}
+	if(doc != null)
+	logger.info("Mapping Document Created");
+	
+	return doc;
+    }
+
+    private String mapQuerySet(String querySet, String project){
+	Element querySetMapping = null;
+	if(mapDoc != null)
+	    logger.info("Im the Map!  Im the Map! I am the Map------" + mapDoc.toString());
+	querySetMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(querySet);
+	String componentQuerySet = querySetMapping.getAttributeValue(project);
+	logger.info("Component Value for " + querySet + " is " + componentQuerySet);
+	return componentQuerySet;
+    }
+
+    private String mapQuery(String querySet, String queryName, String project){
+	String xPath = "/FederationMapping/QuerySets/" + querySet + "/wsQueries/" + queryName;
+	logger.info(xPath);
+	Element queryMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(querySet).getChild("wsQueries").getChild(queryName);
+	String componentQuery = queryMapping.getAttributeValue(project);
+	logger.info("Component Value for " + queryName + " is " + componentQuery);
+	return componentQuery;
+    }
+    
+    private String mapParam(String querySet, String queryName, String paramName, String project){
+	String xPath = "/FederationMapping/QuerySets/" + querySet + "/wsQueries/" + queryName + "/Params/params." + paramName;
+	logger.info(xPath);
+	Element paramMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(querySet).getChild("wsQueries").
+	    getChild(queryName).getChild("Params").getChild("params."+paramName);
+	String componentParam = paramMapping.getAttributeValue(project);
+	logger.info("Component Value for " + paramName + " is " +componentParam);
+	return componentParam;
     }
 
     /*
@@ -109,11 +191,15 @@ public class ApiFedPlugin extends WsfPlugin {
 	
 	    String[] calls = {"","",""};
 	    String orgName = hasOrganism(params);
+	    String datasetName = hasDataset(params);
 	    //logger.info("--------------------orgName =====  " + orgName + " ------------------------");
 	    if(orgName != null){
 		String orgsString = params.get(orgName);
 		calls = getRemoteCalls(orgsString);
-	    } else{
+	    } else if(datasetName != null){	
+		String datasetString = params.get(datasetName);
+		calls = getRemoteCalls(datasetString);
+	    } else {
 		calls[0] = "doCrypto";
 	        calls[1] = "doPlasmo";
 	        calls[2] = "doToxo";
@@ -150,28 +236,67 @@ public class ApiFedPlugin extends WsfPlugin {
 	    Status plasmoThreadStatus = new Status(false);
 	    Status toxoThreadStatus = new Status(false);
 	   
+	    String apiQueryFullName = queryName.replace('.',':');
+	    String[] apiQueryNameArray = apiQueryFullName.split(":");
+	    String apiQuerySetName = apiQueryNameArray[0];
+	    String apiQueryName = apiQueryNameArray[1];
+
 	    //Call only the needed component sites
 	    if(calls[0].equals("")){cryptoThreadStatus.setDone(true);}
 	    else {
-		String[] arrayParams = getParams(params, calls[0], orgName, cryptoModel);
+		
+		String compQuerySetName = mapQuerySet(apiQuerySetName, cryptoModel);
+		String compQueryName = mapQuery(apiQuerySetName, apiQueryName, cryptoModel);
+		String compQueryFullName= "";
+		if(compQuerySetName.length()!=0 && compQueryName.length()!=0){ 
+		    compQueryFullName = compQuerySetName + "." + compQueryName;
+		}else{compQueryFullName = queryName;} 
+		//String[] arrayParams = getParams(params, calls[0], orgName, cryptoModel);
+		//String[] arrayParams = getParams(params, calls[0], orgName, cryptoModel, apiQuerySetName, apiQueryName);
+		String[] arrayParams = getParams(params, calls[0], orgName, datasetName, cryptoModel, apiQuerySetName, apiQueryName);
+
 		Thread cryptoThread = 
-		    new WdkQuery(cryptoUrl, processName, queryName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
+		    // new WdkQuery(cryptoUrl, processName, queryName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
+                       new WdkQuery(cryptoUrl, processName, compQueryFullName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
 		cryptoThread.start();
 	    }
 	    if(calls[1].equals("")){plasmoThreadStatus.setDone(true);}
 	    else {
-		String[] arrayParams = getParams(params, calls[1], orgName, plasmoModel);
+		
+		String compQuerySetName = mapQuerySet(apiQuerySetName, plasmoModel);
+		String compQueryName = mapQuery(apiQuerySetName, apiQueryName, plasmoModel);
+		String compQueryFullName= "";
+		if(compQuerySetName.length()!=0 && compQueryName.length()!=0){ 
+		    compQueryFullName = compQuerySetName + "." + compQueryName;
+		}else{compQueryFullName = queryName;} 
+		//String[] arrayParams = getParams(params, calls[1], orgName, plasmoModel);
+		//String[] arrayParams = getParams(params, calls[1], orgName, plasmoModel, apiQuerySetName, apiQueryName);
+		String[] arrayParams = getParams(params, calls[1], orgName, datasetName, plasmoModel, apiQuerySetName, apiQueryName);
+
 		Thread plasmoThread = 
-		    new WdkQuery(plasmoUrl, processName, queryName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
+		    // new WdkQuery(plasmoUrl, processName, queryName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
+		       new WdkQuery(plasmoUrl, processName, compQueryFullName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
 		plasmoThread.start();
 	    }
 	    if(calls[2].equals("")){toxoThreadStatus.setDone(true);}
 	    else {
+		
+		String compQuerySetName = mapQuerySet(apiQuerySetName, toxoModel);
+		String compQueryName = mapQuery(apiQuerySetName, apiQueryName, toxoModel);
+		String compQueryFullName= "";
+		if(compQuerySetName.length()!=0 && compQueryName.length()!=0){ 
+		    compQueryFullName = compQuerySetName + "." + compQueryName;
+		}else{compQueryFullName = queryName;} 
+		
 		Map<String,String> toxoParams = params;
 		toxoParams.remove(orgName);
-		String[] arrayParams = getParams(toxoParams, calls[2], orgName, toxoModel);
+		//String[] arrayParams = getParams(toxoParams, calls[2], orgName, toxoModel);
+		//String[] arrayParams = getParams(toxoParams, calls[2], orgName, toxoModel, apiQuerySetName, apiQueryName);
+		String[] arrayParams = getParams(toxoParams, calls[2], orgName, datasetName, toxoModel, apiQuerySetName, apiQueryName);
+
 		Thread toxoThread = 
-		    new WdkQuery(toxoUrl, processName, queryName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
+		    // new WdkQuery(toxoUrl, processName, queryName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
+		       new WdkQuery(toxoUrl, processName, compQueryFullName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
 		toxoThread.start();
 	    }
 	   
@@ -196,7 +321,7 @@ public class ApiFedPlugin extends WsfPlugin {
     {
 	String orgName = null;
 	for(String pName:p.keySet()){
-	    if(pName.indexOf("organism")!=-1){
+	    if(pName.indexOf("organism")!=-1 || pName.indexOf("Organism")!=-1){
 		orgName = pName;
 		break;
 	    }
@@ -204,6 +329,18 @@ public class ApiFedPlugin extends WsfPlugin {
 	return orgName;
     }
 
+    private String hasDataset(Map<String,String> p)
+    {
+	String dsName = null;
+	for(String pName:p.keySet()){
+	    if(pName.indexOf("Dataset")!=-1){
+		dsName = pName;
+		break;
+	    }
+	}
+	return dsName;
+    }
+    /************** This Function does not include the Mapping ************************************
     private String[] getParams (Map<String,String> params, String localOrgs, String orgParam, String modelName)
     {
     	String[] arrParams = new String[params.size()+1];
@@ -216,6 +353,33 @@ public class ApiFedPlugin extends WsfPlugin {
 		}else{
 		    String val = params.get(key);
 		    arrParams[i] = key+"="+val;
+		}
+		i++;
+	}
+	arrParams[params.size()] = "SiteModel="+modelName;
+	return arrParams;
+    }
+    ***************************************************************************/
+
+    private String[] getParams (Map<String,String> params, String localOrgs, String orgParam, String datasetParam, String modelName, String querySetName, String queryName)
+    {
+    	String[] arrParams = new String[params.size()+1];
+	Iterator it = params.keySet().iterator();
+	int i = 0;
+	while(it.hasNext()){
+		String key = (String)it.next();
+
+		String compKey = mapParam(querySetName, queryName, key,  modelName);
+		if(compKey.length()==0)
+		    compKey = key;
+
+		if(key.equals(orgParam)){
+		    arrParams[i] = compKey+"="+localOrgs;
+		}else if(key.equals(datasetParam)){
+		    arrParams[i] = compKey+"="+localOrgs;
+		}else{
+		    String val = params.get(key);
+		    arrParams[i] = compKey+"="+val;
 		}
 		i++;
 	}
