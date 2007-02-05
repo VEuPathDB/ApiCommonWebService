@@ -580,9 +580,11 @@ public class ApiFedPlugin extends WsfPlugin {
 	           
 	try {
             WsfService service = locator.getWsfService(new URL(url));
-         
+	    long start = System.currentTimeMillis();
             WsfResponse response = service.invoke(pluginName, queryName, params, cols);
-          
+	    long end = System.currentTimeMillis();
+
+            logger.info("Thread (" + url +") has returned results in " + ((end - start) / 1000.0) + " seconds."); 
 	    result.setMessage(response.getMessage());
             result.setAnswer(response.getResults());
 	    
