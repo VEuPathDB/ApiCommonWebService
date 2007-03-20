@@ -205,7 +205,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    Query q = qs.getQuery(queryName[1]);
 	    //logger.info("Query found : " + q.getFullName());
 	
-	    Map<String,Object> SOParams = convertParams(params,getParamsFromQuery(q));
+	    Map<String,Object> SOParams = convertParams(params,q.getParams());//getParamsFromQuery(q));
 
 	    //validateQueryParams(params,q);
 	    //logger.info("Parameters Validated...");
@@ -291,14 +291,48 @@ public class WdkQueryPlugin extends WsfPlugin {
 	return ret;
 	}
    
-    private Map<String,Object> convertParams(Map<String,String> p, String[] q)
-    {
+    /**   private Map<String,Object> convertParams(Map<String,String> p, String[] q)
+	  {
 	Map<String,Object> ret = new HashMap<String,Object>();
 	for (String key:p.keySet()){
 		Object o = p.get(key);
 		for (String param : q) {
 		    if (key.equals(param) || key.indexOf(param) != -1) {
 			ret.put(param, o);
+		    }
+		}
+	}
+	return ret;
+    }*/
+
+    private Map<String,Object> convertParams(Map<String,String> p, Param[] q){
+	Map<String,Object> ret = new HashMap<String,Object>();
+	for (String key:p.keySet()){
+		Object o = p.get(key);
+		for (Param param : q) {
+		    if (key.equals(param.getName()) || key.indexOf(param.getName()) != -1) {
+			if(param instanceof AbstractEnumParam){
+			    String valList = (String)o;
+			    String[] vals = valList.split(",");
+			    String newVals = "";
+			    for(String mystring : vals){
+				try{
+				    logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
+				if(validateSingleValues((AbstractEnumParam)param,mystring)){
+				    //ret.put(param.getName(), o);
+				    newVals = newVals + "," + mystring;
+				    logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " + mystring);
+				}
+				}catch(WdkModelException e){
+				    logger.info(e);
+				}
+			    }
+			    newVals = newVals.substring(1);
+			    logger.info("validated values string -------------" + newVals);
+			    ret.put(param.getName(), (Object)newVals);
+			}else{
+			    ret.put(param.getName(), o);
+			}
 		    }
 		}
 	}
@@ -450,6 +484,15 @@ public class WdkQueryPlugin extends WsfPlugin {
 	logger.info("------------DONE-------------");
     }
     
+    private boolean validateSingleValues (AbstractEnumParam p, String value) throws WdkModelException
+    {
+	String[] conVocab = p.getVocab();
+	// initVocabMap();
 
-
+	for(String v : conVocab){
+	    if(value.equals(v))
+		return true;
+	}
+	return false;
+    }
 }
