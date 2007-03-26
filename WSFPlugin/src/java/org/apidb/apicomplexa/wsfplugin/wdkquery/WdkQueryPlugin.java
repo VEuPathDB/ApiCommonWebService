@@ -140,19 +140,19 @@ public class WdkQueryPlugin extends WsfPlugin {
     {	
 	logger.info("------------Validating Columns---------------");
 	String[] reqColumns = getColumnsFromQuery(query);
-        Set<String> colSet = new HashSet<String>(orderedColumns.length);
-        for (String col : orderedColumns) {
-            colSet.add(col);
-        }
-        for (String col : reqColumns) {
-            if (!colSet.contains(col)) {
-                throw new WsfServiceException(
-                        "The required column is missing: " + col);
-            }
-        }
+        //Set<String> colSet = new HashSet<String>(orderedColumns.length);
+        //for (String col : orderedColumns) {
+        //    colSet.add(col);
+        //}
+	// for (String col : reqColumns) {
+        //    if (!colSet.contains(col)) {
+        //        throw new WsfServiceException(
+        //               "The required column is missing: " + col);
+        //    }
+        //}
         // cross check
-        colSet.clear();
-        colSet = new HashSet<String>(reqColumns.length);
+        //colSet.clear();
+        Set<String> colSet = new HashSet<String>(reqColumns.length);
         for (String col : reqColumns) {
             colSet.add(col);
         }
