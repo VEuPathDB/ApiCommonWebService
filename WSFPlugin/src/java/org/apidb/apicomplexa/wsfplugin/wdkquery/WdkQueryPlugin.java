@@ -311,7 +311,14 @@ public class WdkQueryPlugin extends WsfPlugin {
 		Object o = p.get(key);
 		for (Param param : q) {
 		    if (key.equals(param.getName()) || key.indexOf(param.getName()) != -1) {
-			if(param instanceof AbstractEnumParam){
+			if(param instanceof DatasetParam){
+			    String sig = (String)p.get("signature");
+			    String compId = sig+":"+o.toString();
+			    o = compId;
+			    logger.info("full input ======== "+compId);
+			    ret.put(param.getName(),o);
+			}
+			else if(param instanceof AbstractEnumParam){
 			    String valList = (String)o;
 			    String[] vals = valList.split(",");
 			    String newVals = "";
