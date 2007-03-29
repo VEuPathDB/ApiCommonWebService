@@ -250,8 +250,12 @@ public class WdkQueryPlugin extends WsfPlugin {
 		resultSize = -2;
             } catch(Exception ex){
 		logger.info("OTHERexception IN execute()" + ex.toString());
-		ex.printStackTrace();
-		resultSize = -1;
+		if(msg.contains("String index out of range"){
+		    resultSize = 0;
+		}else{
+		    ex.printStackTrace();
+		    resultSize = -1;
+		}
             }
 	String[][] responseT = null;    
 	if(componentResults == null) {
