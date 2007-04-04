@@ -83,6 +83,10 @@
        <fileset dir="${targetDir}/config"/>
     </copy>
 
+    <copy todir="${webappTargetDir}/WEB-INF/lib">
+       <fileset dir="${targetDir}/lib/java"/>
+    </copy>
+
   </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
