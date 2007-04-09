@@ -554,7 +554,13 @@ public class WuBlastPlugin extends BlastPlugin {
 	if ( warnings.length() != 0 ) footer.append( warnings.toString() );
         footer.append(line + newline);
         while ((line = in.readLine()) != null) {
-            footer.append(line + newline);
+	    if( line.contains("Database") || line.contains("Title") ) {
+		String[] singleDbs = line.split(";");
+		for (int i = 0; i < singleDbs.length; i++) {
+		    footer.append(singleDbs[i] + newline);
+		}
+	    }
+            else footer.append(line + newline);
         }
 
 	logger.info("\n\n\n--------------------------------------------\n\nWB prepareResult(): Information stored in Stringbuffers and tables, now copy info into results[][]\n\n");
