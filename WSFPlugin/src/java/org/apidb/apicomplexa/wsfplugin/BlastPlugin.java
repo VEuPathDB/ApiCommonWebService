@@ -92,8 +92,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         else timeout = Integer.parseInt(max);
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
-        useProjectId = (useProject != null && useProject
-                .equalsIgnoreCase("yes"));
+        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
 
         // get the regex for parsing scores from the tabular row
         scoreRegex = getProperty(FIELD_SCORE_REGEX);
@@ -182,6 +181,14 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX_PREFIX + dbType);
             organismRegex = getProperty(FIELD_ORGANISM_REGEX_PREFIX + dbType);
 
+            if (sourceIdRegex == null)
+                throw new WsfServiceException("The regular expression for "
+                        + FIELD_SOURCE_ID_REGEX_PREFIX + dbType
+                        + " is missing.");
+            if (organismRegex == null)
+                throw new WsfServiceException("The regular expression for "
+                        + FIELD_ORGANISM_REGEX_PREFIX + dbType + " is missing.");
+
             urlMapOthers = getProperty(FIELD_URL_MAP_OTHER + dbType);
             projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER + dbType);
 
@@ -204,7 +211,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
             // invoke the command
             String output = invokeCommand(command, timeout);
-            
+
             if (exitValue != 0)
                 throw new WsfServiceException("The invocation is failed: "
                         + output);
@@ -238,19 +245,19 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             } else if (dbType.toLowerCase().indexOf("translated") >= 0) {
                 bp = "tblastx";
             } else if ("proteins".equalsIgnoreCase(dbType)
-                       || "orfs".equalsIgnoreCase(dbType)) {
+                    || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "blastx";
             }
         } else if ("protein".equalsIgnoreCase(qType)) {
             if ("Transcripts".equalsIgnoreCase(dbType)
-                || "transcripts".equalsIgnoreCase(dbType)
-                || "ESTs".equalsIgnoreCase(dbType)
-                || "Genomic".equalsIgnoreCase(dbType)
-                || dbType.toLowerCase().indexOf("translated") >= 0
-                || "ESTs".equalsIgnoreCase(dbType)) {
+                    || "transcripts".equalsIgnoreCase(dbType)
+                    || "ESTs".equalsIgnoreCase(dbType)
+                    || "Genomic".equalsIgnoreCase(dbType)
+                    || dbType.toLowerCase().indexOf("translated") >= 0
+                    || "ESTs".equalsIgnoreCase(dbType)) {
                 bp = "tblastn";
             } else if ("proteins".equalsIgnoreCase(dbType)
-                       || "orfs".equalsIgnoreCase(dbType)) {
+                    || "orfs".equalsIgnoreCase(dbType)) {
                 bp = "blastp";
             }
         }
@@ -268,7 +275,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < organisms.length; i++) {
             // construct file path pattern
-            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$", organisms[i]);
+            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
+                    organisms[i]);
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
             sb.append(dataPath + "/" + path + " ");
         }
@@ -283,9 +291,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             // the match is located at group 1
             return new int[] { matcher.start(1), matcher.end(1) };
         } else {
-	    logger.warn("Couldn't find pattern \"" + regex + "\" in defline \"" + defline + "\"");
-	    return null;
-	}
+            logger.warn("Couldn't find pattern \"" + regex + "\" in defline \""
+                    + defline + "\"");
+            return null;
+        }
     }
 
     protected String insertIdUrl(String defline, String dbType) {
