@@ -53,7 +53,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.1.0";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -217,7 +217,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    
 	    // WS Query processing
 	    if(q instanceof WSQuery) {
-	    	//logger.info("Processing WSQuery ...");
+	    	logger.info("Processing WSQuery ...");
 		WSQuery wsquery = (WSQuery) q;
 		WSQueryInstance wsqi = (WSQueryInstance)wsquery.makeInstance();
 		wsqi.setValues(SOParams);
@@ -233,10 +233,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 		ResultFactory resultFactory = sqlquery.getResultFactory();
 		results = resultFactory.getResult(sqlqi);
 	    }
-	    //logger.info("Results set was filled");
+	    logger.info("Results set was filled");
 	    componentResults = results2StringArray(results);
-
-            //logger.info("Results have been processed ...");
+	    logger.info("Results have been processed ...1");
+      
 	    } catch(WdkModelException ex){
 		logger.info("WdkMODELexception in execute()" + ex.toString());
 		String msg = ex.toString();
@@ -263,17 +263,21 @@ public class WdkQueryPlugin extends WsfPlugin {
             }
 	String[][] responseT = null;    
 	if(componentResults == null) {
+	    // logger.info("Component Results = null!!!");
 	    responseT = new String[1][1];
 	    responseT[0][0] = "ERROR";
 	    if(resultSize > 0)
 		resultSize = 0;
 	}else {
+	    // logger.info("Comp-Result not null... getting proper columns");
+	    
 	    responseT = new String[componentResults.length][orderedColumns.length];
 	    for(int i = 0; i < componentResults.length; i++){
 	    	for(int j = 0; j < orderedColumns.length; j++){
 	    	     responseT[i][j] = componentResults[i][j];
 	    	}
 	    }
+	    //logger.info("FINAL RESULT CALCULATED");
 	}
 	if(resultSize > 0)
 	    resultSize = componentResults.length;
@@ -364,21 +368,26 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     private String[][] results2StringArray(ResultList result)throws WdkModelException
     {
-	int r = 0;
-	int c = 0;
-	StringBuffer sb = new StringBuffer();
-	result.write(sb);
-	String s =  sb.toString();
-	//logger.info("------------------- results2Array() : Results String = " + s + " s.length() == " + s.length());
-	if(s.length() == 0) return null;
-	String nl = System.getProperty("line.separator");
-	String[] rows = s.split(nl);
-	String[][] ans = new String[rows.length][];
-	for(String row:rows){
-	    ans[r] = row.split("\t"); 
-	    r++;
+	Column[] cols = result.getColumns();
+	List<String[]> rows = new LinkedList<String[]>();
+	while(result.next()){
+	    String[] values = new String[cols.length];
+	    for(int z = 0; z < cols.length; z++){
+		Object obj = result.getValueFromResult(cols[z].getName());
+		String val = null;
+		if(obj instanceof String) 
+		    val = (String)obj;
+		else if(obj instanceof char[]) 
+		    val = new String((char[]) obj);
+		else if(obj instanceof byte[]) 
+		    val = new String((byte[]) obj);
+		else val = obj.toString();
+		values[z] = val;
+	    }
+	    rows.add(values);
 	}
-	return ans;
+	String[][] arr = new String[rows.size()][];
+	return rows.toArray(arr);
     }
 
     private String[] getColumnsFromQuery(Query q)
