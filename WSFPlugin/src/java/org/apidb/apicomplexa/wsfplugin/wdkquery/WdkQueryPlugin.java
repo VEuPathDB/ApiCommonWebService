@@ -52,7 +52,8 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String PROPERTY_FILE = "wdkquery-config.xml";
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
- 
+    
+    public static final String VERSION = "1.0.0";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -173,6 +174,8 @@ public class WdkQueryPlugin extends WsfPlugin {
     protected String[][] execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException     
     {
+
+       	logger.info("WdkQueryPlugin Version : " + this.VERSION);
         //logger.info("Invoking WdkQueryPlugin......");
 	String[][] componentResults = null;
 	int resultSize = 1;
@@ -339,7 +342,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 				    logger.info(e);
 				}
 			    }
-			    newVals = newVals.substring(1);
+			    if(newVals.length() != 0) newVals = newVals.substring(1);
 			    logger.info("validated values string -------------" + newVals);
 			    ret.put(param.getName(), (Object)newVals);
 			}else{
