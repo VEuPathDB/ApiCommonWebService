@@ -53,7 +53,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.1.1";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -235,13 +235,15 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    }
 	    logger.info("Results set was filled");
 	    componentResults = results2StringArray(results);
-	    logger.info("Results have been processed ...1");
+	    logger.info("Results have been processed.... "+componentResults.length);
       
 	    } catch(WdkModelException ex){
 		logger.info("WdkMODELexception in execute()" + ex.toString());
 		String msg = ex.toString();
 		//if(msg.matches("Invalid value"){}
 		if(msg.contains("Invalid value") && msg.contains("parameter")){
+		    resultSize = 0;
+		}else if(msg.contains("Please choose value(s) for parameter")){
 		    resultSize = 0;
 		}else{
 		ex.printStackTrace();
@@ -254,12 +256,10 @@ public class WdkQueryPlugin extends WsfPlugin {
             } catch(Exception ex){
 		logger.info("OTHERexception IN execute()" + ex.toString());
 		String msg = ex.toString();
-		if(msg.contains("String index out of range")){
-		    resultSize = 0;
-		}else{
+	
 		    ex.printStackTrace();
 		    resultSize = -1;
-		}
+		
             }
 	String[][] responseT = null;    
 	if(componentResults == null) {
