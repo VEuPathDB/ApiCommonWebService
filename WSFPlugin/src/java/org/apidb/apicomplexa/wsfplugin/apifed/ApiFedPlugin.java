@@ -48,7 +48,7 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String TOXO_MODEL = "ToxoModel";
     public static final String MAPPING_FILE = "MappingFile";
 
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.1";
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
     public static final String PARAM_PARAMETERS = "Parameters";
@@ -326,6 +326,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    
 
 	    String[][] result = null;
+            logger.info("Entering Combine Results");
 	    result = combineResults(cryptoResult, plasmoResult, toxoResult, orderedColumns);
 	    return result; 
     }
@@ -426,12 +427,15 @@ public class ApiFedPlugin extends WsfPlugin {
 	 String[][] crypto = cryptoCR.getAnswer();
  	 String[][] plasmo = plasmoCR.getAnswer();
 	 String[][] toxo = toxoCR.getAnswer();
-	 
+	 logger.info("Answers moved to local Variables");
 	 //Determine the length of the new array
 	int numrows = 0;
-	if(crypto!=null && !crypto[0][0].equals("ERROR"))numrows = numrows + crypto.length;
-	if(plasmo!=null && !plasmo[0][0].equals("ERROR"))numrows = numrows + plasmo.length;
-	if(toxo!=null && !toxo[0][0].equals("ERROR"))numrows = numrows + toxo.length;
+	if(crypto!=null && crypto.length > 0 && !crypto[0][0].equals("ERROR"))numrows = numrows + crypto.length;
+        logger.info("Crypto total added .... "+ crypto.length);
+	if(plasmo!=null && plasmo.length > 0 && !plasmo[0][0].equals("ERROR"))numrows = numrows + plasmo.length;
+        logger.info("plasmo total added .... "+ plasmo.length);
+	if(toxo!=null && toxo.length > 0 && !toxo[0][0].equals("ERROR"))numrows = numrows + toxo.length;
+        logger.info("toxo total added ..... "+ toxo.length);
 	int i = 0;
 	String[][] combined = new String[numrows][cols.length + 1]; //add one column for the addition of projectId
 	
@@ -445,7 +449,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	}
 
 	//Add crypto result, if it is not empty, to the final results
-	if(crypto!=null){
+	if(crypto!=null && crypto.length > 0){
 	    message = "cryptodb:"+cryptoCR.getMessage();
 	    if(!crypto[0][0].equals("ERROR")){
 		for(String[] rec:crypto){
@@ -457,7 +461,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	}
 
 	//Add plasmo result, if it is not empty, to the final results
-	if(plasmo!=null){
+	if(plasmo!=null && plasmo.length > 0){
 	    if(message.length()!=0){message = message + ",plasmodb:" + plasmoCR.getMessage();}else{message = "plasmodb:"+plasmoCR.getMessage();}
 	    if(!plasmo[0][0].equals("ERROR")){
 		for(String[] rec:plasmo){
@@ -469,7 +473,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	}
 	
 	//Add toxo result, if it is not empty, to the final results
-	if(toxo!=null){
+	if(toxo!=null && toxo.length > 0){
 	    if(message.length()!=0){message = message + ",toxodb:" + toxoCR.getMessage();}else{message = "toxodb:"+toxoCR.getMessage();}
 	    if(!toxo[0][0].equals("ERROR")){
 		for(String[] rec:toxo){
