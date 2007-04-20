@@ -48,7 +48,7 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String TOXO_MODEL = "ToxoModel";
     public static final String MAPPING_FILE = "MappingFile";
 
-    public static final String VERSION = "1.0.1";
+    public static final String VERSION = "1.1.1";
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
     public static final String PARAM_PARAMETERS = "Parameters";
