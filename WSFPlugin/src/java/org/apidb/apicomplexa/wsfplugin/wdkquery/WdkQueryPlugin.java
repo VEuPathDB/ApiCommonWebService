@@ -206,7 +206,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    String[] queryName = invokeKey.split(":");
 	    QuerySet qs = model.getModel().getQuerySet(queryName[0]);
 	    Query q = qs.getQuery(queryName[1]);
-	    //logger.info("Query found : " + q.getFullName());
+	    logger.info("Query found : " + q.getFullName());
 	
 	    Map<String,Object> SOParams = convertParams(params,q.getParams());//getParamsFromQuery(q));
 
@@ -386,6 +386,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    }
 	    rows.add(values);
 	}
+        result.close();
+
 	String[][] arr = new String[rows.size()][];
 	return rows.toArray(arr);
     }
