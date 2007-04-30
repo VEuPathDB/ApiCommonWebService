@@ -20,6 +20,8 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.SocketTimeoutException;
 import java.rmi.RemoteException;
 import java.util.LinkedHashMap;
 
@@ -253,7 +255,9 @@ public class ApiFedPlugin extends WsfPlugin {
 	    //Call only the needed component sites
 	    if(calls[0].equals("")){cryptoThreadStatus.setDone(true);}
 	    else {
-		
+		boolean goodConn = true;
+	
+
 		String compQuerySetName = mapQuerySet(apiQuerySetName, cryptoModel);
 		String compQueryName = mapQuery(apiQuerySetName, apiQueryName, cryptoModel);
 		String compQueryFullName= "";
@@ -272,8 +276,12 @@ public class ApiFedPlugin extends WsfPlugin {
 
 		Thread cryptoThread = 
 	                    new WdkQuery(cryptoUrl, processName, compQueryFullName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
+		// long start = System.currentTimeMillis();
 		cryptoThread.start();
+		//   if(system.currentTimeMillis() > start + (300 * 1000)) cryptoThread.
 	    }
+
+		
 	    if(calls[1].equals("")){plasmoThreadStatus.setDone(true);}
 	    else {
 		
@@ -308,7 +316,7 @@ public class ApiFedPlugin extends WsfPlugin {
 		}else{compQueryFullName = queryName;} 
 		
 		Map<String,String> toxoParams = params;
-                if(orgName != null) toxoParams.remove(orgName);
+		//   if(orgName != null) toxoParams.remove(orgName);
 	
 		String[] arrayParams = getParams(toxoParams, calls[2], orgName, datasetName, toxoModel, apiQuerySetName, apiQueryName);
 
@@ -430,17 +438,17 @@ public class ApiFedPlugin extends WsfPlugin {
 	 logger.info("Answers moved to local Variables");
 	 //Determine the length of the new array
 	int numrows = 0;
-	if(crypto!=null){
-	    if(crypto.length > 0 && !crypto[0][0].equals("ERROR")) numrows = numrows + crypto.length;
+	//	if(crypto!=null){
+	    if(crypto!=null && crypto.length > 0 && !crypto[0][0].equals("ERROR")) {numrows = numrows + crypto.length;
 	    logger.info("Crypto total added .... "+ crypto.length);
         }
-	if(plasmo!=null){
-	    if(plasmo.length > 0 && !plasmo[0][0].equals("ERROR"))numrows = numrows + plasmo.length;
+    //	if(plasmo!=null){
+	    if(plasmo!=null && plasmo.length > 0 && !plasmo[0][0].equals("ERROR")){numrows = numrows + plasmo.length;
 	    logger.info("plasmo total added .... "+ plasmo.length);
 	}
        
-	if(toxo!=null){
-	    if(toxo.length > 0 && !toxo[0][0].equals("ERROR"))numrows = numrows + toxo.length;
+//	if(toxo!=null){
+	    if(toxo!=null && toxo.length > 0 && !toxo[0][0].equals("ERROR")){numrows = numrows + toxo.length;
             logger.info("toxo total added ..... "+ toxo.length);
 	}
 	int i = 0;
@@ -456,40 +464,49 @@ public class ApiFedPlugin extends WsfPlugin {
 	}
 
 	//Add crypto result, if it is not empty, to the final results
-	if(crypto!=null){ if(crypto.length > 0){
-	    message = "cryptodb:"+cryptoCR.getMessage();
-	    if(!crypto[0][0].equals("ERROR")){
-		for(String[] rec:crypto){
-		    combined[i] = rec;
-		    combined[i] = insertProjectId(combined[i], projectIndex, "cryptodb");
-		    i++;
+	if(crypto!=null){ 
+	    if(crypto.length >= 0)
+		message = "cryptodb:"+cryptoCR.getMessage();
+	    if(crypto.length > 0){ 
+		if(!crypto[0][0].equals("ERROR")){
+		    for(String[] rec:crypto){
+			combined[i] = rec;
+			combined[i] = insertProjectId(combined[i], projectIndex, "cryptodb");
+			i++;
+		    }
 		}
 	    }
-	}}
+	}
 
 	//Add plasmo result, if it is not empty, to the final results
-	if(plasmo!=null){ if(plasmo.length > 0){
-	    if(message.length()!=0){message = message + ",plasmodb:" + plasmoCR.getMessage();}else{message = "plasmodb:"+plasmoCR.getMessage();}
-	    if(!plasmo[0][0].equals("ERROR")){
-		for(String[] rec:plasmo){
-		    combined[i] = rec;
-		    combined[i] = insertProjectId(combined[i], projectIndex, "plasmodb");
-		    i++;
+	if(plasmo!=null){ 
+	    if(plasmo.length >= 0)
+		if(message.length()!=0){message = message + ",plasmodb:" + plasmoCR.getMessage();}else{message = "plasmodb:"+plasmoCR.getMessage();}
+	    if(plasmo.length > 0){
+		if(!plasmo[0][0].equals("ERROR")){
+		    for(String[] rec:plasmo){
+			combined[i] = rec;
+			combined[i] = insertProjectId(combined[i], projectIndex, "plasmodb");
+			i++;
+		    }
 		}
 	    }
-	}}
+	}
 	
 	//Add toxo result, if it is not empty, to the final results
-	if(toxo!=null){if(toxo.length > 0){
-	    if(message.length()!=0){message = message + ",toxodb:" + toxoCR.getMessage();}else{message = "toxodb:"+toxoCR.getMessage();}
-	    if(!toxo[0][0].equals("ERROR")){
-		for(String[] rec:toxo){
-		    combined[i] = rec;
-		    combined[i] = insertProjectId(combined[i], projectIndex, "toxodb");
-		    i++;
+	if(toxo!=null){
+	    if(toxo.length >= 0)
+		if(message.length()!=0){message = message + ",toxodb:" + toxoCR.getMessage();}else{message = "toxodb:"+toxoCR.getMessage();}
+	    if(toxo.length > 0){
+		if(!toxo[0][0].equals("ERROR")){
+		    for(String[] rec:toxo){
+			combined[i] = rec;
+			combined[i] = insertProjectId(combined[i], projectIndex, "toxodb");
+			i++;
+		    }
 		}
 	    }
-	}}
+	}
 	return combined;
     }
     
@@ -598,6 +615,7 @@ public class ApiFedPlugin extends WsfPlugin {
  
 	public void run()
 	{
+	    String errorMessage = "Thread ran and exited Correctly";
 	    logger.info("The Thread is running.................." + url);
 	    WsfServiceServiceLocator locator = new WsfServiceServiceLocator();
 	           
@@ -613,14 +631,18 @@ public class ApiFedPlugin extends WsfPlugin {
 	    
 	    } catch (MalformedURLException ex) {
 	    	ex.printStackTrace();
+		errorMessage = "MalformedURLException Occured : Thread exited";
             } catch (ServiceException ex) {
             	ex.printStackTrace();
+		errorMessage = "ServiceException Occured : Thread exited";
             } catch (RemoteException ex) {
 	    	ex.printStackTrace();
+		errorMessage = "RemoteException Occured : Thread exited";
             }
-	status.setDone(true);
-	logger.info("The Thread is stopped(" +url+").................. : " + status.getDone());
-	return;
+	    finally {
+		status.setDone(true);
+		logger.info("The Thread is stopped(" +url+").................. : " + status.getDone() + "  Error Message = " + errorMessage);
+		return;}
 	}
     }
 
