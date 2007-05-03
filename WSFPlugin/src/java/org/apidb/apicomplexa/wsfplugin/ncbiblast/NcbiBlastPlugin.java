@@ -60,9 +60,19 @@ public class NcbiBlastPlugin extends BlastPlugin {
         cmds.add(outFile.getAbsolutePath());
 
         for (String param : params.keySet()) {
+
+	    if(param.equals("-filter")) {
+		cmds.add("-F");
+		if (params.get(param).equals("yes"))
+		    cmds.add("T");
+		else
+		    cmds.add("F");
+	    }
+
             if (!param.equals("-p") && !param.equals("-d")
-                    && !param.equals("-i") && !param.equals("-o")) {
-                cmds.add(param);
+                    && !param.equals("-i") && !param.equals("-o") && !param.equals("-filter")) {
+		logger.info("HOLAHOLAHOLA: param is: " + param + "\n");
+		cmds.add(param);
                 cmds.add(params.get(param));
             }
         }
