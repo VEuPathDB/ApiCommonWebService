@@ -369,9 +369,14 @@ public class WuBlastPlugin extends BlastPlugin {
 	cmds.add("O=" + outFile.getAbsolutePath());
  
 	for (String param : params.keySet()) {
-            cmds.add(param);
-            cmds.add(params.get(param));
-        }
+	    if( param.equals("filter") && params.get(param).equals("no") ) {}
+	    else {
+		if( param.equals("filter") && params.get(param).equals("yes") )
+		    params.put(param, "seg");
+		cmds.add(param);
+		cmds.add(params.get(param));
+	    }
+	}
 	logger.info("\n\nWB prepareParameters(): " + blastDbs + " inferred from (" + dbType + ", '" + dbOrgs
 		     + "')");
         logger.info("\n\nWB prepareParameters(): " + blastApp + " inferred from (" + qType + ", " + dbType
