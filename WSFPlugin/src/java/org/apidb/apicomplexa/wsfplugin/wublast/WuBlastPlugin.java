@@ -314,12 +314,12 @@ public class WuBlastPlugin extends BlastPlugin {
             throw new WsfServiceException(ex);
         } 
 	
-
+	/*
 	finally {
             if (seqFile != null) seqFile.delete();
             if (outFile != null) outFile.delete();
         }
-
+	*/
 	//remove the finally part if you want to have access to the temporary files
 
     }
@@ -367,15 +367,15 @@ public class WuBlastPlugin extends BlastPlugin {
         cmds.add(blastDbs);
 	cmds.add(seqFile.getAbsolutePath());
 	cmds.add("O=" + outFile.getAbsolutePath());
- 
+
 	for (String param : params.keySet()) {
-	    if( param.equals("filter") && params.get(param).equals("no") ) {}
-	    else {
-		if( param.equals("filter") && params.get(param).equals("yes") )
+	    if( !( param.contains("filter") && params.get(param).equals("no") ) ) {
+		if( param.contains("filter") && params.get(param).equals("yes") )
 		    params.put(param, "seg");
 		cmds.add(param);
 		cmds.add(params.get(param));
 	    }
+
 	}
 	logger.info("\n\nWB prepareParameters(): " + blastDbs + " inferred from (" + dbType + ", '" + dbOrgs
 		     + "')");
