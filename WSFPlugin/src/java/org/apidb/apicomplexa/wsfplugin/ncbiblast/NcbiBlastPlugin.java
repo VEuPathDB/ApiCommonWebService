@@ -71,7 +71,6 @@ public class NcbiBlastPlugin extends BlastPlugin {
 
             if (!param.equals("-p") && !param.equals("-d")
                     && !param.equals("-i") && !param.equals("-o") && !param.equals("-filter")) {
-		logger.info("HOLAHOLAHOLA: param is: " + param + "\n");
 		cmds.add(param);
                 cmds.add(params.get(param));
             }
