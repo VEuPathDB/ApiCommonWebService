@@ -3,10 +3,10 @@
 <properties>
 <comment>The configuration file for MotifSearch WSF Plugin.</comment>
 <entry key="DataDir">(your flatfile database dir)</entry>
-<entry key="UseProjectId">(Yes/No, whether to use project id or not)</entry>
+<entry key="UseProjectId">No</entry>
 
-<entry key="SourceIdRegex">(The regular expression to extract source ID)</entry>
-<entry key="OrganismRegex">(The regular expression to extract organism name)</entry>
+<entry key="SourceIdRegex"><![CDATA[^[^\|]*\|[^\|]*\|([^\|]*)\|]]></entry>
+<entry key="OrganismRegex"><![CDATA[^>([^_\|]+?)\_]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
