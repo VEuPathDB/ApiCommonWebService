@@ -14,28 +14,29 @@
 <entry key="ScoreRegex"><![CDATA[\s+(\S+)$]]>></entry>
 
 <!-- the matching part should be the group#1 in the first match, eg. ^\S+?\|\S+?\|(\S+?)\| --> 
-<entry key="SourceIdRegex_transcripts"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_transcripts"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_Transcripts"><![CDATA[[^\|]+?\|[^\|]*\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_Transcripts"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_genomic"><![CDATA[^\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_genomic"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_genomic"><![CDATA[[^\|]+?\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_genomic"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_dna"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_dna"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_dna"><![CDATA[[^\|]+?\|[^\|]*\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_dna"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_proteins"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_proteins"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_proteins"><![CDATA[[^\|]+?\|[^\|]*\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_proteins"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_CDS Translated"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_CDS Translated"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_Transcripts Translated"><![CDATA[[^\|]+?\|[^\|]*\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_Transcripts Translated"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_est"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_est"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_orfs"><![CDATA[[^\|]+?\|[^\|]*\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_orfs"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="SourceIdRegex_orfs"><![CDATA[^\S+?\|\S+?\|(\S+?)\|]]></entry>
-<entry key="OrganismRegex_orfs"><![CDATA[>?(\S+?)_]]></entry>
+<entry key="SourceIdRegex_ESTs"><![CDATA[^[^\|]+?\|([^\|]+?)\|]]></entry>
+<entry key="OrganismRegex_ESTs"><![CDATA[>?([^_]+?)_]]></entry>
 
-<entry key="ScoreRegex"><![CDATA[the regular expression for parsing out the score in the tabular row, which will be linked to the corresponding alignment block]]></entry>
+<entry key="ScoreRegex"><![CDATA[\s+([0-9.eE-]+)\s*$]]></entry>
+
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 <entry key="UrlMap_Plasmodium_transcripts"><![CDATA[http://localhost:8080/plasmodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=&primary_key=$$source_id$$]]></entry>
