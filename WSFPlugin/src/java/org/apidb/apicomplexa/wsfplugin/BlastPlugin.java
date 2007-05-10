@@ -207,7 +207,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             // prepare the arguments
             String[] command = prepareParameters(params, seqFile, outFile,
                     dbType);
-            logger.debug("Command prepared: " + printArray(command));
+            logger.info("Command prepared: " + printArray(command));
 
             // invoke the command
             String output = invokeCommand(command, timeout);

@@ -332,10 +332,12 @@ public class WdkQueryPlugin extends WsfPlugin {
 			}
 			else if(param instanceof AbstractEnumParam){
 			    String valList = (String)o;
-			    if(param.getMultiPick()){ 
-				String[] vals = valList.split(",");
+			    String[] vals;
+			    Boolean multipick = ((AbstractEnumParam)param).getMultiPick();
+			    if( multipick ){ 
+				vals = valList.split(",");
 			    }else {
-				String[] vals = new String[1]; 
+				vals = new String[1]; 
 				vals[0] = valList;
 			    }
 			    String newVals = "";
@@ -452,20 +454,20 @@ public class WdkQueryPlugin extends WsfPlugin {
     
     private WdkModelBean loadModel()
         { //throws MalformedURLException, WdkModelException {	
-	    //logger.info("_______________________________________________________________________");
+	    logger.info("_______________________________________________________________________");
 	    WdkModel wdkModel = null;
-	    //logger.info("_______________________________________________________________________");
+	    logger.info("_______________________________________________________________________");
 	    try{
-		//CheckFiles();
+		CheckFiles();
 	    wdkModel = ModelXmlParser.parseXmlFile(
 	    m_modelFile.toURL(), m_modelPropFile.toURL(), m_schemaFile.toURL(), 
 	    m_xmlSchemaFile.toURL(), m_configFile.toURL());
 	    }catch(WdkModelException e){logger.info("ERROR  ERROR : -------" + e.toString());}
 	     catch(MalformedURLException e){logger.info("ERROR  ERROR : -------" + e.toString());}
-	    //logger.info("_______________________________________________________________________");
+	    logger.info("_______________________________________________________________________");
         if(wdkModel != null ) logger.info("Model is not Null!!! it is " + wdkModel.getName());
 	WdkModelBean model = new WdkModelBean(wdkModel);
-        //logger.info("---------Model Loading Completed-----------");
+        logger.info("---------Model Loading Completed-----------");
 	return model;
 	
     }//end of loadmodel
@@ -482,6 +484,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		loadConfig(modelName, gus_homes[i]);		
 		//logger.info("------------Config Loaded---------------");
 		logger.info(m_modelFile.toURL().toString()+"\n"+m_modelPropFile.toURL().toString()+"\n"+m_configFile.toURL().toString()+"\n"+m_schemaFile.toURL().toString()+"\n"+m_xmlSchemaFile.toURL().toString());
+	
 		WdkModelBean mb = loadModel();
 		logger.info("===================Model Loaded Was  " + mb.getModel().getName());
 		modelName2Model.put(modelName,mb);
