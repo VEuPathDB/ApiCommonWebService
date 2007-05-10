@@ -522,7 +522,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 	// initVocabMap();
 
 	for(String v : conVocab){
-	    if(value.equals(v))
+	    if(value.equalsIgnoreCase(v))
 		return true;
 	}
 	return false;
