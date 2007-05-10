@@ -53,7 +53,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -332,20 +332,26 @@ public class WdkQueryPlugin extends WsfPlugin {
 			}
 			else if(param instanceof AbstractEnumParam){
 			    String valList = (String)o;
-			    String[] vals = valList.split(",");
+			    if(param.getMultiPick()){ 
+				String[] vals = valList.split(",");
+			    }else {
+				String[] vals = new String[1]; 
+				vals[0] = valList;
+			    }
 			    String newVals = "";
 			    for(String mystring : vals){
-				try{
-				    logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
+			    try{
+				logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
 				if(validateSingleValues((AbstractEnumParam)param,mystring)){
 				    //ret.put(param.getName(), o);
 				    newVals = newVals + "," + mystring;
 				    logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " + mystring);
 				}
-				}catch(WdkModelException e){
-				    logger.info(e);
+			   }catch(WdkModelException e){
+				logger.info(e);
 				}
 			    }
+			    			 
 			    if(newVals.length() != 0) newVals = newVals.substring(1);
 			    logger.info("validated values string -------------" + newVals);
 			    ret.put(param.getName(), (Object)newVals);
