@@ -247,6 +247,10 @@ public class ApiFedPlugin extends WsfPlugin {
 	    Status plasmoThreadStatus = new Status(false);
 	    Status toxoThreadStatus = new Status(false);
 	   
+	    Thread cryptoThread = null;
+	    Thread plasmoThread = null;
+	    Thread toxoThread = null;
+
 	    String apiQueryFullName = queryName.replace('.',':');
 	    String[] apiQueryNameArray = apiQueryFullName.split(":");
 	    String apiQuerySetName = apiQueryNameArray[0];
@@ -274,7 +278,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
 		String[] arrayParams = getParams(cryptoParams, calls[0], orgName, datasetName, cryptoModel, apiQuerySetName, apiQueryName);
 
-		Thread cryptoThread = 
+		cryptoThread = 
 	                    new WdkQuery(cryptoUrl, processName, compQueryFullName, arrayParams, componentColumns, cryptoResult, cryptoThreadStatus);
 		// long start = System.currentTimeMillis();
 		cryptoThread.start();
@@ -301,7 +305,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
 		String[] arrayParams = getParams(plasmoParams, calls[1], orgName, datasetName, plasmoModel, apiQuerySetName, apiQueryName);
 
-		Thread plasmoThread = 
+		plasmoThread = 
 		       new WdkQuery(plasmoUrl, processName, compQueryFullName, arrayParams, componentColumns, plasmoResult, plasmoThreadStatus);
 		plasmoThread.start();
 	    }
@@ -320,14 +324,20 @@ public class ApiFedPlugin extends WsfPlugin {
 	
 		String[] arrayParams = getParams(toxoParams, calls[2], orgName, datasetName, toxoModel, apiQuerySetName, apiQueryName);
 
-		Thread toxoThread = 
+		toxoThread = 
 		    new WdkQuery(toxoUrl, processName, compQueryFullName, arrayParams, componentColumns, toxoResult, toxoThreadStatus);
 		toxoThread.start();
 	    }
-	   
+
+	    long tTime = System.currentTimeMillis();
 	    while(!(cryptoThreadStatus.getDone() && plasmoThreadStatus.getDone() && toxoThreadStatus.getDone())){
 		try{
-		  Thread.sleep(1000);
+		  Thread.sleep(500);
+		  if((System.currentTimeMillis() - tTime) > 3 * (60 * 1000)) {
+		      if(!cryptoThreadStatus.getDone()){cryptoThread.stop(); cryptoThreadStatus.setDone(true); logger.info("cryptoThread killed!!!");}
+		      if(!plasmoThreadStatus.getDone()) {plasmoThread.stop(); plasmoThreadStatus.setDone(true); logger.info("plasmoThread killed!!!");}
+		      if(!toxoThreadStatus.getDone()) {toxoThread.stop(); toxoThreadStatus.setDone(true); logger.info("toxoThread killed!!!");}
+		  }
 		continue;
 		}catch(InterruptedException e){}
 	    }
@@ -624,7 +634,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    long start = System.currentTimeMillis();
             WsfResponse response = service.invoke(pluginName, queryName, params, cols);
 	    long end = System.currentTimeMillis();
-
+	    
             logger.info("Thread (" + url +") has returned results in " + ((end - start) / 1000.0) + " seconds."); 
 	    result.setMessage(response.getMessage());
             result.setAnswer(response.getResults());
