@@ -30,6 +30,7 @@ import org.gusdb.wdk.model.implementation.WSQueryInstance;
 import org.gusdb.wdk.model.implementation.WSResultList;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.Column;
+import org.gusdb.wdk.model.user.Dataset;
 
 import java.net.URL;
 import org.gusdb.wdk.model.user.User;
@@ -53,7 +54,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.3";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -63,12 +64,13 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String COLUMN_RETURN = "Response";
     
     //Member Variables
-    private WdkModelBean[] models         = null;
+    private WdkModelBean[] models       = null;
+    private WdkModelBean model  = null;
     private static File m_modelFile     = null;
     private static File m_modelPropFile = null;
     private static File m_schemaFile    = null;
     private static File m_configFile    = null;
-    private static File m_xmlSchemaFile    = null;
+    private static File m_xmlSchemaFile = null;
     private static String[] modelNames;
     private static String[] gus_homes;
     private static String siteName;
@@ -186,7 +188,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 	}
 	String siteModel = params.get(SITE_MODEL);
 	params.remove(SITE_MODEL);
-	WdkModelBean model = modelName2Model.get(siteModel);
+       	model = modelName2Model.get(siteModel);
 	//logger.info("QueryName = "+ invokeKey);
 
 	//Map<String,Object>SOParams = convertParams(params);
@@ -317,6 +319,20 @@ public class WdkQueryPlugin extends WsfPlugin {
 	return ret;
     }*/
 
+    private String convertDatasetId2DatasetChecksum(String sig_id) throws Exception
+    {
+	String[] parts = sig_id.split(":");
+	String sig = parts[0];
+	String id = parts[1];
+	UserFactory userfactory = model.getModel().getUserFactory();
+	User user = userfactory.loadUserBySignature(sig);
+	Integer idInt = new Integer(id);
+	Dataset dataset = user.getDataset(idInt.intValue());
+	String checksum = dataset.getChecksum();
+	String sig_checksum = sig + ":" + checksum;
+	return sig_checksum;
+    }
+
     private Map<String,Object> convertParams(Map<String,String> p, Param[] q){
 	Map<String,Object> ret = new HashMap<String,Object>();
 	for (String key:p.keySet()){
@@ -324,11 +340,17 @@ public class WdkQueryPlugin extends WsfPlugin {
 		for (Param param : q) {
 		    if (key.equals(param.getName()) || key.indexOf(param.getName()) != -1) {
 			if(param instanceof DatasetParam){
+			    logger.info("Working on a DatasetParam");
+			    try{
 			    String sig = (String)p.get("signature");
 			    String compId = sig+":"+o.toString();
+			    compId = convertDatasetId2DatasetChecksum(compId);
 			    o = compId;
 			    logger.info("full input ======== "+compId);
 			    ret.put(param.getName(),o);
+			    }catch(Exception e){
+				logger.info(e);
+			    }
 			}
 			else if(param instanceof AbstractEnumParam){
 			    String valList = (String)o;
@@ -349,7 +371,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 				    newVals = newVals + "," + mystring;
 				    logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " + mystring);
 				}
-			   }catch(WdkModelException e){
+			   }catch(Exception e){
 				logger.info(e);
 				}
 			    }
