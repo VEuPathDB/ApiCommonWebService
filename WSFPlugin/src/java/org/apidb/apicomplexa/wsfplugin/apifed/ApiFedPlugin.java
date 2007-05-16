@@ -333,10 +333,30 @@ public class ApiFedPlugin extends WsfPlugin {
 	    while(!(cryptoThreadStatus.getDone() && plasmoThreadStatus.getDone() && toxoThreadStatus.getDone())){
 		try{
 		  Thread.sleep(500);
-		  if((System.currentTimeMillis() - tTime) > 3 * (60 * 1000)) {
-		      if(!cryptoThreadStatus.getDone()){cryptoThread.stop(); cryptoThreadStatus.setDone(true); logger.info("cryptoThread killed!!!");}
-		      if(!plasmoThreadStatus.getDone()) {plasmoThread.stop(); plasmoThreadStatus.setDone(true); logger.info("plasmoThread killed!!!");}
-		      if(!toxoThreadStatus.getDone()) {toxoThread.stop(); toxoThreadStatus.setDone(true); logger.info("toxoThread killed!!!");}
+		  //Changing the Next line will change the Timeout for the ApiFedPlugin... it is in Minutes
+                  int timeOutInMinutes = 2;
+		  if((System.currentTimeMillis() - tTime) > timeOutInMinutes * (60 * 1000)) {
+		      if(!cryptoThreadStatus.getDone()){
+			  cryptoThread.stop(); 
+			  cryptoThreadStatus.setDone(true);
+			  cryptoResult.setAnswer(new String[0][0]);
+			  cryptoResult.setMessage("-1"); 
+			  logger.info("cryptoThread killed!!!");
+		      }
+		      if(!plasmoThreadStatus.getDone()) {
+			  plasmoThread.stop(); 
+			  plasmoThreadStatus.setDone(true);
+			  plasmoResult.setAnswer(new String[0][0]);
+			  plasmoResult.setMessage("-1"); 
+			  logger.info("plasmoThread killed!!!");
+		      }
+		      if(!toxoThreadStatus.getDone()) {
+			  toxoThread.stop(); 
+			  toxoThreadStatus.setDone(true); 
+			  toxoResult.setAnswer(new String[0][0]);
+			  toxoResult.setMessage("-1"); 
+			  logger.info("toxoThread killed!!!");
+		      }
 		  }
 		continue;
 		}catch(InterruptedException e){}
