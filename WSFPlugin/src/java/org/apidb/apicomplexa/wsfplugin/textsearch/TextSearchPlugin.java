@@ -11,8 +11,11 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,10 +27,6 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  * @created Aug 23, 2006
  */
 public class TextSearchPlugin extends WsfPlugin {
-
-    private class Match {
-        public String geneID;
-    }
 
     private String scriptDir;
 
@@ -42,6 +41,7 @@ public class TextSearchPlugin extends WsfPlugin {
     public static final String PARAM_WHOLE_WORDS = "whole_words";
 
     public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_DATASETS = "Datasets";
 
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
@@ -87,7 +87,7 @@ public class TextSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID };
+        return new String[] { COLUMN_GENE_ID, COLUMN_DATASETS };
     }
 
     /*
@@ -120,62 +120,58 @@ public class TextSearchPlugin extends WsfPlugin {
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
 
+	Map<String, Set<String>> matches = new HashMap<String, Set<String>>();
+
 	if (species_name == null) {
 	    species_name = "";
 	}
 
-	StringBuffer cmd = new StringBuffer("(");
-
 	// iterate through datasets
 	String[] ds = datasets.split(",");
 	for (String dataset : ds) {
-	    cmd.append(scriptDir + "/filterByValue -n " + maxPvalue + " < " + dataDir
-		       + "/" + dataset + " | " + scriptDir + "/filterByValue -s '"
-		       + species_name + "' | egrep " + caseIndependent + " '" + textExpression
-		       + "';");
-	}
+	    String datasetName = dataset.replaceAll("^.*_", "").replaceAll(".txt", "");
+	    String cmd = scriptDir + "/filterByValue -n " + maxPvalue + " < " + dataDir
+		+ "/" + dataset + " | " + scriptDir + "/filterByValue -s '"
+		+ species_name + "' | egrep " + caseIndependent + " '" + textExpression
+		+ " | cut -f1 ";
 
-       	cmd.append(") | cut -f1 | sort -u");
-	//	cmd.append(")");
+	    logger.info("\ncommand line = \"" + cmd + "\"\n\n");
 
-	logger.info("\ncommand line = \"" + cmd + "\"\n\n");
+	    // make it a string array to fool exec() into working
+	    //	String[] cmds = new String[] {cmd.toString(), "|",  "cut", "-f1",  "|", "sort", "-u"};
+	    String[] cmds = new String[] {"bash", "-c", cmd};
 
-	// make it a string array to fool exec() into working
-	//	String[] cmds = new String[] {cmd.toString(), "|",  "cut", "-f1",  "|", "sort", "-u"};
-	String[] cmds = new String[] {"bash", "-c", cmd.toString()};
+	    // run it
+	    try {
+		String output = invokeCommand(cmds, 10 * 60);
+		//System.out.println("output is " + output);
+		logger.debug("output is " + output);
+		//            long end = System.currentTimeMillis();
+		//            logger.info("Invocation takes: " + ((end - start) / 1000.0)
+		//                    + " seconds");
 
-	// run it
-	try {
-            String output = invokeCommand(cmds, 10 * 60);
-	    //System.out.println("output is " + output);
-	    logger.debug("output is " + output);
-	    //            long end = System.currentTimeMillis();
-	    //            logger.info("Invocation takes: " + ((end - start) / 1000.0)
-	    //                    + " seconds");
+		if (exitValue != 0)
+		    throw new WsfServiceException("The invocation is failed: "
+						  + output);
 
-            if (exitValue != 0)
-                throw new WsfServiceException("The invocation is failed: "
-                        + output);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(output.getBytes())));
+		String nameIn;
+		while ((nameIn = reader.readLine()) != null) {
 
-	    List<Match> matches = new ArrayList<Match>();
+		    logger.debug("match GeneID: " + nameIn);
 
-	    BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(output.getBytes())));
-	    String nameIn;
-	    while ((nameIn = reader.readLine()) != null) {
+		    if (!matches.containsKey(nameIn)) {
+			matches.put(nameIn, new HashSet<String>());
+		    }
+		    matches.get(nameIn).add(datasetName);
+		}
 
-		logger.debug("match GeneID: " + nameIn);
-
-		Match match = new Match();
-		match.geneID = nameIn;
-		matches.add(match);
+	    } catch (Exception ex) {
+		throw new WsfServiceException(ex);
 	    }
-
-	    // construct results
-            return prepareResult(matches, orderedColumns);
-	} catch (Exception ex) {
-            throw new WsfServiceException(ex);
-        }
-
+	}
+	// construct results
+	return prepareResult(matches, orderedColumns);
     }
 
     private String rewriteExpression(String expression, String whole_words) {
@@ -201,40 +197,23 @@ public class TextSearchPlugin extends WsfPlugin {
 
     }
 
-    private String[][] prepareResult(List<Match> matches, String[] cols) {
+    private String[][] prepareResult(Map<String, Set<String>> matches, String[] cols) {
         String[][] result = new String[matches.size()][cols.length];
         // create an column order map
         Map<String, Integer> orders = new HashMap<String, Integer>();
         for (int i = 0; i < cols.length; i++)
             orders.put(cols[i], i);
 
-        for (int i = 0; i < matches.size(); i++) {
-            Match match = matches.get(i);
 
-            result[i][orders.get(COLUMN_GENE_ID)] = match.geneID;
+	ArrayList <String> sortedIds = new ArrayList<String>(matches.keySet());
+	Collections.sort(sortedIds);
+
+        for (int i = 0; i < sortedIds.size(); i++) {
+            String id = sortedIds.get(i);
+            result[i][orders.get(COLUMN_GENE_ID)] = id;
+            result[i][orders.get(COLUMN_DATASETS)] = matches.get(id).toString();
         }
         return result;
     }
 
-    private String[][] prepareDummyResult(List<Match> matches, String[] cols) {
-        String[][] result = new String[1][cols.length];
-        // create an column order map
-        Map<String, Integer> orders = new HashMap<String, Integer>();
-        for (int i = 0; i < cols.length; i++)
-            orders.put(cols[i], i);
-
-
-        result[0][orders.get(COLUMN_GENE_ID)] = "PF13_0021";
-
-        return result;
-    }
-
-    private String extractField(String defline, String regex) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(defline);
-        if (matcher.find()) {
-            // the match is located at group 1
-            return matcher.group(1);
-        } else return null;
-    }
 }
