@@ -212,7 +212,7 @@ public class TextSearchPlugin extends WsfPlugin {
             String id = sortedIds.get(i);
             result[i][orders.get(COLUMN_GENE_ID)] = id;
             String fields = matches.get(id).toString();
-            result[i][orders.get(COLUMN_DATASETS)] = fields.substring(1, fields.length());
+            result[i][orders.get(COLUMN_DATASETS)] = fields.substring(1, fields.length() - 1);
         }
         return result;
     }
