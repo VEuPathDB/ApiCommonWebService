@@ -211,7 +211,8 @@ public class TextSearchPlugin extends WsfPlugin {
         for (int i = 0; i < sortedIds.size(); i++) {
             String id = sortedIds.get(i);
             result[i][orders.get(COLUMN_GENE_ID)] = id;
-            result[i][orders.get(COLUMN_DATASETS)] = matches.get(id).toString();
+            String fields = matches.get(id).toString();
+            result[i][orders.get(COLUMN_DATASETS)] = fields.substring(1, fields.length());
         }
         return result;
     }
