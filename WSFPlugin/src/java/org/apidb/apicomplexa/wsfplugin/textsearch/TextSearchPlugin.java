@@ -193,7 +193,8 @@ public class TextSearchPlugin extends WsfPlugin {
 	    }
 	}
 
-	String[][] replacement = { {".", "\\."}, {"/", "\\/"}, {"|", "\\|"}, {"*", ".*"} };
+	String[][] replacement = { {"\\.", "\\\\."}, {"/", "\\\\/"},
+                                   {"\\|", "\\\\|"}, {"\\*", ".*"} };
         for (int i = 0; i < replacement.length; i++)
             newExpression = newExpression.replaceAll(replacement[i][0], replacement[i][1]);
 
