@@ -34,7 +34,7 @@ public class TextSearchPlugin extends WsfPlugin {
 
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
-    public static final String PARAM_CASE_INDEPENDENT = "case_independent";
+    // public static final String PARAM_CASE_INDEPENDENT = "case_independent";
     public static final String PARAM_DATASETS = "datasets";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
     public static final String PARAM_SPECIES_NAME = "species_name";
@@ -116,9 +116,11 @@ public class TextSearchPlugin extends WsfPlugin {
         String datasets = params.get(PARAM_DATASETS);
 	String whole_words = params.get(PARAM_WHOLE_WORDS);
         String textExpression = rewriteExpression(params.get(PARAM_TEXT_EXPRESSION), whole_words);
-        String caseIndependent = params.get(PARAM_CASE_INDEPENDENT);
 	String maxPvalue = params.get(PARAM_MAX_PVALUE);
 	String species_name = params.get(PARAM_SPECIES_NAME);
+
+        // String caseIndependent = params.get(PARAM_CASE_INDEPENDENT);
+        String caseIndependent = "-i";  // always case-independent
 
 	Map<String, Set<String>> matches = new HashMap<String, Set<String>>();
 
@@ -190,6 +192,10 @@ public class TextSearchPlugin extends WsfPlugin {
 		newExpression = "	.*" + expression;
 	    }
 	}
+
+	String[][] replacement = { {".", "\\."}, {"/", "\\/"}, {"|", "\\|"}, {"*", ".*"} };
+        for (int i = 0; i < replacement.length; i++)
+            newExpression = newExpression.replaceAll(replacement[i][0], replacement[i][1]);
 
         logger.debug("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
 
