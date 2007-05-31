@@ -177,26 +177,26 @@ public class TextSearchPlugin extends WsfPlugin {
     }
 
     private String rewriteExpression(String expression, String whole_words) {
-	String newExpression;
-
-	if (expression.substring(0, 1).equals("^")) {
-	    if (whole_words.equals("true")){
-                newExpression = "	" + expression.substring(1) + "[^[:alnum:]]";
-	    } else {
-		newExpression = "	" + expression.substring(1);
-	    }
-	} else {
-	    if (whole_words.equals("true")){
-		newExpression = "[^[:alnum:]]" + expression + "[^[:alnum:]]";
-	    } else {
-		newExpression = "	.*" + expression;
-	    }
-	}
+	String newExpression = expression;;
 
 	String[][] replacement = { {"\\.", "\\\\."}, {"/", "\\\\/"},
                                    {"\\|", "\\\\|"}, {"\\*", ".*"} };
         for (int i = 0; i < replacement.length; i++)
             newExpression = newExpression.replaceAll(replacement[i][0], replacement[i][1]);
+
+	if (newExpression.substring(0, 1).equals("^")) {
+	    if (whole_words.equals("true")){
+                newExpression = "	" + newExpression.substring(1) + "[^[:alnum:]]";
+	    } else {
+		newExpression = "	" + newExpression.substring(1);
+	    }
+	} else {
+	    if (whole_words.equals("true")){
+		newExpression = "[^[:alnum:]]" + newExpression + "[^[:alnum:]]";
+	    } else {
+		newExpression = "	.*" + newExpression;
+	    }
+	}
 
         logger.debug("rewrote \"" + expression + "\" to \"" + newExpression + "\"");
 
