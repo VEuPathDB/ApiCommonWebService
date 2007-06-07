@@ -50,7 +50,7 @@ public class ApiFedPlugin extends WsfPlugin {
     public static final String TOXO_MODEL = "ToxoModel";
     public static final String MAPPING_FILE = "MappingFile";
 
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.4";
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
     public static final String PARAM_PARAMETERS = "Parameters";
@@ -667,7 +667,7 @@ public class ApiFedPlugin extends WsfPlugin {
 		errorMessage = "ServiceException Occured : Thread exited";
             } catch (RemoteException ex) {
 	    	ex.printStackTrace();
-		errorMessage = "RemoteException Occured : Thread exited";
+		errorMessage = "RemoteException Occured : Thread exited" + ex.getCause();
             }
 	    finally {
 		status.setDone(true);
