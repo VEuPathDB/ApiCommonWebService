@@ -54,7 +54,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "1.1.3";
+    public static final String VERSION = "1.1.4";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -193,7 +193,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 
 	//Map<String,Object>SOParams = convertParams(params);
 	//logger.info("Parameters were processed");
-
+	Integer[] colindicies = new Integer[orderedColumns.length];
 	try {
 	    
 
@@ -216,6 +216,16 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    //logger.info("Parameters Validated...");
 	    validateQueryColumns(orderedColumns,q);
 	    //logger.info("Columns Validated...");
+	    
+	    // Get the indicies of the correct columns for the component Query
+	    
+	    int i = 0;
+	    for(String oCol : orderedColumns){
+		int value = findColumnIndex(q, oCol);
+		Integer iValue = new Integer(value);
+		colindicies[i] = iValue;
+		i++;
+	    }
 	    
 	    // WS Query processing
 	    if(q instanceof WSQuery) {
@@ -264,7 +274,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 		
             }
 	String[][] responseT = null;    
-	if(componentResults == null) {
+
+	//Error condition
+
+        if(componentResults == null) {
 	    // logger.info("Component Results = null!!!");
 	    responseT = new String[1][1];
 	    responseT[0][0] = "ERROR";
@@ -272,21 +285,38 @@ public class WdkQueryPlugin extends WsfPlugin {
 		resultSize = 0;
 	}else {
 	    // logger.info("Comp-Result not null... getting proper columns");
+	  
+	    // Successfull Query... need to ensure that the correct columns are rerieved from the component site
+	    // use the Column name to Find the correct columns to return instead of assumeing them to be in order.. oops
 	    
 	    responseT = new String[componentResults.length][orderedColumns.length];
 	    for(int i = 0; i < componentResults.length; i++){
-	    	for(int j = 0; j < orderedColumns.length; j++){
-	    	     responseT[i][j] = componentResults[i][j];
+	    	for(int j = 0; j < colindicies.length; j++){
+		    int index = colindicies[j].intValue();
+	    	    responseT[i][j] = componentResults[i][index];
 	    	}
 	    }
 	    //logger.info("FINAL RESULT CALCULATED");
 	}
+
+	// Empty Result 
+
 	if(resultSize > 0)
 	    resultSize = componentResults.length;
 	message = String.valueOf(resultSize);
 	return responseT;
     }
-       
+    
+    private int findColumnIndex (Query q, String colName){
+	Column[] cols = q.getColumns();
+	int index = 0;
+	for(Column col : cols){
+	    if(col.getName().equalsIgnoreCase(colName)) return index;
+	    else index++;
+	}
+	return -1;
+    }
+
     private Map<String,Object> convertParams(String[] p){
 	Map<String,Object> ret = new HashMap<String,Object>();
 	for (String param:p){
