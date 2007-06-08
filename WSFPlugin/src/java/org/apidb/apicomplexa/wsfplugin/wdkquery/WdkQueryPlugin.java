@@ -257,7 +257,9 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    resultSize = 0;
 		}else if(msg.contains("Please choose value(s) for parameter")){
 		    resultSize = 0;
-		}else{
+		}else if{msg.contains("datasets value '' has an error: Missing the value")){
+		    resultSize = 0;
+		}else {
 		ex.printStackTrace();
 		resultSize = -1;
 		}
