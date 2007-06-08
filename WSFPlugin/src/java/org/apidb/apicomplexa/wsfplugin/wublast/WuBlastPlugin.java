@@ -66,7 +66,7 @@ public class WuBlastPlugin extends BlastPlugin {
     private static final String URL_MAP_PREFIX = "UrlMap_";
     private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others_";
     private static final String PROJECT_MAP_PREFIX = "ProjectMap_";
-    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX + "Others";
+    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX + "Others_";
 
     // in BlastPlugin some are protected instead of private so they can be used in a derived class
     private String appPath;
@@ -264,8 +264,13 @@ public class WuBlastPlugin extends BlastPlugin {
 
 	    // BlastPlugin uses dbType instead
 	    organismRegex = getProperty(FIELD_ORGANISM_REGEX_PREFIX + suffix);
+
             urlMapOthers = getProperty(FIELD_URL_MAP_OTHER + suffix);
-            projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER + suffix);
+	    //logger.info("\n\nWB execute(): urlMapOthers is: " + urlMapOthers + "\n\n");
+
+            projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
+	    //logger.info("\n\nWB execute(): projectMapOthers is: " + projectMapOthers + "\n\n");
+
 	    sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX_PREFIX + suffix);
 
 	    // Attempt to use same config file as Crypto
@@ -284,6 +289,9 @@ public class WuBlastPlugin extends BlastPlugin {
             out.flush();
             out.close();
 
+
+	  
+
             // prepare the arguments
             String[] command = prepareParameters(params, seqFile, outFile, dbType);
 	    logger.info("WB execute(): Command prepared: " + printArray(command));
@@ -299,7 +307,8 @@ public class WuBlastPlugin extends BlastPlugin {
                         + output);
 	    */
 
-            // if the invocation succeeds, prepare the result; otherwise,
+
+	    // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
             logger.info("WB execute(): calling prepareResult()\n\n");
             String[][] result = prepareResult(orderedColumns, outFile, dbType);
@@ -377,10 +386,8 @@ public class WuBlastPlugin extends BlastPlugin {
 	    }
 
 	}
-	logger.info("\n\nWB prepareParameters(): " + blastDbs + " inferred from (" + dbType + ", '" + dbOrgs
-		     + "')");
-        logger.info("\n\nWB prepareParameters(): " + blastApp + " inferred from (" + qType + ", " + dbType
-		     + ")");
+	logger.info("\n\nWB prepareParameters(): " + blastDbs + " inferred from (" + dbType + ", '" + dbOrgs + "')");
+        logger.info("\n\nWB prepareParameters(): " + blastApp + " inferred from (" + qType + ", " + dbType  + ")");
         String[] cmdArray = new String[cmds.size()];
         cmds.toArray(cmdArray);
         return cmdArray;
@@ -406,6 +413,8 @@ public class WuBlastPlugin extends BlastPlugin {
             columns.put(orderedColumns[i], i);
         }
 
+
+
         // open output file, and read it
 	// Header; if there is a  WARNING before the line "Sequences", it will be added to the header
         String line;
@@ -427,6 +436,9 @@ public class WuBlastPlugin extends BlastPlugin {
 	    return new String[0][columns.size()];
 	}
 
+
+
+
         // Tabular Rows; which starts after the ONE empty line
         line = in.readLine(); // skip an empty line
 
@@ -440,22 +452,24 @@ public class WuBlastPlugin extends BlastPlugin {
 
 	// Loop on Tabular Rows
         while ((line = in.readLine()) != null) {
-	    logger.debug("\nWB prepareResult() Unless no hits, this should be a tabular row line: " + line + "\n");
+	    logger.info("\nWB prepareResult() Unless no hits, this should be a tabular row line: " + line + "\n");
 
 
             if (line.trim().length() == 0) {
-		logger.info("\nWB prepareResult() Line length 0!!, we finished with tabular rows \n -------------------------\n");
+		logger.debug("\nWB prepareResult() Line length 0!!, we finished with tabular rows \n -------------------------\n");
 		break;}
 	    
 	    // insert bookmark: link score to alignment block name=#counter
 	    line = insertLinkToBlock(line,counter);
 
+logger.info("WB prepareResult(): \nif dbType is not ORF, to insert URL in the line: " + line + "\n");
 	    // insert link to gene page, in source_id, only if dbType IS NOT ORF
 	    if ( !dbType.contains("ORF") ) line = insertUrl(line,dbType);
 
 	    counterstring = counter.toString();
 	    rows.put(counterstring, line);
 	    counter++;
+
         }//end while
 
 	// We need to deal with a possible WARNING between tabular rows and alignments: move it to header
@@ -539,8 +553,11 @@ public class WuBlastPlugin extends BlastPlugin {
 		    alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
 		}
 
+logger.info("WB prepareResult(): alignments: to insert URL in: " + line + "\n");
 		// Insert link to gene page, in source_id	   
 		line = insertUrl(line,dbType);
+
+
 
 		// Insert <a name="source_id"></a> in the beginning of the line		
 		// line = "<a name=\"" + hit_sourceId + "\"></a>" + line;
@@ -670,9 +687,13 @@ public class WuBlastPlugin extends BlastPlugin {
     // SAME AS IN BLASTPLUGIN
     // organism is the hit_organism, from defline: includes string in first position only until _
     protected String getProjectId(String organism) {
+
         String mapKey = PROJECT_MAP_PREFIX + organism;
+logger.info("\n\nWB getProjectId() mapKey is: *" + mapKey + "*\n");
         String projectId = getProperty(mapKey);
+logger.info("\n\nWB getProjectId() projectId is: " + projectId + "\n");
         if (projectId == null) projectId = projectMapOthers;
+	//logger.info("\n\nWB getProjectId() if projectId was null, now it is: " + projectId + "\n");
         return projectId;
     }
 
@@ -690,14 +711,20 @@ public class WuBlastPlugin extends BlastPlugin {
     
 
     private String insertUrl(String defline, String dbType) {
-	logger.debug("\n\nWB insertUrl() defline is: " + defline + "\n");
-	logger.debug("\n\nWB insertUrl() dbType is: " + dbType + "\n");
+	//logger.info("\n\nWB insertUrl() defline is: " + defline);
+	//logger.info("\n\nWB insertUrl() dbType is: " + dbType + "\n");
 
         // extract organism from the defline
 	String hit_sourceId = extractField(defline, sourceIdRegex);
+	//logger.info("\n\nWB insertUrl() hit_sourceId : " + hit_sourceId + "\n");
 	String hit_organism = extractField(defline, organismRegex);
+	//logger.info("\n\nWB insertUrl() hit_organism : " + hit_organism + "\n");
+
 	String hit_projectId = getProjectId(hit_organism);
+	//logger.info("\n\nWB insertUrl() hit_projectId : " + hit_projectId + "\n");
+
 	String linkedSourceId = getSourceUrl(hit_organism,hit_projectId,hit_sourceId,dbType);
+
 
 	// replace the url into the defline
 	Pattern pattern = Pattern.compile(sourceIdRegex);
@@ -713,6 +740,8 @@ public class WuBlastPlugin extends BlastPlugin {
 	    sb.append(defline.substring(end));
 	    return sb.toString();
 	} else return defline;
+
+
     }
     
 
@@ -721,9 +750,11 @@ public class WuBlastPlugin extends BlastPlugin {
         String sourceUrl = sourceId + " - (no link)";   
 	String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-        //logger.info("mapkey=" + mapkey + ", mapurl=" + mapurl);
+        logger.info("\n\nWB getSourceUrl(): mapkey=" + mapkey + ", mapurl=" + mapurl + "\n");
 
 	if (mapurl == null) mapurl = urlMapOthers; // use default url
+	//logger.info("\n\nWB getSourceUrl() if it was null, mapurl=" + mapurl + "\n");
+
 	mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
 	mapurl = mapurl.trim().replaceAll("\\$\\$project_id\\$\\$", projectId);
 	sourceUrl = ("<a href=\"" + mapurl + "\" >" + sourceId + "</a>");
