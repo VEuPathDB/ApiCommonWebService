@@ -153,11 +153,18 @@ public class ApiFedPlugin extends WsfPlugin {
     }
     
     private String mapParam(String querySet, String queryName, String paramName, String project){
+
+
+
 	String xPath = "/FederationMapping/QuerySets/" + querySet + "/wsQueries/" + queryName + "/Params/params." + paramName;
 
 	Element paramMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(querySet).getChild("wsQueries").
 	    getChild(queryName).getChild("Params").getChild("params."+paramName);
+
+
+
 	String componentParam = paramMapping.getAttributeValue(project);
+	//logger.info("componentParamt: " + componentParam + "\n");
 
 	return componentParam;
     }
@@ -423,6 +430,7 @@ public class ApiFedPlugin extends WsfPlugin {
 		String key = (String)it.next();
 		logger.info("Param == "+key+"  Values == "+params.get(key));
 		String compKey = mapParam(querySetName, queryName, key,  modelName);
+
 		if(compKey.length()==0)
 		    compKey = key;
 
