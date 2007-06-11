@@ -456,7 +456,7 @@ public class WuBlastPlugin extends BlastPlugin {
 
 
             if (line.trim().length() == 0) {
-		logger.debug("\nWB prepareResult() Line length 0!!, we finished with tabular rows \n -------------------------\n");
+		logger.info("\nWB prepareResult(): Line length 0!!, we finished with tabular rows \n -------------------------\n");
 		break;}
 	    
 	    // insert bookmark: link score to alignment block name=#counter
@@ -474,7 +474,7 @@ logger.info("WB prepareResult(): \nif dbType is not ORF, to insert URL in the li
 
 	// We need to deal with a possible WARNING between tabular rows and alignments: move it to header
         line = in.readLine(); // skip an empty line
-	// logger.info("\nWB prepareResult() This line is supposed to be empty or could have a WARNING or keyword NONE: " + line+"\n");
+	logger.info("\nWB prepareResult() This line is supposed to be empty or could have a WARNING or keyword NONE: " + line+"\n");
 	header.append(newline + line + newline);
 
 	if ( line.indexOf("NONE") >= 0 )    {
@@ -484,13 +484,13 @@ logger.info("WB prepareResult(): \nif dbType is not ORF, to insert URL in the li
 
 	if (line.trim().startsWith("WARNING")) {
 	    line = in.readLine(); // get next line
-	    //logger.info("\nWB prepareResult() This line is continuation of warning line: " + line+"\n");
+	    logger.info("\nWB prepareResult() This line is continuation of warning line: " + line+"\n");
             header.append(line + newline);
 	    line = in.readLine(); // get next line
-	    //logger.info("\nWB prepareResult() This line is supposed to be empty: " + line+"\n");
+	    logger.info("\nWB prepareResult() This line is supposed to be empty: " + line+"\n");
             header.append(line + newline);
 	    line = in.readLine(); // get next line
-	    //logger.info("\nWB prepareResult() This line is supposed to be empty: " + line+"\n");
+	    logger.info("\nWB prepareResult() This line is supposed to be empty: " + line+"\n");
 	}
 
 
@@ -507,7 +507,7 @@ logger.info("WB prepareResult(): \nif dbType is not ORF, to insert URL in the li
 	    // found a warning before parameters
             if (line.trim().startsWith("WARNING")) {
 		
-		logger.debug("\nWB prepareResult() Found WARNING: " + line + "\n");
+		logger.info("\nWB prepareResult() Found WARNING: " + line + "\n");
 		warnings.append(line + newline);
 		line = in.readLine(); // get next line
 		warnings.append(line + newline);
@@ -530,7 +530,7 @@ logger.info("WB prepareResult(): \nif dbType is not ORF, to insert URL in the li
 
             // reach a new start of alignment block
             if (line.length() > 0 && line.charAt(0) == '>') {
-		logger.info("\n\n\n-----------------\n\n\nWB prepareResult() This should be a new block: " + line + "\n");
+		logger.info("\n\n\n-----------------\nWB prepareResult() This should be a new block: " + line + "\n");
 
                 // output the previous block, if have
                 if (alignment != null) {
