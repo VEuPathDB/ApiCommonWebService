@@ -255,7 +255,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		//if(msg.matches("Invalid value"){}
 		if(msg.contains("Invalid value") && msg.contains("parameter")){
 		    resultSize = 0;
-		}else if(msg.contains("Please choose value(s) for parameter")){
+		}else if(msg.contains("No value supplied for param")){
 		    resultSize = 0;
 		}else if(msg.contains("datasets value '' has an error: Missing the value")){
 		    resultSize = 0;
