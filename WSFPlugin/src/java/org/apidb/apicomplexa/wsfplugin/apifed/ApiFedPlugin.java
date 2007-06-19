@@ -670,12 +670,15 @@ public class ApiFedPlugin extends WsfPlugin {
 	    } catch (MalformedURLException ex) {
 	    	ex.printStackTrace();
 		errorMessage = "MalformedURLException Occured : Thread exited";
+                result.setMessage("-1");
             } catch (ServiceException ex) {
             	ex.printStackTrace();
 		errorMessage = "ServiceException Occured : Thread exited";
+                result.setMessage("-1");
             } catch (RemoteException ex) {
 	    	ex.printStackTrace();
 		errorMessage = "RemoteException Occured : Thread exited" + ex.getCause();
+                result.setMessage("-2");
             }
 	    finally {
 		status.setDone(true);
