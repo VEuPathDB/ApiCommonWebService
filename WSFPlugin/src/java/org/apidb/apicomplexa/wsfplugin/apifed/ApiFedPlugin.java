@@ -30,6 +30,11 @@ import org.gusdb.wsf.client.WsfResponse;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
 
+import org.apache.axis.MessageContext;
+
+import javax.servlet.ServletContext;
+import javax.servlet.Servlet;
+
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
@@ -75,6 +80,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
     public ApiFedPlugin() throws WsfServiceException {
 	super(PROPERTY_FILE);
+	//super();
 	
 	//String urlList = getProperty(URLS);
 	//urls = urlList.split(",");
@@ -105,15 +111,21 @@ public class ApiFedPlugin extends WsfPlugin {
     // }
 
     private String getMapFilePath(){
-	 String root = System.getProperty("webservice.home");
-        File rootDir;
-        if (root == null) {
+	//String root = System.getProperty("webservice.home");
+	MessageContext msgContext = MessageContext.getCurrentContext();
+	ServletContext servletContext = ((Servlet) msgContext.getProperty(org.apache.axis.transport.http.HTTPConstants.MC_HTTP_SERVLET)).getServletConfig().getServletContext();
+	String root = servletContext.getRealPath("/");
+        //File rootDir;
+        //if (root == null) {
             // if the webservice.home is not specified, by default, we assume
             // the Axis is installed under ${tomcat_home}/webapps
             //root = System.getProperty("catalina.home");
-           root = System.getProperty("catalina.base");
-	   root = root+"/webapps/axis/WEB-INF/wsf-config/";
-        } else root = root + "WEB-INF/wsf-config/";
+        //   root = System.getProperty("catalina.base");
+	//   root = root+"/webapps/axis/WEB-INF/wsf-config/";
+        //} else 
+	root = root + "WEB-INF/wsf-config/";
+	logger.info("Mapping File Path == " + root);
+	//rootDir = new File(root);
     return root;
     }
 
@@ -153,18 +165,11 @@ public class ApiFedPlugin extends WsfPlugin {
     }
     
     private String mapParam(String querySet, String queryName, String paramName, String project){
-
-
-
 	String xPath = "/FederationMapping/QuerySets/" + querySet + "/wsQueries/" + queryName + "/Params/params." + paramName;
 
 	Element paramMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(querySet).getChild("wsQueries").
 	    getChild(queryName).getChild("Params").getChild("params."+paramName);
-
-
-
 	String componentParam = paramMapping.getAttributeValue(project);
-	//logger.info("componentParamt: " + componentParam + "\n");
 
 	return componentParam;
     }
@@ -430,7 +435,6 @@ public class ApiFedPlugin extends WsfPlugin {
 		String key = (String)it.next();
 		logger.info("Param == "+key+"  Values == "+params.get(key));
 		String compKey = mapParam(querySetName, queryName, key,  modelName);
-
 		if(compKey.length()==0)
 		    compKey = key;
 
@@ -670,15 +674,12 @@ public class ApiFedPlugin extends WsfPlugin {
 	    } catch (MalformedURLException ex) {
 	    	ex.printStackTrace();
 		errorMessage = "MalformedURLException Occured : Thread exited";
-                result.setMessage("-1");
             } catch (ServiceException ex) {
             	ex.printStackTrace();
 		errorMessage = "ServiceException Occured : Thread exited";
-                result.setMessage("-1");
             } catch (RemoteException ex) {
 	    	ex.printStackTrace();
 		errorMessage = "RemoteException Occured : Thread exited" + ex.getCause();
-                result.setMessage("-2");
             }
 	    finally {
 		status.setDone(true);
