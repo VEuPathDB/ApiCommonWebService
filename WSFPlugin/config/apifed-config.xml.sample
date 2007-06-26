@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-<properties>
-<comment>The configuration file for MotifSearch WSF Plugin.</comment>
-<entry key="CryptoURL">(URL of the WsfService that Cryptodb.org uses)</entry>
-<entry key="PlasmoURL">(URL of the WsfService that Plasmodb.org uses)</entry>
-<entry key="ToxoURL">(URL of the WsfService that Toxodb.org uses)</entry>
-</properties>
+<Config>
+  <Sites>
+    <model name="cryptoModel"
+           projectId="cryptodb"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="(?:^C$|^C\.?\w*\s+(?:hominis|parvum)(\s+annotated proteins)?)" />
+    <model name="plasmoDbModel"
+           projectId="plasmodb"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="(?:^P$|^P\.?\w*\s+(?:falciparum|vivax|berghei|yoelii|chabaudi|knowlesi)(\s+annotated proteins)?)" />
+    <model name="toxoDbModel" 
+           projectId="toxodb"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="(?:^T$|^T\.?\w*\s+(?:gondii)(\s+annotated proteins)?)" />
+  </Sites>
+  <MappingFile name="QueryMap.xml"/>
+  <Timeout minutes="2"/>
+</Config>
