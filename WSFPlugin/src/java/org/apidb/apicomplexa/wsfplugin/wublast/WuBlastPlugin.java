@@ -323,12 +323,12 @@ public class WuBlastPlugin extends BlastPlugin {
             throw new WsfServiceException(ex);
         } 
 	
-	/*
+
 	finally {
             if (seqFile != null) seqFile.delete();
             if (outFile != null) outFile.delete();
         }
-	*/
+
 	//remove the finally part if you want to have access to the temporary files
 
     }
