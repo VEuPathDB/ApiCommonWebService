@@ -204,17 +204,34 @@ public class ApiFedPlugin extends WsfPlugin {
 	doAll = false;
 	logger.info("ApiFedPlugin Version : " + this.VERSION);
 	initSites();
-	    String orgName = hasOrganism(params);
-	    String datasetName = hasDataset(params);
-	    if(orgName != null){
-		String orgsString = params.get(orgName);
-		getRemoteCalls(orgsString);
-	    } else if(datasetName != null){	
-		String datasetString = params.get(datasetName);
-		getRemoteCalls(datasetString);
-	    } else {
+
+
+            //Spliting the QueryName up for Mapping
+	    String apiQueryFullName = queryName.replace('.',':');
+	    String[] apiQueryNameArray = apiQueryFullName.split(":");
+	    String apiQuerySetName = apiQueryNameArray[0];
+	    String apiQueryName = apiQueryNameArray[1];
+
+
+	    //Determine if Query is Parameter, Attribute, or PrimaryKey Query
+
+	    if(apiQuerySetName.contains("Params")){
 		doAll = true;
 		getRemoteCalls(doAll);
+	    }else{
+
+		String orgName = hasOrganism(params);
+		String datasetName = hasDataset(params);
+		if(orgName != null){
+		    String orgsString = params.get(orgName);
+		    getRemoteCalls(orgsString);
+		} else if(datasetName != null){	
+		    String datasetString = params.get(datasetName);
+		    getRemoteCalls(datasetString);
+		} else {
+		    doAll = true;
+		    getRemoteCalls(doAll);
+		}
 	    }
 
 	    String query = "";	    
@@ -241,11 +258,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    for(Thread thread:compThreads)
 		thread = null;
 	    
-	    //Spliting the QueryName up for Mapping
-	    String apiQueryFullName = queryName.replace('.',':');
-	    String[] apiQueryNameArray = apiQueryFullName.split(":");
-	    String apiQuerySetName = apiQueryNameArray[0];
-	    String apiQueryName = apiQueryNameArray[1];
+	  
 
 	    //Preparing and executing the propriate component sites for this Query
 	    logger.info("invoking the web services");
