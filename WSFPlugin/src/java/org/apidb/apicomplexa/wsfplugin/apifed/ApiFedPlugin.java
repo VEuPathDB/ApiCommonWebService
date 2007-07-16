@@ -212,7 +212,9 @@ public class ApiFedPlugin extends WsfPlugin {
 	    String apiQuerySetName = apiQueryNameArray[0];
 	    String apiQueryName = apiQueryNameArray[1];
 
-
+        String orgName = null;
+        String datasetName = null;
+        
 	    //Determine if Query is Parameter, Attribute, or PrimaryKey Query
 
 	    if(apiQuerySetName.contains("Params")){
@@ -220,8 +222,8 @@ public class ApiFedPlugin extends WsfPlugin {
 		getRemoteCalls(doAll);
 	    }else{
 
-		String orgName = hasOrganism(params);
-		String datasetName = hasDataset(params);
+		orgName = hasOrganism(params);
+		datasetName = hasDataset(params);
 		if(orgName != null){
 		    String orgsString = params.get(orgName);
 		    getRemoteCalls(orgsString);
