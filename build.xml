@@ -11,6 +11,13 @@
     </ant>
   </target>  
 
+  <target name="WDK-Installation">
+    <ant antfile="../WDK/build.xml" target="WDK-Installation">
+      <property name="project" value="WDK"/>
+      <property name="version" value="??"/>
+    </ant>
+  </target>  
+
   <target name="WSF-WebInstallation">
     <ant antfile="../WSF/build.xml" target="WSF-WebInstallation">
       <property name="project" value="WSF"/>
@@ -47,7 +54,8 @@
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Installation" depends="WSF-Installation,
+  <target name="ApiCommonWebService-Installation" depends="WDK-Installation,
+                                                  WSF-Installation,
                                                   ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultProjectInstall"/>
@@ -58,7 +66,7 @@
 
  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WSF-Installation">
+  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WDK-Installation, WSF-Installation">
     <!-- before starting the installation, copy necessary jars -->
     <copy file="${targetDir}/wsf-lib/java/WSF-Plugin.jar" todir="${targetDir}/lib/java" />
     <!-- move file="${targetDir}/lib/java/WSF-Client.jar" todir="${targetDir}/wsf-lib/java" /-->
