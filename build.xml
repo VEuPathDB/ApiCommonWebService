@@ -84,7 +84,9 @@
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation">
+  <target name="ApiCommonWebService-WebInstallation" 
+            depends="WSF-WebInstallation,
+            ApiCommonWebService-Installation">
 
     <copy file="${targetDir}/wsf-lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${webappTargetDir}/WEB-INF/lib" />
     <copy todir="${webappTargetDir}/WEB-INF/wsf-config">
