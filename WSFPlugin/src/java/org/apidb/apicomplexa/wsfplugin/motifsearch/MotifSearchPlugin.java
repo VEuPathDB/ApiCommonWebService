@@ -49,8 +49,8 @@ public class MotifSearchPlugin extends WsfPlugin {
     public static final String CLASS_TURNLIKE = "[acdeghknqrst]";
 
     // required parameter definition
-    public static final String PARAM_DATASET = "Dataset";
-    public static final String PARAM_EXPRESSION = "Expression";
+    public static final String PARAM_DATASET = "motif_organism";
+    public static final String PARAM_EXPRESSION = "motif_expression";
 
     // column definitions for returnd results
     public static final String COLUMN_GENE_ID = "GeneID";
