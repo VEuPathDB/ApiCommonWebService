@@ -79,7 +79,11 @@ public class ApiFedPlugin extends WsfPlugin {
 	MessageContext msgContext = MessageContext.getCurrentContext();
 	ServletContext servletContext = ((Servlet) msgContext.getProperty(org.apache.axis.transport.http.HTTPConstants.MC_HTTP_SERVLET)).getServletConfig().getServletContext();
 	String root = servletContext.getRealPath("/");
-	root = root + "WEB-INF/wsf-config/";
+
+    String wsfConfigDir = servletContext.getInitParameter("wsfConfigDir_param");
+    if (wsfConfigDir == null) { wsfConfigDir = "WEB-INF/wsf-config/"; }
+
+	root = root + wsfConfigDir;
 	logger.info("Mapping File Path == " + root);
     return root;
     }
