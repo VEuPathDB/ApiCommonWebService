@@ -4,24 +4,17 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="WSF-Installation">
-    <ant antfile="../WSF/build.xml" target="WSF-Installation">
+  <target name="WSF/Plugin-Installation">
+    <ant antfile="../WSF/build.xml" target="WSF/Plugin-Installation">
       <property name="project" value="WSF"/>
-      <property name="version" value="??"/>
+      <property name="version" value="WDK_version_1-14"/>
     </ant>
   </target>  
 
-  <target name="WDK-Installation">
-    <ant antfile="../WDK/build.xml" target="WDK-Installation">
+  <target name="WDK/Model-Installation">
+    <ant antfile="../WDK/build.xml" target="WDK/Model-Installation">
       <property name="project" value="WDK"/>
-      <property name="version" value="??"/>
-    </ant>
-  </target>  
-
-  <target name="WSF-WebInstallation">
-    <ant antfile="../WSF/build.xml" target="WSF-WebInstallation">
-      <property name="project" value="WSF"/>
-      <property name="version" value="??"/>
+      <property name="version" value="WDK_version_1-14"/>
     </ant>
   </target>  
     
@@ -29,7 +22,7 @@
     <ant target="defaultProjectCheckout" inheritAll="false">
       <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/WSF"/>
       <property name="project" value="WSF"/>
-      <property name="version" value="??"/>
+      <property name="version" value="WDK_version_1-14"/>
     </ant>
   </target>
 
@@ -54,30 +47,23 @@
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Installation" depends="WDK-Installation,
-                                                  WSF-Installation,
-                                                  ApiCommonWebService/WSFPlugin-Installation">
+  <target name="ApiCommonWebService-Installation" depends="ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultProjectInstall"/>
 
-    <move file="${targetDir}/lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${targetDir}/wsf-lib/java" />
   </target>
 
 
  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService/WSFPlugin-Installation">
-    <!-- before starting the installation, copy necessary jars -->
-    <copy file="${targetDir}/wsf-lib/java/WSF-Plugin.jar" todir="${targetDir}/lib/java" />
-    <!-- move file="${targetDir}/lib/java/WSF-Client.jar" todir="${targetDir}/wsf-lib/java" /-->
+  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WDK/Model-Installation,
+                                                                     WSF/Plugin-Installation">
 
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService"/>
       <property name="component" value="WSFPlugin"/>
     </ant>
     
-    <delete file="${targetDir}/lib/java/WSF-Plugin.jar" />
-    <!-- move file="${targetDir}/wsf-lib/java/WSF-Client.jar" todir="${targetDir}/lib/java" /-->
  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -85,17 +71,7 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ApiCommonWebService-WebInstallation" 
-            depends="ApiCommonWebService-Installation,
-                     WSF-WebInstallation">
-
-    <copy file="${targetDir}/wsf-lib/java/ApiCommonWebService-WSFPlugin.jar" todir="${webappTargetDir}/WEB-INF/lib" />
-    <copy todir="${webappTargetDir}/${confTargetDir}">
-       <fileset dir="${targetDir}/config"/>
-    </copy>
-
-    <copy todir="${webappTargetDir}/WEB-INF/lib">
-       <fileset dir="${targetDir}/lib/java"/>
-    </copy>
+            depends="ApiCommonWebService-Installation">
 
   </target>
 
