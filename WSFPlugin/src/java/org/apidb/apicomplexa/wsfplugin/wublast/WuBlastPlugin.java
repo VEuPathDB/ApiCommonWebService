@@ -273,9 +273,7 @@ public class WuBlastPlugin extends BlastPlugin {
 
 	    sourceIdRegex = getProperty(FIELD_SOURCE_ID_REGEX_PREFIX + suffix);
 
-	    // Attempt to use same config file as Crypto
-	    if (useProjectId) { dataPath = getProperty(FIELD_DATA_PATH + "_Api"); }
-	    else  { dataPath = getProperty(FIELD_DATA_PATH); }
+            dataPath = getProperty(FIELD_DATA_PATH); 
 
 	    // get sequence
             String seq = params.get(PARAM_SEQUENCE);
@@ -675,9 +673,10 @@ logger.info("WB prepareResult(): alignments: to insert URL in: " + line + "\n");
             // construct file path pattern
             String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$", organisms[i]);
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
-
-	    if (useProjectId) {   sb.append(dataPath + seqType + "/" + path + " "); }
-	    else { sb.append(dataPath + "/" + path + " "); }
+	    
+	    // for apidb will need to add /p/ or /n/ dependieng on data type
+	    //  if (apidb) {   sb.append(dataPath + seqType + "/" + path + " "); }
+	    sb.append(dataPath + "/" + path + " "); 
         }
         // sb.append("\"");
         return sb.toString().trim();
