@@ -4,15 +4,22 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="WSF/Plugin-Installation">
-    <ant antfile="../WSF/build.xml" target="WSF/Plugin-Installation">
+  <target name="WSF-Installation">
+    <ant antfile="../WSF/build.xml" target="WSF-Installation">
       <property name="project" value="WSF"/>
       <property name="version" value="WDK_version_1-14"/>
     </ant>
   </target>  
 
-  <target name="WDK/Model-Installation">
-    <ant antfile="../WDK/build.xml" target="WDK/Model-Installation">
+  <target name="WSF-WebInstallation">
+    <ant antfile="../WSF/build.xml" target="WSF-WebInstallation">
+      <property name="project" value="WSF"/>
+      <property name="version" value="WDK_version_1-14"/>
+    </ant>
+  </target>  
+
+  <target name="WDK-Installation">
+    <ant antfile="../WDK/build.xml" target="WDK-Installation">
       <property name="project" value="WDK"/>
       <property name="version" value="WDK_version_1-14"/>
     </ant>
@@ -47,7 +54,9 @@
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Installation" depends="ApiCommonWebService/WSFPlugin-Installation">
+  <target name="ApiCommonWebService-Installation" depends="WSF-Installation,
+                                                           WDK-Installation,
+                                                           ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultProjectInstall"/>
 
@@ -56,8 +65,7 @@
 
  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService/WSFPlugin-Installation" depends="WDK/Model-Installation,
-                                                                     WSF/Plugin-Installation">
+  <target name="ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService"/>
@@ -70,8 +78,8 @@
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation" 
-            depends="ApiCommonWebService-Installation">
+  <target name="ApiCommonWebService-WebInstallation" depends="WSF-WebInstallation,
+                                                              ApiCommonWebService-Installation">
 
   </target>
 
