@@ -35,13 +35,15 @@ public class TextSearchPlugin extends WsfPlugin {
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     // public static final String PARAM_CASE_INDEPENDENT = "case_independent";
-    public static final String PARAM_DATASETS = "datasets";
+    public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
     public static final String PARAM_SPECIES_NAME = "species_name";
     public static final String PARAM_WHOLE_WORDS = "whole_words";
 
     public static final String COLUMN_GENE_ID = "GeneID";
     public static final String COLUMN_DATASETS = "Datasets";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
+     
 
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
@@ -87,7 +89,7 @@ public class TextSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_DATASETS };
+        return new String[] { COLUMN_GENE_ID, COLUMN_DATASETS, COLUMN_PROJECT_ID };
     }
 
     /*
