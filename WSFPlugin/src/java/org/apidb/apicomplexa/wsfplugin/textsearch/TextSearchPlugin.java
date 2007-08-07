@@ -6,18 +6,13 @@ package org.apidb.apicomplexa.wsfplugin.textsearch;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.List;
 import java.util.Map;
-import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -37,7 +32,7 @@ public class TextSearchPlugin extends WsfPlugin {
     // public static final String PARAM_CASE_INDEPENDENT = "case_independent";
     public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
-    public static final String PARAM_SPECIES_NAME = "species_name";
+    public static final String PARAM_SPECIES_NAME = "organism";
     public static final String PARAM_WHOLE_WORDS = "whole_words";
 
     public static final String COLUMN_GENE_ID = "GeneID";
@@ -50,8 +45,8 @@ public class TextSearchPlugin extends WsfPlugin {
     private static final String FIELD_SCRIPT_DIR = "ScriptDir";
 
     private File dataDir;
-    private String sourceIdRegex;
-    private int maxLen;
+    //private String sourceIdRegex;
+    //private int maxLen;
 
     /**
      * @throws WsfServiceException
