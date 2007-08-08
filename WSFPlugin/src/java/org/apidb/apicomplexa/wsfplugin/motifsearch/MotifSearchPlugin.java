@@ -375,12 +375,12 @@ public class MotifSearchPlugin extends WsfPlugin {
                 String organism = extractField(line, organismRegex);
                 
                 // TEST
-                //logger.info("Organism = " + organism);
+                //logger.debug("Organism from defline = " + organism);
                 
                 projectId = getProjectId(organism);
                 
                 // TEST
-                //logger.info("ProjectId = " + projectId);
+                //logger.debug("ProjectId = " + projectId);
             }
 
             StringBuffer seq = new StringBuffer();
