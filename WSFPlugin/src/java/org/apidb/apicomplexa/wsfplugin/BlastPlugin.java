@@ -276,7 +276,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         for (int i = 0; i < organisms.length; i++) {
             // construct file path pattern
             String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
-                    organisms[i]);
+                    Matcher.quoteReplacement(organisms[i]));
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
             sb.append(dataPath + "/" + path + " ");
         }
@@ -309,7 +309,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         String mapurl = getProperty(mapkey);
         logger.debug("mapkey=" + mapkey + ", mapurl=" + mapurl);
         if (mapurl == null) mapurl = urlMapOthers; // use default url
-        mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", sourceId);
+        mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", Matcher.quoteReplacement(sourceId));
 
         // insert a link tag into the data
         StringBuffer sb = new StringBuffer(defline.substring(0, srcPos[0]));
