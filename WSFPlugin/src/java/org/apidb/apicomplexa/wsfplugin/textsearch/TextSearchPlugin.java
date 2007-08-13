@@ -43,8 +43,10 @@ public class TextSearchPlugin extends WsfPlugin {
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
     private static final String FIELD_SCRIPT_DIR = "ScriptDir";
+    private static final String FIELD_PROJECT_ID = "ProjectID";
 
     private File dataDir;
+    private String projectId;
     //private String sourceIdRegex;
     //private int maxLen;
 
@@ -64,6 +66,7 @@ public class TextSearchPlugin extends WsfPlugin {
         logger.debug("constructor(): dataDir: " + dataDir.getName() + "\n");
 
 	scriptDir = getProperty(FIELD_SCRIPT_DIR);
+        projectId = getProperty(FIELD_PROJECT_ID);
     }
 
     /*
@@ -217,6 +220,7 @@ public class TextSearchPlugin extends WsfPlugin {
             result[i][orders.get(COLUMN_GENE_ID)] = id;
             String fields = matches.get(id).toString();
             result[i][orders.get(COLUMN_DATASETS)] = fields.substring(1, fields.length() - 1);
+            result[i][orders.get(COLUMN_PROJECT_ID)] = this.projectId;
         }
         return result;
     }
