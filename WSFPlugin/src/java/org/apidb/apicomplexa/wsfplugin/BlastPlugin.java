@@ -30,7 +30,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     public static final String COLUMN_PROJECT_ID = "ProjectId";
 
     // required parameter definitions
-    public static final String PARAM_QUERY_TYPE = "BlastQueryType";
+    public static final String PARAM_ALGORITHM = "BlastAlgorithm";
+    //    public static final String PARAM_QUERY_TYPE = "BlastQueryType";
     public static final String PARAM_DATABASE_TYPE = "BlastDatabaseType";
     public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
@@ -105,7 +106,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_QUERY_TYPE, PARAM_DATABASE_ORGANISM,
+        return new String[] { PARAM_ALGORITHM, PARAM_DATABASE_ORGANISM,
                 PARAM_SEQUENCE };
     }
 
