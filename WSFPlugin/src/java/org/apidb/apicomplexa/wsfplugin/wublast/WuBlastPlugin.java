@@ -53,8 +53,8 @@ public class WuBlastPlugin extends BlastPlugin {
 
 	Vector<String> cmds = new Vector<String>();
 
-	String qType = params.get(PARAM_QUERY_TYPE);
-	params.remove(PARAM_QUERY_TYPE);
+	//	String qType = params.get(PARAM_QUERY_TYPE);
+	//	params.remove(PARAM_QUERY_TYPE);
 
 	String dbOrgs = null;
 	String dbOrgName = null;
@@ -67,8 +67,10 @@ public class WuBlastPlugin extends BlastPlugin {
 	}
 	params.remove(dbOrgName);
 	
-        String blastApp = getBlastProgram(qType, dbType);
+	//      String blastApp = getBlastProgram(qType, dbType);
 
+	String blastApp = params.get(PARAM_ALGORITHM);
+	params.remove(PARAM_ALGORITHM);
 	// so database name is built correctly for the Translated cases
 	if (dbType.contains("Translated")) {
             if ( dbType.contains("Transcripts") ) dbType="Transcripts";
