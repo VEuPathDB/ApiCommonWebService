@@ -43,12 +43,17 @@ public class NcbiBlastPlugin extends BlastPlugin {
         Vector<String> cmds = new Vector<String>();
         cmds.add(appPath + "/blastall");
 
-        String qType = params.get(PARAM_QUERY_TYPE);
-        params.remove(PARAM_QUERY_TYPE);
+	//       String qType = params.get(PARAM_QUERY_TYPE);
+	//        params.remove(PARAM_QUERY_TYPE);
+
         String dbOrgs = params.get(PARAM_DATABASE_ORGANISM);
         params.remove(PARAM_DATABASE_ORGANISM);
 
-        String blastApp = getBlastProgram(qType, dbType);
+	//        String blastApp = getBlastProgram(qType, dbType);
+
+	String blastApp = params.get(PARAM_ALGORITHM);
+	params.remove(PARAM_ALGORITHM);
+	
         String blastDbs = getBlastDatabase(dbType, dbOrgs);
         cmds.add("-p");
         cmds.add(blastApp);
@@ -77,8 +82,8 @@ public class NcbiBlastPlugin extends BlastPlugin {
         }
         logger.debug(blastDbs + " inferred from (" + dbType + ", '" + dbOrgs
                 + "')");
-        logger.debug(blastApp + " inferred from (" + qType + ", " + dbType
-                + ")");
+        logger.debug(blastApp);// + " inferred from (" + qType + ", " + dbType
+	//                + ")");
 
         String[] cmdArray = new String[cmds.size()];
         cmds.toArray(cmdArray);
