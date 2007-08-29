@@ -219,9 +219,11 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
-            logger.debug("Preparing the result");
+            logger.info("\nPreparing the result");
             String[][] result = prepareResult(orderedColumns, outFile, dbType);
-            // insert a bbokmark into the tabular row, linking to alignment
+            logger.info("\nResult prepared");
+
+            // insert a bookmark into the tabular row, linking to alignment
             insertBookmark(result, orderedColumns);
             logger.debug(printArray(result));
             return result;
@@ -276,8 +278,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < organisms.length; i++) {
             // construct file path pattern
-            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
-                    Matcher.quoteReplacement(organisms[i]));
+            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$", Matcher.quoteReplacement(organisms[i]).trim()  );
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
             sb.append(dataPath + "/" + path + " ");
         }
@@ -300,10 +301,14 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
     protected String insertIdUrl(String defline, String dbType) {
         // extract organism from the defline
+logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is " + dbType + "\n");
+
         int[] orgPos = findField(defline, organismRegex);
         String organism = defline.substring(orgPos[0], orgPos[1]);
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
+
+logger.debug("\ninsertIdUrl() organism is: " + organism + "\nand sourceId is " + sourceId + "\n");
 
         // get the url mapping for this organsim
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
