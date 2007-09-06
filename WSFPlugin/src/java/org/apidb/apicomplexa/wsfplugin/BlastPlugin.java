@@ -301,21 +301,24 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
     protected String insertIdUrl(String defline, String dbType) {
         // extract organism from the defline
-logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is " + dbType + "\n");
+	logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is " + dbType + "\n");
 
         int[] orgPos = findField(defline, organismRegex);
         String organism = defline.substring(orgPos[0], orgPos[1]);
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
+	logger.debug("\ninsertIdUrl() organism is: " + organism + "\nand sourceId is " + sourceId + "\n");
 
-logger.debug("\ninsertIdUrl() organism is: " + organism + "\nand sourceId is " + sourceId + "\n");
-
+	String projectId= getProjectId(organism);
+	logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
         // get the url mapping for this organsim
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
         logger.debug("mapkey=" + mapkey + ", mapurl=" + mapurl);
+
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", Matcher.quoteReplacement(sourceId));
+        mapurl = mapurl.trim().replaceAll("\\$\\$project_id\\$\\$", Matcher.quoteReplacement(projectId));
 
         // insert a link tag into the data
         StringBuffer sb = new StringBuffer(defline.substring(0, srcPos[0]));
