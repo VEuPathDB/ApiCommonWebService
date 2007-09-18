@@ -131,7 +131,7 @@ public class TextSearchPlugin extends WsfPlugin {
 	// iterate through datasets
 	String[] ds = datasets.split(",");
 	for (String dataset : ds) {
-	    dataset = datatset.trim();
+	    dataset = dataset.trim();
 	    String datasetName = dataset.replaceAll("^.*_", "").replaceAll(".txt", "");
 	    String cmd = scriptDir + "/filterByValue -n " + maxPvalue + " < " + dataDir
 		+ "/" + dataset + " | " + scriptDir + "/filterByValue -s '"
