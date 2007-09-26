@@ -32,7 +32,7 @@ public class TextSearchPlugin extends WsfPlugin {
     // public static final String PARAM_CASE_INDEPENDENT = "case_independent";
     public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
-    public static final String PARAM_SPECIES_NAME = "organism";
+    public static final String PARAM_SPECIES_NAME = "text_search_organism";
     public static final String PARAM_WHOLE_WORDS = "whole_words";
 
     public static final String COLUMN_GENE_ID = "GeneID";
