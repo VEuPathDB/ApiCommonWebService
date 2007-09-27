@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>The configuration file for Profile Similarity Search WSF Plugin.</comment>
+<entry key="perlExecutable">(The absolute path to the perl command)</entry>
+<entry key="perlScript">(The absolute path to expressionSimilarity.pl)</entry>
+<entry key="dbConnection">(The DBI connection string)</entry>
+<entry key="dbLogin">(The account used to access the database)</entry>
+<entry key="dbPassword">(The password of the account to access the database)</entry>
+</properties>
