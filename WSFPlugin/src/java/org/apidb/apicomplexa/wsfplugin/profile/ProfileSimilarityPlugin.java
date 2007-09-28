@@ -37,6 +37,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_PROJECT_ID = "ProjectID";
     public static final String COLUMN_QUERY_GENE_ID = "QueryGeneId";
     public static final String COLUMN_DISTANCE = "Distance";
     public static final String COLUMN_SHIFT = "Shift";
@@ -47,13 +48,14 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     private static final String FIELD_DB_CONNECTION = "dbConnection";
     private static final String FIELD_DB_LOGIN = "dbLogin";
     private static final String FIELD_DB_PASSWORD = "dbPassword";
+    private static final String FIELD_PROJECT_ID = "projectId";
 
     private String perlExec;
     private String perlScript;
     private String dbConnection;
     private String dbLogin;
     private String dbPassword;
-
+    private String projectId;
     /**
      * @throws WsfServiceException
      * 
@@ -67,6 +69,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         dbConnection = getProperty(FIELD_DB_CONNECTION);
         dbLogin = getProperty(FIELD_DB_LOGIN);
         dbPassword = getProperty(FIELD_DB_PASSWORD);
+	projectId = getProperty(FIELD_PROJECT_ID);
 
         if (perlExec == null)
             throw new WsfServiceException("The " + FIELD_PERL_EXECUTABLE
@@ -82,6 +85,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
                     + "field is missing from the configuration file");
         if (dbPassword == null)
             throw new WsfServiceException("The " + FIELD_DB_PASSWORD
+                    + "field is missing from the configuration file");
+        if (projectId == null)
+            throw new WsfServiceException("The " + FIELD_PROJECT_ID
                     + "field is missing from the configuration file");
     }
 
@@ -105,7 +111,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
+        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
     }
 
     /*
@@ -277,8 +283,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             // need to skip the query gene itself
             if (geneId.equalsIgnoreCase(queryGeneId)) continue;
             
-            String[] row = new String[4];
+            String[] row = new String[5];
             row[columns.get(COLUMN_GENE_ID)] = geneId;
+            row[columns.get(COLUMN_PROJECT_ID)] = projectId;
             row[columns.get(COLUMN_DISTANCE)] = format.format(distance);
             row[columns.get(COLUMN_SHIFT)] = parts[2];
             row[columns.get(COLUMN_QUERY_GENE_ID)] = queryGeneId;
@@ -286,7 +293,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         }
         in.close();
 
-        String[][] array = new String[results.size()][4];
+        String[][] array = new String[results.size()][5];
         for (int i = 0; i < array.length; i++) {
             array[i] = results.get(i);
         }
