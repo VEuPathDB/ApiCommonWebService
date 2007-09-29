@@ -37,7 +37,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
-    public static final String COLUMN_PROJECT_ID = "ProjectID";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_QUERY_GENE_ID = "QueryGeneId";
     public static final String COLUMN_DISTANCE = "Distance";
     public static final String COLUMN_SHIFT = "Shift";
