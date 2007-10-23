@@ -616,8 +616,8 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 
     private String[][] fillAttributes(ResultList rl, String[] cols, RecordClass rc)throws WdkModelException {
 	List<String[]> rows = new LinkedList<String[]>();
-	String[] values = new String[cols.length + 1];
 	while(rl.next()){
+	    String[] values = new String[cols.length];
 	    String pk = (String)rl.getValueFromResult("source_id");
 	    values[0] = pk;
 	    String pid = (String)rl.getValueFromResult("project_id");
@@ -636,13 +636,20 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 		else val = obj.toString();	    
 		values[i] = val;
 	    }
-	    logResults(values);;
+	    logResults(values);
 	    rows.add(values);
 	}
 	rl.close();
 	
 	String[][] arr = new String[rows.size()][];
-	return rows.toArray(arr);
+	arr = rows.toArray(arr);
+
+	logger.info("Output from final Array[][]");
+
+	for(int x=0; x<arr.length; x++){
+	    logResults(arr[x]);
+	}
+	return arr;//rows.toArray(arr);
     }
  
     private void logResults(String [] vals){
