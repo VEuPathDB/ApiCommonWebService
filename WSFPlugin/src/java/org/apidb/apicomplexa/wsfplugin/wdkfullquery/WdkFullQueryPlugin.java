@@ -48,7 +48,7 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  * @created Dec 20, 2006
  */
 public class WdkFullQueryPlugin extends WsfPlugin {
-    
+     
     //Propert values
     public static final String PROPERTY_FILE = "wdkquery-config.xml";
     public static final String MODEL_NAME = "ModelName";
