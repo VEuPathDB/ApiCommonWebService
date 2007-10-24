@@ -1,5 +1,8 @@
 /**
- * 
+ *Version 1.0.0
+ * First implementation
+ * Taken from WdkQuery, this plugin will return all primary keys (source_id) and the project_id as well as any other attribute that you specify in the column list.  This has the ability to get all of teh data for an answer in one shot to the component site.
+ *
  */
 package org.apidb.apicomplexa.wsfplugin.wdkfullquery;
 

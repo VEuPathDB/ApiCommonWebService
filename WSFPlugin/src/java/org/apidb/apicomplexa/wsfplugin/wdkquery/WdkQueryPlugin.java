@@ -1,4 +1,6 @@
 /**
+ *Version 2.0.0 --
+ * Updated to work with the new Wdk Model.  The loading subroutine was updated to call parse() correctly for the new code in teh WDK
  * 
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;

@@ -1,5 +1,7 @@
 /**
- * 
+ * Version 2.0.0 -- made the configuration file more robust to allow more sites to be added to the system with any change in the code
+ * Added Regular Expression to recognize the organisms to determine which sites need to be included in a given query
+ *
  */
 package org.apidb.apicomplexa.wsfplugin.apifed;
 import java.io.*;
