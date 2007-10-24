@@ -636,7 +636,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 		else val = obj.toString();	    
 		values[i] = val;
 	    }
-	    logResults(values);
+	    //logResults(values);
 	    rows.add(values);
 	}
 	rl.close();
@@ -644,11 +644,11 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 	String[][] arr = new String[rows.size()][];
 	arr = rows.toArray(arr);
 
-	logger.info("Output from final Array[][]");
+	//logger.info("Output from final Array[][]");
 
-	for(int x=0; x<arr.length; x++){
-	    logResults(arr[x]);
-	}
+	//for(int x=0; x<arr.length; x++){
+	//    logResults(arr[x]);
+	//}
 	return arr;//rows.toArray(arr);
     }
  
