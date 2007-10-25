@@ -50,7 +50,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
     public static final String VERSION = "2.0.0";
 
-    public static final String PARAM_SET_NAME = "VocabQueries";
+    public static final String PARAM_SET_NAME = "VQ";
     //Input Parameters
     public static final String PARAM_PROCESSNAME = "ProcessName";
     public static final String PARAM_PARAMETERS = "Parameters";
@@ -226,11 +226,21 @@ public class ApiFedPlugin extends WsfPlugin {
 	boolean isParam = false;
 	logger.info("Sites Array Initialized ... ");
 
+	    String query = "";	    
+	    String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
+	    if(params.containsKey(PARAM_QUERY)){
+		query = params.get(PARAM_QUERY);
+		params.remove(PARAM_QUERY);
+		queryName = query;
+	    } else{query = queryName;}
+
             //Spliting the QueryName up for Mapping
+	    logger.info("QueryName = " + queryName);
 	    String apiQueryFullName = queryName.replace('.',':');
+	    logger.info("ApiQueryFullName = " + apiQueryFullName);
 	    String[] apiQueryNameArray = apiQueryFullName.split(":");
 	    String apiQuerySetName = apiQueryNameArray[0];
-	    String apiQueryName = apiQueryNameArray[1];
+	    String apiQueryName = apiQueryNameArray[1]; 
 	    
 	    logger.info("Full QueryName = " + queryName);
 	    //Determine if the Query is a Parameter Query
@@ -240,7 +250,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    String orgName = null;
 	    String datasetName = null;
 	    if(isParam){
-		logger.info("Found that QuerySet Name = VocabQueries");
+		logger.info("Found that QuerySet Name = VQ");
 		doAll = true;
 		getRemoteCalls(doAll);
 		logger.info("RemoteCalls Returned successfully");
@@ -259,14 +269,6 @@ public class ApiFedPlugin extends WsfPlugin {
 		    getRemoteCalls(doAll);
 		}
 	    }
-
-	    String query = "";	    
-	    String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
-	    if(params.containsKey(PARAM_QUERY)){
-		query = params.get(PARAM_QUERY);
-		params.remove(PARAM_QUERY);
-		queryName = query;
-	    } else{query = queryName;}
 
 	    String[] componentColumns = orderedColumns;
 	    if(!isParam){
