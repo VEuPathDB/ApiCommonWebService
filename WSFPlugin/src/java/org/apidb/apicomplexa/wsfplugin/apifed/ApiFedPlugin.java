@@ -436,7 +436,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	String[] orgArray = orgs.split(",");
 	for(String organism:orgArray){
 	    for(int i = 0; i < sites.length; i++){
-		if(organism.matches(sites[i].getMarker())){
+		if(organism.trim().matches(sites[i].getMarker())){
 		   sites[i].appendOrganism(organism);
 		}
 	    }
