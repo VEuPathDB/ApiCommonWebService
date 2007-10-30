@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- projectId should be the same as in mat views -->
+<!-- update marker to have all the possible values for organism (or the param used to select site)
+-->
+<!-- QueryMap needs to be in gus_home/config (not used currently) -->
 <Config>
   <Sites>
-    <model name="cryptoModel"
-           projectId="cryptodb"
+    <model name="CryptoDB"
+           projectId="CryptoDB"
            url="(URL FOR WSF WEB SERVICE)" 
            marker="(?:^C$|^C\.?\w*\s+(?:hominis|parvum)(\s+annotated proteins)?)" />
-    <model name="plasmoDbModel"
-           projectId="plasmodb"
+    <model name="PlasmoDB"
+           projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
            marker="(?:^P$|^P\.?\w*\s+(?:falciparum|vivax|berghei|yoelii|chabaudi|knowlesi)(\s+annotated proteins)?)" />
-    <model name="toxoDbModel" 
-           projectId="toxodb"
+    <model name="ToxoDB" 
+           projectId="ToxoDB"
            url="(URL FOR WSF WEB SERVICE)" 
            marker="(?:^T$|^T\.?\w*\s+(?:gondii)(\s+annotated proteins)?)" />
   </Sites>
