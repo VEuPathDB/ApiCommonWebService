@@ -64,9 +64,9 @@ public class ApiFedPlugin extends WsfPlugin {
     //Member Variable
     private Site[] sites;
     private boolean doAll;
+    private boolean hasProjectId;
     private int timeOutInMinutes;
     private Document mapDoc = null;
-
     public ApiFedPlugin() throws WsfServiceException {
 	super();
 	logger.info("Parent Constructor Finished");
@@ -220,6 +220,7 @@ public class ApiFedPlugin extends WsfPlugin {
      */
     @Override
     protected String[][] execute(String queryName, Map<String, String> params, String[] orderedColumns) throws WsfServiceException {
+	hasProjectId = false;
 	doAll = false;
 	logger.info("ApiFedPlugin Version : " + this.VERSION);
 	initSites();
@@ -228,11 +229,12 @@ public class ApiFedPlugin extends WsfPlugin {
 
 	    String query = "";	    
 	    String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
-	    if(params.containsKey(PARAM_QUERY)){
-		query = params.get(PARAM_QUERY);
-		params.remove(PARAM_QUERY);
-		queryName = query;
-	    } else{query = queryName;}
+	    //if(params.containsKey(PARAM_QUERY)){
+		//query = params.get(PARAM_QUERY);
+		//params.remove(PARAM_QUERY);
+		//queryName = query;
+	    //} else{query = queryName;}
+	    query = queryName;
 
             //Spliting the QueryName up for Mapping
 	    logger.info("QueryName = " + queryName);
@@ -376,7 +378,7 @@ public class ApiFedPlugin extends WsfPlugin {
     {
 	String orgName = null;
 	for(String pName:p.keySet()){
-	    if(pName.indexOf("organism")!=-1 || pName.indexOf("Organism")!=-1){
+	    if(pName.indexOf("organism")!=-1 || pName.indexOf("Organism")!=-1 || pName.equals("primaryKey")){
 		orgName = pName;
 		break;
 	    }
@@ -441,6 +443,7 @@ public class ApiFedPlugin extends WsfPlugin {
 		}
 	    }
 	}
+	logger.info("GetRemoteCalls() Done");
     }
 
     private String[][] combineResults(CompResult[] compResults, String[] cols, boolean isParamResult)
@@ -466,12 +469,13 @@ public class ApiFedPlugin extends WsfPlugin {
 	logger.info("Total Number of Rows in Combined Result is ----------> " + numrows);
 	
 	//Find the index for the projectId columns
-	int projectIndex = 0;
-	for(String col:cols){
-	    if(col.equals("project_id")){break;}
-	    else{projectIndex++;}
-	}
-
+	//if(hasProjectId){
+	  int projectIndex = 0;
+	  for(String col:cols){
+	      if(col.equals("project_id")){break;}
+	      else{projectIndex++;}
+	  }
+        //}
 	//Add  result, if it is not empty, to the final results
 	for(CompResult compResult:compResults){
 	    if(compResult != null){
@@ -486,7 +490,7 @@ public class ApiFedPlugin extends WsfPlugin {
 			if(!answer[0][0].equals("ERROR")){
 			    for(String[] rec:answer){
 				combined[i] = rec;
-				if(!isParamResult)
+				if(!isParamResult && hasProjectId)
 				    combined[i] = insertProjectId(combined[i], projectIndex, compResult.getSiteName());
 				i++;
 			    }// Loop for records
@@ -535,12 +539,15 @@ public class ApiFedPlugin extends WsfPlugin {
 
     // Method to remove the projectId column from the colums sent to the component sites
     private String[] removeProjectId(String[] cols)
-    {
+    { 
+	hasProjectId = false;
 	int projectIndex = 0;
 	for(String col:cols){
-	   if(col.equals("project_id")){break;}
+	   if(col.equals("project_id")){hasProjectId = true; break;}
 	    else{projectIndex++;}
 	}
+	if(!hasProjectId) return cols;
+
 	int newindex = 0;
 	String[] newCols = new String[cols.length - 1];
 	for(int i = 0;i<cols.length;i++){
@@ -660,6 +667,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	public void setOrganism(String organism) {this.organism = organism;}
 	public void appendOrganism(String organism) 
 	{
+	    organism = organism.trim();
 	    if(this.organism.length() == 0)
 	       setOrganism(organism);
 	    else 
