@@ -140,7 +140,15 @@ public class WuBlastPlugin extends BlastPlugin {
             line = in.readLine();
             if (line == null)
                 throw new IOException("Invalid BLAST output format");
-            header.append(line + newline);
+	    
+	    //if this is a WARNING complaining about the numbers in some fasta files, do not append this line and the two following
+	    if ( !( line.contains("invalid") && line.contains("code") ) ) 
+		header.append(line + newline);
+	    else  {
+		line = in.readLine();
+		line = in.readLine();
+	    }
+	    
 	    logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
         } while (   (!line.startsWith("Sequence")) &&  (!line.startsWith("FATAL"))    );
 
