@@ -48,6 +48,10 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
+ *
+ * 2.0.0 -- Worked with ApiFedPlugin 2.0.0
+ * 2.1 -- Ditched the three number versioning... not that many changes
+ *     -- Added support for accessing Enum Parameters on the componet Sites
  */
 public class WdkQueryPlugin extends WsfPlugin {
     
@@ -56,7 +60,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     public static final String MODEL_NAME = "ModelName";
     public static final String GUS_HOME = "Gus_Home";
     
-    public static final String VERSION = "2.0.0";
+    public static final String VERSION = "2.1";
     //Input Parameters
     public static final String PARAM_PARAMETERS = "Parameters";
     public static final String PARAM_COLUMNS = "Columns";
@@ -210,10 +214,20 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    
 	    invokeKey = invokeKey.replace('.',':');
 	    logger.info(invokeKey);
+	    Query q = null;
 	    String[] queryName = invokeKey.split(":");
-	    QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-	    Query q = qs.getQuery(queryName[1]);
-	    logger.info("Query found : " + q.getFullName());
+	    if(model.getModel().hasQuerySet(queryName[0])){
+		QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+		q = qs.getQuery(queryName[1]);
+		logger.info("Query found : " + q.getFullName());
+	    }else {
+		ParamSet ps = model.getModel().getParamSet(queryName[0]);
+		Param p = ps.getParam(queryName[1]);
+		logger.info("Parameter found : " + p.getFullName());
+		String[][] enumValues = handleEnumParameters(p);
+		return enumValues;
+	    }
+
 	
 	    Map<String,Object> SOParams = convertParams(params,q.getParams());//getParamsFromQuery(q));
 
@@ -592,5 +606,22 @@ public class WdkQueryPlugin extends WsfPlugin {
 		return true;
 	}
 	return false;
+    }
+
+    private String[][] handleEnumParameters(Param p){
+	logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
+	EnumParam eParam = (EnumParam)p;
+	Map<String,String> termDisp = eParam.getTermDisplayMap();
+	Set<String> terms = termDisp.keySet();
+	String[][] ePValues = new String [terms.size()][2];
+	int index = 0;
+	for(String term : terms){
+	    String disp = termDisp.get(term);
+	    ePValues[index][0] = term;
+	    ePValues[index][1] = disp;
+	    logger.info("Term = " + term + ",     Display = " + disp);
+	    index++;
+	}
+	return ePValues;
     }
 }
