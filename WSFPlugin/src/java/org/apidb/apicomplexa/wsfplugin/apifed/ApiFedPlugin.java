@@ -261,8 +261,20 @@ public class ApiFedPlugin extends WsfPlugin {
 	        orgName = hasOrganism(params);
 	        datasetName = hasDataset(params);
 		if(orgName != null){
-		    String orgsString = params.get(orgName);
-		    getRemoteCalls(orgsString);
+		    if(orgName.indexOf("primaryKey") != -1){
+			logger.info("Working with AjaxRecordClass primaryKey calculations");
+			String pk = params.get(orgName);
+			logger.info("orgName = " + orgName + ",   pk = " + pk);
+			String[] parts = new String[2];
+			parts = pk.split(":");
+			logger.info("Query = " + parts[0] + ", primaryKey = " + parts[1]);
+			params.put("Query", parts[0]);
+			getRemoteCalls(parts[1]);
+		    }
+		    else{
+			String orgsString = params.get(orgName);
+			getRemoteCalls(orgsString);
+		    }
 		} else if(datasetName != null){	
 		    String datasetString = params.get(datasetName);
 		    getRemoteCalls(datasetString);
@@ -378,7 +390,7 @@ public class ApiFedPlugin extends WsfPlugin {
     {
 	String orgName = null;
 	for(String pName:p.keySet()){
-	    if(pName.indexOf("organism")!=-1 || pName.indexOf("Organism")!=-1 || pName.equals("primaryKey")){
+	    if(pName.indexOf("organism")!=-1 || pName.indexOf("Organism")!=-1 || pName.indexOf("primaryKey")!=-1){
 		orgName = pName;
 		break;
 	    }
