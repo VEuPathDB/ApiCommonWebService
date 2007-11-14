@@ -40,6 +40,11 @@ import javax.servlet.Servlet;
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
+ *
+ * 2.0.0 -- currently deployed for ApiDB Live Site
+ * 2.1   -- updated to take advantage of the consistancy in the Unified Model
+ *       -- Added functionality to retrieve Parameters (Vocab and Enum) from the component Sites
+ *       -- Removed all need fro DBLinks in the ApiDB Model
  */
 public class ApiFedPlugin extends WsfPlugin {
 	
@@ -48,7 +53,7 @@ public class ApiFedPlugin extends WsfPlugin {
     
     public static final String MAPPING_FILE = "MappingFile";
 
-    public static final String VERSION = "2.0.0";
+    public static final String VERSION = "2.1";
 
     public static final String PARAM_SET_NAME = "VQ";
     //Input Parameters
