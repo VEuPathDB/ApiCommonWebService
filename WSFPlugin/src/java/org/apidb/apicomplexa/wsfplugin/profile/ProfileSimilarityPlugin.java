@@ -280,8 +280,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             String geneId = parts[0].trim();
             double distance = Double.parseDouble(parts[1]);
             
-            // need to skip the query gene itself
-            if (geneId.equalsIgnoreCase(queryGeneId)) continue;
+            // do not skip the query gene, and include it in the result list
+            // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
             
             String[] row = new String[5];
             row[columns.get(COLUMN_GENE_ID)] = geneId;
