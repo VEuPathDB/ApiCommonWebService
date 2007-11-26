@@ -345,7 +345,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         for (int rowId = 0; rowId < result.length; rowId++) {
             String sourceId = result[rowId][srcPos];
             if (sourceId == null || sourceId.length() == 0) continue;
-
+	    // if v < b 
+            if (result[rowId][rowPos] == null) continue;
             // insert the link to the score field
             String tabRow = result[rowId][rowPos].trim();
             int[] scorePos = findField(tabRow, scoreRegex);
