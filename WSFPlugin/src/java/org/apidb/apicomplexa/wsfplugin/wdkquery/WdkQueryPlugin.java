@@ -428,6 +428,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 			    }
 			    			 
 			    if(newVals.length() != 0) newVals = newVals.substring(1);
+			    else newVals = "\u0000";
 			    logger.info("validated values string -------------" + newVals);
 			    ret.put(param.getName(), (Object)newVals);
 			}else{
