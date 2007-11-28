@@ -417,9 +417,9 @@ public class WdkQueryPlugin extends WsfPlugin {
 			    for(String mystring : vals){
 			    try{
 				logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
-				if(validateSingleValues((AbstractEnumParam)param,mystring)){
+				if(validateSingleValues((AbstractEnumParam)param,mystring.trim())){
 				    //ret.put(param.getName(), o);
-				    newVals = newVals + "," + mystring;
+				    newVals = newVals + "," + mystring.trim();
 				    logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " + mystring);
 				}
 			   }catch(Exception e){
