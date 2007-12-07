@@ -418,7 +418,7 @@ public class MotifSearchPlugin extends WsfPlugin {
         Matcher matcher = pattern.matcher(sequence);
         while (matcher.find()) {
             // add locations
-            if (sbLoc.length() != 0) sbLoc.append(",");
+            if (sbLoc.length() != 0) sbLoc.append(", ");
             sbLoc.append('(');
             sbLoc.append(matcher.start());
             sbLoc.append("-");
