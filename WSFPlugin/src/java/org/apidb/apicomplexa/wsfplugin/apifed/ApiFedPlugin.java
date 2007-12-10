@@ -225,10 +225,14 @@ public class ApiFedPlugin extends WsfPlugin {
      */
     @Override
     protected String[][] execute(String queryName, Map<String, String> params, String[] orderedColumns) throws WsfServiceException {
+	Site[] sites = new Site[this.sites.length];
+	//initSites();
+	for (int i = 0; i < sites.length; i++){
+	    sites[i] = (Site) this.sites[i].clone();
+	}
 	hasProjectId = false;
 	doAll = false;
 	logger.info("ApiFedPlugin Version : " + this.VERSION);
-	initSites();
 	boolean isParam = false;
 	logger.info("Sites Array Initialized ... ");
 
@@ -259,7 +263,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	    if(isParam){
 		logger.info("Found that QuerySet Name = VQ");
 		doAll = true;
-		getRemoteCalls(doAll);
+		getRemoteCalls(doAll,sites);
 		logger.info("RemoteCalls Returned successfully");
 	    }else{
 
@@ -274,18 +278,18 @@ public class ApiFedPlugin extends WsfPlugin {
 			parts = pk.split(":");
 			logger.info("Query = " + parts[0] + ", primaryKey = " + parts[1]);
 			params.put("Query", parts[0]);
-			getRemoteCalls(parts[1]);
+			getRemoteCalls(parts[1],sites);
 		    }
 		    else{
 			String orgsString = params.get(orgName);
-			getRemoteCalls(orgsString);
+			getRemoteCalls(orgsString,sites);
 		    }
 		} else if(datasetName != null){	
 		    String datasetString = params.get(datasetName);
-		    getRemoteCalls(datasetString);
+		    getRemoteCalls(datasetString,sites);
 		} else {
 		    doAll = true;
-		    getRemoteCalls(doAll);
+		    getRemoteCalls(doAll, sites);
 		}
 	    }
 
@@ -443,14 +447,14 @@ public class ApiFedPlugin extends WsfPlugin {
     }
     
 
-    private void getRemoteCalls(boolean all)
+    private void getRemoteCalls(boolean all, Site[] sites)
     {
 	for(Site site:sites){
 	    site.setOrganism("doAll");
 	}
     }
 
-    private void getRemoteCalls(String orgs)
+    private void getRemoteCalls(String orgs, Site[] sites)
     {
 	logger.info("Organism = " + orgs);
 	String[] orgArray = orgs.split(",");
@@ -666,7 +670,7 @@ public class ApiFedPlugin extends WsfPlugin {
 	}
     }
 
-    class Site 
+    class Site implements Cloneable
     {
 	private String name;
 	private String projectId;
@@ -695,6 +699,15 @@ public class ApiFedPlugin extends WsfPlugin {
 	{
 	    if(this.organism.length() == 0) return false;
 	    else return true;
+	}
+	public Object clone() {
+	    Site s = new Site();
+	    s.name = name;
+	    s.projectId = projectId;
+	    s.url = url;
+	    s.marker = marker;
+	    s.organism = organism;
+	    return s;
 	}
     }
 
