@@ -270,9 +270,11 @@ public class WdkQueryPlugin extends WsfPlugin {
       
 	    } catch(WdkModelException ex){
 		logger.info("WdkMODELexception in execute()" + ex.toString());
-		String msg = ex.toString();
+		//String msg = ex.toString();
+		String msg = ex.formatErrors();
+		logger.info("Message = " + msg);
 		//if(msg.matches("Invalid value"){}
-		if(msg.contains("value") && msg.contains("has an error: - Please choose value(s) for parameter")){
+		if (msg.indexOf("Please choose value(s) for parameter") != -1){
 		    resultSize = 0;
 		}else if(msg.contains("No value supplied for param")){
 		    resultSize = 0;
