@@ -407,6 +407,12 @@ public class WdkQueryPlugin extends WsfPlugin {
 			}
 			else if(param instanceof AbstractEnumParam){
 			    String valList = (String)o;
+
+			    //Code to specificly work around a specific problem created by the OrthologPattern Question
+			    if(param.getName().equalsIgnoreCase("phyletic_indent_map")) valList = "Archaea";
+			    if(param.getName().equalsIgnoreCase("phyletic_term_map")) valList = "rno"; 
+			    //end workaround
+
 			    String[] vals;
 			    Boolean multipick = ((AbstractEnumParam)param).getMultiPick();
 			    if( multipick ){ 
@@ -603,7 +609,6 @@ public class WdkQueryPlugin extends WsfPlugin {
     {
 	String[] conVocab = p.getVocab();
 	// initVocabMap();
-
 	for(String v : conVocab){
 	    if(value.equalsIgnoreCase(v))
 		return true;
