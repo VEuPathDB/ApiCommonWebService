@@ -49,11 +49,9 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     private static final String FIELD_SCORE_REGEX = "ScoreRegex";
 
     private static final String URL_MAP_PREFIX = "UrlMap_";
-    private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX
-            + "Others_";
+    private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others";
     private static final String PROJECT_MAP_PREFIX = "ProjectMap_";
-    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX
-            + "Others_";
+    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX + "Others";
 
     protected String appPath;
     protected String dataPath;
@@ -190,8 +188,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
                 throw new WsfServiceException("The regular expression for "
                         + FIELD_ORGANISM_REGEX_PREFIX + dbType + " is missing.");
 
-            urlMapOthers = getProperty(FIELD_URL_MAP_OTHER + dbType);
-            projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER + dbType);
+            urlMapOthers = getProperty(FIELD_URL_MAP_OTHER);
+            projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
 
             // get sequence
             String seq = params.get(PARAM_SEQUENCE);
