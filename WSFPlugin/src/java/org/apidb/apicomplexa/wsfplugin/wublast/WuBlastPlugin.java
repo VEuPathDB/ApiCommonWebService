@@ -115,6 +115,9 @@ public class WuBlastPlugin extends BlastPlugin {
     protected String[][] prepareResult(String[] orderedColumns, File outFile, String dbType)
             throws IOException {
 
+	// initialize message otherwise it will show the one from previous run
+	this.message = null;
+
 	//so database name is built correctly for the Translated cases
 	if (dbType.contains("Translated")) {
             if ( dbType.contains("Transcripts") ) dbType="Transcripts";
