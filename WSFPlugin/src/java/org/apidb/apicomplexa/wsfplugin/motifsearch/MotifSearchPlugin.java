@@ -425,14 +425,14 @@ public class MotifSearchPlugin extends WsfPlugin {
             sbLoc.append(matcher.end() - 1);
             sbLoc.append(')');
 
-            // abtain the context sequence
+            // obtain the context sequence
             if ((matcher.start() - prev) <= (contextLength * 2)) {
                 // no need to trim
                 sbSeq.append(sequence.substring(prev, matcher.start()));
             } else { // need to trim some
                 if (prev != 0)
                     sbSeq.append(sequence.substring(prev, prev + contextLength));
-                sbSeq.append("...");
+                sbSeq.append("... ");
                 sbSeq.append(sequence.substring(
                         matcher.start() - contextLength, matcher.start()));
             }
@@ -447,7 +447,7 @@ public class MotifSearchPlugin extends WsfPlugin {
         // grab the last context
         if ((prev + contextLength) < sequence.length()) {
             sbSeq.append(sequence.substring(prev, prev + contextLength));
-            sbSeq.append("...");
+            sbSeq.append("... ");
         } else {
             sbSeq.append(sequence.substring(prev));
         }
