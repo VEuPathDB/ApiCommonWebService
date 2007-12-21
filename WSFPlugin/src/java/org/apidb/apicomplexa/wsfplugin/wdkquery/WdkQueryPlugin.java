@@ -278,7 +278,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    resultSize = 0;
 		}else if(msg.contains("No value supplied for param")){
 		    resultSize = 0;
-		}else if(msg.indexOf("does not include query") != -1){
+		}else if(msg.indexOf("does not contain") != -1){
 		    resultSize = -2;
 		}else if(msg.contains("datasets value '' has an error: Missing the value")){
 		    resultSize = 0;
