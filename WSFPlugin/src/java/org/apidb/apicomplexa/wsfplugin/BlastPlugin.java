@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -233,10 +234,33 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             logger.error(ex);
             throw new WsfServiceException(ex);
         } finally {
+	    /*
             if (seqFile != null) seqFile.delete();
             if (outFile != null) outFile.delete();
+	    */
+    	    cleanup();
         }
     }
+
+
+
+    protected void cleanup() {
+	File dir = new File(tempPath);
+	String[] allFiles=dir.list();
+	File tempFile = null;
+	long fileDate;
+	long todayLong = new Date().getTime();
+	// remove files older than a week  (500000000)
+	for(int i=0;i<allFiles.length;i++) {
+	    tempFile = new File(dir,allFiles[i]);
+	    if( (todayLong - (tempFile.lastModified()) ) > 500000000 ){
+		logger.info("Temp file to be deleted: " + allFiles[i] + "\n" );
+		tempFile.delete();
+	    }
+	}
+	return;
+    }
+    
 
     protected String getBlastProgram(String qType, String dbType)
             throws WsfServiceException {
