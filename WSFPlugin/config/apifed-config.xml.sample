@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- projectId should be the same as in mat views -->
-<!-- update marker to have all the possible values for organism (or the param used to select site)
--->
+<!-- marker should have all the possible values for organism (or the param used to select site) -->
 <!-- QueryMap needs to be in gus_home/config (not used currently) -->
+
 <Config>
   <Sites>
     <model name="CryptoDB"
            projectId="CryptoDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="(?:^C$|^C\.?\w*\s+(?:hominis|parvum)(\s+annotated proteins)?)" />
+           marker="^C$|^Cryptosporidium\s*.*" />
+    <model name="GiardiaDB"
+           projectId="GiardiaDB"
+           url="(URL FOR WSF WEB SERVICE)"
+           marker="^G$|^Giardia\s*.*" />
     <model name="PlasmoDB"
            projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="(?:^P$|^P\.?\w*\s+(?:falciparum|vivax|berghei|yoelii|chabaudi|knowlesi)(\s+annotated proteins)?)" />
+           marker="^P$|^Plasmodium\s*.*" />
     <model name="ToxoDB" 
            projectId="ToxoDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="(?:^T$|^T\.?\w*\s+(?:gondii)(\s+annotated proteins)?)" />
+           marker="^T$|^Toxoplasma\s*.*" />
+    <model name="TrichDB"
+           projectId="TrichDB"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="^Tr$|^Trichomonas\s*.*" />
+
   </Sites>
   <MappingFile name="QueryMap.xml"/>
   <Timeout minutes="2"/>
