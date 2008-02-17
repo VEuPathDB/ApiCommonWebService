@@ -280,6 +280,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    resultSize = 0;
 		}else if(msg.indexOf("does not contain") != -1){
 		    resultSize = -2;
+}else if(msg.indexOf("does not include") != -1){
+		    resultSize = -2;
 		}else if(msg.contains("datasets value '' has an error: Missing the value")){
 		    resultSize = 0;
 		}else {
