@@ -323,7 +323,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    if(index >= 0)
 	    	    responseT[i][j] = componentResults[i][index];
 		    else 
-		        response[i][j] = "N/A";
+		        responseT[i][j] = "N/A";
 	    	}
 	    }
 	    //logger.info("FINAL RESULT CALCULATED");
