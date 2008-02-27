@@ -1,7 +1,7 @@
 /**
  *Version 2.0.0 --
  * Updated to work with the new Wdk Model.  The loading subroutine was updated to call parse() correctly for the new code in teh WDK
- * 
+ * 2/27/2008 -- Removed valiadtion of the columns and inserted code to insert "N/A" into the result is a column does not exists on a component site
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
@@ -202,7 +202,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 
 	//Map<String,Object>SOParams = convertParams(params);
 	//logger.info("Parameters were processed");
-	Integer[] colindicies = new Integer[orderedColumns.length];
+	Integer[] colindicies = new Integer[orderedColumns.length];// Variable to maintain the order of columns in the result... maintains order given by Federation Plugin
 	try {
 	    
 
@@ -232,8 +232,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    Map<String,Object> SOParams = convertParams(params,q.getParams());//getParamsFromQuery(q));
 
 	    //validateQueryParams(params,q);
-	    logger.info("Parameters Validated...");
-	    validateQueryColumns(orderedColumns,q);
+	    //logger.info("Parameters Validated...");
+	    //validateQueryColumns(orderedColumns,q);
 	    //logger.info("Columns Validated...");
 	    
 	    // Get the indicies of the correct columns for the component Query
@@ -280,8 +280,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    resultSize = 0;
 		}else if(msg.indexOf("does not contain") != -1){
 		    resultSize = -2;
-	}else if(msg.indexOf("does not include") != -1){
-	    		    resultSize = -2;
+}else if(msg.indexOf("does not include") != -1){
+		    resultSize = -2;
 		}else if(msg.contains("datasets value '' has an error: Missing the value")){
 		    resultSize = 0;
 		}else {
@@ -320,7 +320,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 	    for(int i = 0; i < componentResults.length; i++){
 	    	for(int j = 0; j < colindicies.length; j++){
 		    int index = colindicies[j].intValue();
+		    if(index >= 0)
 	    	    responseT[i][j] = componentResults[i][index];
+		    else 
+		        responseT[i][j] = "N/A";
 	    	}
 	    }
 	    //logger.info("FINAL RESULT CALCULATED");
