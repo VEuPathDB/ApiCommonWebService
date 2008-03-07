@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -56,6 +57,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     private String dbLogin;
     private String dbPassword;
     private String projectId;
+
     /**
      * @throws WsfServiceException
      * 
@@ -69,7 +71,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         dbConnection = getProperty(FIELD_DB_CONNECTION);
         dbLogin = getProperty(FIELD_DB_LOGIN);
         dbPassword = getProperty(FIELD_DB_PASSWORD);
-	projectId = getProperty(FIELD_PROJECT_ID);
+        projectId = getProperty(FIELD_PROJECT_ID);
 
         if (perlExec == null)
             throw new WsfServiceException("The " + FIELD_PERL_EXECUTABLE
@@ -111,7 +113,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
+        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
+                COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
     }
 
     /*
@@ -190,7 +193,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      *      java.lang.String[])
      */
     @Override
-    protected String[][] execute(String invokeKey, Map<String, String> params,
+    protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
@@ -201,18 +204,25 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         long start = System.currentTimeMillis();
         try {
             // invoke the command, and set default 10 min as timeout limit
-            String output = invokeCommand(cmds, 10 * 60);
+            StringBuffer output = new StringBuffer();
+            int signal = invokeCommand(cmds, output, 10 * 60);
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
                     + " seconds");
 
-            if (exitValue != 0)
+            if (signal != 0)
                 throw new WsfServiceException("The invocation is failed: "
                         + output);
 
             // prepare the result
             String queryGeneId = params.get(PARAM_GENE_ID);
-            return prepareResult(output, orderedColumns, queryGeneId);
+            String[][] result = prepareResult(output.toString(),
+                    orderedColumns, queryGeneId);
+
+            WsfResult wsfResult = new WsfResult();
+            wsfResult.setResult(result);
+            wsfResult.setSignal(signal);
+            return wsfResult;
         } catch (IOException ex) {
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
@@ -246,8 +256,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         return array;
     }
 
-    private String[][] prepareResult(String content, String[] orderedColumns, String queryGeneId)
-            throws WsfServiceException, IOException {
+    private String[][] prepareResult(String content, String[] orderedColumns,
+            String queryGeneId) throws WsfServiceException, IOException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -273,16 +283,17 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             line = line.trim();
             if (line.length() == 0) continue;
             String[] parts = line.split("\t");
-            
+
             if (parts.length != 3)
-                throw new WsfServiceException("Invalid output format:\n" + content);
-            
+                throw new WsfServiceException("Invalid output format:\n"
+                        + content);
+
             String geneId = parts[0].trim();
             double distance = Double.parseDouble(parts[1]);
-            
+
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
-            
+
             String[] row = new String[5];
             row[columns.get(COLUMN_GENE_ID)] = geneId;
             row[columns.get(COLUMN_PROJECT_ID)] = projectId;

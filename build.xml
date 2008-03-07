@@ -60,6 +60,10 @@
 
     <ant target="defaultProjectInstall"/>
 
+    <!-- copy the WSF-Clisnt.jar, which will be used by IDE -->
+    <copy  file="${targetDir}/lib/java/WSF-Client.jar"
+           toDir="../ApiCommonWebService/WSFPlugin/lib/java" />
+
   </target>
 
 

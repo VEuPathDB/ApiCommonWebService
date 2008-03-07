@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -81,33 +82,39 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected String[][] execute(String invokeKey, Map<String, String> params,
+    protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking PlasmoAPPlugin...");
 
         try {
             // invoke the PlasmoAP application
             String[] command = prepareCommand(params);
-            String report = invokeCommand(command, 0); // wait for infinite
-            // time
+            StringBuffer buffer = new StringBuffer();
+            // wait for infinite time
+            int signal = invokeCommand(command, buffer, 0);
+            String output = buffer.toString();
 
-            if (exitValue != 0)
+            if (signal != 0)
                 throw new WsfServiceException(
-                        "The invocation of PlasmoApPlugin is failed: " + report);
+                        "The invocation of PlasmoApPlugin is failed: " + output);
 
             // parse the signal out of the report
-            String signal = parseResult(report);
+            String match = parseResult(output);
 
             // construct the result
             String[][] result = new String[1][orderedColumns.length];
             for (int i = 0; i < orderedColumns.length; i++) {
                 if (orderedColumns[i].equalsIgnoreCase(COLUMN_REPORT)) {
-                    result[0][i] = report;
+                    result[0][i] = output;
                 } else if (orderedColumns[i].equalsIgnoreCase(COLUMN_SIGNAL)) {
-                    result[0][i] = signal;
+                    result[0][i] = match;
                 }
             }
-            return result;
+            WsfResult wsfResult = new WsfResult();
+            wsfResult.setResult(result);
+            wsfResult.setMessage(output);
+            wsfResult.setSignal(signal);
+            return wsfResult;
         } catch (IOException ex) {
             logger.error(ex);
             throw new WsfServiceException(ex);
@@ -116,13 +123,13 @@ public class PlasmoAPPlugin extends WsfPlugin {
 
     private String[] prepareCommand(Map<String, String> params) {
         String sequence = params.get(PARAM_SEQUENCE);
-       Vector<String> cmds = new Vector<String>();
-       cmds.add(perlExe);
-       cmds.add(plasmoapScript);
-       cmds.add(sequence);
-       String[] cmdArray = new String[cmds.size()];
-       cmds.toArray(cmdArray);
-       return cmdArray;
+        Vector<String> cmds = new Vector<String>();
+        cmds.add(perlExe);
+        cmds.add(plasmoapScript);
+        cmds.add(sequence);
+        String[] cmdArray = new String[cmds.size()];
+        cmds.toArray(cmdArray);
+        return cmdArray;
     }
 
     private String parseResult(String result) {

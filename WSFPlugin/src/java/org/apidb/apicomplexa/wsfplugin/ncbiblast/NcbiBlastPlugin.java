@@ -43,17 +43,17 @@ public class NcbiBlastPlugin extends BlastPlugin {
         Vector<String> cmds = new Vector<String>();
         cmds.add(appPath + "/blastall");
 
-	//       String qType = params.get(PARAM_QUERY_TYPE);
-	//        params.remove(PARAM_QUERY_TYPE);
+        // String qType = params.get(PARAM_QUERY_TYPE);
+        // params.remove(PARAM_QUERY_TYPE);
 
         String dbOrgs = params.get(PARAM_DATABASE_ORGANISM);
         params.remove(PARAM_DATABASE_ORGANISM);
 
-	//        String blastApp = getBlastProgram(qType, dbType);
+        // String blastApp = getBlastProgram(qType, dbType);
 
-	String blastApp = params.get(PARAM_ALGORITHM);
-	params.remove(PARAM_ALGORITHM);
-	
+        String blastApp = params.get(PARAM_ALGORITHM);
+        params.remove(PARAM_ALGORITHM);
+
         String blastDbs = getBlastDatabase(dbType, dbOrgs);
         cmds.add("-p");
         cmds.add(blastApp);
@@ -66,24 +66,23 @@ public class NcbiBlastPlugin extends BlastPlugin {
 
         for (String param : params.keySet()) {
 
-	    if(param.equals("-filter")) {
-		cmds.add("-F");
-		if (params.get(param).equals("yes"))
-		    cmds.add("T");
-		else
-		    cmds.add("F");
-	    }
+            if (param.equals("-filter")) {
+                cmds.add("-F");
+                if (params.get(param).equals("yes")) cmds.add("T");
+                else cmds.add("F");
+            }
 
             if (!param.equals("-p") && !param.equals("-d")
-                    && !param.equals("-i") && !param.equals("-o") && !param.equals("-filter")) {
-		cmds.add(param);
+                    && !param.equals("-i") && !param.equals("-o")
+                    && !param.equals("-filter")) {
+                cmds.add(param);
                 cmds.add(params.get(param));
             }
         }
         logger.debug(blastDbs + " inferred from (" + dbType + ", '" + dbOrgs
                 + "')");
         logger.debug(blastApp);// + " inferred from (" + qType + ", " + dbType
-	//                + ")");
+        // + ")");
 
         String[] cmdArray = new String[cmds.size()];
         cmds.toArray(cmdArray);
@@ -91,7 +90,7 @@ public class NcbiBlastPlugin extends BlastPlugin {
     }
 
     protected String[][] prepareResult(String[] orderedColumns, File outFile,
-            String dbType) throws IOException {
+            String dbType, StringBuffer message) throws IOException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -104,7 +103,7 @@ public class NcbiBlastPlugin extends BlastPlugin {
         StringBuffer header = new StringBuffer();
         do {
             line = in.readLine();
-            
+
             if (line == null)
                 throw new IOException("Invalid BLAST output format");
             header.append(line + newline);
@@ -112,10 +111,10 @@ public class NcbiBlastPlugin extends BlastPlugin {
             // check if no hit in the result
             if (line.indexOf("No hits found") >= 0) {
                 // no hits found, then read everything into message
-                 while ((line = in.readLine()) != null) {
-                     header.append(line + newline);
-                 }
-                this.message = header.toString();
+                while ((line = in.readLine()) != null) {
+                    header.append(line + newline);
+                }
+                message.append(header.toString());
                 return new String[0][columns.size()];
             }
         } while (!line.startsWith("Sequence"));
@@ -165,25 +164,24 @@ public class NcbiBlastPlugin extends BlastPlugin {
                 alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
-		// to handle two-line definitions in ORFs
-		String secondLine = in.readLine();
-		block.append(line + newline);
-		block.append(secondLine + newline);
+                // to handle two-line definitions in ORFs
+                String secondLine = in.readLine();
+                block.append(line + newline);
+                block.append(secondLine + newline);
 
-		line = line.trim() + secondLine.trim();
+                line = line.trim() + secondLine.trim();
 
                 // extract source id
                 int[] sourceIdPos = findField(line, sourceIdRegex);
-                String sourceId = line
-                        .substring(sourceIdPos[0], sourceIdPos[1]);
+                String sourceId = line.substring(sourceIdPos[0], sourceIdPos[1]);
 
                 // insert the organism url
                 line = insertIdUrl(line, dbType);
                 alignment[columns.get(COLUMN_ID)] = sourceId;
             } else {
-		// add this line to the block
-		block.append(line + newline);
-	    }
+                // add this line to the block
+                block.append(line + newline);
+            }
         }
 
         // get the rest as the footer part

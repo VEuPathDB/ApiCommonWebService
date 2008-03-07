@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -90,7 +91,8 @@ public class MotifSearchPlugin extends WsfPlugin {
                     "The required field in property file is missing: "
                             + FIELD_DATA_DIR);
         dataDir = new File(dir);
-        logger.info("constructor(): dataDir: " + dataDir.getAbsolutePath() + "\n");
+        logger.info("constructor(): dataDir: " + dataDir.getAbsolutePath()
+                + "\n");
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
         useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
@@ -156,7 +158,7 @@ public class MotifSearchPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected String[][] execute(String invokeKey, Map<String, String> params,
+    protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
@@ -202,7 +204,10 @@ public class MotifSearchPlugin extends WsfPlugin {
             }
 
             // construct results
-            return prepareResult(matches, orderedColumns);
+            String[][] result = prepareResult(matches, orderedColumns);
+            WsfResult wsfResult = new WsfResult();
+            wsfResult.setResult(result);
+            return wsfResult;
         } catch (IOException ex) {
             throw new WsfServiceException(ex);
         }
@@ -365,22 +370,22 @@ public class MotifSearchPlugin extends WsfPlugin {
             // get first gene id
             line = line.trim().replaceAll("\\s", " ");
             String geneID = extractField(line, sourceIdRegex);
-            
+
             // TEST
-            //logger.info("geneID = " + geneID);
+            // logger.info("geneID = " + geneID);
 
             // get project id, if required
             String projectId = null;
             if (useProjectId) {
                 String organism = extractField(line, organismRegex);
-                
+
                 // TEST
-                //logger.debug("Organism from defline = " + organism);
-                
+                // logger.debug("Organism from defline = " + organism);
+
                 projectId = getProjectId(organism);
-                
+
                 // TEST
-                //logger.debug("ProjectId = " + projectId);
+                // logger.debug("ProjectId = " + projectId);
             }
 
             StringBuffer seq = new StringBuffer();

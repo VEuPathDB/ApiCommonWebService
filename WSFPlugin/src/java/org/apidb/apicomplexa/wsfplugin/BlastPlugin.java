@@ -7,14 +7,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Map;
 import java.util.Date;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.gusdb.wsf.plugin.IWsfPlugin;
 import org.gusdb.wsf.plugin.WsfPlugin;
+import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.util.Formatter;
 
 /**
  * @author xingao
@@ -32,7 +34,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
     // required parameter definitions
     public static final String PARAM_ALGORITHM = "BlastAlgorithm";
-    //    public static final String PARAM_QUERY_TYPE = "BlastQueryType";
+    // public static final String PARAM_QUERY_TYPE = "BlastQueryType";
     public static final String PARAM_DATABASE_TYPE = "BlastDatabaseType";
     public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
@@ -52,7 +54,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     private static final String URL_MAP_PREFIX = "UrlMap_";
     private static final String FIELD_URL_MAP_OTHER = URL_MAP_PREFIX + "Others";
     private static final String PROJECT_MAP_PREFIX = "ProjectMap_";
-    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX + "Others";
+    private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX
+            + "Others";
 
     protected String appPath;
     protected String dataPath;
@@ -151,7 +154,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      *      java.lang.String[])
      */
     @Override
-    protected String[][] execute(String invokeKey, Map<String, String> params,
+    protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         // get plugin name
         String pluginName = getClass().getSimpleName();
@@ -207,60 +210,66 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             // prepare the arguments
             String[] command = prepareParameters(params, seqFile, outFile,
                     dbType);
-            logger.info("Command prepared: " + printArray(command));
+            logger.info("Command prepared: " + Formatter.printArray(command));
 
             // invoke the command
-            String output = invokeCommand(command, timeout);
+            StringBuffer output = new StringBuffer();
+            int signal = invokeCommand(command, output, timeout);
 
-	    // exitValue is int, defined in WsfPlugin.java
-	    // we want to show the stderr to the user 
-	    /*
-            if (exitValue != 0)
-                throw new WsfServiceException("The invocation is failed: "
-                        + output);
-	    */
+            // signal is int, defined in WsfPlugin.java
+            // we want to show the stderr to the user
+            /*
+             * if (signal != 0) throw new WsfServiceException("The invocation is
+             * failed: " + output);
+             */
+            logger.debug("BLAST output: " + output.toString());
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
             logger.info("\nPreparing the result");
-            String[][] result = prepareResult(orderedColumns, outFile, dbType);
+            StringBuffer message = new StringBuffer();
+            String[][] result = prepareResult(orderedColumns, outFile, dbType,
+                    message);
             logger.info("\nResult prepared");
 
             // insert a bookmark into the tabular row, linking to alignment
             insertBookmark(result, orderedColumns);
-            logger.debug(printArray(result));
-            return result;
+            logger.debug(Formatter.printArray(result));
+
+            if (message.length() == 0) message.append(output);
+
+            WsfResult wsfResult = new WsfResult();
+            wsfResult.setMessage(message.toString());
+            wsfResult.setSignal(signal);
+            wsfResult.setResult(result);
+            return wsfResult;
         } catch (IOException ex) {
             logger.error(ex);
             throw new WsfServiceException(ex);
         } finally {
-	    /*
-            if (seqFile != null) seqFile.delete();
-            if (outFile != null) outFile.delete();
-	    */
-    	    cleanup();
+            /*
+             * if (seqFile != null) seqFile.delete(); if (outFile != null)
+             * outFile.delete();
+             */
+            cleanup();
         }
     }
 
-
-
     protected void cleanup() {
-	File dir = new File(tempPath);
-	String[] allFiles=dir.list();
-	File tempFile = null;
-	long fileDate;
-	long todayLong = new Date().getTime();
-	// remove files older than a week  (500000000)
-	for(int i=0;i<allFiles.length;i++) {
-	    tempFile = new File(dir,allFiles[i]);
-	    if( (todayLong - (tempFile.lastModified()) ) > 500000000 ){
-		logger.info("Temp file to be deleted: " + allFiles[i] + "\n" );
-		tempFile.delete();
-	    }
-	}
-	return;
+        File dir = new File(tempPath);
+        String[] allFiles = dir.list();
+        File tempFile = null;
+        long todayLong = new Date().getTime();
+        // remove files older than a week (500000000)
+        for (int i = 0; i < allFiles.length; i++) {
+            tempFile = new File(dir, allFiles[i]);
+            if ((todayLong - (tempFile.lastModified())) > 500000000) {
+                logger.info("Temp file to be deleted: " + allFiles[i] + "\n");
+                tempFile.delete();
+            }
+        }
+        return;
     }
-    
 
     protected String getBlastProgram(String qType, String dbType)
             throws WsfServiceException {
@@ -304,7 +313,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < organisms.length; i++) {
             // construct file path pattern
-            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$", Matcher.quoteReplacement(organisms[i]).trim()  );
+            String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
+                    Matcher.quoteReplacement(organisms[i]).trim());
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
             sb.append(dataPath + "/" + path + " ");
         }
@@ -327,24 +337,28 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
     protected String insertIdUrl(String defline, String dbType) {
         // extract organism from the defline
-	logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is " + dbType + "\n");
+        logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is "
+                + dbType + "\n");
 
         int[] orgPos = findField(defline, organismRegex);
         String organism = defline.substring(orgPos[0], orgPos[1]);
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
-	logger.debug("\ninsertIdUrl() organism is: " + organism + "\nand sourceId is " + sourceId + "\n");
+        logger.debug("\ninsertIdUrl() organism is: " + organism
+                + "\nand sourceId is " + sourceId + "\n");
 
-	String projectId= getProjectId(organism);
-	logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
+        String projectId = getProjectId(organism);
+        logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
         // get the url mapping for this organsim
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
         logger.debug("mapkey=" + mapkey + ", mapurl=" + mapurl);
 
         if (mapurl == null) mapurl = urlMapOthers; // use default url
-        mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$", Matcher.quoteReplacement(sourceId));
-        mapurl = mapurl.trim().replaceAll("\\$\\$project_id\\$\\$", Matcher.quoteReplacement(projectId));
+        mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$",
+                Matcher.quoteReplacement(sourceId));
+        mapurl = mapurl.trim().replaceAll("\\$\\$project_id\\$\\$",
+                Matcher.quoteReplacement(projectId));
 
         // insert a link tag into the data
         StringBuffer sb = new StringBuffer(defline.substring(0, srcPos[0]));
@@ -371,7 +385,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         for (int rowId = 0; rowId < result.length; rowId++) {
             String sourceId = result[rowId][srcPos];
             if (sourceId == null || sourceId.length() == 0) continue;
-	    // if v < b 
+            // if v < b
             if (result[rowId][rowPos] == null) continue;
             // insert the link to the score field
             String tabRow = result[rowId][rowPos].trim();
@@ -406,6 +420,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             WsfServiceException;
 
     protected abstract String[][] prepareResult(String[] orderedColumns,
-            File outFile, String dbType) throws IOException;
+            File outFile, String dbType, StringBuffer message)
+            throws IOException;
 
 }
