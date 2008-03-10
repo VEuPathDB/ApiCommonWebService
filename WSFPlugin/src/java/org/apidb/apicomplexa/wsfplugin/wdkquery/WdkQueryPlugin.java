@@ -629,10 +629,10 @@ public class WdkQueryPlugin extends WsfPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p) {
+    private String[][] handleEnumParameters(Param p) throws WdkModelException {
         logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
         EnumParam eParam = (EnumParam) p;
-        Map<String, String> termDisp = eParam.getTermDisplayMap();
+        Map<String, String> termDisp = eParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
         String[][] ePValues = new String[terms.size()][2];
         int index = 0;
