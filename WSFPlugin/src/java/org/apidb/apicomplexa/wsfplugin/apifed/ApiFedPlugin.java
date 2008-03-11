@@ -16,6 +16,7 @@ import javax.servlet.ServletContext;
 import javax.xml.rpc.ServiceException;
 
 import org.apache.axis.MessageContext;
+import org.gusdb.wsf.client.WsfResponse;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
 import org.gusdb.wsf.plugin.WsfPlugin;
@@ -653,14 +654,18 @@ public class ApiFedPlugin extends WsfPlugin {
             try {
                 WsfService service = locator.getWsfService(new URL(url));
                 long start = System.currentTimeMillis();
-                WsfResult wsfResult = service.invoke(pluginName, queryName,
+                
+                // HACK
+                // in the future, this inovcation should be replaced by the 
+                // newer version, invokeEx()
+                WsfResponse wsfResult = service.invoke(pluginName, queryName,
                         params, cols);
                 long end = System.currentTimeMillis();
 
                 logger.info("Thread (" + url + ") has returned results in "
                         + ((end - start) / 1000.0) + " seconds.");
                 result.setMessage(wsfResult.getMessage());
-                result.setAnswer(wsfResult.getResult());
+                result.setAnswer(wsfResult.getResults());
 
             } catch (MalformedURLException ex) {
                 ex.printStackTrace();
