@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-<properties>
-<comment>The configuration file for MotifSearch WSF Plugin.</comment>
-<entry key="DataDir">(your flatfile data directory)</entry>
-<entry key="ScriptDir">(the directory to which GUS executables get installed)</entry>
-<entry key="ProjectID">(ProjectID of the project using this plugin)</entry>
-</properties>
