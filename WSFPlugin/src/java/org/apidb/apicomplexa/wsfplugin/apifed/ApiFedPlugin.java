@@ -114,7 +114,7 @@ public class ApiFedPlugin extends WsfPlugin {
                     config_e.getChild("Timeout").getAttributeValue("minutes")).intValue();
             logger.debug("Mapping File ========== " + mapfile);
             logger.debug("Timeout Value ========== " + timeOutInMinutes);
-            mapDoc = createMap(mapfile);
+	    //   mapDoc = createMap(mapfile);
         } catch (Exception e) {
             logger.debug(e);
         }
