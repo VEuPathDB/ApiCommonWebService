@@ -181,10 +181,8 @@ public class WuBlastPlugin extends BlastPlugin {
             // blastplugin does this at the end of execute() --insertBookmark()
             // line = insertLinkToBlock(line,counter);
 
-            // logger.info("WB prepareResult(): \nif dbType is not ORF, we
-            // insert URL in the line: " + line + "\n");
-            // insert link to gene page, in source_id, only if dbType IS NOT ORF
-            if (!dbType.contains("ORF")) line = insertIdUrl(line, dbType);
+            // insert link to gene page, in source_id
+            line = insertIdUrl(line, dbType);
 
             counterstring = counter.toString();
             rows.put(counterstring, line);
