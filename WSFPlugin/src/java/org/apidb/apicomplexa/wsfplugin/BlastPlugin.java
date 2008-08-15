@@ -156,6 +156,16 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     @Override
     protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
+
+	//Identifier--ProjectId--TabularRow--Alignment--Header--Footer--
+        logger.debug("BlastPlugin.java: ordered columns are:"+
+		    orderedColumns[0] + "--" +
+		    orderedColumns[1] + "--" +
+		    orderedColumns[2] + "--" +
+		    orderedColumns[3] + "--" +
+		    orderedColumns[4] + "--" +
+		    orderedColumns[5] + "--" );
+
         // get plugin name
         String pluginName = getClass().getSimpleName();
         logger.info("Invoking " + pluginName + "...");
@@ -335,13 +345,12 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         }
     }
 
-    protected String insertIdUrl(String defline, String dbType) {
-        // extract organism from the defline
-        logger.debug("\ninsertIdUrl() line is: " + defline + "\nand dbType is "
-                + dbType + "\n");
 
-        int[] orgPos = findField(defline, organismRegex);
-        String organism = defline.substring(orgPos[0], orgPos[1]);
+  protected String insertIdUrl(String defline, String dbType,String organism) {
+        // extract organism from the defline
+        logger.debug("\ninsertIdUrl() line is: " + defline + "   --- dbType is "
+                + dbType + "   --- organism is " + organism + "\n");
+
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
         logger.debug("\ninsertIdUrl() organism is: " + organism
@@ -350,9 +359,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         String projectId = getProjectId(organism);
         logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
         // get the url mapping for this organsim
+
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-        logger.debug("mapkey=" + mapkey + ", mapurl=" + mapurl);
+        logger.debug("\ninsertIdUrl() mapkey=" + mapkey + ", mapurl=" + mapurl);
 
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$",
@@ -368,8 +378,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         sb.append(sourceId);
         sb.append("</a>");
         sb.append(defline.substring(srcPos[1]));
-        return sb.toString();
+	return sb.toString();
+
     }
+
 
     protected void insertBookmark(String[][] result, String[] orderedColumns) {
         // get the position of source_id, tabular row and alignment block

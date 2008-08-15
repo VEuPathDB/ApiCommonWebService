@@ -100,10 +100,8 @@ public class WuBlastPlugin extends BlastPlugin {
     }
 
     // -------------------------------------------------------------------------
-    // it used to call insertLinkToBlock(), now it uses insertBookmark()
-    // --called in execute()
-    // it used to call insertUrl(), now it uses insertIdUrl() --needs to be
-    // fixed to add projectId
+    // it used to call insertLinkToBlock(), now it uses insertBookmark() ----called in execute()
+    // it used to call insertUrl(), now it uses insertIdUrl() 
     // it used to call extractField(), now it uses FindField()
 
     protected String[][] prepareResult(String[] orderedColumns, File outFile,
@@ -161,11 +159,12 @@ public class WuBlastPlugin extends BlastPlugin {
         Map<String, String> rows = new HashMap<String, String>();
 
         // wublast truncates deflines in tabular lines, that is why in ORF fasta
-        // files the source ids are sometimes truncated
+        // files the source ids are sometimes truncated -- now it is the organism...
         // we introduce these variables to link score to correct alignment
         // block, without id (with a counter instead)
         Integer counter = 0;
         String counterstring;
+	String rowline; //to rewrite the tabular row line with a link
 
         // Loop on Tabular Rows
         while ((line = in.readLine()) != null) {
@@ -173,7 +172,8 @@ public class WuBlastPlugin extends BlastPlugin {
             // a tabular row line: " + line + "\n");
 
             if (line.trim().length() == 0) {
-                logger.info("\nWB prepareResult(): Line length 0!!, we finished with tabular rows \n -------------------------\n");
+                logger.debug("\nWB prepareResult(): Line length 0!!, END OF tabular rows\n");
+ logger.info("\n\n ********** NUMBER OF HITS: "+ rows.size() +"\n\n");
                 break;
             }
 
@@ -181,14 +181,17 @@ public class WuBlastPlugin extends BlastPlugin {
             // blastplugin does this at the end of execute() --insertBookmark()
             // line = insertLinkToBlock(line,counter);
 
-            // insert link to gene page, in source_id
-            line = insertIdUrl(line, dbType);
+            // insert link to record page, in source_id, when block is read,
+	    //       so we do not have the problem of truncated deflines
+            // line = insertIdUrl(line, dbType);
 
             counterstring = counter.toString();
             rows.put(counterstring, line);
             counter++;
 
         }// end while
+
+	// END OF READING TABULAR ROWS -- start reading alignments
 
         // We need to deal with a possible WARNING between tabular rows and
         // alignments: move it to header
@@ -219,9 +222,18 @@ public class WuBlastPlugin extends BlastPlugin {
         // Extract alignment blocks
         String hit_organism, hit_projectId = "", hit_sourceId = "";
 
-        List<String[]> blocks = new ArrayList<String[]>();
-        StringBuffer block = null;
+
+	//alignment will have the following []:
+	// COLUMN_ID,COLUMN_PROJECT_ID,COLUMN_ROW,COLUMN_BLOCK,COLUMN_HEADER,COLUMN_FOOTER
         String[] alignment = null;
+	// block will be copied into alignment[COLUMN_BLOCK]
+        StringBuffer block = null;
+	// miniblock is used to concatenate the lines that make up the full defline in each hit
+	StringBuffer miniblock = null;
+
+	// blocks will contain the alignments
+        List<String[]> blocks = new ArrayList<String[]>();
+
         StringBuffer warnings = new StringBuffer();
         counter = 0;
 
@@ -229,7 +241,7 @@ public class WuBlastPlugin extends BlastPlugin {
             // found a warning before parameters
             if (line.trim().startsWith("WARNING")) {
 
-                logger.info("\nWB prepareResult() Found WARNING: " + line
+                logger.debug("\nWB prepareResult() Found WARNING: " + line
                         + "\n");
                 warnings.append(line + newline);
                 line = in.readLine(); // get next line
@@ -254,9 +266,9 @@ public class WuBlastPlugin extends BlastPlugin {
 
             // reach a new start of alignment block
             if (line.length() > 0 && line.charAt(0) == '>') {
-                logger.info("\n\n\n-----------------\nWB prepareResult() This should be a new block: "
+                logger.debug("\n\n\n-----------------\nWB prepareResult() This should be a new block: "
                         + line + "\n");
-
+	
                 // output the previous block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
@@ -266,16 +278,21 @@ public class WuBlastPlugin extends BlastPlugin {
                 alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
-                /*
-                 * // obtain the ID of it, which is the rest of this line
-                 * hit_sourceId = extractField(line,sourceIdRegex);
-                 * //logger.info("\nWB prepareResult() Back from extractField()
-                 * hit_sourceId : " + hit_sourceId + "\n"); hit_organism =
-                 * extractField(line, organismRegex); //logger.info("\nWB
-                 * prepareResult() Back from extractField(organismRegex):
-                 * organism: " + hit_organism+"\n");
-                 */
+		// for deflines where source id is TOO long so
+		//     the keyword "organism" in blast report appears in the second line :
+		// concatenate lines of the defline so we can find "organism"
+		//     with the regex provided in config file
+		miniblock = new StringBuffer();
+		while ( !(line.trim().startsWith("Length ="))   ) {
+		    logger.debug("\nWB prepareResult() concatenating defline: " + line
+				+ "\n");
+		    miniblock.append(line.trim() + " ");
+		    line = in.readLine(); // get next line
+		}
+		miniblock.append("\n" + line);
+		line=miniblock.toString();
 
+		//---------------   Making the link to record page
                 // get source id
                 int[] sourceIdPos = findField(line, sourceIdRegex);
                 hit_sourceId = line.substring(sourceIdPos[0], sourceIdPos[1]);
@@ -283,27 +300,32 @@ public class WuBlastPlugin extends BlastPlugin {
                 // get organism
                 int[] organismPos = findField(line, organismRegex);
                 hit_organism = line.substring(organismPos[0], organismPos[1]);
-                logger.debug("Organism extracted from defline is: "
+                logger.debug("\nWB prepareResult() Organism extracted from defline is: "
                         + hit_organism);
 
                 if (useProjectId) {
                     hit_projectId = getProjectId(hit_organism);
-                    // logger.info("\nWB prepareResult() Back from
-                    // getProjectId(): projectId : " + hit_projectId+"\n\n");
+                    logger.debug("\nWB prepareResult() projectId : " + hit_projectId+"\n\n");
                     alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
                 }
-
-                logger.info("WB prepareResult(): alignments: to insert URL in: "
+	
+                logger.debug("WB prepareResult(): alignments: to insert URL in: "
                         + line + "\n");
                 // Insert link to gene page, in source_id
                 // ncbi plugin does not do this
-                line = insertIdUrl(line, dbType);
+                line = insertIdUrl(line, dbType, hit_organism);
 
-                // Insert <a name="source_id"></a> in the beginning of the line
-                // line = "<a name=\"" + hit_sourceId + "\"></a>" + line;
-                // not neededif we use insertBookmark() in BlastPlugin
-                // line = "<a name=\"" + counter + "\"></a>" + line;
-                counter++;
+		//--------------
+		// insert link in tabular row now that we know the organism	
+		counterstring = counter.toString();	
+		rowline = rows.get(counterstring);
+		logger.debug("\nWB prepareResult(): alignments: to insert URL in TABROW: "
+			    + rowline + "\n");
+		rowline = insertIdUrl(rowline, dbType, hit_organism);
+		rows.put(counterstring, rowline);
+		counter++;
+		//--------------
+
                 alignment[columns.get(COLUMN_ID)] = hit_sourceId;
 
             }
@@ -325,7 +347,7 @@ public class WuBlastPlugin extends BlastPlugin {
             } else footer.append(line + newline);
         }
 
-        logger.info("\n\n\n--------------------------------------------\n\nWB prepareResult(): Information stored in Stringbuffers and tables, now copy info into results[][]\n\n");
+        logger.debug("\n\n\n--------------------------------------------\n\nWB prepareResult(): Information stored in Stringbuffers and tables, now copy info into results[][]\n\n");
 
         // now reconstruct the result
         int size = Math.max(1, blocks.size());
@@ -377,6 +399,7 @@ public class WuBlastPlugin extends BlastPlugin {
 
     // ----------- PRIVATE METHODS
     // -----------------------------------------------
+
 
     protected String getBlastProgram(String qType, String dbType)
             throws WsfServiceException {
