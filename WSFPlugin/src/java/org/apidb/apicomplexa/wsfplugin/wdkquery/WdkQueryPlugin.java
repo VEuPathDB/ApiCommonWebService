@@ -6,10 +6,9 @@
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
 import java.io.File;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,32 +18,33 @@ import org.gusdb.wdk.model.DatasetParam;
 import org.gusdb.wdk.model.EnumParam;
 import org.gusdb.wdk.model.Param;
 import org.gusdb.wdk.model.ParamSet;
-import org.gusdb.wdk.model.Query;
 import org.gusdb.wdk.model.QuerySet;
-import org.gusdb.wdk.model.ResultFactory;
-import org.gusdb.wdk.model.ResultList;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.WdkUserException;
+import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.implementation.ModelXmlParser;
-import org.gusdb.wdk.model.implementation.SqlQuery;
-import org.gusdb.wdk.model.implementation.SqlQueryInstance;
-import org.gusdb.wdk.model.implementation.WSQuery;
-import org.gusdb.wdk.model.implementation.WSQueryInstance;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.ProcessQuery;
+import org.gusdb.wdk.model.query.ProcessQueryInstance;
+import org.gusdb.wdk.model.query.Query;
+import org.gusdb.wdk.model.query.SqlQuery;
+import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.user.Dataset;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wdk.model.user.UserFactory;
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
+import org.json.JSONException;
 
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
- *
- * 2.0.0 -- Worked with ApiFedPlugin 2.0.0
- * 2.1 -- Ditched the three number versioning... not that many changes
- *     -- Added support for accessing Enum Parameters on the componet Sites
+ * 
+ * 2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three number
+ * versioning... not that many changes -- Added support for accessing Enum
+ * Parameters on the componet Sites
  */
 public class WdkQueryPlugin extends WsfPlugin {
 
@@ -65,11 +65,11 @@ public class WdkQueryPlugin extends WsfPlugin {
     // Member Variables
     // private WdkModelBean[] models = null;
     private WdkModelBean model = null;
-    private static File m_modelFile = null;
-    private static File m_modelPropFile = null;
-    private static File m_schemaFile = null;
-    private static File m_configFile = null;
-    private static File m_xmlSchemaFile = null;
+    // private static File m_modelFile = null;
+    // private static File m_modelPropFile = null;
+    // private static File m_schemaFile = null;
+    // private static File m_configFile = null;
+    // private static File m_xmlSchemaFile = null;
     private static String[] modelNames;
     private static String[] gus_homes;
     private static String[] siteNames;
@@ -128,44 +128,44 @@ public class WdkQueryPlugin extends WsfPlugin {
     // Overriding the parent class to do nothing in this plugin
     }
 
-    private void validateQueryParams(Map<String, String> params, Query q)
-            throws WsfServiceException {
-        logger.info("--------Validating Parameters---------------");
-        String[] reqParams = getParamsFromQuery(q);
-        for (String param : reqParams) {
-            if (!params.containsKey(param)) {
-                throw new WsfServiceException(
-                        "The required parameter is missing: " + param);
-            }
-        }
-    }
+    // private void validateQueryParams(Map<String, String> params, Query q)
+    // throws WsfServiceException {
+    // logger.info("--------Validating Parameters---------------");
+    // String[] reqParams = getParamsFromQuery(q);
+    // for (String param : reqParams) {
+    // if (!params.containsKey(param)) {
+    // throw new WsfServiceException(
+    // "The required parameter is missing: " + param);
+    // }
+    // }
+    // }
 
-    private void validateQueryColumns(String[] orderedColumns, Query query)
-            throws WsfServiceException {
-        logger.info("------------Validating Columns---------------");
-        String[] reqColumns = getColumnsFromQuery(query);
-        // Set<String> colSet = new HashSet<String>(orderedColumns.length);
-        // for (String col : orderedColumns) {
-        // colSet.add(col);
-        // }
-        // for (String col : reqColumns) {
-        // if (!colSet.contains(col)) {
-        // throw new WsfServiceException(
-        // "The required column is missing: " + col);
-        // }
-        // }
-        // cross check
-        // colSet.clear();
-        Set<String> colSet = new HashSet<String>(reqColumns.length);
-        for (String col : reqColumns) {
-            colSet.add(col);
-        }
-        for (String col : orderedColumns) {
-            if (!colSet.contains(col)) {
-                throw new WsfServiceException("Unknown column: " + col);
-            }
-        }
-    }
+    // private void validateQueryColumns(String[] orderedColumns, Query query)
+    // throws WsfServiceException {
+    // logger.info("------------Validating Columns---------------");
+    // String[] reqColumns = getColumnsFromQuery(query);
+    // // Set<String> colSet = new HashSet<String>(orderedColumns.length);
+    // // for (String col : orderedColumns) {
+    // // colSet.add(col);
+    // // }
+    // // for (String col : reqColumns) {
+    // // if (!colSet.contains(col)) {
+    // // throw new WsfServiceException(
+    // // "The required column is missing: " + col);
+    // // }
+    // // }
+    // // cross check
+    // // colSet.clear();
+    // Set<String> colSet = new HashSet<String>(reqColumns.length);
+    // for (String col : reqColumns) {
+    // colSet.add(col);
+    // }
+    // for (String col : orderedColumns) {
+    // if (!colSet.contains(col)) {
+    // throw new WsfServiceException("Unknown column: " + col);
+    // }
+    // }
+    // }
 
     /*
      * (non-Javadoc)
@@ -247,27 +247,23 @@ public class WdkQueryPlugin extends WsfPlugin {
             }
 
             // WS Query processing
-            if (q instanceof WSQuery) {
+            if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
-                WSQuery wsquery = (WSQuery) q;
-                WSQueryInstance wsqi = (WSQueryInstance) wsquery.makeInstance();
-                wsqi.setValues(SOParams);
-                ResultFactory resultFactory = wsquery.getResultFactory();
-                results = resultFactory.getResult(wsqi);
+                ProcessQuery wsquery = (ProcessQuery) q;
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(SOParams);
+                results = wsqi.getResults();
             }
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance();
-                sqlqi.setValues(SOParams);
-                ResultFactory resultFactory = sqlquery.getResultFactory();
-                results = resultFactory.getResult(sqlqi);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(SOParams);
+                results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
-            componentResults = results2StringArray(results);
-            logger.info("Results have been processed.... "
-                    + componentResults.length);
+            // componentResults = results2StringArray(results);
+            // logger.info("Results have been processed.... "
+            // + componentResults.length);
 
         } catch (WdkModelException ex) {
             logger.info("WdkMODELexception in execute()" + ex.toString());
@@ -350,37 +346,31 @@ public class WdkQueryPlugin extends WsfPlugin {
         return -1;
     }
 
-    private Map<String, Object> convertParams(String[] p) {
-        Map<String, Object> ret = new HashMap<String, Object>();
-        for (String param : p) {
-            String[] pa = param.split("=");
-            ret.put(pa[0], (Object) pa[1]);
-        }
-        return ret;
-    }
+    // private Map<String, Object> convertParams(String[] p) {
+    // Map<String, Object> ret = new HashMap<String, Object>();
+    // for (String param : p) {
+    // String[] pa = param.split("=");
+    // ret.put(pa[0], (Object) pa[1]);
+    // }
+    // return ret;
+    // }
+    //
+    // private Map<String, Object> convertParams(Map<String, String> p) {
+    // Map<String, Object> ret = new HashMap<String, Object>();
+    // for (String key : p.keySet()) {
+    // Object o = p.get(key);
+    // ret.put(key, o);
+    // }
+    // return ret;
+    // }
 
-    private Map<String, Object> convertParams(Map<String, String> p) {
-        Map<String, Object> ret = new HashMap<String, Object>();
-        for (String key : p.keySet()) {
-            Object o = p.get(key);
-            ret.put(key, o);
-        }
-        return ret;
-    }
-
-    /**   private Map<String,Object> convertParams(Map<String,String> p, String[] q)
-      {
-    Map<String,Object> ret = new HashMap<String,Object>();
-    for (String key:p.keySet()){
-    	Object o = p.get(key);
-    	for (String param : q) {
-    	    if (key.equals(param) || key.indexOf(param) != -1) {
-    		ret.put(param, o);
-    	    }
-    	}
-    }
-    return ret;
-    }*/
+    /**
+     * private Map<String,Object> convertParams(Map<String,String> p, String[]
+     * q) { Map<String,Object> ret = new HashMap<String,Object>(); for (String
+     * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
+     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } } }
+     * return ret; }
+     */
 
     private String convertDatasetId2DatasetChecksum(String sig_id)
             throws Exception {
@@ -467,58 +457,59 @@ public class WdkQueryPlugin extends WsfPlugin {
         return ret;
     }
 
-    private String results2String(ResultList result) throws WdkModelException {
+    // private String results2String(ResultList result) throws WdkModelException
+    // {
+    //
+    // StringBuffer sb = new StringBuffer();
+    // result.write(sb);
+    // return sb.toString();
+    //
+    // }
 
-        StringBuffer sb = new StringBuffer();
-        result.write(sb);
-        return sb.toString();
+    // private String[][] results2StringArray(ResultList result)
+    // throws WdkModelException {
+    // Column[] cols = result.getColumns();
+    // List<String[]> rows = new LinkedList<String[]>();
+    // while (result.next()) {
+    // String[] values = new String[cols.length];
+    // for (int z = 0; z < cols.length; z++) {
+    // Object obj = result.getValueFromResult(cols[z].getName());
+    // String val = null;
+    // if (obj instanceof String) val = (String) obj;
+    // else if (obj instanceof char[]) val = new String((char[]) obj);
+    // else if (obj instanceof byte[]) val = new String((byte[]) obj);
+    // else val = obj.toString();
+    // values[z] = val;
+    // }
+    // rows.add(values);
+    // }
+    // result.close();
+    //
+    // String[][] arr = new String[rows.size()][];
+    // return rows.toArray(arr);
+    // }
 
-    }
-
-    private String[][] results2StringArray(ResultList result)
-            throws WdkModelException {
-        Column[] cols = result.getColumns();
-        List<String[]> rows = new LinkedList<String[]>();
-        while (result.next()) {
-            String[] values = new String[cols.length];
-            for (int z = 0; z < cols.length; z++) {
-                Object obj = result.getValueFromResult(cols[z].getName());
-                String val = null;
-                if (obj instanceof String) val = (String) obj;
-                else if (obj instanceof char[]) val = new String((char[]) obj);
-                else if (obj instanceof byte[]) val = new String((byte[]) obj);
-                else val = obj.toString();
-                values[z] = val;
-            }
-            rows.add(values);
-        }
-        result.close();
-
-        String[][] arr = new String[rows.size()][];
-        return rows.toArray(arr);
-    }
-
-    private String[] getColumnsFromQuery(Query q) {
-        Column[] qcols = q.getColumns();
-        String[] ret = new String[qcols.length];
-        int i = 0;
-        for (Column c : qcols) {
-            ret[i] = c.getName();
-            i++;
-        }
-        return ret;
-    }
-
-    private String[] getParamsFromQuery(Query q) {
-        Param[] qp = q.getParams();
-        String[] ret = new String[qp.length];
-        int i = 0;
-        for (Param p : qp) {
-            ret[i] = p.getName();
-            i++;
-        }
-        return ret;
-    }
+    // private String[] getColumnsFromQuery(Query q) {
+    // Column[] qcols = q.getColumns();
+    // String[] ret = new String[qcols.length];
+    // int i = 0;
+    // for (Column c : qcols) {
+    // ret[i] = c.getName();
+    // i++;
+    // }
+    // return ret;
+    // }
+    //
+    // private String[] getParamsFromQuery(Query q) {
+    // Param[] qp = q.getParams();
+    // String[] ret = new String[qp.length];
+    // int i = 0;
+    // for (Param p : qp) {
+    // ret[i] = p.getName();
+    // i++;
+    // }
+    // return ret;
+    // }
 
     /*
      * private static void loadConfig(String mName, String GH)throws IOException {
@@ -585,7 +576,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         WdkModel myModel = parser.parseModel(modelName);
                         WdkModelBean mb = new WdkModelBean(myModel);
                         logger.info("===================Model Loaded Was  "
-                                + mb.getModel().getName());
+                                + mb.getModel().getProjectId());
                         modelName2Model.put(siteNames[i], mb);
                         // logger.info("------------Model
                         // Loaded----------------");
@@ -599,28 +590,30 @@ public class WdkQueryPlugin extends WsfPlugin {
         }
     }
 
-    private void CheckFiles() {
-        logger.info("-----------------Checking the Files fro Read Permissions---------------");
-        if (!m_modelFile.canRead()) {
-            logger.info(m_modelFile + " Cannot be Read!!!");
-        }
-        if (!m_modelPropFile.canRead()) {
-            logger.info(m_modelPropFile + " Cannot be Read!!!");
-        }
-        if (!m_configFile.canRead()) {
-            logger.info(m_configFile + " Cannot be Read!!!");
-        }
-        if (!m_schemaFile.canRead()) {
-            logger.info(m_schemaFile + " Cannot be Read!!!");
-        }
-        if (!m_xmlSchemaFile.canRead()) {
-            logger.info(m_xmlSchemaFile + " Cannot be Read!!!");
-        }
-        logger.info("------------DONE-------------");
-    }
+    // private void CheckFiles() {
+    // logger.info("-----------------Checking the Files fro Read
+    // Permissions---------------");
+    // if (!m_modelFile.canRead()) {
+    // logger.info(m_modelFile + " Cannot be Read!!!");
+    // }
+    // if (!m_modelPropFile.canRead()) {
+    // logger.info(m_modelPropFile + " Cannot be Read!!!");
+    // }
+    // if (!m_configFile.canRead()) {
+    // logger.info(m_configFile + " Cannot be Read!!!");
+    // }
+    // if (!m_schemaFile.canRead()) {
+    // logger.info(m_schemaFile + " Cannot be Read!!!");
+    // }
+    // if (!m_xmlSchemaFile.canRead()) {
+    // logger.info(m_xmlSchemaFile + " Cannot be Read!!!");
+    // }
+    // logger.info("------------DONE-------------");
+    // }
 
     private boolean validateSingleValues(AbstractEnumParam p, String value)
-            throws WdkModelException {
+            throws WdkModelException, NoSuchAlgorithmException, SQLException,
+            JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         // initVocabMap();
         for (String v : conVocab) {
@@ -629,7 +622,9 @@ public class WdkQueryPlugin extends WsfPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p) throws WdkModelException {
+    private String[][] handleEnumParameters(Param p) throws WdkModelException,
+            NoSuchAlgorithmException, SQLException, JSONException,
+            WdkUserException {
         logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
         EnumParam eParam = (EnumParam) p;
         Map<String, String> termDisp = eParam.getDisplayMap();
