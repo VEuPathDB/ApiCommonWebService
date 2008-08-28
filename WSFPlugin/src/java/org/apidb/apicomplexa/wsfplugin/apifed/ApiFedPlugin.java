@@ -466,16 +466,16 @@ public class ApiFedPlugin extends WsfPlugin {
                 if (anser != null && anser.length > 0
                         && !anser[0][0].equals("ERROR")) {
                     numrows = numrows + anser.length;
-                    logger.debug("Answer " + index + " total added .... "
+                    logger.info("\n*********\n**************Answer " + index + " total added .... "
                             + anser.length);
                 }
             }
         }
+logger.info("\n*******\n**********Total Number of Rows in Combined Result is (numrows) ----------> " + numrows);
         int i = 0;
         Map<Integer, String[]> combined = new LinkedHashMap<Integer, String[]>();
-        logger.debug("Total Number of Rows in Combined Result is ----------> "
-                + numrows);
-
+        
+ 
         // Find the index for the projectId columns
         int projectIndex = 0;
         for (String col : cols) {
@@ -496,21 +496,29 @@ public class ApiFedPlugin extends WsfPlugin {
                             + compResult.getMessage());
                     if (answer.length > 0) {
                         if (!answer[0][0].equals("ERROR")) {
+                            
                             for (String[] rec : answer) {
+
                                 if (!isParamResult && hasProjectId)
-                                    rec = insertProjectId(rec, projectIndex,
-                                            compResult.getSiteName());
-                                combined.put(Arrays.deepHashCode(rec), rec);
+                                    rec = insertProjectId(rec, projectIndex, compResult.getSiteName());
+				logger.debug("\n\n*********\n***rec[0] and rec[1] are: " + rec[0]  + " and " + rec[1]);
+				// combined.put(Arrays.deepHashCode(rec), rec);
+				combined.put(i, rec);
+				logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "    + combined.size() ); 
                                 i++;
+				logger.debug("\n*********\n***number of records in combined is: " + i);
                             }// Loop for records
+			    
                         }// if answer[0][0] = ERROR
                     }// if answer is 0 lentgh
                 }// if answer == null
             }// if result = null
         }// Loop for all Results
+ 
+	logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "    + combined.size() ); 
+	logger.debug("\n*******\n**********IF THE NUMBERS DO NOT COINCIDE, PROBLEM ");
         Collection<String[]> combinedColl = combined.values();
         String[][] combinedArr = new String[combined.size()][];
-
         return combinedColl.toArray(combinedArr);
     }
 
