@@ -309,7 +309,7 @@ public class WuBlastPlugin extends BlastPlugin {
                     alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
                 }
 	
-                logger.debug("WB prepareResult(): alignments: to insert URL in: "
+                logger.info("\n\n\n\n\nWB prepareResult(): to insert URL in alignments: line is: "
                         + line + "\n");
                 // Insert link to gene page, in source_id
                 // ncbi plugin does not do this
@@ -319,9 +319,10 @@ public class WuBlastPlugin extends BlastPlugin {
 		// insert link in tabular row now that we know the organism	
 		counterstring = counter.toString();	
 		rowline = rows.get(counterstring);
-		logger.debug("\nWB prepareResult(): alignments: to insert URL in TABROW: "
+		logger.info("\nWB prepareResult(): alignments: to insert URL in TABROW: "
 			    + rowline + "\n");
-		rowline = insertIdUrl(rowline, dbType, hit_organism);
+		if ( ! (dbType.contains("ORF") && hit_organism.contains("Crypto")) ) 
+		    rowline = insertIdUrl(rowline, dbType, hit_organism);
 		rows.put(counterstring, rowline);
 		counter++;
 		//--------------
