@@ -268,7 +268,7 @@ public class MotifSearchPlugin extends WsfPlugin {
 
         File dataFile = new File(dataDir, datasetID);
         if (!dataFile.exists()) throw new IOException("The dataset \""
-                + datasetID + "\" cannot be found.");
+                + dataFile.toString() + "\" cannot be found.");
         else return dataFile;
     }
 
