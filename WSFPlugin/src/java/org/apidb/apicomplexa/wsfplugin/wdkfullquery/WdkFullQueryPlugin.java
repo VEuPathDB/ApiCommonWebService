@@ -19,7 +19,6 @@ import org.gusdb.wdk.model.Column;
 import org.gusdb.wdk.model.DatasetParam;
 import org.gusdb.wdk.model.Param;
 import org.gusdb.wdk.model.PrimaryKeyAttributeField;
-import org.gusdb.wdk.model.PrimaryKeyAttributeValue;
 import org.gusdb.wdk.model.QuerySet;
 import org.gusdb.wdk.model.RecordClass;
 import org.gusdb.wdk.model.RecordInstance;
@@ -624,9 +623,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             for (String column : pkColumns) {
                 pkValues.put(column, rl.get(column));
             }
-            PrimaryKeyAttributeValue pkValue = new PrimaryKeyAttributeValue(
-                    pkField, pkValues);
-            RecordInstance ri = new RecordInstance(rc, pkValue);
+            RecordInstance ri = rc.makeRecordInstance(pkValues);
             for (int i = 2; i < cols.length; i++) {
                 String col = cols[i];
                 Object obj = ri.getAttributeValue(col);
