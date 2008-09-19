@@ -196,11 +196,9 @@ public class MotifSearchPlugin extends WsfPlugin {
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
-                logger.info("execute(): dsId: " + dsId + "\n");
+                logger.info("execute(): dsId: " + dsId + " , input expression: " + expression + " , expr translated to regex: " + regex + "\n");
                 matches.addAll(findMatches(dsId.trim(), regex, colorCode,
                         contextLength));
-                logger.info("execute(): foundMatch for " + dsId + "\n");
-
             }
 
             // construct results
