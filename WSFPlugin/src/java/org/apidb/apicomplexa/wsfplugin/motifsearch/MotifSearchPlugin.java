@@ -478,6 +478,8 @@ public class MotifSearchPlugin extends WsfPlugin {
             if (useProjectId)
                 result[i][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
         }
+        logger.info("hits found: " + result.length + "\n");
+        logger.debug("result " + resultToString(result) + "\n");
         return result;
     }
 
@@ -495,5 +497,18 @@ public class MotifSearchPlugin extends WsfPlugin {
         String projectId = getProperty(mapKey);
         if (projectId == null) projectId = projectMapOthers;
         return projectId;
+    }
+    
+    private StringBuffer resultToString(String[][] result) {
+        StringBuffer toString = new StringBuffer();
+        for (int i=0; i < result.length; i++) {
+            for (int j=0; j < result[i].length; j++) {
+                toString.append(result[i][j]);
+                if (j != result[i].length)
+                    toString.append(", ");
+            }
+            toString.append("\n");
+        }
+        return toString;
     }
 }
