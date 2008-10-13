@@ -623,7 +623,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             for (String column : pkColumns) {
                 pkValues.put(column, rl.get(column));
             }
-            RecordInstance ri = rc.makeRecordInstance(pkValues);
+            RecordInstance ri = new RecordInstance(rc, pkValues);
             for (int i = 2; i < cols.length; i++) {
                 String col = cols[i];
                 Object obj = ri.getAttributeValue(col);
