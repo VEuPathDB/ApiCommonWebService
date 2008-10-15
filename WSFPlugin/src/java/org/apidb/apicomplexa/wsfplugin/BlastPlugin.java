@@ -273,7 +273,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         // remove files older than a week (500000000)
         for (int i = 0; i < allFiles.length; i++) {
             tempFile = new File(dir, allFiles[i]);
-            if ((todayLong - (tempFile.lastModified())) > 500000000) {
+            if ( tempFile.canWrite() &&
+                 (todayLong - (tempFile.lastModified())) > 500000000) {
                 logger.info("Temp file to be deleted: " + allFiles[i] + "\n");
                 tempFile.delete();
             }
