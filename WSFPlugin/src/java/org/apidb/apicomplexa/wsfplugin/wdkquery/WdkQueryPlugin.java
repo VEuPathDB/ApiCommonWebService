@@ -5,10 +5,11 @@
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
-import java.io.File;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -261,9 +262,9 @@ public class WdkQueryPlugin extends WsfPlugin {
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
-            // componentResults = results2StringArray(results);
-            // logger.info("Results have been processed.... "
-            // + componentResults.length);
+            componentResults = results2StringArray(q.getColumns(), results);
+            logger.info("Results have been processed.... "
+                    + componentResults.length);
 
         } catch (WdkModelException ex) {
             logger.info("WdkMODELexception in execute()" + ex.toString());
@@ -306,7 +307,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             responseT[0][0] = "ERROR";
             if (resultSize > 0) resultSize = 0;
         } else {
-            // logger.info("Comp-Result not null... getting proper columns");
+            logger.info("Comp-Result not null... getting proper columns");
 
             // Successfull Query... need to ensure that the correct columns are
             // rerieved from the component site
@@ -466,28 +467,27 @@ public class WdkQueryPlugin extends WsfPlugin {
     //
     // }
 
-    // private String[][] results2StringArray(ResultList result)
-    // throws WdkModelException {
-    // Column[] cols = result.getColumns();
-    // List<String[]> rows = new LinkedList<String[]>();
-    // while (result.next()) {
-    // String[] values = new String[cols.length];
-    // for (int z = 0; z < cols.length; z++) {
-    // Object obj = result.getValueFromResult(cols[z].getName());
-    // String val = null;
-    // if (obj instanceof String) val = (String) obj;
-    // else if (obj instanceof char[]) val = new String((char[]) obj);
-    // else if (obj instanceof byte[]) val = new String((byte[]) obj);
-    // else val = obj.toString();
-    // values[z] = val;
-    // }
-    // rows.add(values);
-    // }
-    // result.close();
-    //
-    // String[][] arr = new String[rows.size()][];
-    // return rows.toArray(arr);
-    // }
+    private String[][] results2StringArray(Column[] cols, ResultList result)
+            throws WdkModelException {
+        List<String[]> rows = new LinkedList<String[]>();
+        while (result.next()) {
+            String[] values = new String[cols.length];
+            for (int z = 0; z < cols.length; z++) {
+                Object obj = result.get(cols[z].getName());
+                String val = null;
+                if (obj instanceof String) val = (String) obj;
+                else if (obj instanceof char[]) val = new String((char[]) obj);
+                else if (obj instanceof byte[]) val = new String((byte[]) obj);
+                else val = obj.toString();
+                values[z] = val;
+            }
+            rows.add(values);
+        }
+        result.close();
+
+        String[][] arr = new String[rows.size()][];
+        return rows.toArray(arr);
+    }
 
     // private String[] getColumnsFromQuery(Query q) {
     // Column[] qcols = q.getColumns();
