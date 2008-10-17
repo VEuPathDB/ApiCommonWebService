@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,12 +29,12 @@ import org.jdom.input.SAXBuilder;
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
- *
- * 2.0.0 -- currently deployed for ApiDB Live Site
- * 2.1   -- updated to take advantage of the consistancy in the Unified Model
- *       -- Added functionality to retrieve Parameters (Vocab and Enum) from the component Sites
- *       -- Removed all need fro DBLinks in the ApiDB Model
- *       -- Changed the combineResults to use a LinkedHashMap to eliminate duplicates for the parameter queries
+ * 
+ * 2.0.0 -- currently deployed for ApiDB Live Site 2.1 -- updated to take
+ * advantage of the consistancy in the Unified Model -- Added functionality to
+ * retrieve Parameters (Vocab and Enum) from the component Sites -- Removed all
+ * need fro DBLinks in the ApiDB Model -- Changed the combineResults to use a
+ * LinkedHashMap to eliminate duplicates for the parameter queries
  */
 public class ApiFedPlugin extends WsfPlugin {
 
@@ -114,7 +113,7 @@ public class ApiFedPlugin extends WsfPlugin {
                     config_e.getChild("Timeout").getAttributeValue("minutes")).intValue();
             logger.debug("Mapping File ========== " + mapfile);
             logger.debug("Timeout Value ========== " + timeOutInMinutes);
-	    //   mapDoc = createMap(mapfile);
+            // mapDoc = createMap(mapfile);
         } catch (Exception e) {
             logger.debug(e);
         }
@@ -466,16 +465,16 @@ public class ApiFedPlugin extends WsfPlugin {
                 if (anser != null && anser.length > 0
                         && !anser[0][0].equals("ERROR")) {
                     numrows = numrows + anser.length;
-                    logger.info("\n*********\n**************Answer " + index + " total added .... "
-                            + anser.length);
+                    logger.info("\n*********\n**************Answer " + index
+                            + " total added .... " + anser.length);
                 }
             }
         }
-logger.info("\n*******\n**********Total Number of Rows in Combined Result is (numrows) ----------> " + numrows);
+        logger.info("\n*******\n**********Total Number of Rows in Combined Result is (numrows) ----------> "
+                + numrows);
         int i = 0;
         Map<Integer, String[]> combined = new LinkedHashMap<Integer, String[]>();
-        
- 
+
         // Find the index for the projectId columns
         int projectIndex = 0;
         for (String col : cols) {
@@ -496,27 +495,34 @@ logger.info("\n*******\n**********Total Number of Rows in Combined Result is (nu
                             + compResult.getMessage());
                     if (answer.length > 0) {
                         if (!answer[0][0].equals("ERROR")) {
-                            
+
                             for (String[] rec : answer) {
 
                                 if (!isParamResult && hasProjectId)
-                                    rec = insertProjectId(rec, projectIndex, compResult.getSiteName());
-				logger.debug("\n\n*********\n***rec[0] and rec[1] are: " + rec[0]  + " and " + rec[1]);
-				// combined.put(Arrays.deepHashCode(rec), rec);
-				combined.put(i, rec);
-				logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "    + combined.size() ); 
+                                    rec = insertProjectId(rec, projectIndex,
+                                            compResult.getSiteName());
+                                // logger.debug("\n\n*********\n***rec[0] and
+                                // rec[1] are: " + rec[0] + " and " + rec[1]);
+                                // combined.put(Arrays.deepHashCode(rec), rec);
+                                combined.put(i, rec);
+                                // logger.debug("\n*******\n**********Total
+                                // Number of Rows in Combined Result is
+                                // (combined size) ----------> " +
+                                // combined.size() );
                                 i++;
-				logger.debug("\n*********\n***number of records in combined is: " + i);
+                                // logger.debug("\n*********\n***number of
+                                // records in combined is: " + i);
                             }// Loop for records
-			    
+
                         }// if answer[0][0] = ERROR
                     }// if answer is 0 lentgh
                 }// if answer == null
             }// if result = null
         }// Loop for all Results
- 
-	logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "    + combined.size() ); 
-	logger.debug("\n*******\n**********IF THE NUMBERS DO NOT COINCIDE, PROBLEM ");
+
+        logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "
+                + combined.size());
+        logger.debug("\n*******\n**********IF THE NUMBERS DO NOT COINCIDE, PROBLEM ");
         Collection<String[]> combinedColl = combined.values();
         String[][] combinedArr = new String[combined.size()][];
         return combinedColl.toArray(combinedArr);
@@ -662,9 +668,9 @@ logger.info("\n*******\n**********Total Number of Rows in Combined Result is (nu
             try {
                 WsfService service = locator.getWsfService(new URL(url));
                 long start = System.currentTimeMillis();
-                
+
                 // HACK
-                // in the future, this inovcation should be replaced by the 
+                // in the future, this inovcation should be replaced by the
                 // newer version, invokeEx()
                 WsfResponse wsfResult = service.invoke(pluginName, queryName,
                         params, cols);
