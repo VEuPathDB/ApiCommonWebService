@@ -31,6 +31,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     public static final String COLUMN_ROW = "TabularRow";
     public static final String COLUMN_BLOCK = "Alignment";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
+    public static final String COLUMN_COUNTER = "Counter";
 
     // required parameter definitions
     public static final String PARAM_ALGORITHM = "BlastAlgorithm";
@@ -120,9 +121,9 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     @Override
     protected String[] getColumns() {
         if (useProjectId) return new String[] { COLUMN_PROJECT_ID, COLUMN_ID,
-                COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK };
+                COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK, COLUMN_COUNTER };
         else return new String[] { COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
-                COLUMN_ROW, COLUMN_BLOCK };
+                COLUMN_ROW, COLUMN_BLOCK,COLUMN_COUNTER };
     }
 
     /*
@@ -157,14 +158,15 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     protected WsfResult execute(String invokeKey, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
 
-	//Identifier--ProjectId--TabularRow--Alignment--Header--Footer--
+	//Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
         logger.debug("BlastPlugin.java: ordered columns are:"+
 		    orderedColumns[0] + "--" +
 		    orderedColumns[1] + "--" +
 		    orderedColumns[2] + "--" +
 		    orderedColumns[3] + "--" +
 		    orderedColumns[4] + "--" +
-		    orderedColumns[5] + "--" );
+orderedColumns[5] + "--" +
+		    orderedColumns[6] + "--" );
 
         // get plugin name
         String pluginName = getClass().getSimpleName();
@@ -244,7 +246,9 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
             // insert a bookmark into the tabular row, linking to alignment
             insertBookmark(result, orderedColumns);
-            logger.debug(Formatter.printArray(result));
+            //logger.info(Formatter.printArray(result));
+
+	    //logger.info("\nID: " + result[0][0] + "\nID: " + result[1][0] + "\nID: " + result[2][0] + "\nID: " + result[3][0]);
 
             if (message.length() == 0) message.append(output);
 
