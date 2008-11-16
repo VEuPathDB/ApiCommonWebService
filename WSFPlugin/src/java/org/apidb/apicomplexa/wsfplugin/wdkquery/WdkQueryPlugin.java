@@ -278,6 +278,8 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
+            } else if (msg.indexOf("does not exist") != -1) {
+                resultSize = -2;
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2;
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
@@ -469,6 +471,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     private String[][] results2StringArray(Column[] cols, ResultList result)
             throws WdkModelException {
+
         List<String[]> rows = new LinkedList<String[]>();
         while (result.next()) {
             String[] values = new String[cols.length];
@@ -486,7 +489,8 @@ public class WdkQueryPlugin extends WsfPlugin {
         result.close();
 
         String[][] arr = new String[rows.size()][];
-        return rows.toArray(arr);
+
+	return rows.toArray(arr);
     }
 
     // private String[] getColumnsFromQuery(Query q) {
