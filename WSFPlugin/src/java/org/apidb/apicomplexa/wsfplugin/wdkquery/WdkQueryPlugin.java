@@ -279,7 +279,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
             } else if (msg.indexOf("does not exist") != -1) {
-                resultSize = -2;
+                resultSize = 0;
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2;
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
