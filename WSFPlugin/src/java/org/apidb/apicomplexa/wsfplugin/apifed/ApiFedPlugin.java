@@ -62,6 +62,7 @@ public class ApiFedPlugin extends WsfPlugin {
     private boolean hasProjectId;
     private int timeOutInMinutes;
     private Document mapDoc = null;
+	private String primaryKey = null;
 
     public ApiFedPlugin() throws WsfServiceException {
         super();
@@ -231,6 +232,7 @@ public class ApiFedPlugin extends WsfPlugin {
         for (int i = 0; i < sites.length; i++) {
             sites[i] = (Site) this.sites[i].clone();
         }
+		primaryKey = null;
         hasProjectId = false;
         doAll = false;
         logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
@@ -264,7 +266,10 @@ public class ApiFedPlugin extends WsfPlugin {
             datasetName = hasDataset(params);
             if (orgName != null) {
                 if (orgName.indexOf("primaryKey") != -1) {
-                    logger.debug("Working with AjaxRecordClass primaryKey calculations");
+	
+					this.primaryKey = params.get(orgName); //WORKAROUND FOR COLUMN RESTRICTIONS
+    
+                	logger.debug("Working with AjaxRecordClass primaryKey calculations");
                     String pk = params.get(orgName);
                     logger.debug("orgName = " + orgName + ",   pk = " + pk);
                     String[] parts = new String[2];
@@ -369,7 +374,25 @@ public class ApiFedPlugin extends WsfPlugin {
         StringBuffer message = new StringBuffer();
         String[][] result = combineResults(compResults, orderedColumns,
                 isParam, message);
-
+		
+		if(this.primaryKey != null){
+			int index = 0;
+			for(String[] recArr: result){
+				String[] a = new String[recArr.length + 2];
+				a[0] = "pk";
+				a[1] = "pid";
+				for(int i=0;i<recArr.length;i++)
+					a[i+2] = recArr[i];
+				result[index] = a;
+				String recStr = "";
+				for(String s : a){
+					recStr = recStr + "-|-" + s;
+				}
+				logger.info("______+++++++======== Record [" + index + "]------- " + recStr);
+				index++;
+			}
+		}
+		
         WsfResult wsfResult = new WsfResult();
         wsfResult.setResult(result);
         wsfResult.setMessage(message.toString());
@@ -419,7 +442,9 @@ public class ApiFedPlugin extends WsfPlugin {
             String querySetName, String queryName) {
         String[] arrParams = new String[params.size() + 1];
         int i = 0;
+		logger.info("ORGPARAM = " + orgParam);
         for (String key : params.keySet()) {
+			logger.info("getParams------> key = " + key + ", value = " + params.get(key));
             String compKey = key;
             if ((key.equals(orgParam)) && !(orgParam.equals("primaryKey"))) {
                 arrParams[i] = compKey + "=" + localOrgs;
@@ -498,7 +523,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
                             for (String[] rec : answer) {
 
-                                if (!isParamResult && hasProjectId)
+                                if (!isParamResult && hasProjectId && primaryKey == null)
                                     rec = insertProjectId(rec, projectIndex,
                                             compResult.getSiteName());
                                 // logger.debug("\n\n*********\n***rec[0] and
