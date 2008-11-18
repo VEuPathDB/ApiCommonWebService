@@ -234,7 +234,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
                 logger.info("Parameter found : " + p.getFullName());
-                String[][] enumValues = handleEnumParameters(p orderedColumns);
+                String[][] enumValues = handleEnumParameters(p, orderedColumns);
 
                 WsfResult wsfResult = new WsfResult();
                 wsfResult.setResult(enumValues);
@@ -289,8 +289,6 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
-            } else if (msg.indexOf("does not exist") != -1) {
-                resultSize = 0;
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2;
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
@@ -482,7 +480,6 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     private String[][] results2StringArray(Column[] cols, ResultList result)
             throws WdkModelException {
-
         List<String[]> rows = new LinkedList<String[]>();
         while (result.next()) {
             String[] values = new String[cols.length];
@@ -500,8 +497,7 @@ public class WdkQueryPlugin extends WsfPlugin {
         result.close();
 
         String[][] arr = new String[rows.size()][];
-
-	return rows.toArray(arr);
+        return rows.toArray(arr);
     }
 
     // private String[] getColumnsFromQuery(Query q) {
@@ -644,14 +640,15 @@ public class WdkQueryPlugin extends WsfPlugin {
         EnumParam eParam = (EnumParam) p;
         Map<String, String> termDisp = eParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
-		int tI;
-		int iI;
+		int tI = 0;
+		int iI = 0;
 		int i = 0;
 		for(String c : ordCols){
-			if(c == 'term')
-				tI = i;
-			else if(c == 'internal')
+			if(c == "term"){
+			 	tI = i;
+			} else if(c == "internal"){
 				iI = i;
+			}
 			i++;
 		}
 		
