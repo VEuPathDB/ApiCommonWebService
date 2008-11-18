@@ -646,12 +646,12 @@ public class WdkQueryPlugin extends WsfPlugin {
 		for(String c : ordCols){
 			if(c == "term"){
 			 	tI = i;
-			} else if(c == "internal"){
+			} else if(c == "internal" || c == "display"){
 				iI = i;
 			}
 			i++;
 		}
-		
+		logger.info("term = " + tI + ", Internal = " + iI);
         String[][] ePValues = new String[terms.size()][ordCols.length];
         int index = 0;
         for (String term : terms) {
