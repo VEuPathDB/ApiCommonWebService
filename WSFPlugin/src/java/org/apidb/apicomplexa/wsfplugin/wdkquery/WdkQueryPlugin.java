@@ -645,9 +645,9 @@ public class WdkQueryPlugin extends WsfPlugin {
 		int i = 0;
 		for(String c : ordCols){
 			logger.info("current Column = " + c + " ,,,, i = " + i);
-			if(c == "term"){
+			if(c.equals("term")){
 			 	tI = i;
-			} else if(c == "internal" || c == "display"){
+			} else if(c.equals("internal") || c.equals("display")){
 				iI = i;
 			}
 			i++;
