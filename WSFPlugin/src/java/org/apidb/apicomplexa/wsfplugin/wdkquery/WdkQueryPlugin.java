@@ -644,6 +644,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		int iI = 0;
 		int i = 0;
 		for(String c : ordCols){
+			logger.info("current Column = " + c + " ,,,, i = " + i);
 			if(c == "term"){
 			 	tI = i;
 			} else if(c == "internal" || c == "display"){
@@ -651,7 +652,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 			}
 			i++;
 		}
-		logger.info("term = " + tI + ", Internal = " + iI);
+		logger.info("OrderedColumns.length = " + ordCols.length + ", term = " + tI + ", Internal = " + iI);
         String[][] ePValues = new String[terms.size()][ordCols.length];
         int index = 0;
         for (String term : terms) {
