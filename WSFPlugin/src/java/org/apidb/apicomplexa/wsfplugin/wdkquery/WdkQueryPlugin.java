@@ -216,14 +216,25 @@ public class WdkQueryPlugin extends WsfPlugin {
             Query q = null;
             String[] queryName = invokeKey.split(":");
             if (model.getModel().hasQuerySet(queryName[0])) {
-                QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-                q = qs.getQuery(queryName[1]);
-                logger.info("Query found : " + q.getFullName());
+				if(params.containsKey("ServedQuery")){
+					String servedquery = params.get("servedQuery");
+					String[] sQuery = servedquery.split(".");
+					if(model.getModel().hasQuerySet(sQuery[0])){
+							Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
+							QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+		                	q = qs.getQuery(queryName[1]);
+		                	logger.info("Query found : " + q.getFullName());
+					}
+				}else{
+                	QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+                	q = qs.getQuery(queryName[1]);
+                	logger.info("Query found : " + q.getFullName());
+				}
             } else {
                 ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
                 logger.info("Parameter found : " + p.getFullName());
-                String[][] enumValues = handleEnumParameters(p);
+                String[][] enumValues = handleEnumParameters(p, orderedColumns);
 
                 WsfResult wsfResult = new WsfResult();
                 wsfResult.setResult(enumValues);
@@ -278,8 +289,6 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
-            } else if (msg.indexOf("does not exist") != -1) {
-                resultSize = 0;
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2;
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
@@ -471,7 +480,6 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     private String[][] results2StringArray(Column[] cols, ResultList result)
             throws WdkModelException {
-
         List<String[]> rows = new LinkedList<String[]>();
         while (result.next()) {
             String[] values = new String[cols.length];
@@ -489,8 +497,7 @@ public class WdkQueryPlugin extends WsfPlugin {
         result.close();
 
         String[][] arr = new String[rows.size()][];
-
-	return rows.toArray(arr);
+        return rows.toArray(arr);
     }
 
     // private String[] getColumnsFromQuery(Query q) {
@@ -626,19 +633,34 @@ public class WdkQueryPlugin extends WsfPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p) throws WdkModelException,
+    private String[][] handleEnumParameters(Param p, String[] ordCols) throws WdkModelException,
             NoSuchAlgorithmException, SQLException, JSONException,
             WdkUserException {
         logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
         EnumParam eParam = (EnumParam) p;
         Map<String, String> termDisp = eParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
-        String[][] ePValues = new String[terms.size()][2];
+		int tI = 0;
+		int iI = 0;
+		int i = 0;
+		for(String c : ordCols){
+			logger.info("current Column = " + c + " ,,,, i = " + i);
+			if(c.equals("term")){
+			 	tI = i;
+			} else if(c.equals("internal") || c.equals("display")){
+				iI = i;
+			}
+			i++;
+		}
+		logger.info("OrderedColumns.length = " + ordCols.length + ", term = " + tI + ", Internal = " + iI);
+        String[][] ePValues = new String[terms.size()][ordCols.length];
         int index = 0;
         for (String term : terms) {
+			for(int j=0;j<ePValues[index].length;j++)
+				ePValues[index][j] = "N/A";
             String disp = termDisp.get(term);
-            ePValues[index][0] = term;
-            ePValues[index][1] = disp;
+            ePValues[index][tI] = term;
+            ePValues[index][iI] = disp;
             logger.info("Term = " + term + ",     Display = " + disp);
             index++;
         }
