@@ -14,25 +14,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.wdk.model.AbstractEnumParam;
-import org.gusdb.wdk.model.Column;
-import org.gusdb.wdk.model.DatasetParam;
-import org.gusdb.wdk.model.Param;
+import org.gusdb.wdk.model.ModelXmlParser;
 import org.gusdb.wdk.model.PrimaryKeyAttributeField;
-import org.gusdb.wdk.model.QuerySet;
 import org.gusdb.wdk.model.RecordClass;
 import org.gusdb.wdk.model.RecordInstance;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
-import org.gusdb.wdk.model.implementation.ModelXmlParser;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.Column;
 import org.gusdb.wdk.model.query.ProcessQuery;
 import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.query.Query;
+import org.gusdb.wdk.model.query.QuerySet;
 import org.gusdb.wdk.model.query.SqlQuery;
 import org.gusdb.wdk.model.query.SqlQueryInstance;
+import org.gusdb.wdk.model.query.param.AbstractEnumParam;
+import org.gusdb.wdk.model.query.param.DatasetParam;
+import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.user.Dataset;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wdk.model.user.UserFactory;
@@ -212,7 +212,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             RecordClass recordClass = model.getModel().getRecordClass(
                     recordClassName);
             logger.info("RecordClass found : " + recordClass.getFullName());
-            Map<String, Object> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
+            Map<String, String> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
             logger.info("Parameters Validated...");
@@ -364,7 +364,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         String sig = parts[0];
         String id = parts[1];
         UserFactory userfactory = model.getModel().getUserFactory();
-        User user = userfactory.loadUserBySignature(sig);
+        User user = userfactory.getUser(sig);
         Integer idInt = new Integer(id);
         Dataset dataset = user.getDataset(idInt.intValue());
         String checksum = dataset.getChecksum();
@@ -372,17 +372,17 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         return sig_checksum;
     }
 
-    private Map<String, Object> convertParams(Map<String, String> p, Param[] q) {
-        Map<String, Object> ret = new HashMap<String, Object>();
+    private Map<String, String> convertParams(Map<String, String> p, Param[] q) {
+        Map<String, String> ret = new HashMap<String, String>();
         for (String key : p.keySet()) {
-            Object o = p.get(key);
+            String o = p.get(key);
             for (Param param : q) {
                 if (key.equals(param.getName())
                         || key.indexOf(param.getName()) != -1) {
                     if (param instanceof DatasetParam) {
                         logger.info("Working on a DatasetParam");
                         try {
-                            String sig = (String) p.get("signature");
+                            String sig = p.get("signature");
                             String compId = sig + ":" + o.toString();
                             compId = convertDatasetId2DatasetChecksum(compId);
                             o = compId;
@@ -423,7 +423,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
                             newVals = newVals.substring(1);
                         logger.info("validated values string -------------"
                                 + newVals);
-                        ret.put(param.getName(), (Object) newVals);
+                        ret.put(param.getName(), newVals);
                     } else {
                         ret.put(param.getName(), o);
                     }

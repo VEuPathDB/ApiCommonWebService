@@ -8,29 +8,30 @@ package org.apidb.apicomplexa.wsfplugin.wdkquery;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.gusdb.wdk.model.AbstractEnumParam;
-import org.gusdb.wdk.model.Column;
-import org.gusdb.wdk.model.DatasetParam;
-import org.gusdb.wdk.model.EnumParam;
-import org.gusdb.wdk.model.Param;
-import org.gusdb.wdk.model.ParamSet;
-import org.gusdb.wdk.model.QuerySet;
+import org.gusdb.wdk.model.ModelXmlParser;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
-import org.gusdb.wdk.model.implementation.ModelXmlParser;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.Column;
 import org.gusdb.wdk.model.query.ProcessQuery;
 import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.query.Query;
+import org.gusdb.wdk.model.query.QuerySet;
 import org.gusdb.wdk.model.query.SqlQuery;
 import org.gusdb.wdk.model.query.SqlQueryInstance;
+import org.gusdb.wdk.model.query.param.AbstractEnumParam;
+import org.gusdb.wdk.model.query.param.DatasetParam;
+import org.gusdb.wdk.model.query.param.EnumParam;
+import org.gusdb.wdk.model.query.param.Param;
+import org.gusdb.wdk.model.query.param.ParamSet;
 import org.gusdb.wdk.model.user.Dataset;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wdk.model.user.UserFactory;
@@ -43,9 +44,9 @@ import org.json.JSONException;
  * @author Cary Pennington
  * @created Dec 20, 2006
  * 
- * 2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three number
- * versioning... not that many changes -- Added support for accessing Enum
- * Parameters on the componet Sites
+ *          2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three
+ *          number versioning... not that many changes -- Added support for
+ *          accessing Enum Parameters on the componet Sites
  */
 public class WdkQueryPlugin extends WsfPlugin {
 
@@ -241,7 +242,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 return wsfResult;
             }
 
-            Map<String, Object> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
+            Map<String, String> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
             // logger.info("Parameters Validated...");
@@ -380,8 +381,8 @@ public class WdkQueryPlugin extends WsfPlugin {
      * private Map<String,Object> convertParams(Map<String,String> p, String[]
      * q) { Map<String,Object> ret = new HashMap<String,Object>(); for (String
      * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
-     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } } }
-     * return ret; }
+     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } }
+     * } return ret; }
      */
 
     private String convertDatasetId2DatasetChecksum(String sig_id)
@@ -390,7 +391,7 @@ public class WdkQueryPlugin extends WsfPlugin {
         String sig = parts[0];
         String id = parts[1];
         UserFactory userfactory = model.getModel().getUserFactory();
-        User user = userfactory.loadUserBySignature(sig);
+        User user = userfactory.getUser(sig);
         Integer idInt = new Integer(id);
         Dataset dataset = user.getDataset(idInt.intValue());
         String checksum = dataset.getChecksum();
@@ -398,10 +399,10 @@ public class WdkQueryPlugin extends WsfPlugin {
         return sig_checksum;
     }
 
-    private Map<String, Object> convertParams(Map<String, String> p, Param[] q) {
-        Map<String, Object> ret = new HashMap<String, Object>();
+    private Map<String, String> convertParams(Map<String, String> p, Param[] q) {
+        Map<String, String> ret = new LinkedHashMap<String, String>();
         for (String key : p.keySet()) {
-            Object o = p.get(key);
+            String o = p.get(key);
             for (Param param : q) {
                 if (key.equals(param.getName())
                         || key.indexOf(param.getName()) != -1) {
@@ -459,7 +460,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         else newVals = "\u0000";
                         logger.info("validated values string -------------"
                                 + newVals);
-                        ret.put(param.getName(), (Object) newVals);
+                        ret.put(param.getName(), newVals);
                     } else {
                         ret.put(param.getName(), o);
                     }
@@ -523,7 +524,8 @@ public class WdkQueryPlugin extends WsfPlugin {
     // }
 
     /*
-     * private static void loadConfig(String mName, String GH)throws IOException {
+     * private static void loadConfig(String mName, String GH)throws IOException
+     * {
      * 
      * //model Name and path for xml files will be read from config file String
      * modelName = mName; String GUS_HOME = GH;
@@ -549,18 +551,18 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     /*
      * private WdkModelBean loadModel() { //throws MalformedURLException,
-     * WdkModelException {
-     * logger.info("_______________________________________________________________________");
-     * WdkModel wdkModel = null;
-     * logger.info("_______________________________________________________________________");
-     * try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
+     * WdkModelException {logger.info(
+     * "_______________________________________________________________________"
+     * ); WdkModel wdkModel = null;logger.info(
+     * "_______________________________________________________________________"
+     * ); try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
      * m_modelFile.toURL(), m_modelPropFile.toURL(), m_schemaFile.toURL(), //
      * m_xmlSchemaFile.toURL(), m_configFile.toURL()); }catch(WdkModelException
      * e){logger.info("ERROR ERROR : -------" + e.toString());}
      * catch(MalformedURLException e){logger.info("ERROR ERROR : -------" +
-     * e.toString());}
-     * logger.info("_______________________________________________________________________");
-     * if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
+     * e.toString());}logger.info(
+     * "_______________________________________________________________________"
+     * ); if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
      * wdkModel.getName()); WdkModelBean model = new WdkModelBean(wdkModel);
      * logger.info("---------Model Loading Completed-----------"); return model;
      * 
