@@ -232,6 +232,11 @@ public class ApiFedPlugin extends WsfPlugin {
         for (int i = 0; i < sites.length; i++) {
             sites[i] = (Site) this.sites[i].clone();
         }
+
+		String ocStr = "";
+		for(String s : orderedColumns)
+			ocStr = ocStr + "-------" + s;
+		logger.info("****************" + ocStr);
 		primaryKey = null;
         hasProjectId = false;
         doAll = false;
@@ -299,7 +304,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
         String[] componentColumns = orderedColumns;
         if (!isParam) {
-            componentColumns = removeProjectId(orderedColumns);
+            //componentColumns = removeProjectId(orderedColumns);
             logger.debug("ProjectId Removed from Column Set");
         }
 
@@ -374,26 +379,7 @@ public class ApiFedPlugin extends WsfPlugin {
         StringBuffer message = new StringBuffer();
         String[][] result = combineResults(compResults, orderedColumns,
                 isParam, message);
-		
-		if(this.primaryKey != null){
-			int index = 0;
-			for(String[] recArr: result){
-				String[] a = new String[recArr.length + 2];
-				a[0] = "pk";
-				a[1] = "pid";
-				for(int i=0;i<recArr.length;i++)
-					a[i+2] = recArr[i];
-				result[index] = a;
-				String recStr = "";
-				for(String s : a){
-					recStr = recStr + "-|-" + s;
-				}
-				logger.info("______+++++++======== Record [" + index + "]------- " + recStr);
-				index++;
-			}
-		}
-		
-        WsfResult wsfResult = new WsfResult();
+		WsfResult wsfResult = new WsfResult();
         wsfResult.setResult(result);
         wsfResult.setMessage(message.toString());
         return wsfResult;
