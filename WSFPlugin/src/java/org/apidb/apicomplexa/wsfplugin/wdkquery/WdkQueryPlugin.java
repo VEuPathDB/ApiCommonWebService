@@ -216,20 +216,20 @@ public class WdkQueryPlugin extends WsfPlugin {
             Query q = null;
             String[] queryName = invokeKey.split(":");
             if (model.getModel().hasQuerySet(queryName[0])) {
-				if(params.containsKey("ServedQuery")){
-					String servedquery = params.get("servedQuery");
-					String[] sQuery = servedquery.split(".");
-					if(model.getModel().hasQuerySet(sQuery[0])){
-							Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
-							QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-		                	q = qs.getQuery(queryName[1]);
-		                	logger.info("Query found : " + q.getFullName());
-					}
-				}else{
+				//if(params.containsKey("ServedQuery")){
+					//String servedquery = params.get("servedQuery");
+					//String[] sQuery = servedquery.split(".");
+				//	if(model.getModel().hasQuerySet(sQuery[0])){
+				//			Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
+				//			QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+		          //      	q = qs.getQuery(queryName[1]);
+		            //    	logger.info("Query found : " + q.getFullName());
+					//}
+				//}else{
                 	QuerySet qs = model.getModel().getQuerySet(queryName[0]);
                 	q = qs.getQuery(queryName[1]);
                 	logger.info("Query found : " + q.getFullName());
-				}
+				//}
             } else {
                 ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
@@ -647,7 +647,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 			logger.info("current Column = " + c + " ,,,, i = " + i);
 			if(c.equals("term")){
 			 	tI = i;
-			} else if(c.equals("internal") || c.equals("display")){
+			} else if(c.equals("internal")){
 				iI = i;
 			}
 			i++;
@@ -659,8 +659,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 			for(int j=0;j<ePValues[index].length;j++)
 				ePValues[index][j] = "N/A";
             String disp = termDisp.get(term);
-            ePValues[index][tI] = term;
-            ePValues[index][iI] = disp;
+            ePValues[index][tI] = disp;
+            ePValues[index][iI] = term;
             logger.info("Term = " + term + ",     Display = " + disp);
             index++;
         }
