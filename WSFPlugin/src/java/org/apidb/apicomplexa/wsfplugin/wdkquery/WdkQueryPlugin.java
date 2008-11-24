@@ -645,9 +645,9 @@ public class WdkQueryPlugin extends WsfPlugin {
 		int i = 0;
 		for(String c : ordCols){
 			logger.info("current Column = " + c + " ,,,, i = " + i);
-			if(c.equals("term")){
+			if(c.equals("term") || c.equals("display")){
 			 	tI = i;
-			} else if(c.equals("internal") || c.equals("display")){
+			} else if(c.equals("internal")){
 				iI = i;
 			}
 			i++;
@@ -659,8 +659,8 @@ public class WdkQueryPlugin extends WsfPlugin {
 			for(int j=0;j<ePValues[index].length;j++)
 				ePValues[index][j] = "N/A";
             String disp = termDisp.get(term);
-            ePValues[index][tI] = term;
-            ePValues[index][iI] = disp;
+            ePValues[index][tI] = disp;
+            ePValues[index][iI] = term;
             logger.info("Term = " + term + ",     Display = " + disp);
             index++;
         }
