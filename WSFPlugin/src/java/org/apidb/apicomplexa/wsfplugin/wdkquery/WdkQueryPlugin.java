@@ -217,16 +217,16 @@ public class WdkQueryPlugin extends WsfPlugin {
             Query q = null;
             String[] queryName = invokeKey.split(":");
             if (model.getModel().hasQuerySet(queryName[0])) {
-				if(params.containsKey("ServedQuery")){
-					String servedquery = params.get("servedQuery");
-					String[] sQuery = servedquery.split(".");
-					if(model.getModel().hasQuerySet(sQuery[0])){
-							Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
-							QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-		                	q = qs.getQuery(queryName[1]);
-		                	logger.info("Query found : " + q.getFullName());
-					}
-				}else{
+				//if(params.containsKey("ServedQuery")){
+					//String servedquery = params.get("servedQuery");
+					//String[] sQuery = servedquery.split(".");
+				//	if(model.getModel().hasQuerySet(sQuery[0])){
+				//			Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
+				//			QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+		          //      	q = qs.getQuery(queryName[1]);
+		            //    	logger.info("Query found : " + q.getFullName());
+					//}
+				//}else{
                 	QuerySet qs = model.getModel().getQuerySet(queryName[0]);
                 	q = qs.getQuery(queryName[1]);
                 	logger.info("Query found : " + q.getFullName());
