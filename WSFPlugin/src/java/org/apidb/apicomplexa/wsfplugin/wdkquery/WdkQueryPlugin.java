@@ -481,21 +481,22 @@ public class WdkQueryPlugin extends WsfPlugin {
     private String[][] results2StringArray(Column[] cols, ResultList result)
             throws WdkModelException {
         List<String[]> rows = new LinkedList<String[]>();
-        while (result.next()) {
+	while (result.next()) {
             String[] values = new String[cols.length];
             for (int z = 0; z < cols.length; z++) {
                 Object obj = result.get(cols[z].getName());
                 String val = null;
-                if (obj instanceof String) val = (String) obj;
+		if (obj == null) val="N/A";
+                else if (obj instanceof String) val = (String) obj;
                 else if (obj instanceof char[]) val = new String((char[]) obj);
                 else if (obj instanceof byte[]) val = new String((byte[]) obj);
                 else val = obj.toString();
                 values[z] = val;
-            }
-            rows.add(values);
+	    }
+	    rows.add(values);
         }
         result.close();
-
+	
         String[][] arr = new String[rows.size()][];
         return rows.toArray(arr);
     }
