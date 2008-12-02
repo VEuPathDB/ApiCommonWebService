@@ -287,6 +287,9 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.contains("No value supplied for param")) {
                 resultSize = 0;
+	    //isolate query on crypto/plasmo with only param values for plasmo
+	    } else if (msg.contains("does not exist")) {
+               resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
             } else if (msg.indexOf("does not include") != -1) {
