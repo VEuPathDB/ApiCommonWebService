@@ -8,44 +8,60 @@ package org.apidb.apicomplexa.wsfplugin.textsearch;
  * @author John I
  * @created Nov 16, 2008
  */
-public class SearchResult {
+public class SearchResult implements Comparable <SearchResult> {
 
 
-    private String source_id; 
-    private float max_score; 
-    private String fields_matched; 
+    private String sourceId; 
+    private float maxScore; 
+    private String fieldsMatched; 
     private String snippet;
  
-    public SearchResult(String source_id, float max_score, String fields_matched, String snippet) {
-	this.source_id = source_id;
-	this.max_score = max_score;
-	fields_matched = fields_matched;
+    public SearchResult(String sourceId, float maxScore, String fieldsMatched, String snippet) {
+	this.sourceId = sourceId;
+	this.maxScore = maxScore;
+	fieldsMatched = fieldsMatched;
 	this.snippet = snippet;
 
     }
 
-    protected void combine(SearchResult other) {
-	if (other.getMaxScore() > max_score) {
-	    max_score = other.getMaxScore();
-	    snippet = other.getSnippet();
-	    fields_matched = other.getFieldsMatched() + fields_matched;
-	} else {
-	    //	    fields_matched.append(other.getFieldsMatched()), if fields_matched were a StringBuffer
-	    fields_matched = fields_matched + other.getFieldsMatched();
-	}
-
-    }
-
     protected float getMaxScore() {
-	return max_score;
+	return maxScore;
     }
 
     protected String getSnippet() {
 	return snippet;
     }
 
+    protected String getSourceId() {
+	return sourceId;
+    }
+
     protected String getFieldsMatched() {
-	return fields_matched;
+	return fieldsMatched;
+    }
+
+    protected void combine(SearchResult other) {
+	if (other.getMaxScore() > maxScore) {
+	    maxScore = other.getMaxScore();
+	    snippet = other.getSnippet();
+	    fieldsMatched = other.getFieldsMatched() + fieldsMatched;
+	} else {
+	    //	    fieldsMatched.append(other.getFieldsMatched()), if fieldsMatched were a StringBuffer
+	    fieldsMatched = fieldsMatched + other.getFieldsMatched();
+	}
+
+    }
+
+    public int compareTo(SearchResult other) {
+
+
+	if (other.getMaxScore() > maxScore || (other.getMaxScore() == maxScore && sourceId.compareTo(other.getSourceId()) < 0)) {
+	    return -1;
+	} else if(other.getMaxScore() < maxScore || (other.getMaxScore() == maxScore && sourceId.compareTo(other.getSourceId()) > 0)) {
+	    return 1;
+	} else {
+	    return 1;
+	}
     }
 
 }

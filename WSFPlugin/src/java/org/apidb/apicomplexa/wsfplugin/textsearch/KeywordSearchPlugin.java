@@ -8,16 +8,21 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.servlet.ServletContext;
 
+import org.apache.axis.MessageContext;
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wdk.model.ModelConfig;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 
 /**
  * @author John I
@@ -30,7 +35,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     public static final String PARAM_DATASETS = "text_fields";
-    public static final String PARAM_SPECIES_NAME = "text_search_organism";
+    public static final String PARAM_ORGANISMS = "text_search_organisms";
     public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
@@ -46,9 +51,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private String projectId;
     private Connection commentDbConnection;
-    private String commentInstance;
-    private String commentPassword;
-
+    private Connection componentDbConnection;
     /**
      * @throws WsfServiceException
      * 
@@ -56,17 +59,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public KeywordSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
         // load properties
-        commentInstance = getProperty(FIELD_COMMENT_INSTANCE);
-        if (commentInstance == null)
-            throw new WsfServiceException(
-                    "Required field in property file is missing: "
-                            + FIELD_COMMENT_INSTANCE);
-
-        commentPassword = getProperty(FIELD_COMMENT_PASSWORD);
-        if (commentPassword == null)
-            throw new WsfServiceException(
-                    "Required field in property file is missing: "
-                            + FIELD_COMMENT_PASSWORD);
     }
 
     /*
@@ -111,228 +103,240 @@ public class KeywordSearchPlugin extends WsfPlugin {
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking KeywordSearchPlugin...");
 
+	int signal = 0;
         // get parameters
-        String datasets = params.get(PARAM_DATASETS);
-        String speciesName = params.get(PARAM_SPECIES_NAME);
         String projectId = params.get(PARAM_PROJECT_ID);
         String recordType = params.get(PARAM_WDK_RECORD_TYPE);
+        String fields = params.get(PARAM_DATASETS);
         String textExpression = params.get(PARAM_TEXT_EXPRESSION);
         String componentInstance = params.get(PARAM_COMPONENT_INSTANCE);
+	//        String x = params.get(X);
+        String organisms = params.get(PARAM_ORGANISMS);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
         Map<String, SearchResult> componentMatches = new HashMap<String, SearchResult>();
 
-        if (speciesName == null) {
-            speciesName = "";
-        }
 
-        // iterate through datasets
-        int signal = 0;
         boolean searchComments = false;
         boolean searchComponent = false;
-        String[] ds = datasets.split(",");
-	StringBuffer tableNames = new StringBuffer();
-        for (String dataset : ds) {
-            dataset = dataset.trim();
-	    if (dataset.equals("comments")) {
-		searchComments = true;
-	    } else {
-		searchComponent = true;
-		tableNames.append(tableNames == null ? "'" + dataset + "'" : tableNames +  ", '" + dataset + "'");
-	    }
-	}
 
-	if (searchComments) {
-	    commentMatches = commentSearch(speciesName, projectId, textExpression);
-	}
+        String[] ds = fields.split(",");
+        for (String field : ds) {
+            field = field.trim();
+            if (field.equals("comments")) {
+                searchComments = true;
+            } else {
+                searchComponent = true;
+            }
+        }
 
-	if (searchComponent) {
-	    componentMatches = componentSearch(componentInstance, speciesName, projectId, textExpression);
-	}
+	String oracleTextExpression = transformQueryString(textExpression);
 
-/*        Map<String, SearchResult> matches = joinMatches(commentMatches, componentMatches);*/
-        Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
+        if (searchComments) {
+            commentMatches = textSearch(commentDbConnection,
+					getCommentSql(projectId, recordType, organisms, oracleTextExpression));
+        }
+
+        if (searchComponent) {
+            componentMatches = textSearch(componentDbConnection,
+					  getComponentSql(projectId, recordType, organisms, oracleTextExpression));
+        }
+
+        SearchResult[] matches = joinMatches(commentMatches, componentMatches);
 
         // construct results
-        String[][] result = prepareResult(matches, orderedColumns);
+        String[][] result = flattenMatches(matches, orderedColumns);
         WsfResult wsfResult = new WsfResult();
         wsfResult.setResult(result);
         wsfResult.setSignal(signal);
         return wsfResult;
     }
 
-    private HashMap<String, SearchResult> commentSearch(String speciesName, String projectId, String textExpression) throws WsfServiceException {
+    private String transformQueryString(String queryExpression) {
 
-        HashMap<String, SearchResult> matches = new HashMap<String, SearchResult>();
+	// get the query, which is a sequence of words. we must transform this into an Oracle Text expression suitable for passing to CONTAINS() or SNIPPET()
+        // e.g. "calcium binding" becomes "(calcium NEAR binding) * 1 OR (calcium ACCUM binding) * .1"
 
-	try {
-	    if (commentDbConnection == null) {
-		DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
-		commentDbConnection = DriverManager.getConnection(commentInstance, "apidb", commentPassword);
-	    }
+	/* '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||  ') * 1 OR ('\n" +
+	   "                           || REPLACE('calcium binding', ' ', ' ACCUM ') || ') * .1' */
 
-	    String sql =
-		"SELECT source_id,\n" +
-		"           max_score,\n" +
-		"           fields_matched,\n" +
-		"           CTX_DOC.SNIPPET('comments_text_ix', best_rowid,\n" +
-		"                           '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||  ') * 1 OR ('\n" +
-		"                           || REPLACE('calcium binding', ' ', ' ACCUM ') || ') * .1'\n" +
-		"                                      ) as snippet\n" +
-		"FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
-		"             'community comments' as fields_matched,\n" +
-		"             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid\n" +
-		"      FROM (SELECT SCORE(1)* 1 -- weight\n" +
-		"                     as scoring,\n" +
-		"                   stable_id as source_id, rowid as oracle_rowid\n" +
-		"            FROM iodice.comments\n" +
-		"            WHERE CONTAINS(content,\n" +
-		"                           '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||\n" +
-		"                           ') * 1 OR (' || REPLACE('calcium binding', ' ', ' ACCUM ') ||\n" +
-		"                           ') * .1', 1) > 0\n" +
-		"           )\n" +
-		"      GROUP BY source_id\n" +
-		"      ORDER BY max_score desc\n" +
-		"     )";
+	double nearWeight = 1;
+	double accumWeight = .1;
 
-	    ResultSet rs = commentDbConnection.createStatement().executeQuery(sql);
-	    while (rs.next()) {
-		String sourceId = rs.getString("source_id") ;
-
-		if (matches.containsKey(sourceId)) {
-		    throw new WsfServiceException("duplicate sourceId " + sourceId);
-		} else {
-		    SearchResult match =
-			new SearchResult(sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
-		    matches.put(sourceId, match);
-		}
-	    }
-	    rs.close();
-        } catch (SQLException e) {
-            logger.info("caught SQLException " + e.getMessage());
-	}
-
-	return matches;
+	String nearString = queryExpression.trim().replaceAll("\\s+", " NEAR ");
+	String accumString = queryExpression.trim().replaceAll("\\s+", " ACCUM ");
+	return  "(" + nearString + ") * " + nearWeight + " OR (" + accumString + ") * " + accumWeight;
     }
 
-    private HashMap<String, SearchResult> componentSearch(String componentInstance, String speciesName, String projectId, String textExpression)
-	throws WsfServiceException {
-        HashMap<String, SearchResult> matches = new HashMap<String, SearchResult>();
-	try {
-	    if (commentDbConnection == null) {
-		DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
-		commentDbConnection = DriverManager.getConnection(commentInstance, "apidb", commentPassword);
-	    }
+    private String getCommentSql(String projectId, String recordType, String organisms, String oracleTextExpression) {
 
-	    String sql =
-                "SELECT source_id,\n" +
-                "       max_score,\n" +
-                "       fields_matched,\n" +
-                "       CTX_DOC.SNIPPET(index_name, best_rowid,\n" +
-                "                       '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||  ') * 1 OR ('|| \n" +
-                "                       REPLACE('calcium binding', ' ', ' ACCUM ') || ') * .1'\n" +             
-                "                      ) as snippet\n" +
+	
+	return "SELECT source_id,\n" +
+                "           max_score,\n" +
+                "           fields_matched,\n" +
+                "           CTX_DOC.SNIPPET('comments_text_ix', best_rowid,\n" +
+                "                           '" + oracleTextExpression + "') as snippet\n" +
                 "FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
-                "             apidb.tab_to_string(CAST(COLLECT(DISTINCT table_name) AS apidb.varchartab), ', ')  fields_matched,\n" +
-                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid,\n" +
-                "             max(index_name) keep (dense_rank first order by scoring desc) as index_name\n" +
-                "      FROM (  SELECT SCORE(1)* 1 -- weight\n" +
-                "                       as scoring,\n" +
-                "                    'blastp_text_ix' as index_name, source_id,\n" +
-                "                    external_database_name as table_name, rowid as oracle_rowid\n" +
-                "              FROM apidb.Blastp\n" +
-                "              WHERE CONTAINS(description,\n" +
-                "                             '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||\n" +
-                "                             ') * 1 OR (' || REPLACE('calcium binding', ' ', ' ACCUM ') ||\n" +
-                "                             ') * .1', 1) > 0\n" +
-                "                AND 'Blastp' = 'not Blastp' -- is blastp one of the datasets to search?\n" +
-                "                AND 'recordType = genes' = 'recordType = genes'\n" +
-                "            UNION\n" +
-                "              SELECT SCORE(1)* 1 -- weight\n" +
-                "                       as scoring,\n" +
-                "                     'gene_text_ix' as index_name, source_id, table_name,\n" +
-                "                     rowid as oracle_rowid\n" +
-                "              FROM apidb.GeneTable\n" +
-                "              WHERE CONTAINS(content,\n" +
-                "                             '(' || REPLACE('calcium binding', ' ', ' NEAR ') ||\n" +
-                "                             ') * 1 OR (' || REPLACE('calcium binding', ' ', ' ACCUM ') ||\n" +
-                "                             ') * .1', 1) > 0\n" +
-                "                AND table_name in ('Notes', 'MetabolicPathways', 'Orthologs', 'GoTerms')\n" +
-                "                AND 'recordType = genes' = 'recordType = genes'\n" +
-                "            UNION\n" +
-                "              SELECT SCORE(1)* 1 -- weight\n" +
-                "                       as scoring,\n" +
-                "                    'isolate_text_ix' as index_name, source_id, table_name, rowid as oracle_rowid\n" +
-                "              FROM apidb.WdkIsolateTable\n" +
-                "              WHERE CONTAINS(content,\n" +
-                "                             '(' || REPLACE('calcium binding', ' ', ' NEAR ')  ||\n" +
-                "                             ') * 1 OR (' || REPLACE('calcium binding', ' ', ' ACCUM ') ||\n" +
-                "                             ') * .1', 1) > 0\n" +
-                "                AND 'isolate search lacks table granularity' =  'isolate search lacks table granularity'\n" +
-                "                AND 'recordType = isolates' = 'recordType = isolates'\n" +
-                "           )\n" +
+                "             'community comments' as fields_matched,\n" +
+                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid\n" +
+                "      FROM (SELECT SCORE(1)* 1 -- weight\n" +
+                "                     as scoring,\n" +
+                "                   stable_id as source_id, rowid as oracle_rowid\n" +
+                "            FROM iodice.comments\n" +
+                "            WHERE CONTAINS(content,\n" +
+                "                           '" + oracleTextExpression + "')\n" +
                 "      GROUP BY source_id\n" +
-                "      ORDER BY max_score desc, source_id\n" +
+                "      ORDER BY max_score desc\n" +
                 "     )";
+    }
 
-	    ResultSet rs = commentDbConnection.createStatement().executeQuery(sql);
-	    while (rs.next()) {
-		String sourceId = rs.getString("source_id") ;
+    private String getComponentSql(String projectId, String recordType,  String oracleTextExpression, String fields) {
 
-		if (matches.containsKey(sourceId)) {
-		    throw new WsfServiceException("duplicate sourceId " + sourceId);
-		} else {
-		    SearchResult match =
-			new SearchResult(sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
-		    matches.put(sourceId, match);
-		}
-	    }
-	    rs.close();
+	return "SELECT source_id, \n" +
+               "       max_scoring, \n" +
+               "       fields_matched, \n" +
+               "       CTX_DOC.SNIPPET(index_name, oracle_rowid, \n" +
+               "                           '" + oracleTextExpression + "')\n" +
+               "                      ) as snippet \n" +
+               "FROM (SELECT source_id, MAX(scoring) as max_scoring, \n" +
+               "             apidb.tab_to_string(CAST(COLLECT(DISTINCT table_name) AS apidb.varchartab), ', ')  fields_matched, \n" +
+               "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
+               "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
+               "      FROM (  SELECT SCORE(1)* 1 -- weight \n" +
+               "                       as scoring, \n" +
+               "                    'blastp_text_ix' as index_name, rowid as oracle_rowid, source_id, \n" +
+               "                    external_database_name as table_name \n" +
+               "              FROM apidb.Blastp \n" +
+               "              WHERE CONTAINS(description, \n" +
+               "                           '" + oracleTextExpression + "')\n" +
+               "                AND '" + fields + "' like '%Blastp%' \n" +
+               "                AND '" + recordType + "' = 'genes' \n" +
+               "            UNION \n" +
+               "              SELECT SCORE(1)* 1 -- weight \n" +
+               "                       as scoring, \n" +
+               "                     'gene_text_ix' as index_name, rowid as oracle_rowid, source_id, table_name \n" +
+               "              FROM apidb.GeneTable \n" +
+               "              WHERE CONTAINS(content, \n" +
+               "                           '" + oracleTextExpression + "')\n" +
+               "                AND '" + fields + "' like '%' || table_name || '%' \n" +
+               "                AND '" + recordType + "' = 'genes' \n" +
+               "            UNION \n" +
+               "              SELECT SCORE(1)* 1 -- weight \n" +
+               "                       as scoring, \n" +
+               "                    'isolate_text_ix' as index_name, rowid as oracle_rowid, source_id, table_name \n" +
+               "              FROM apidb.WdkIsolateTable \n" +
+               "              WHERE CONTAINS(content, \n" +
+               "                           '" + oracleTextExpression + "')\n" +
+               "                AND '" + fields + "' like '%' || table_name || '%' \n" +
+               "                AND '" + recordType + "' = 'isolates' \n" +
+               "           ) \n" +
+               "      GROUP BY source_id \n" +
+               "      ORDER BY max_scoring desc, source_id \n" +
+               "     )";
+    }
+
+    private Map<String, SearchResult> textSearch(Connection dbConnection, String sql)
+        throws WsfServiceException {
+        Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
+        try {
+            if (dbConnection == null) {
+		throw new WsfServiceException("null database connection");
+            }
+
+            ResultSet rs = dbConnection.createStatement().executeQuery(sql);
+            while (rs.next()) {
+                String sourceId = rs.getString("source_id") ;
+
+                if (matches.containsKey(sourceId)) {
+                    throw new WsfServiceException("duplicate sourceId " + sourceId);
+                } else {
+                    SearchResult match =
+                        new SearchResult(sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
+                    matches.put(sourceId, match);
+                }
+            }
+            rs.close();
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
-	}
-
-	return matches;
-    }
-
-    private HashMap<String, SearchResult> joinMatches(HashMap<String, SearchResult> commentMatches, HashMap<String, SearchResult> componentMatches){
-
-	Iterator commentIterator = commentMatches.keySet().iterator();
-	while (commentIterator.hasNext()) {
-	    String sourceId = (String) commentIterator.next();
-	    SearchResult commentMatch = commentMatches.get(sourceId);
-	    SearchResult componentMatch = componentMatches.get(sourceId);
-
-	    if (componentMatch == null) {
-		componentMatches.put(sourceId, commentMatch);
-	    } else {
-		componentMatch.combine(commentMatch);
-	    }
-	}
-
-	return componentMatches;
-    }
-
-    private String[][] prepareResult(Map<String, SearchResult> matches,
-            String[] cols) {
-        String[][] result = new String[matches.size()][cols.length];
-        // create an column order map
-        Map<String, Integer> orders = new HashMap<String, Integer>();
-        for (int i = 0; i < cols.length; i++)
-            orders.put(cols[i], i);
-
-        ArrayList<String> sortedIds = new ArrayList<String>(matches.keySet());
-        Collections.sort(sortedIds);
-
-        for (int i = 0; i < sortedIds.size(); i++) {
-            String id = sortedIds.get(i);
-            result[i][orders.get(COLUMN_GENE_ID)] = id;
-            String fields = matches.get(id).toString();
-            result[i][orders.get(COLUMN_DATASETS)] = fields.substring(1,
-                    fields.length() - 1);
-            result[i][orders.get(COLUMN_PROJECT_ID)] = this.projectId;
         }
-        return result;
+
+        return matches;
     }
+
+    private SearchResult[] joinMatches(Map<String, SearchResult> commentMatches, Map<String, SearchResult> componentMatches){
+
+        Iterator commentIterator = commentMatches.keySet().iterator();
+        while (commentIterator.hasNext()) {
+            String sourceId = (String) commentIterator.next();
+            SearchResult commentMatch = commentMatches.get(sourceId);
+            SearchResult componentMatch = componentMatches.get(sourceId);
+
+            if (componentMatch == null) {
+                componentMatches.put(sourceId, commentMatch);
+            } else {
+                componentMatch.combine(commentMatch);
+            }
+        }
+
+        // componentMatches now has all results combined; get it into a sorted array
+        Collection<SearchResult> matchCollection = componentMatches.values();
+        SearchResult[] matchArray = matchCollection.toArray(new SearchResult[0]);
+        Arrays.sort(matchArray);
+
+        return matchArray;
+        
+    }
+
+    private String[][] flattenMatches(SearchResult[] matches, String[] orderedColumns) throws WsfServiceException{
+
+        // validate that WDK expects the columns in the order we want
+        String[] expectedColumns = {"SourceId", "ProjectId", "MaxScore", "FieldsMatched", "Snippet"};
+
+        int i = 0;
+        for (String expected : expectedColumns) {
+            if (!expected.equals(orderedColumns[i])) {
+                throw new WsfServiceException("misordered WSF column: expected \"" + expected + "\", got \"" + orderedColumns[i]);
+            }
+            i++;
+        }
+
+        String[][] flat = new String[matches.length][];
+
+        i = 0;
+        for (SearchResult match : matches) {
+            String[] a = {match.getSourceId(), Float.toString(match.getMaxScore()), match.getFieldsMatched(), match.getSnippet()};
+            flat[i++] = a;
+        }
+
+        return flat;
+    }
+
+  Connection getCommentDbConnection() throws SQLException {
+
+	WdkModelBean wdkModel = (WdkModelBean)servletContext.getAttribute("wdkModel");
+	ModelConfig modelConfig = wdkModel.getModel().getModelConfig();
+
+      if (commentDbConnection == null) {
+          DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+          commentDbConnection = DriverManager.getConnection(modelConfig.getUserDB().getConnectionUrl(),
+							    modelConfig.getUserDB().getLogin(),
+							    modelConfig.getUserDB().getPassword());
+      }
+      return commentDbConnection;
+  }
+
+    Connection getComponentDbConnection() throws SQLException {
+
+	WdkModelBean wdkModel = (WdkModelBean)servletContext.getAttribute("wdkModel");
+	ModelConfig modelConfig = wdkModel.getModel().getModelConfig();
+
+      if (componentDbConnection == null) {
+          DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+          commentDbConnection = DriverManager.getConnection(modelConfig.getApplicationDB().getConnectionUrl(),
+							    modelConfig.getApplicationDB().getLogin(),
+							    modelConfig.getApplicationDB().getPassword());
+      }
+      return componentDbConnection;
+  }
 
 }
