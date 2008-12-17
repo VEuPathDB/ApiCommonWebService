@@ -11,12 +11,13 @@ package org.apidb.apicomplexa.wsfplugin.textsearch;
 public class SearchResult implements Comparable <SearchResult> {
 
 
-    private String sourceId; 
+    private String sourceId;
+    private String projectId;
     private float maxScore; 
     private String fieldsMatched; 
     private String snippet;
  
-    public SearchResult(String sourceId, float maxScore, String fieldsMatched, String snippet) {
+    public SearchResult(String projectId, String sourceId, float maxScore, String fieldsMatched, String snippet) {
 	this.sourceId = sourceId;
 	this.maxScore = maxScore;
 	fieldsMatched = fieldsMatched;
@@ -34,6 +35,10 @@ public class SearchResult implements Comparable <SearchResult> {
 
     protected String getSourceId() {
 	return sourceId;
+    }
+
+    protected String getProjectId() {
+	return projectId;
     }
 
     protected String getFieldsMatched() {
