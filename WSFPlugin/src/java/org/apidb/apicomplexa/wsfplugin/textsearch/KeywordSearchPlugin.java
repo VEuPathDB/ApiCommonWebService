@@ -33,9 +33,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "keywordsearch-config.xml";
 
     // required parameter definition
+    public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     public static final String PARAM_DATASETS = "text_search_fields";
-    public static final String PARAM_ORGANISMS = "text_search_organisms";
+    public static final String PARAM_ORGANISMS = "text_search_organism";
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
 
@@ -67,7 +68,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_WDK_RECORD_TYPE };
+        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_WDK_RECORD_TYPE };
     }
 
     /*
@@ -108,7 +109,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("^'", "").replaceAll("'$", "");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
 	//        String x = params.get(X);
-        String organisms = params.get(PARAM_ORGANISMS);
+        String organisms = params.get(PARAM_ORGANISMS).trim().replaceAll("^'", "").replaceAll("'$", "");
+        String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("^'", "").replaceAll("'$", "");
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
         Map<String, SearchResult> componentMatches = new HashMap<String, SearchResult>();
@@ -127,15 +129,15 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	String oracleTextExpression = transformQueryString(textExpression);
 
-	logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
+	logger.debug("projectId = \"" + projectId + "\"");
         if (searchComments) {
             commentMatches = textSearch(getCommentDbConnection(),
-					getCommentSql("@PROJECT_ID@", recordType, organisms, oracleTextExpression));
+					getCommentSql(projectId, recordType, organisms, oracleTextExpression));
         }
 
         if (searchComponent) {
             componentMatches = textSearch(getComponentDbConnection(),
-					  getComponentSql("@PROJECT_ID@", recordType, organisms, oracleTextExpression, fields));
+					  getComponentSql(projectId, recordType, organisms, oracleTextExpression, fields));
         }
 
         SearchResult[] matches = joinMatches(commentMatches, componentMatches);
@@ -184,7 +186,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 "                     as scoring,\n" +
                 "                   source_id, rowid as oracle_rowid\n" +
                 "            FROM apidb.TextSearchableComment\n" +
-                "            WHERE CONTAINS(content,\n" +
+                "            WHERE project_id = '" + projectId + "' \n" +
+                "              AND CONTAINS(content,\n" +
                 "                           '" + oracleTextExpression + "', 1) > 0 ) \n" +
                 "      GROUP BY source_id\n" +
                 "      ORDER BY max_score desc\n" +
