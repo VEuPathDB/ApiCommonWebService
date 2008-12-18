@@ -40,7 +40,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
 
-    public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_GENE_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_DATASETS = "Datasets";
     public static final String COLUMN_SNIPPET = "Snippet";
@@ -106,7 +106,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	int signal = 0;
         // get parameters
         String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
-        String fields = params.get(PARAM_DATASETS).trim().replaceAll("^'", "").replaceAll("'$", "");
+        String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
+	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS).trim().replaceAll("^'", "").replaceAll("'$", "");
@@ -129,7 +130,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	String oracleTextExpression = transformQueryString(textExpression);
 
-	logger.debug("projectId = \"" + projectId + "\"");
         if (searchComments) {
             commentMatches = textSearch(getCommentDbConnection(),
 					getCommentSql(projectId, recordType, organisms, oracleTextExpression));
@@ -176,7 +176,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
                 "           max_score,\n" +
-                "           fields_matched,\n" +
+                "       fields_matched, \n" +
                 "           CTX_DOC.SNIPPET('comments_text_ix', best_rowid,\n" +
                 "                           '" + oracleTextExpression + "') as snippet\n" +
                 "FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
@@ -262,6 +262,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 } else {
                     SearchResult match =
                         new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
+		    logger.debug("new SearchResult match has fieldsMatched of " + match.getFieldsMatched());
                     matches.put(sourceId, match);
                 }
             }
@@ -300,7 +301,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private String[][] flattenMatches(SearchResult[] matches, String[] orderedColumns) throws WsfServiceException{
 
         // validate that WDK expects the columns in the order we want
-        String[] expectedColumns = {"GeneID", "ProjectId", "MaxScore", "Datasets", "Snippet"};
+        String[] expectedColumns = {"RecordID", "ProjectId", "MaxScore", "Datasets", "Snippet"};
 
         int i = 0;
         for (String expected : expectedColumns) {

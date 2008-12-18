@@ -3,7 +3,6 @@
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
-
 /**
  * @author John I
  * @created Nov 16, 2008
@@ -16,13 +15,13 @@ public class SearchResult implements Comparable <SearchResult> {
     private float maxScore; 
     private String fieldsMatched; 
     private String snippet;
- 
+
     public SearchResult(String projectId, String sourceId, float maxScore, String fieldsMatched, String snippet) {
 	this.sourceId = sourceId;
+	this.projectId = projectId;
 	this.maxScore = maxScore;
-	fieldsMatched = fieldsMatched;
+	this.fieldsMatched = fieldsMatched;
 	this.snippet = snippet;
-
     }
 
     protected float getMaxScore() {
