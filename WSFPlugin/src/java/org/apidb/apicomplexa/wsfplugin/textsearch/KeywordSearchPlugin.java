@@ -175,14 +175,14 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
-                "           max_score,\n" +
+                "           max_score * (select weight from apidb.TableWeight where table_name = 'Comments') as max_score,\n" +
                 "       fields_matched, \n" +
                 "           CTX_DOC.SNIPPET('comments_text_ix', best_rowid,\n" +
                 "                           '" + oracleTextExpression + "') as snippet\n" +
                 "FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
                 "             'community comments' as fields_matched,\n" +
                 "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid\n" +
-                "      FROM (SELECT SCORE(1)* 1 -- weight\n" +
+                "      FROM (SELECT SCORE(1)\n" +
                 "                     as scoring,\n" +
                 "                   source_id, rowid as oracle_rowid\n" +
                 "            FROM apidb.TextSearchableComment\n" +
@@ -209,7 +209,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "             apidb.tab_to_string(CAST(COLLECT(DISTINCT table_name) AS apidb.varchartab), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
-               "      FROM (  SELECT SCORE(1)* 1 -- weight \n" +
+               "      FROM (  SELECT SCORE(1) * (select weight from apidb.TableWeight where table_name = 'Blastp') \n" +
                "                       as scoring, \n" +
                "                    'blastp_text_ix' as index_name, rowid as oracle_rowid, source_id, \n" +
                "                    external_database_name as table_name \n" +
@@ -219,23 +219,25 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "            UNION \n" +
-               "              SELECT SCORE(1)* 1 -- weight \n" +
+               "              SELECT SCORE(1)* tw.weight \n" +
                "                       as scoring, \n" +
-               "                     'gene_text_ix' as index_name, rowid as oracle_rowid, source_id, table_name \n" +
-               "              FROM apidb.GeneTable \n" +
+               "                     'gene_text_ix' as index_name, gt.rowid as oracle_rowid, source_id, gt.table_name \n" +
+               "              FROM apidb.GeneTable gt, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
-               "                AND '" + fields + "' like '%' || table_name || '%' \n" +
+               "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
+               "                AND gt.table_name = tw.table_name \n" +
                "            UNION \n" +
-               "              SELECT SCORE(1)* 1 -- weight \n" +
+               "              SELECT SCORE(1) * tw.weight  \n" +
                "                       as scoring, \n" +
-               "                    'isolate_text_ix' as index_name, rowid as oracle_rowid, source_id, table_name \n" +
-               "              FROM apidb.WdkIsolateTable \n" +
+               "                    'isolate_text_ix' as index_name, wit.rowid as oracle_rowid, source_id, wit.table_name \n" +
+               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
-               "                AND '" + fields + "' like '%' || table_name || '%' \n" +
+               "                AND '" + fields + "' like '%' || wit.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'isolate' \n" +
+               "                AND wit.table_name = tw.table_name \n" +
                "           ) \n" +
                "      GROUP BY source_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
