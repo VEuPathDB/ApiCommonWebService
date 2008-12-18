@@ -110,7 +110,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
 	//        String x = params.get(X);
-        String organisms = params.get(PARAM_ORGANISMS).trim().replaceAll("^'", "").replaceAll("'$", "");
+        String organisms = params.get(PARAM_ORGANISMS);
+	if (organisms != null) {
+	    organisms = organisms.trim().replaceAll("^'", "").replaceAll("'$", "");
+	}
         String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("^'", "").replaceAll("'$", "");
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
