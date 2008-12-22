@@ -283,7 +283,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             }
             rs.close();
         } catch (SQLException e) {
-            logger.info("caught SQLException " + e.getMessage());
+            logger.info("caught SQLException " + e.getMessage() + "\nSQL: " + sql);
         }
 
         return matches;
