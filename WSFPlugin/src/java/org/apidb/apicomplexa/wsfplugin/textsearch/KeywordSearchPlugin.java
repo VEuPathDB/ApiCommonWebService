@@ -39,6 +39,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String PARAM_ORGANISMS = "text_search_organism";
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
+    public static final String PARAM_MAX_PVALUE = "max_pvalue";
 
     public static final String COLUMN_GENE_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
@@ -115,6 +116,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    organisms = organisms.trim().replaceAll("^'", "").replaceAll("'$", "");
 	}
         String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("^'", "").replaceAll("'$", "");
+        String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
         Map<String, SearchResult> componentMatches = new HashMap<String, SearchResult>();
@@ -140,7 +142,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         if (searchComponent) {
             componentMatches = textSearch(getComponentDbConnection(),
-					  getComponentSql(projectId, recordType, organisms, oracleTextExpression, fields));
+					  getComponentSql(projectId, recordType, organisms, oracleTextExpression, fields, maxPvalue));
         }
 
         SearchResult[] matches = joinMatches(commentMatches, componentMatches);
@@ -200,7 +202,15 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	return sql;
     }
 
-    private String getComponentSql(String projectId, String recordType, String organisms, String oracleTextExpression, String fields) {
+    private String getComponentSql(String projectId, String recordType, String organisms, String oracleTextExpression, String fields, String maxPvalue) {
+
+	String pvalueTerm;
+	if (maxPvalue == null || maxPvalue.equals("")) {
+	    pvalueTerm = "";
+	} else {
+	    pvalueTerm = "                AND pvalue_exp <= " + maxPvalue + " \n";
+	}
+
 
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
                "       max_score, \n" +
@@ -220,7 +230,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "              WHERE CONTAINS(description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
-               "                AND '" + recordType + "' = 'gene' \n" +
+               "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* tw.weight \n" +
                "                       as scoring, \n" +
