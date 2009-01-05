@@ -222,7 +222,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "             apidb.tab_to_string(CAST(COLLECT(DISTINCT table_name) AS apidb.varchartab), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
-               "      FROM (  SELECT SCORE(1) * (select weight from apidb.TableWeight where table_name = 'Blastp') \n" +
+               "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
                "                       as scoring, \n" +
                "                    'apidb.blastp_text_ix' as index_name, rowid as oracle_rowid, source_id, \n" +
                "                    external_database_name as table_name \n" +
@@ -232,7 +232,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
                "            UNION \n" +
-               "              SELECT SCORE(1)* tw.weight \n" +
+               "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
                "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, source_id, gt.table_name \n" +
                "              FROM apidb.GeneTable gt, apidb.TableWeight tw \n" +
@@ -240,9 +240,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
-               "                AND gt.table_name = tw.table_name \n" +
+               "                AND gt.table_name = tw.table_name(+) \n" +
                "            UNION \n" +
-               "              SELECT SCORE(1) * tw.weight  \n" +
+               "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
                "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, source_id, wit.table_name \n" +
                "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
@@ -250,7 +250,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%' || wit.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'isolate' \n" +
-               "                AND wit.table_name = tw.table_name \n" +
+               "                AND wit.table_name = tw.table_name(+) \n" +
                "           ) \n" +
                "      GROUP BY source_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
@@ -283,7 +283,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             }
             rs.close();
         } catch (SQLException e) {
-            logger.info("caught SQLException " + e.getMessage());
+            logger.info("caught SQLException " + e.getMessage() + "\nSQL: " + sql);
         }
 
         return matches;
