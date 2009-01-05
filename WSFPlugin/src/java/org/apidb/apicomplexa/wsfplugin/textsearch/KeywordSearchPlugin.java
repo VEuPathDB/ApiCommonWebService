@@ -180,7 +180,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
-                "           max_score * (select weight from apidb.TableWeight where table_name = 'Comments') as max_score,\n" +
+                "           max_score as max_score, /* should be weighted using component TableWeight */\n" +
                 "       fields_matched, \n" +
                 "           CTX_DOC.SNIPPET('apidb.comments_text_ix', best_rowid,\n" +
                 "                           '" + oracleTextExpression + "') as snippet\n" +
