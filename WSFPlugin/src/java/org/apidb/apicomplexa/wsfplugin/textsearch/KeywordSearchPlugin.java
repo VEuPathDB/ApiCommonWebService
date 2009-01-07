@@ -211,6 +211,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    pvalueTerm = "                AND pvalue_exp <= " + maxPvalue + " \n";
 	}
 
+	String organismsTerm;
+	if (organisms == null || organisms.equals("")) {
+	    organismsTerm = "";
+	} else {
+	    organismsTerm = "                AND tn.name in (" + organisms + ") \n";
+	}
 
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
                "       max_score, \n" +
@@ -226,37 +232,39 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                       as scoring, \n" +
                "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
-               "              WHERE CONTAINS(description, \n" +
+               "              FROM apidb.Blastp b, dots.GeneFeature gf, dots.NaSequence ns, sres.TaxonName tn \n" +
+               "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
-               "                AND b.source_id = ga.source_id \n" +
-               "                AND ga.organism in (" + organisms + ") \n" +
+               "                AND b.source_id = gf.source_id \n" +
+               "                AND gf.na_sequence_id = ns.na_sequence_id \n" +
+               "                AND ns.taxon_id = tn.taxon_id \n" +
+               "                AND tn.name_class = 'scientific name' \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
                "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.table_name \n" +
-               "              FROM apidb.GeneTable gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
+               "              FROM apidb.GeneTable gt, apidb.TableWeight tw, dots.GeneFeature gf, dots.NaSequence ns, sres.TaxonName tn \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "                AND gt.table_name = tw.table_name(+) \n" +
-               "                AND gt.source_id = ga.source_id and gt.project_id = ga.project_id\n" +
-               "                AND ga.organism in (" + organisms + ") \n" +
+               "                AND gt.source_id = gf.source_id \n" +
+               "                AND gf.na_sequence_id = ns.na_sequence_id \n" +
+               "                AND ns.taxon_id = tn.taxon_id \n" +
+               "                AND tn.name_class = 'scientific name' \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
                "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.table_name \n" +
-               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw, apidb.IsolateAttributes ia \n" +
+               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%' || wit.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'isolate' \n" +
                "                AND wit.table_name = tw.table_name(+) \n" +
-               "                AND wit.source_id = ia.source_id and wit.project_id = ia.project_id\n" +
-               "                AND ia.organism in (" + organisms + ") \n" +
                "           ) \n" +
                "      GROUP BY source_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
