@@ -69,7 +69,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_WDK_RECORD_TYPE };
+        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
     /*
@@ -107,6 +107,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	int signal = 0;
         // get parameters
         String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
+	if (recordType == null || recordType.equals("")) {
+	    recordType = "gene";
+	}
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
 	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
@@ -208,14 +211,14 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	if (maxPvalue == null || maxPvalue.equals("")) {
 	    pvalueTerm = "";
 	} else {
-	    pvalueTerm = "                AND pvalue_exp <= " + maxPvalue + " \n";
+	    pvalueTerm = "                AND b.pvalue_exp <= " + maxPvalue + " \n";
 	}
 
 	String organismsTerm;
 	if (organisms == null || organisms.equals("")) {
 	    organismsTerm = "";
 	} else {
-	    organismsTerm = "                AND tn.name in (" + organisms + ") \n";
+	    organismsTerm = "                AND ga.organism in (" + organisms + ") \n";
 	}
 
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
@@ -232,29 +235,23 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                       as scoring, \n" +
                "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b, dots.GeneFeature gf, dots.NaSequence ns, sres.TaxonName tn \n" +
+               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
-               "                AND b.source_id = gf.source_id \n" +
-               "                AND gf.na_sequence_id = ns.na_sequence_id \n" +
-               "                AND ns.taxon_id = tn.taxon_id \n" +
-               "                AND tn.name_class = 'scientific name' \n" + organismsTerm +
+               "                AND b.source_id = ga.source_id \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
                "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.table_name \n" +
-               "              FROM apidb.GeneTable gt, apidb.TableWeight tw, dots.GeneFeature gf, dots.NaSequence ns, sres.TaxonName tn \n" +
+               "              FROM apidb.GeneTable gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "                AND gt.table_name = tw.table_name(+) \n" +
-               "                AND gt.source_id = gf.source_id \n" +
-               "                AND gf.na_sequence_id = ns.na_sequence_id \n" +
-               "                AND ns.taxon_id = tn.taxon_id \n" +
-               "                AND tn.name_class = 'scientific name' \n" + organismsTerm +
+               "                AND gt.source_id = ga.source_id \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
