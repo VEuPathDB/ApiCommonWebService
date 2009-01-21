@@ -69,7 +69,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS, PARAM_WDK_RECORD_TYPE };
+        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
     /*
@@ -107,6 +107,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	int signal = 0;
         // get parameters
         String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
+	if (recordType == null || recordType.equals("")) {
+	    recordType = "gene";
+	}
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
 	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
@@ -208,9 +211,15 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	if (maxPvalue == null || maxPvalue.equals("")) {
 	    pvalueTerm = "";
 	} else {
-	    pvalueTerm = "                AND pvalue_exp <= " + maxPvalue + " \n";
+	    pvalueTerm = "                AND b.pvalue_exp <= " + maxPvalue + " \n";
 	}
 
+	String organismsTerm;
+	if (organisms == null || organisms.equals("")) {
+	    organismsTerm = "";
+	} else {
+	    organismsTerm = "                AND ga.organism in (" + organisms + ") \n";
+	}
 
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
                "       max_score, \n" +
@@ -219,7 +228,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                           '" + oracleTextExpression + "'\n" +
                "                      ) as snippet \n" +
                "FROM (SELECT source_id, MAX(scoring) as max_score, \n" +
-               "             apidb.tab_to_string(CAST(COLLECT(DISTINCT table_name) AS apidb.varchartab), ', ')  fields_matched, \n" +
+               "             apidb.tab_to_string(set(CAST(COLLECT('''' || table_name ||'''') AS apidb.varchartab)), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
@@ -227,12 +236,11 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
                "                    external_database_name as table_name \n" +
                "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
-               "              WHERE CONTAINS(description, \n" +
+               "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
-               "                AND b.source_id = ga.source_id \n" +
-               "                AND ga.organism in (" + organisms + ") \n" +
+               "                AND b.source_id = ga.source_id \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
@@ -243,20 +251,17 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "                AND gt.table_name = tw.table_name(+) \n" +
-               "                AND gt.source_id = ga.source_id and gt.project_id = ga.project_id\n" +
-               "                AND ga.organism in (" + organisms + ") \n" +
+               "                AND gt.source_id = ga.source_id \n" + organismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
                "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.table_name \n" +
-               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw, apidb.IsolateAttributes ia \n" +
+               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%' || wit.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'isolate' \n" +
                "                AND wit.table_name = tw.table_name(+) \n" +
-               "                AND wit.source_id = ia.source_id and wit.project_id = ia.project_id\n" +
-               "                AND ia.organism in (" + organisms + ") \n" +
                "           ) \n" +
                "      GROUP BY source_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
