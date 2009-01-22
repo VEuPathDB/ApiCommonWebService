@@ -214,11 +214,18 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    pvalueTerm = "                AND b.pvalue_exp <= " + maxPvalue + " \n";
 	}
 
-	String organismsTerm;
+	String blastpOrganismsTerm;
 	if (organisms == null || organisms.equals("")) {
-	    organismsTerm = "";
+	    blastpOrganismsTerm = "";
 	} else {
-	    organismsTerm = "                AND ga.organism in (" + organisms + ") \n";
+	    blastpOrganismsTerm = "                AND b.query_organism in (" + organisms + ") \n";
+	}
+
+	String geneTableOrganismsTerm;
+	if (organisms == null || organisms.equals("")) {
+	    geneTableOrganismsTerm = "";
+	} else {
+	    geneTableOrganismsTerm = "                AND ga.query_organism in (" + organisms + ") \n";
 	}
 
 	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
@@ -235,12 +242,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                       as scoring, \n" +
                "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
+               "              FROM apidb.Blastp b \n" +
                "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
-               "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
-               "                AND b.source_id = ga.source_id \n" + organismsTerm +
+               "                AND '" + recordType + "' = 'gene' \n" +
+               pvalueTerm + blastpOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
@@ -251,7 +258,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "                AND gt.table_name = tw.table_name(+) \n" +
-               "                AND gt.source_id = ga.source_id \n" + organismsTerm +
+               "                AND gt.source_id = ga.source_id \n" + geneTableOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
