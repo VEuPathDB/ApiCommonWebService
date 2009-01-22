@@ -33,9 +33,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "keywordsearch-config.xml";
 
     // required parameter definition
-    public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
-    public static final String PARAM_DATASETS = "text_search_fields";
+    public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_ORGANISMS = "text_search_organism";
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
@@ -69,7 +68,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
+        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
     /*
@@ -106,16 +105,17 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	int signal = 0;
         // get parameters
-        String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
-	if (recordType == null || recordType.equals("")) {
+	String recordType;
+        if (params.get(PARAM_WDK_RECORD_TYPE) == null) {
 	    recordType = "gene";
+	} else {
+	    recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
 	}
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
 	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS);
-        String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("^'", "").replaceAll("'$", "");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
@@ -137,12 +137,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         if (searchComments) {
             commentMatches = textSearch(getCommentDbConnection(),
-					getCommentSql(projectId, recordType, organisms, oracleTextExpression));
+					getCommentSql(recordType, organisms, oracleTextExpression));
         }
 
         if (searchComponent) {
             componentMatches = textSearch(getComponentDbConnection(),
-					  getComponentSql(projectId, recordType, organisms, oracleTextExpression, fields, maxPvalue));
+					  getComponentSql(recordType, organisms, oracleTextExpression, fields, maxPvalue));
         }
 
         SearchResult[] matches = joinMatches(commentMatches, componentMatches);
@@ -176,36 +176,33 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	return transformed;
     }
 
-    private String getCommentSql(String projectId, String recordType, String organisms, String oracleTextExpression) {
+    private String getCommentSql(String recordType, String organisms, String oracleTextExpression) {
 
 	
-	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
-                "           max_score as max_score, /* should be weighted using component TableWeight */\n" +
+	String sql = new String("SELECT source_id, project_id, \n" +
+                "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
                 "       fields_matched, \n" +
-                "           CTX_DOC.SNIPPET('apidb.comments_text_ix', best_rowid,\n" +
-                "                           '" + oracleTextExpression + "') as snippet\n" +
-                "FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
-                "             'community comments' as fields_matched,\n" +
-                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid\n" +
-                "      FROM (SELECT SCORE(1)\n" +
-                "                     as scoring,\n" +
-                "                   tsc.source_id, tsc.rowid as oracle_rowid\n" +
-                "            FROM apidb.TextSearchableComment tsc, comments2.comments c\n" +
-                "            WHERE tsc.project_id = '" + projectId + "' \n" +
-                "              AND tsc.source_id = c.stable_id\n" +
-                "              AND tsc.project_id = c.project_name\n" +
-                "              AND c.organism in (" + organisms + ") \n" +
-                "              AND CONTAINS(tsc.content,\n" +
+                "           CTX_DOC.SNIPPET('apidb.comments_text_ix', best_rowid, \n" +
+                "                           '" + oracleTextExpression + "') as snippet \n" +
+                "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
+                "             'community comments' as fields_matched, \n" +
+                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n" +
+                "      FROM (SELECT SCORE(1) \n" +
+                "                     as scoring, \n" +
+                "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n" +
+                "            FROM apidb.TextSearchableComment tsc \n" +
+                "            WHERE tsc.organism in (" + organisms + ") \n" +
+                "              AND CONTAINS(tsc.content, \n" +
                 "                           '" + oracleTextExpression + "', 1) > 0 ) \n" +
-                "      GROUP BY source_id\n" +
-                "      ORDER BY max_score desc\n" +
+                "      GROUP BY source_id, project_id \n" +
+                "      ORDER BY max_score desc \n" +
                 "     )");
 
 	logger.debug("comment SQL: " + sql);
 	return sql;
     }
 
-    private String getComponentSql(String projectId, String recordType, String organisms, String oracleTextExpression, String fields, String maxPvalue) {
+    private String getComponentSql(String recordType, String organisms, String oracleTextExpression, String fields, String maxPvalue) {
 
 	String pvalueTerm;
 	if (maxPvalue == null || maxPvalue.equals("")) {
@@ -225,10 +222,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	if (organisms == null || organisms.equals("")) {
 	    geneTableOrganismsTerm = "";
 	} else {
-	    geneTableOrganismsTerm = "                AND ga.query_organism in (" + organisms + ") \n";
+	    geneTableOrganismsTerm = "                AND ga.organism in (" + organisms + ") \n";
 	}
 
-	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
+	String sql = new String("SELECT txt.source_id, ga.project_id, \n" +
                "       max_score, \n" +
                "       fields_matched, \n" +
                "       CTX_DOC.SNIPPET(index_name, oracle_rowid, \n" +
@@ -272,7 +269,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "           ) \n" +
                "      GROUP BY source_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
-               "     )");
+               "     ) txt, apidb.GeneAttributes ga \n" + 
+               "WHERE txt.source_id = ga.source_id");
 
 	logger.debug("component SQL: " + sql);
 	return sql;
@@ -295,7 +293,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 } else {
                     SearchResult match =
                         new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
-		    logger.debug("new SearchResult match has fieldsMatched of " + match.getFieldsMatched());
                     matches.put(sourceId, match);
                 }
             }
