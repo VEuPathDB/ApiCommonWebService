@@ -225,30 +225,31 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    geneTableOrganismsTerm = "                AND ga.organism in (" + organisms + ") \n";
 	}
 
-	String sql = new String("SELECT txt.source_id, ga.project_id, \n" +
+	String sql = new String("SELECT source_id, project_id, \n" +
                "       max_score, \n" +
                "       fields_matched, \n" +
                "       CTX_DOC.SNIPPET(index_name, oracle_rowid, \n" +
                "                           '" + oracleTextExpression + "'\n" +
                "                      ) as snippet \n" +
-               "FROM (SELECT source_id, MAX(scoring) as max_score, \n" +
+               "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
                "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
                "                       as scoring, \n" +
-               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
+               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, ga.project_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b \n" +
+               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
+               "                AND b.source_id = ga.source_id \n" +
                pvalueTerm + blastpOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
-               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.table_name \n" +
+               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.table_name \n" +
                "              FROM apidb.GeneTable gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
@@ -259,7 +260,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
-               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.table_name \n" +
+               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.table_name \n" +
                "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
@@ -267,10 +268,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + recordType + "' = 'isolate' \n" +
                "                AND wit.table_name = tw.table_name(+) \n" +
                "           ) \n" +
-               "      GROUP BY source_id \n" +
+               "      GROUP BY source_id, project_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
-               "     ) txt, apidb.GeneAttributes ga \n" + 
-               "WHERE txt.source_id = ga.source_id");
+               "     )");
 
 	logger.debug("component SQL: " + sql);
 	return sql;
