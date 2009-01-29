@@ -43,7 +43,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String COLUMN_GENE_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_DATASETS = "Datasets";
-    public static final String COLUMN_SNIPPET = "Snippet";
     public static final String COLUMN_MAX_SCORE = "MaxScore";
 
     // field definition
@@ -78,7 +77,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DATASETS, COLUMN_SNIPPET, COLUMN_MAX_SCORE };
+        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DATASETS, COLUMN_MAX_SCORE };
     }
 
     /*
@@ -181,9 +180,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	
 	String sql = new String("SELECT source_id, project_id, \n" +
                 "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
-                "       fields_matched, \n" +
-                "           CTX_DOC.SNIPPET('apidb.comments_text_ix', best_rowid, \n" +
-                "                           '" + oracleTextExpression + "') as snippet \n" +
+                "       fields_matched \n" +
                 "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
                 "             'community comments' as fields_matched, \n" +
                 "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n" +
@@ -227,10 +224,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	String sql = new String("SELECT source_id, project_id, \n" +
                "       max_score, \n" +
-               "       fields_matched, \n" +
-               "       CTX_DOC.SNIPPET(index_name, oracle_rowid, \n" +
-               "                           '" + oracleTextExpression + "'\n" +
-               "                      ) as snippet \n" +
+               "       fields_matched \n" +
                "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
                "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
@@ -291,7 +285,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     throw new WsfServiceException("duplicate sourceId " + sourceId);
                 } else {
                     SearchResult match =
-                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
+                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"));
                     matches.put(sourceId, match);
                 }
             }
@@ -330,7 +324,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private String[][] flattenMatches(SearchResult[] matches, String[] orderedColumns) throws WsfServiceException{
 
         // validate that WDK expects the columns in the order we want
-        String[] expectedColumns = {"RecordID", "ProjectId", "MaxScore", "Datasets", "Snippet"};
+        String[] expectedColumns = {"RecordID", "ProjectId", "MaxScore", "Datasets"};
 
         int i = 0;
         for (String expected : expectedColumns) {
@@ -344,7 +338,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         i = 0;
         for (SearchResult match : matches) {
-            String[] a = {match.getSourceId(), match.getProjectId(), Float.toString(match.getMaxScore()), match.getFieldsMatched(), match.getSnippet()};
+            String[] a = {match.getSourceId(), match.getProjectId(), Float.toString(match.getMaxScore()), match.getFieldsMatched()};
             flat[i++] = a;
         }
 

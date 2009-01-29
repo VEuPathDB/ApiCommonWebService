@@ -14,22 +14,16 @@ public class SearchResult implements Comparable <SearchResult> {
     private String projectId;
     private float maxScore; 
     private String fieldsMatched; 
-    private String snippet;
 
-    public SearchResult(String projectId, String sourceId, float maxScore, String fieldsMatched, String snippet) {
+    public SearchResult(String projectId, String sourceId, float maxScore, String fieldsMatched) {
 	this.sourceId = sourceId;
 	this.projectId = projectId;
 	this.maxScore = maxScore;
 	this.fieldsMatched = fieldsMatched;
-	this.snippet = snippet;
     }
 
     protected float getMaxScore() {
 	return maxScore;
-    }
-
-    protected String getSnippet() {
-	return snippet;
     }
 
     protected String getSourceId() {
@@ -47,7 +41,6 @@ public class SearchResult implements Comparable <SearchResult> {
     protected void combine(SearchResult other) {
 	if (other.getMaxScore() > maxScore) {
 	    maxScore = other.getMaxScore();
-	    snippet = other.getSnippet();
 	    fieldsMatched = other.getFieldsMatched() + fieldsMatched;
 	} else {
 	    //	    fieldsMatched.append(other.getFieldsMatched()), if fieldsMatched were a StringBuffer
