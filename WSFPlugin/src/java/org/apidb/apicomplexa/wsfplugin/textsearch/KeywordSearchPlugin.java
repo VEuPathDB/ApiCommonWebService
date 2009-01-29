@@ -237,14 +237,13 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
                "                       as scoring, \n" +
-               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, ga.project_id, \n" +
+               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
+               "              FROM apidb.Blastp b \n" +
                "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
-               "                AND b.source_id = ga.source_id \n" +
                pvalueTerm + blastpOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
