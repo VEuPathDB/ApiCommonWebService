@@ -33,9 +33,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private static final String PROPERTY_FILE = "keywordsearch-config.xml";
 
     // required parameter definition
-    public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
-    public static final String PARAM_DATASETS = "text_search_fields";
+    public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_ORGANISMS = "text_search_organism";
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
@@ -44,7 +43,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String COLUMN_GENE_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_DATASETS = "Datasets";
-    public static final String COLUMN_SNIPPET = "Snippet";
     public static final String COLUMN_MAX_SCORE = "MaxScore";
 
     // field definition
@@ -69,7 +67,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getRequiredParameterNames() {
-        return new String[] { PARAM_PROJECT_ID, PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
+        return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
     /*
@@ -79,7 +77,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      */
     @Override
     protected String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DATASETS, COLUMN_SNIPPET, COLUMN_MAX_SCORE };
+        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID, COLUMN_DATASETS, COLUMN_MAX_SCORE };
     }
 
     /*
@@ -106,16 +104,17 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	int signal = 0;
         // get parameters
-        String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
-	if (recordType == null || recordType.equals("")) {
+	String recordType;
+        if (params.get(PARAM_WDK_RECORD_TYPE) == null) {
 	    recordType = "gene";
+	} else {
+	    recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("^'", "").replaceAll("'$", "");
 	}
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
 	logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS);
-        String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("^'", "").replaceAll("'$", "");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
@@ -137,12 +136,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         if (searchComments) {
             commentMatches = textSearch(getCommentDbConnection(),
-					getCommentSql(projectId, recordType, organisms, oracleTextExpression));
+					getCommentSql(recordType, organisms, oracleTextExpression));
         }
 
         if (searchComponent) {
             componentMatches = textSearch(getComponentDbConnection(),
-					  getComponentSql(projectId, recordType, organisms, oracleTextExpression, fields, maxPvalue));
+					  getComponentSql(recordType, organisms, oracleTextExpression, fields, maxPvalue));
         }
 
         SearchResult[] matches = joinMatches(commentMatches, componentMatches);
@@ -176,36 +175,31 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	return transformed;
     }
 
-    private String getCommentSql(String projectId, String recordType, String organisms, String oracleTextExpression) {
+    private String getCommentSql(String recordType, String organisms, String oracleTextExpression) {
 
 	
-	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
-                "           max_score as max_score, /* should be weighted using component TableWeight */\n" +
-                "       fields_matched, \n" +
-                "           CTX_DOC.SNIPPET('apidb.comments_text_ix', best_rowid,\n" +
-                "                           '" + oracleTextExpression + "') as snippet\n" +
-                "FROM (SELECT source_id, MAX(scoring) as max_score,\n" +
-                "             'community comments' as fields_matched,\n" +
-                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid\n" +
-                "      FROM (SELECT SCORE(1)\n" +
-                "                     as scoring,\n" +
-                "                   tsc.source_id, tsc.rowid as oracle_rowid\n" +
-                "            FROM apidb.TextSearchableComment tsc, comments2.comments c\n" +
-                "            WHERE tsc.project_id = '" + projectId + "' \n" +
-                "              AND tsc.source_id = c.stable_id\n" +
-                "              AND tsc.project_id = c.project_name\n" +
-                "              AND c.organism in (" + organisms + ") \n" +
-                "              AND CONTAINS(tsc.content,\n" +
+	String sql = new String("SELECT source_id, project_id, \n" +
+                "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
+                "       fields_matched \n" +
+                "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
+                "             'community comments' as fields_matched, \n" +
+                "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n" +
+                "      FROM (SELECT SCORE(1) \n" +
+                "                     as scoring, \n" +
+                "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n" +
+                "            FROM apidb.TextSearchableComment tsc \n" +
+                "            WHERE tsc.organism in (" + organisms + ") \n" +
+                "              AND CONTAINS(tsc.content, \n" +
                 "                           '" + oracleTextExpression + "', 1) > 0 ) \n" +
-                "      GROUP BY source_id\n" +
-                "      ORDER BY max_score desc\n" +
+                "      GROUP BY source_id, project_id \n" +
+                "      ORDER BY max_score desc \n" +
                 "     )");
 
 	logger.debug("comment SQL: " + sql);
 	return sql;
     }
 
-    private String getComponentSql(String projectId, String recordType, String organisms, String oracleTextExpression, String fields, String maxPvalue) {
+    private String getComponentSql(String recordType, String organisms, String oracleTextExpression, String fields, String maxPvalue) {
 
 	String pvalueTerm;
 	if (maxPvalue == null || maxPvalue.equals("")) {
@@ -214,48 +208,52 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    pvalueTerm = "                AND b.pvalue_exp <= " + maxPvalue + " \n";
 	}
 
-	String organismsTerm;
+	String blastpOrganismsTerm;
 	if (organisms == null || organisms.equals("")) {
-	    organismsTerm = "";
+	    blastpOrganismsTerm = "";
 	} else {
-	    organismsTerm = "                AND ga.organism in (" + organisms + ") \n";
+	    blastpOrganismsTerm = "                AND b.query_organism in (" + organisms + ") \n";
 	}
 
-	String sql = new String("SELECT source_id, '" + projectId + "' as project_id, \n" +
+	String geneTableOrganismsTerm;
+	if (organisms == null || organisms.equals("")) {
+	    geneTableOrganismsTerm = "";
+	} else {
+	    geneTableOrganismsTerm = "                AND ga.organism in (" + organisms + ") \n";
+	}
+
+	String sql = new String("SELECT source_id, project_id, \n" +
                "       max_score, \n" +
-               "       fields_matched, \n" +
-               "       CTX_DOC.SNIPPET(index_name, oracle_rowid, \n" +
-               "                           '" + oracleTextExpression + "'\n" +
-               "                      ) as snippet \n" +
-               "FROM (SELECT source_id, MAX(scoring) as max_score, \n" +
-               "             apidb.tab_to_string(set(CAST(COLLECT('''' || table_name ||'''') AS apidb.varchartab)), ', ')  fields_matched, \n" +
+               "       fields_matched \n" +
+               "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
+               "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
                "                       as scoring, \n" +
-               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, \n" +
+               "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n" +
                "                    external_database_name as table_name \n" +
-               "              FROM apidb.Blastp b, apidb.GeneAttributes ga \n" +
+               "              FROM apidb.Blastp b \n" +
                "              WHERE CONTAINS(b.description, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
                "                AND '" + fields + "' like '%Blastp%' \n" +
-               "                AND '" + recordType + "' = 'gene' \n" + pvalueTerm +
-               "                AND b.source_id = ga.source_id \n" + organismsTerm +
+               "                AND '" + recordType + "' = 'gene' \n" +
+               pvalueTerm + blastpOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
-               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.table_name \n" +
+               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.table_name \n" +
                "              FROM apidb.GeneTable gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0\n" +
                "                AND '" + fields + "' like '%' || gt.table_name || '%' \n" +
                "                AND '" + recordType + "' = 'gene' \n" +
                "                AND gt.table_name = tw.table_name(+) \n" +
-               "                AND gt.source_id = ga.source_id \n" + organismsTerm +
+               "                AND gt.source_id = ga.source_id \n" + geneTableOrganismsTerm +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
-               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.table_name \n" +
+               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.table_name \n" +
                "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, \n" +
                "                           '" + oracleTextExpression + "', 1) > 0 \n" +
@@ -263,7 +261,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "                AND '" + recordType + "' = 'isolate' \n" +
                "                AND wit.table_name = tw.table_name(+) \n" +
                "           ) \n" +
-               "      GROUP BY source_id \n" +
+               "      GROUP BY source_id, project_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
                "     )");
 
@@ -287,8 +285,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     throw new WsfServiceException("duplicate sourceId " + sourceId);
                 } else {
                     SearchResult match =
-                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"), rs.getString("snippet"));
-		    logger.debug("new SearchResult match has fieldsMatched of " + match.getFieldsMatched());
+                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"));
                     matches.put(sourceId, match);
                 }
             }
@@ -327,7 +324,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private String[][] flattenMatches(SearchResult[] matches, String[] orderedColumns) throws WsfServiceException{
 
         // validate that WDK expects the columns in the order we want
-        String[] expectedColumns = {"RecordID", "ProjectId", "MaxScore", "Datasets", "Snippet"};
+        String[] expectedColumns = {"RecordID", "ProjectId", "MaxScore", "Datasets"};
 
         int i = 0;
         for (String expected : expectedColumns) {
@@ -341,7 +338,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         i = 0;
         for (SearchResult match : matches) {
-            String[] a = {match.getSourceId(), match.getProjectId(), Float.toString(match.getMaxScore()), match.getFieldsMatched(), match.getSnippet()};
+            String[] a = {match.getSourceId(), match.getProjectId(), Float.toString(match.getMaxScore()), match.getFieldsMatched()};
             flat[i++] = a;
         }
 
