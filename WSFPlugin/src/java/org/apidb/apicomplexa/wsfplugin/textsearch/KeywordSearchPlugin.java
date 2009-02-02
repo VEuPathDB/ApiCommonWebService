@@ -1,5 +1,5 @@
 /**
- * 
+ * KeywordSearchPlugin -- text search using Oracle Text
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
@@ -112,7 +112,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	}
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
 	logger.debug("fields = \"" + fields + "\"");
-        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("^'", "").replaceAll("'$", "");
+        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll("'", "").replaceAll("[-&|~,=;%]", "\\\0").replaceAll("\\*", "%");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS);
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
