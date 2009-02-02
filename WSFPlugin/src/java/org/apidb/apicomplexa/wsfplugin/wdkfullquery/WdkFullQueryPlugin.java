@@ -64,11 +64,11 @@ public class WdkFullQueryPlugin extends WsfPlugin {
     // Member Variables
     // private WdkModelBean[] models = null;
     private WdkModelBean model = null;
-//    private static File m_modelFile = null;
-//    private static File m_modelPropFile = null;
-//    private static File m_schemaFile = null;
-//    private static File m_configFile = null;
-//    private static File m_xmlSchemaFile = null;
+    // private static File m_modelFile = null;
+    // private static File m_modelPropFile = null;
+    // private static File m_schemaFile = null;
+    // private static File m_configFile = null;
+    // private static File m_xmlSchemaFile = null;
     private static String[] modelNames;
     private static String[] gus_homes;
     private static String[] siteNames;
@@ -127,17 +127,17 @@ public class WdkFullQueryPlugin extends WsfPlugin {
     // Overriding the parent class to do nothing in this plugin
     }
 
-//    private void validateQueryParams(Map<String, String> params, Query q)
-//            throws WsfServiceException {
-//        logger.info("--------Validating Parameters---------------");
-//        String[] reqParams = getParamsFromQuery(q);
-//        for (String param : reqParams) {
-//            if (!params.containsKey(param)) {
-//                throw new WsfServiceException(
-//                        "The required parameter is missing: " + param);
-//            }
-//        }
-//    }
+    // private void validateQueryParams(Map<String, String> params, Query q)
+    // throws WsfServiceException {
+    // logger.info("--------Validating Parameters---------------");
+    // String[] reqParams = getParamsFromQuery(q);
+    // for (String param : reqParams) {
+    // if (!params.containsKey(param)) {
+    // throw new WsfServiceException(
+    // "The required parameter is missing: " + param);
+    // }
+    // }
+    // }
 
     private void validateQueryColumns(String[] orderedColumns, Query query)
             throws WsfServiceException {
@@ -230,17 +230,20 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             }
 
             // WS Query processing
+            User user = model.getModel().getSystemUser();
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
-                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(SOParams);
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
+                        user, SOParams);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(SOParams);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
+                        user, SOParams);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -248,7 +251,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             // This Section will preform the Attribute query and return the full
             // result for this Query
 
-            componentResults = fillAttributes(results, orderedColumns,
+            componentResults = fillAttributes(user, results, orderedColumns,
                     recordClass);
 
             // End Attribute Query Section
@@ -303,8 +306,8 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 
             /*
              * responseT = new
-             * String[componentResults.length][orderedColumns.length]; for(int i =
-             * 0; i < componentResults.length; i++){ for(int j = 0; j <
+             * String[componentResults.length][orderedColumns.length]; for(int i
+             * = 0; i < componentResults.length; i++){ for(int j = 0; j <
              * colindicies.length; j++){ int index = colindicies[j].intValue();
              * responseT[i][j] = componentResults[i][index]; } }
              */
@@ -332,30 +335,30 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         return -1;
     }
 
-//    private Map<String, Object> convertParams(String[] p) {
-//        Map<String, Object> ret = new HashMap<String, Object>();
-//        for (String param : p) {
-//            String[] pa = param.split("=");
-//            ret.put(pa[0], (Object) pa[1]);
-//        }
-//        return ret;
-//    }
-//
-//    private Map<String, Object> convertParams(Map<String, String> p) {
-//        Map<String, Object> ret = new HashMap<String, Object>();
-//        for (String key : p.keySet()) {
-//            Object o = p.get(key);
-//            ret.put(key, o);
-//        }
-//        return ret;
-//    }
+    // private Map<String, Object> convertParams(String[] p) {
+    // Map<String, Object> ret = new HashMap<String, Object>();
+    // for (String param : p) {
+    // String[] pa = param.split("=");
+    // ret.put(pa[0], (Object) pa[1]);
+    // }
+    // return ret;
+    // }
+    //
+    // private Map<String, Object> convertParams(Map<String, String> p) {
+    // Map<String, Object> ret = new HashMap<String, Object>();
+    // for (String key : p.keySet()) {
+    // Object o = p.get(key);
+    // ret.put(key, o);
+    // }
+    // return ret;
+    // }
 
     /**
      * private Map<String,Object> convertParams(Map<String,String> p, String[]
      * q) { Map<String,Object> ret = new HashMap<String,Object>(); for (String
      * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
-     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } } }
-     * return ret; }
+     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } }
+     * } return ret; }
      */
 
     private String convertDatasetId2DatasetChecksum(String sig_id)
@@ -433,61 +436,63 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         return ret;
     }
 
-//    private String results2String(ResultList result) throws WdkModelException {
-//
-//        StringBuffer sb = new StringBuffer();
-//        result.write(sb);
-//        return sb.toString();
-//
-//    }
+    // private String results2String(ResultList result) throws WdkModelException
+    // {
+    //
+    // StringBuffer sb = new StringBuffer();
+    // result.write(sb);
+    // return sb.toString();
+    //
+    // }
 
-//    private String[][] results2StringArray(ResultList result)
-//            throws WdkModelException {
-//        Column[] cols = result.getColumns();
-//        List<String[]> rows = new LinkedList<String[]>();
-//        while (result.next()) {
-//            String[] values = new String[cols.length];
-//            for (int z = 0; z < cols.length; z++) {
-//                Object obj = result.getValueFromResult(cols[z].getName());
-//                String val = null;
-//                if (obj instanceof String) val = (String) obj;
-//                else if (obj instanceof char[]) val = new String((char[]) obj);
-//                else if (obj instanceof byte[]) val = new String((byte[]) obj);
-//                else val = obj.toString();
-//                values[z] = val;
-//            }
-//            rows.add(values);
-//        }
-//        result.close();
-//
-//        String[][] arr = new String[rows.size()][];
-//        return rows.toArray(arr);
-//    }
-//
-//    private String[] getColumnsFromQuery(Query q) {
-//        Column[] qcols = q.getColumns();
-//        String[] ret = new String[qcols.length];
-//        int i = 0;
-//        for (Column c : qcols) {
-//            ret[i] = c.getName();
-//            i++;
-//        }
-//        return ret;
-//    }
+    // private String[][] results2StringArray(ResultList result)
+    // throws WdkModelException {
+    // Column[] cols = result.getColumns();
+    // List<String[]> rows = new LinkedList<String[]>();
+    // while (result.next()) {
+    // String[] values = new String[cols.length];
+    // for (int z = 0; z < cols.length; z++) {
+    // Object obj = result.getValueFromResult(cols[z].getName());
+    // String val = null;
+    // if (obj instanceof String) val = (String) obj;
+    // else if (obj instanceof char[]) val = new String((char[]) obj);
+    // else if (obj instanceof byte[]) val = new String((byte[]) obj);
+    // else val = obj.toString();
+    // values[z] = val;
+    // }
+    // rows.add(values);
+    // }
+    // result.close();
+    //
+    // String[][] arr = new String[rows.size()][];
+    // return rows.toArray(arr);
+    // }
+    //
+    // private String[] getColumnsFromQuery(Query q) {
+    // Column[] qcols = q.getColumns();
+    // String[] ret = new String[qcols.length];
+    // int i = 0;
+    // for (Column c : qcols) {
+    // ret[i] = c.getName();
+    // i++;
+    // }
+    // return ret;
+    // }
 
-//    private String[] getParamsFromQuery(Query q) {
-//        Param[] qp = q.getParams();
-//        String[] ret = new String[qp.length];
-//        int i = 0;
-//        for (Param p : qp) {
-//            ret[i] = p.getName();
-//            i++;
-//        }
-//        return ret;
-//    }
+    // private String[] getParamsFromQuery(Query q) {
+    // Param[] qp = q.getParams();
+    // String[] ret = new String[qp.length];
+    // int i = 0;
+    // for (Param p : qp) {
+    // ret[i] = p.getName();
+    // i++;
+    // }
+    // return ret;
+    // }
 
     /*
-     * private static void loadConfig(String mName, String GH)throws IOException {
+     * private static void loadConfig(String mName, String GH)throws IOException
+     * {
      * 
      * //model Name and path for xml files will be read from config file String
      * modelName = mName; String GUS_HOME = GH;
@@ -513,18 +518,18 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 
     /*
      * private WdkModelBean loadModel() { //throws MalformedURLException,
-     * WdkModelException {
-     * logger.info("_______________________________________________________________________");
-     * WdkModel wdkModel = null;
-     * logger.info("_______________________________________________________________________");
-     * try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
+     * WdkModelException {logger.info(
+     * "_______________________________________________________________________"
+     * ); WdkModel wdkModel = null;logger.info(
+     * "_______________________________________________________________________"
+     * ); try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
      * m_modelFile.toURL(), m_modelPropFile.toURL(), m_schemaFile.toURL(), //
      * m_xmlSchemaFile.toURL(), m_configFile.toURL()); }catch(WdkModelException
      * e){logger.info("ERROR ERROR : -------" + e.toString());}
      * catch(MalformedURLException e){logger.info("ERROR ERROR : -------" +
-     * e.toString());}
-     * logger.info("_______________________________________________________________________");
-     * if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
+     * e.toString());}logger.info(
+     * "_______________________________________________________________________"
+     * ); if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
      * wdkModel.getName()); WdkModelBean model = new WdkModelBean(wdkModel);
      * logger.info("---------Model Loading Completed-----------"); return model;
      * 
@@ -565,28 +570,29 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         }
     }
 
-//    private void CheckFiles() {
-//        logger.info("-----------------Checking the Files fro Read Permissions---------------");
-//        if (!m_modelFile.canRead()) {
-//            logger.info(m_modelFile + " Cannot be Read!!!");
-//        }
-//        if (!m_modelPropFile.canRead()) {
-//            logger.info(m_modelPropFile + " Cannot be Read!!!");
-//        }
-//        if (!m_configFile.canRead()) {
-//            logger.info(m_configFile + " Cannot be Read!!!");
-//        }
-//        if (!m_schemaFile.canRead()) {
-//            logger.info(m_schemaFile + " Cannot be Read!!!");
-//        }
-//        if (!m_xmlSchemaFile.canRead()) {
-//            logger.info(m_xmlSchemaFile + " Cannot be Read!!!");
-//        }
-//        logger.info("------------DONE-------------");
-//    }
+    // private void CheckFiles() {
+    // logger.info("-----------------Checking the Files fro Read Permissions---------------");
+    // if (!m_modelFile.canRead()) {
+    // logger.info(m_modelFile + " Cannot be Read!!!");
+    // }
+    // if (!m_modelPropFile.canRead()) {
+    // logger.info(m_modelPropFile + " Cannot be Read!!!");
+    // }
+    // if (!m_configFile.canRead()) {
+    // logger.info(m_configFile + " Cannot be Read!!!");
+    // }
+    // if (!m_schemaFile.canRead()) {
+    // logger.info(m_schemaFile + " Cannot be Read!!!");
+    // }
+    // if (!m_xmlSchemaFile.canRead()) {
+    // logger.info(m_xmlSchemaFile + " Cannot be Read!!!");
+    // }
+    // logger.info("------------DONE-------------");
+    // }
 
     private boolean validateSingleValues(AbstractEnumParam p, String value)
-            throws WdkModelException, NoSuchAlgorithmException, SQLException, JSONException, WdkUserException {
+            throws WdkModelException, NoSuchAlgorithmException, SQLException,
+            JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         // initVocabMap();
 
@@ -607,7 +613,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         return rc;
     }
 
-    private String[][] fillAttributes(ResultList rl, String[] cols,
+    private String[][] fillAttributes(User user, ResultList rl, String[] cols,
             RecordClass rc) throws WdkModelException, NoSuchAlgorithmException,
             SQLException, JSONException, WdkUserException {
         // get primary key columns
@@ -623,7 +629,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             for (String column : pkColumns) {
                 pkValues.put(column, rl.get(column));
             }
-            RecordInstance ri = new RecordInstance(rc, pkValues);
+            RecordInstance ri = new RecordInstance(user, rc, pkValues);
             for (int i = 2; i < cols.length; i++) {
                 String col = cols[i];
                 Object obj = ri.getAttributeValue(col);
@@ -650,35 +656,36 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         return arr;// rows.toArray(arr);
     }
 
-//    private void logResults(String[] vals) {
-//        String res = "";
-//        for (String val : vals) {
-//            res = res + " " + val + ",";
-//        }
-//        logger.info(res);
-//    }
+    // private void logResults(String[] vals) {
+    // String res = "";
+    // for (String val : vals) {
+    // res = res + " " + val + ",";
+    // }
+    // logger.info(res);
+    // }
 
-//    private String[][] fullResults2StringArray(ResultList result, String[] oc,
-//            RecordClass rc) throws WdkModelException {
-//        Column[] cols = result.getColumns();
-//
-//        List<String[]> rows = new LinkedList<String[]>();
-//        while (result.next()) {
-//            String[] values = new String[cols.length];
-//            for (int z = 0; z < cols.length; z++) {
-//                Object obj = result.getValueFromResult(cols[z].getName());
-//                String val = null;
-//                if (obj instanceof String) val = (String) obj;
-//                else if (obj instanceof char[]) val = new String((char[]) obj);
-//                else if (obj instanceof byte[]) val = new String((byte[]) obj);
-//                else val = obj.toString();
-//                values[z] = val;
-//            }
-//            rows.add(values);
-//        }
-//        result.close();
-//
-//        String[][] arr = new String[rows.size()][];
-//        return rows.toArray(arr);
-//    }
+    // private String[][] fullResults2StringArray(ResultList result, String[]
+    // oc,
+    // RecordClass rc) throws WdkModelException {
+    // Column[] cols = result.getColumns();
+    //
+    // List<String[]> rows = new LinkedList<String[]>();
+    // while (result.next()) {
+    // String[] values = new String[cols.length];
+    // for (int z = 0; z < cols.length; z++) {
+    // Object obj = result.getValueFromResult(cols[z].getName());
+    // String val = null;
+    // if (obj instanceof String) val = (String) obj;
+    // else if (obj instanceof char[]) val = new String((char[]) obj);
+    // else if (obj instanceof byte[]) val = new String((byte[]) obj);
+    // else val = obj.toString();
+    // values[z] = val;
+    // }
+    // rows.add(values);
+    // }
+    // result.close();
+    //
+    // String[][] arr = new String[rows.size()][];
+    // return rows.toArray(arr);
+    // }
 }
