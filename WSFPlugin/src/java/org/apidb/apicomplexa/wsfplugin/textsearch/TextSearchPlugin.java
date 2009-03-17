@@ -139,8 +139,8 @@ public class TextSearchPlugin extends WsfPlugin {
                     ".txt", "");
             String cmd = scriptDir + "/filterByValue -n " + maxPvalue + " < "
                     + dataDir + "/" + dataset + " | " + scriptDir
-                    + "/filterByValue -s '" + species_name + "' | egrep "
-                    + caseIndependent + " '" + textExpression + "' | cut -f1 ";
+                    + "/filterByValue -s " + species_name + " | egrep "
+                    + caseIndependent + " " + textExpression + " | cut -f1 ";
 
             logger.info("\ncommand line = \"" + cmd + "\"\n\n");
 
