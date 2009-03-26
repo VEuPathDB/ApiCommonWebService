@@ -184,9 +184,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	
 	String sql = new String("SELECT source_id, project_id, \n" +
                 "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
-                "       fields_matched \n" +
+                "       text_fields \n" +
                 "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
-                "             'community comments' as fields_matched, \n" +
+                "             'community comments' as text_fields, \n" +
                 "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n" +
                 "      FROM (SELECT SCORE(1) \n" +
                 "                     as scoring, \n" +
@@ -220,9 +220,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	String sql = new String("SELECT source_id, project_id, \n" +
                "       max_score, \n" +
-               "       fields_matched \n" +
+               "       text_fields \n" +
                "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
-               "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n" +
+               "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  text_fields, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
@@ -298,7 +298,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     throw new WsfServiceException("duplicate sourceId " + sourceId);
                 } else {
                     SearchResult match =
-                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"));
+                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("text_fields"));
                     matches.put(sourceId, match);
                 }
             }
