@@ -319,7 +319,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
         // Preparing and executing the propriate component sites for this Query
         logger.info("invoking the web services");
-        logger.info("***if the next message you see says: *Entering Combine Results* we are not accessing any component site: probably your apifed-config does not have all necessary organism values used to select site\n");
+        logger.info("***if the next message you see says: *Entering Combine Results* we are not accessing any component site: probably your apifed-config does not have all necessary organism values used to select site... Alternatively you need to make sure the organism value does not have quotes!!!\n");
         int thread_counter = 0;
         for (Site site : sites) {
             if (site.hasOrganism()) {
