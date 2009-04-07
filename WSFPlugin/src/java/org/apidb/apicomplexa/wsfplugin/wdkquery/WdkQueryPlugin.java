@@ -215,6 +215,15 @@ public class WdkQueryPlugin extends WsfPlugin {
             logger.info(invokeKey);
             Query q = null;
             String[] queryName = invokeKey.split(":");
+
+
+	    // TODO: check parameters starting with its paramSet, finding out the type (enum, flatvocab, etc)
+	    //       then if flatvocab, find the queryRef, if enum as below...
+	    // As it is, the javascript provides the param full name OR the queryRef:
+	    // --  if it is a queryRef it is understood it is  a flat vocab param fro ALL COMP SITES
+	    // -- if it is not a queryRef, it is assumed to be enum FOR ALL COMPONENT SITES: this is wrong:
+	    //    we want to have component sites defining the parameter enum or flat as they wish
+	    //
             if (model.getModel().hasQuerySet(queryName[0])) {
 				//if(params.containsKey("ServedQuery")){
 					//String servedquery = params.get("servedQuery");
