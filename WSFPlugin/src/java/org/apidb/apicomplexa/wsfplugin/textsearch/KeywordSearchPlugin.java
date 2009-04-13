@@ -117,6 +117,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    .replaceAll("[-&|~,=;%]", "\\\\$0").replaceAll("\\*", "%");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS);
+	logger.debug("organisms = \"" + organisms + "\"");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
@@ -198,6 +199,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 "      ORDER BY max_score desc \n" +
                 "     )");
 
+	logger.debug("comment SQL: " + sql);
+	logger.debug("organisms = \"" + organisms + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+
 	PreparedStatement ps = null;;
         try {
 	    ps = dbConnection.prepareStatement(sql);
@@ -207,7 +211,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
             logger.info("caught SQLException " + e.getMessage());
         }
 
-	logger.debug("comment SQL: " + sql);
 	return ps;
     }
 
@@ -260,6 +263,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "      ORDER BY max_score desc, source_id \n" +
                "     )");
 	logger.debug("component SQL: " + sql);
+	logger.debug("organisms = \"" + organisms + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+	logger.debug("fields = \"" + fields + "\"");
+	logger.debug("recordType = \"" + recordType + "\"");
+	logger.debug("maxPvalue = \"" + maxPvalue + "\"");
 
 	PreparedStatement ps = null;
 	try {
