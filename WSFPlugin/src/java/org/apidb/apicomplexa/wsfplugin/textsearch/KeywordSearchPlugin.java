@@ -117,6 +117,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	    .replaceAll("[-&|~,=;%]", "\\\\$0").replaceAll("\\*", "%");
 	//        String x = params.get(X);
         String organisms = params.get(PARAM_ORGANISMS);
+	logger.debug("organisms = \"" + organisms + "\"");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
@@ -184,9 +185,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	
 	String sql = new String("SELECT source_id, project_id, \n" +
                 "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
-                "       text_fields \n" +
+                "       fields_matched \n" +
                 "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
-                "             'community comments' as text_fields, \n" +
+                "             'community comments' as fields_matched, \n" +
                 "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n" +
                 "      FROM (SELECT SCORE(1) \n" +
                 "                     as scoring, \n" +
@@ -198,6 +199,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 "      ORDER BY max_score desc \n" +
                 "     )");
 
+	logger.debug("comment SQL: " + sql);
+	logger.debug("organisms = \"" + organisms + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+
 	PreparedStatement ps = null;;
         try {
 	    ps = dbConnection.prepareStatement(sql);
@@ -207,7 +211,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
             logger.info("caught SQLException " + e.getMessage());
         }
 
-	logger.debug("comment SQL: " + sql);
 	return ps;
     }
 
@@ -220,9 +223,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	String sql = new String("SELECT source_id, project_id, \n" +
                "       max_score, \n" +
-               "       text_fields \n" +
+               "       fields_matched \n" +
                "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
-               "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  text_fields, \n" +
+               "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n" +
                "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n" +
                "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n" +
                "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n" +
@@ -260,6 +263,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "      ORDER BY max_score desc, source_id \n" +
                "     )");
 	logger.debug("component SQL: " + sql);
+	logger.debug("organisms = \"" + organisms + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+	logger.debug("fields = \"" + fields + "\"");
+	logger.debug("recordType = \"" + recordType + "\"");
+	logger.debug("maxPvalue = \"" + maxPvalue + "\"");
 
 	PreparedStatement ps = null;
 	try {
@@ -298,7 +305,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     throw new WsfServiceException("duplicate sourceId " + sourceId);
                 } else {
                     SearchResult match =
-                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("text_fields"));
+                        new SearchResult(rs.getString("project_id"), sourceId, rs.getFloat("max_score"), rs.getString("fields_matched"));
                     matches.put(sourceId, match);
                 }
             }
