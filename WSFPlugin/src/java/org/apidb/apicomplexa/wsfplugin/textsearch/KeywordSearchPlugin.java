@@ -241,23 +241,23 @@ public class KeywordSearchPlugin extends WsfPlugin {
                "            UNION \n" +
                "              SELECT SCORE(1)* nvl(tw.weight, 1) \n" +
                "                       as scoring, \n" +
-               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.table_name \n" +
-               "              FROM apidb.GeneTable gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
+               "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n" +
+               "              FROM apidb.GeneDetail gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n" +
                "              WHERE CONTAINS(content, ?, 1) > 0\n" +
-               "                AND ? like '%' || gt.table_name || '%' \n" +
+               "                AND ? like '%' || gt.field_name || '%' \n" +
                "                AND ? = 'gene' \n" +
-               "                AND gt.table_name = tw.table_name(+) \n" +
+               "                AND gt.field_name = tw.table_name(+) \n" +
                "                AND gt.source_id = ga.source_id \n" +
                "                AND ? like '%' || ga.species || '%' \n" +
                "            UNION \n" +
                "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n" +
                "                       as scoring, \n" +
-               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.table_name \n" +
-               "              FROM apidb.WdkIsolateTable wit, apidb.TableWeight tw \n" +
+               "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n" +
+               "              FROM apidb.IsolateDetail wit, apidb.TableWeight tw \n" +
                "              WHERE CONTAINS(content, ?, 1) > 0 \n" +
-               "                AND ? like '%' || wit.table_name || '%' \n" +
+               "                AND ? like '%' || wit.field_name || '%' \n" +
                "                AND ? = 'isolate' \n" +
-               "                AND wit.table_name = tw.table_name(+) \n" +
+               "                AND wit.field_name = tw.table_name(+) \n" +
                "           ) \n" +
                "      GROUP BY source_id, project_id \n" +
                "      ORDER BY max_score desc, source_id \n" +
