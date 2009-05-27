@@ -31,7 +31,8 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
  */
 public class KeywordSearchPlugin extends WsfPlugin {
 
-    private static final String PROPERTY_FILE = "keywordsearch-config.xml";
+    //    private static final String PROPERTY_FILE = "keywordsearch-config.xml";
+    private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
 
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
@@ -49,16 +50,24 @@ public class KeywordSearchPlugin extends WsfPlugin {
     // field definition
     private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
     private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
+    private static final String FIELD_PROJECT_ID = "projectId";
 
     private Connection commentDbConnection;
     private Connection componentDbConnection;
+    private String projectId;
+
     /**
      * @throws WsfServiceException
      * 
      */
     public KeywordSearchPlugin() throws WsfServiceException {
-	super();
-        // super(PROPERTY_FILE); -- load properties
+	// super();
+        super(PROPERTY_FILE); // load properties
+
+        projectId = getProperty(FIELD_PROJECT_ID);
+        if (projectId == null)
+            throw new WsfServiceException("The " + FIELD_PROJECT_ID
+                    + "field is missing from the configuration file");
     }
 
     /*
@@ -184,7 +193,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	
 	String sql = new String("SELECT source_id, project_id, \n" +
-                "           max_score as max_score, /* should be weighted using component TableWeight */ \n" +
+                "           max_score as max_score, -- should be weighted using component TableWeight \n" +
                 "       fields_matched \n" +
                 "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n" +
                 "             'community comments' as fields_matched, \n" +
@@ -195,6 +204,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 "            FROM apidb.TextSearchableComment tsc \n" +
                 "            WHERE ? like '%' || tsc.organism || '%' \n" +
                 "              AND CONTAINS(tsc.content, ?, 1) > 0 ) \n" +
+                "              AND project_id = '" + projectId + "' \n" +
                 "      GROUP BY source_id, project_id \n" +
                 "      ORDER BY max_score desc \n" +
                 "     )");
