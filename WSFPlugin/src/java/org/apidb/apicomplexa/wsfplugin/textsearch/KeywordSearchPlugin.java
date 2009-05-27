@@ -50,7 +50,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
     // field definition
     private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
     private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
-    private static final String FIELD_PROJECT_ID = "projectId";
 
     private Connection commentDbConnection;
     private Connection componentDbConnection;
@@ -61,13 +60,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * 
      */
     public KeywordSearchPlugin() throws WsfServiceException {
-	// super();
-        super(PROPERTY_FILE); // load properties
+	super();
 
-        projectId = getProperty(FIELD_PROJECT_ID);
-        if (projectId == null)
-            throw new WsfServiceException("The " + FIELD_PROJECT_ID
-                    + "field is missing from the configuration file");
+        projectId = servletContext.getInitParameter("model");
     }
 
     /*
