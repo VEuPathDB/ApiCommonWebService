@@ -198,8 +198,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n" +
                 "            FROM apidb.TextSearchableComment tsc \n" +
                 "            WHERE ? like '%' || tsc.organism || '%' \n" +
-                "              AND CONTAINS(tsc.content, ?, 1) > 0 ) \n" +
-                "              AND project_id = '" + projectId + "' \n" +
+                "              AND CONTAINS(tsc.content, ?, 1) > 0  \n" +
+                "              AND project_id = '" + projectId + "') \n" +
                 "      GROUP BY source_id, project_id \n" +
                 "      ORDER BY max_score desc \n" +
                 "     )");
@@ -275,7 +275,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
 	PreparedStatement ps = null;
 	try {
-	    ps = dbConnection.prepareStatement(sql);
+    ps = dbConnection.prepareStatement(sql);
 	    // Blastp
 	    ps.setString(1, oracleTextExpression);
 	    ps.setString(2, fields);
