@@ -53,6 +53,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private Connection commentDbConnection;
     private Connection componentDbConnection;
+    private PreparedStatement validationQuery = null;
     private String projectId;
 
     /**
@@ -145,6 +146,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
             commentMatches
 		= textSearch(getCommentQuery(getCommentDbConnection(),
 					     recordType, organisms, oracleTextExpression));
+	    commentMatches = validateRecords(commentMatches);
+	    logger.debug("after validation commentMatches = " + commentMatches.toString());
         }
 
         if (searchComponent) {
@@ -298,6 +301,26 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	return ps;
     }
 
+    private PreparedStatement getValidationQuery() {
+
+	if (validationQuery == null) {
+	    String sql = new String("select attrs.source_id, attrs.project_id \n" +
+				    "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n" +
+				    "where alias.alias = ? \n" +
+				    "  and alias.gene = attrs.source_id \n" +
+				    "  and attrs.project_id = ?");
+
+	    try {
+		Connection dbConnection = getComponentDbConnection();
+		validationQuery = dbConnection.prepareStatement(sql);
+	    } catch (SQLException e) {
+		logger.info("caught SQLException " + e.getMessage());
+	    }
+
+	}
+	return validationQuery;
+    }
+
     private Map<String, SearchResult> textSearch(PreparedStatement query)
         throws WsfServiceException {
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
@@ -320,6 +343,46 @@ public class KeywordSearchPlugin extends WsfPlugin {
         }
 
         return matches;
+    }
+
+    private Map<String, SearchResult> validateRecords(Map<String, SearchResult> commentMatches){
+
+        PreparedStatement validationQuery = getValidationQuery();
+	Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
+	newCommentMatches.putAll(commentMatches);
+
+        Iterator commentIterator = commentMatches.keySet().iterator();
+        while (commentIterator.hasNext()) {
+            String sourceId = (String) commentIterator.next();
+	    logger.debug("validating sourceId \"" + sourceId + "\"");
+	    try {
+		validationQuery.setString(1, sourceId);
+		validationQuery.setString(2, projectId);
+		ResultSet rs = validationQuery.executeQuery();
+		if (!rs.next()) {
+		    // no match; drop result
+		    logger.info("dropping unrecognized ID \"" + sourceId + "\" from comment-search result set.");
+		    newCommentMatches.remove(sourceId);
+		} else {
+		    String returnedSourceId = rs.getString("source_id");
+		    logger.debug("validation query returned \"" + returnedSourceId + "\"");
+		    if (!returnedSourceId.equals(sourceId)) {
+			// ID changed; substitute returned value
+			logger.info("Substituting valid ID \"" + returnedSourceId + "\" for ID \"" + sourceId + "\" returned from comment-search result set.");
+			SearchResult result = newCommentMatches.get(sourceId);
+			result.setSourceId(returnedSourceId);
+			newCommentMatches.remove(sourceId);
+			newCommentMatches.put(returnedSourceId, result);
+		    }
+		}
+		rs.close();
+	    } catch (SQLException e) {
+		logger.info("caught SQLException " + e.getMessage());
+		}
+
+	}
+	//	Map<String, SearchResult> otherCommentMatches = new HashMap<String, SearchResult>();
+	return newCommentMatches;
     }
 
     private SearchResult[] joinMatches(Map<String, SearchResult> commentMatches, Map<String, SearchResult> componentMatches){

@@ -30,6 +30,10 @@ public class SearchResult implements Comparable <SearchResult> {
 	return sourceId;
     }
 
+    protected void setSourceId(String id) {
+	sourceId = id;
+    }
+
     protected String getProjectId() {
 	return projectId;
     }
