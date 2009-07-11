@@ -176,15 +176,54 @@ public class KeywordSearchPlugin extends WsfPlugin {
 	String transformed;
 
 	String trimmed = queryExpression.trim();
-	if (trimmed.matches(".*\\s+.*")) {
-	    String nearString = trimmed.replaceAll("\\s+", " NEAR ");
-	    String accumString = trimmed.replaceAll("\\s+", " ACCUM ");
-	    transformed = "(" + nearString + ") * " + nearWeight + " OR (" + accumString + ") * " + accumWeight;
+	ArrayList<String> tokenized = tokenizer(trimmed);
+	if (tokenized.size() > 1) {
+	    transformed = "(" + join(tokenized, " NEAR ") + ") * " + nearWeight + " OR (" + join(tokenized, " ACCUM ") + ") * " + accumWeight;
 	} else {
 	    transformed = trimmed;
 	}
 
 	return transformed;
+    }
+
+    private static ArrayList<String> tokenizer(String input) {
+
+	ArrayList<String> tokenized = new ArrayList<String>();
+
+	String[] quoteSplit = input.split("\"");
+	boolean insideQuotes = false;
+	for (String quoteChunk : input.split("\"")) {
+	    if (insideQuotes && quoteChunk.length() > 0) {
+		tokenized.add(quoteChunk);
+	    } else {
+		for (String spaceChunk : quoteChunk.split(" ")) {
+		    if (spaceChunk.length() > 0) {
+			tokenized.add(spaceChunk);
+		    }
+		}
+	    }
+	    insideQuotes = !insideQuotes;
+	}
+
+	return tokenized;
+    }
+
+    private static String join(ArrayList<String> parts, String delimiter) {
+	boolean notFirstChunk = false;
+
+	StringBuffer conjunction = new StringBuffer("");
+
+	for (String part : parts) {
+	    if (notFirstChunk) {
+		conjunction.append(delimiter);
+	    }
+
+	    conjunction.append(part);
+
+	    notFirstChunk = true;
+	}
+
+	return conjunction.toString();
     }
 
     private PreparedStatement getCommentQuery(Connection dbConnection, String recordType, String organisms, String oracleTextExpression) {
