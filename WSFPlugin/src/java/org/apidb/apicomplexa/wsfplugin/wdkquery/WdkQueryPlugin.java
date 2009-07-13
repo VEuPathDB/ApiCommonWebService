@@ -272,14 +272,14 @@ public class WdkQueryPlugin extends WsfPlugin {
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
-                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(user, SOParams);
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(user, SOParams, true);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(user, SOParams);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(user, SOParams, true);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
