@@ -479,7 +479,7 @@ public class MotifSearchPlugin extends WsfPlugin {
                 result[i][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
         }
         logger.info("hits found: " + result.length + "\n");
-        logger.debug("result " + resultToString(result) + "\n");
+        // logger.debug("result " + resultToString(result) + "\n");
         return result;
     }
 
