@@ -2,9 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.apifed;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,10 +10,9 @@ import java.util.Map;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
-import javax.xml.rpc.ServiceException;
 
 import org.apache.axis.MessageContext;
-import org.gusdb.wsf.client.WsfResponse;
+import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
 import org.gusdb.wsf.plugin.WsfPlugin;
@@ -683,24 +680,31 @@ public class ApiFedPlugin extends WsfPlugin {
                 // HACK
                 // in the future, this inovcation should be replaced by the
                 // newer version, invokeEx()
-                WsfResponse wsfResult = service.invoke(pluginName, queryName,
+                WsfResult wsfResult = service.invokeEx(pluginName, queryName,
                         params, cols);
+                int packets = wsfResult.getTotalPackets();
+                if (packets > 1) {
+                    StringBuffer buffer = new StringBuffer(wsfResult.getResult()[0][0]);
+                    String requestId = wsfResult.getRequestId();
+                    for (int i = 1; i < packets; i++) {
+                        logger.debug("getting message " + requestId + " pieces: "
+                                + i + "/" + packets);
+                        String more = service.requestResult(requestId, i);
+                        buffer.append(more);
+                    }
+                    String[][] content = Utilities.convertContent(buffer.toString());
+                    wsfResult.setResult(content);
+                }
                 long end = System.currentTimeMillis();
 
                 logger.info("Thread (" + url + ") has returned results in "
                         + ((end - start) / 1000.0) + " seconds.");
                 result.setMessage(wsfResult.getMessage());
-                result.setAnswer(wsfResult.getResults());
+                result.setAnswer(wsfResult.getResult());
 
-            } catch (MalformedURLException ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
-                errorMessage = "MalformedURLException Occured : Thread exited";
-            } catch (ServiceException ex) {
-                ex.printStackTrace();
-                errorMessage = "ServiceException Occured : Thread exited";
-            } catch (RemoteException ex) {
-                ex.printStackTrace();
-                errorMessage = "RemoteException Occured : Thread exited"
+                errorMessage = ex.getMessage() + " Occured : Thread exited"
                         + ex.getCause();
             } finally {
                 status.setDone(true);
