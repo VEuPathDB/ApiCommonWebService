@@ -249,7 +249,14 @@ public class WdkQueryPlugin extends WsfPlugin {
 
             // get the user
             String signature = params.get("signature");
-            User user = model.getModel().getUserFactory().getUser(signature);
+            User user;
+            try {
+                user = model.getModel().getUserFactory().getUser(signature);
+            } catch (Exception ex) {
+                // the given user signature is invalid, use a system user instead.
+                logger.warn(ex.toString());
+                user = model.getModel().getSystemUser();
+            }
 
             // converting from internal values to dependent values
             Map<String, String> SOParams = convertParams(user, params,
