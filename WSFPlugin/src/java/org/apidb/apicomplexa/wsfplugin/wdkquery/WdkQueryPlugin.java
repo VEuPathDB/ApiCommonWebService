@@ -6,6 +6,7 @@
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,7 +32,7 @@ import org.gusdb.wdk.model.query.param.DatasetParam;
 import org.gusdb.wdk.model.query.param.EnumParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.ParamSet;
-import org.gusdb.wdk.model.user.Dataset;
+import org.gusdb.wdk.model.user.DatasetFactory;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wdk.model.user.UserFactory;
 import org.gusdb.wsf.plugin.WsfPlugin;
@@ -43,9 +44,9 @@ import org.json.JSONException;
  * @author Cary Pennington
  * @created Dec 20, 2006
  * 
- * 2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three number
- * versioning... not that many changes -- Added support for accessing Enum
- * Parameters on the componet Sites
+ *          2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three
+ *          number versioning... not that many changes -- Added support for
+ *          accessing Enum Parameters on the componet Sites
  */
 public class WdkQueryPlugin extends WsfPlugin {
 
@@ -193,19 +194,10 @@ public class WdkQueryPlugin extends WsfPlugin {
 
         // Map<String,Object>SOParams = convertParams(params);
         // logger.info("Parameters were processed");
-        Integer[] colindicies = new Integer[orderedColumns.length];// Variable
-        // to
-        // maintain
-        // the order
-        // of
-        // columns
-        // in the
-        // result...
-        // maintains
-        // order
-        // given by
-        // Federation
-        // Plugin
+
+        // Variable to maintain the order of columns in the result... maintains
+        // order given by Federation Plugin
+        Integer[] colindicies = new Integer[orderedColumns.length];
         try {
 
             // Reset the QueryName for testing reasons
@@ -216,29 +208,34 @@ public class WdkQueryPlugin extends WsfPlugin {
             Query q = null;
             String[] queryName = invokeKey.split(":");
 
-
-	    // TODO: check parameters starting with its paramSet, finding out the type (enum, flatvocab, etc)
-	    //       then if flatvocab, find the queryRef, if enum as below...
-	    // As it is, the javascript provides the param full name OR the queryRef:
-	    // --  if it is a queryRef it is understood it is  a flat vocab param fro ALL COMP SITES
-	    // -- if it is not a queryRef, it is assumed to be enum FOR ALL COMPONENT SITES: this is wrong:
-	    //    we want to have component sites defining the parameter enum or flat as they wish
-	    //
+            // TODO: check parameters starting with its paramSet, finding out
+            // the type (enum, flatvocab, etc)
+            // then if flatvocab, find the queryRef, if enum as below...
+            // As it is, the javascript provides the param full name OR the
+            // queryRef:
+            // -- if it is a queryRef it is understood it is a flat vocab param
+            // fro ALL COMP SITES
+            // -- if it is not a queryRef, it is assumed to be enum FOR ALL
+            // COMPONENT SITES: this is wrong:
+            // we want to have component sites defining the parameter enum or
+            // flat as they wish
+            //
             if (model.getModel().hasQuerySet(queryName[0])) {
-				//if(params.containsKey("ServedQuery")){
-					//String servedquery = params.get("servedQuery");
-					//String[] sQuery = servedquery.split(".");
-				//	if(model.getModel().hasQuerySet(sQuery[0])){
-				//			Query que = model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
-				//			QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-		          //      	q = qs.getQuery(queryName[1]);
-		            //    	logger.info("Query found : " + q.getFullName());
-					//}
-				//}else{
-                	QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-                	q = qs.getQuery(queryName[1]);
-                	logger.info("Query found : " + q.getFullName());
-				//}
+                // if(params.containsKey("ServedQuery")){
+                // String servedquery = params.get("servedQuery");
+                // String[] sQuery = servedquery.split(".");
+                // if(model.getModel().hasQuerySet(sQuery[0])){
+                // Query que =
+                // model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
+                // QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+                // q = qs.getQuery(queryName[1]);
+                // logger.info("Query found : " + q.getFullName());
+                // }
+                // }else{
+                QuerySet qs = model.getModel().getQuerySet(queryName[0]);
+                q = qs.getQuery(queryName[1]);
+                logger.info("Query found : " + q.getFullName());
+                // }
             } else {
                 ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
@@ -250,6 +247,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 return wsfResult;
             }
 
+            // converting from internal values to dependent values
             Map<String, String> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
@@ -272,14 +270,16 @@ public class WdkQueryPlugin extends WsfPlugin {
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
-                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(user, SOParams, true);
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
+                        user, SOParams, true);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(user, SOParams, true);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
+                        user, SOParams, true);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -297,9 +297,10 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.contains("No value supplied for param")) {
                 resultSize = 0;
-	    //isolate query on crypto/plasmo with only param values for plasmo
-	    } else if (msg.contains("does not exist")) {
-               resultSize = 0;
+                // isolate query on crypto/plasmo with only param values for
+                // plasmo
+            } else if (msg.contains("does not exist")) {
+                resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2;
             } else if (msg.indexOf("does not include") != -1) {
@@ -393,8 +394,8 @@ public class WdkQueryPlugin extends WsfPlugin {
      * private Map<String,Object> convertParams(Map<String,String> p, String[]
      * q) { Map<String,Object> ret = new HashMap<String,Object>(); for (String
      * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
-     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } } }
-     * return ret; }
+     * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } }
+     * } return ret; }
      */
 
     private String convertDatasetId2DatasetChecksum(String sig_id)
@@ -404,11 +405,16 @@ public class WdkQueryPlugin extends WsfPlugin {
         String id = parts[1];
         UserFactory userfactory = model.getModel().getUserFactory();
         User user = userfactory.getUser(sig);
-        Integer idInt = new Integer(id);
-        Dataset dataset = user.getDataset(idInt.intValue());
-        String checksum = dataset.getChecksum();
-        String sig_checksum = sig + ":" + checksum;
-        return sig_checksum;
+        Integer datasetId = new Integer(id);
+        DatasetFactory datasetFactory = model.getModel().getDatasetFactory();
+        Connection connection = model.getModel().getUserPlatform().getDataSource().getConnection();
+        try {
+            int userDatasetId = datasetFactory.getUserDatasetId(connection,
+                    user, datasetId);
+            return Integer.toString(userDatasetId);
+        } finally {
+            connection.close();
+        }
     }
 
     private Map<String, String> convertParams(Map<String, String> p, Param[] q) {
@@ -472,7 +478,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         else newVals = "\u0000";
                         logger.info("validated values string -------------"
                                 + newVals);
-                        ret.put(param.getName(),  newVals);
+                        ret.put(param.getName(), newVals);
                     } else {
                         ret.put(param.getName(), o.toString());
                     }
@@ -494,22 +500,22 @@ public class WdkQueryPlugin extends WsfPlugin {
     private String[][] results2StringArray(Column[] cols, ResultList result)
             throws WdkModelException {
         List<String[]> rows = new LinkedList<String[]>();
-	while (result.next()) {
+        while (result.next()) {
             String[] values = new String[cols.length];
             for (int z = 0; z < cols.length; z++) {
                 Object obj = result.get(cols[z].getName());
                 String val = null;
-		if (obj == null) val="N/A";
+                if (obj == null) val = "N/A";
                 else if (obj instanceof String) val = (String) obj;
                 else if (obj instanceof char[]) val = new String((char[]) obj);
                 else if (obj instanceof byte[]) val = new String((byte[]) obj);
                 else val = obj.toString();
                 values[z] = val;
-	    }
-	    rows.add(values);
+            }
+            rows.add(values);
         }
         result.close();
-	
+
         String[][] arr = new String[rows.size()][];
         return rows.toArray(arr);
     }
@@ -537,7 +543,8 @@ public class WdkQueryPlugin extends WsfPlugin {
     // }
 
     /*
-     * private static void loadConfig(String mName, String GH)throws IOException {
+     * private static void loadConfig(String mName, String GH)throws IOException
+     * {
      * 
      * //model Name and path for xml files will be read from config file String
      * modelName = mName; String GUS_HOME = GH;
@@ -563,18 +570,18 @@ public class WdkQueryPlugin extends WsfPlugin {
 
     /*
      * private WdkModelBean loadModel() { //throws MalformedURLException,
-     * WdkModelException {
-     * logger.info("_______________________________________________________________________");
-     * WdkModel wdkModel = null;
-     * logger.info("_______________________________________________________________________");
-     * try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
+     * WdkModelException {logger.info(
+     * "_______________________________________________________________________"
+     * ); WdkModel wdkModel = null;logger.info(
+     * "_______________________________________________________________________"
+     * ); try{ //CheckFiles(); // wdkModel = ModelXmlParser.parseXmlFile( //
      * m_modelFile.toURL(), m_modelPropFile.toURL(), m_schemaFile.toURL(), //
      * m_xmlSchemaFile.toURL(), m_configFile.toURL()); }catch(WdkModelException
      * e){logger.info("ERROR ERROR : -------" + e.toString());}
      * catch(MalformedURLException e){logger.info("ERROR ERROR : -------" +
-     * e.toString());}
-     * logger.info("_______________________________________________________________________");
-     * if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
+     * e.toString());}logger.info(
+     * "_______________________________________________________________________"
+     * ); if(wdkModel != null ) logger.info("Model is not Null!!! it is " +
      * wdkModel.getName()); WdkModelBean model = new WdkModelBean(wdkModel);
      * logger.info("---------Model Loading Completed-----------"); return model;
      * 
@@ -647,31 +654,32 @@ public class WdkQueryPlugin extends WsfPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p, String[] ordCols) throws WdkModelException,
-            NoSuchAlgorithmException, SQLException, JSONException,
-            WdkUserException {
+    private String[][] handleEnumParameters(Param p, String[] ordCols)
+            throws WdkModelException, NoSuchAlgorithmException, SQLException,
+            JSONException, WdkUserException {
         logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
         EnumParam eParam = (EnumParam) p;
         Map<String, String> termDisp = eParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
-		int tI = 0;
-		int iI = 0;
-		int i = 0;
-		for(String c : ordCols){
-			logger.info("current Column = " + c + " ,,,, i = " + i);
-			if(c.equals("term")){
-			 	tI = i;
-			} else if(c.equals("internal")){
-				iI = i;
-			}
-			i++;
-		}
-		logger.info("OrderedColumns.length = " + ordCols.length + ", term = " + tI + ", Internal = " + iI);
+        int tI = 0;
+        int iI = 0;
+        int i = 0;
+        for (String c : ordCols) {
+            logger.info("current Column = " + c + " ,,,, i = " + i);
+            if (c.equals("term")) {
+                tI = i;
+            } else if (c.equals("internal")) {
+                iI = i;
+            }
+            i++;
+        }
+        logger.info("OrderedColumns.length = " + ordCols.length + ", term = "
+                + tI + ", Internal = " + iI);
         String[][] ePValues = new String[terms.size()][ordCols.length];
         int index = 0;
         for (String term : terms) {
-			for(int j=0;j<ePValues[index].length;j++)
-				ePValues[index][j] = "N/A";
+            for (int j = 0; j < ePValues[index].length; j++)
+                ePValues[index][j] = "N/A";
             String disp = termDisp.get(term);
             ePValues[index][tI] = disp;
             ePValues[index][iI] = term;
