@@ -250,7 +250,20 @@ public class WdkQueryPlugin extends WsfPlugin {
                 return wsfResult;
             }
 
-            Map<String, String> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
+            // get the user
+            String signature = params.get("signature");
+            User user;
+            try {
+                user = model.getModel().getUserFactory().getUser(signature);
+            } catch (Exception ex) {
+                // the given user signature is invalid, use a system user instead.
+                logger.warn(ex.toString());
+                user = model.getModel().getSystemUser();
+            }
+
+            // converting from internal values to dependent values
+            Map<String, String> SOParams = convertParams(user, params,
+                    q.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
             // logger.info("Parameters Validated...");
@@ -268,7 +281,6 @@ public class WdkQueryPlugin extends WsfPlugin {
             }
 
             // WS Query processing
-            User user = model.getModel().getSystemUser();
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
@@ -411,18 +423,18 @@ public class WdkQueryPlugin extends WsfPlugin {
         return sig_checksum;
     }
 
-    private Map<String, String> convertParams(Map<String, String> p, Param[] q) {
+    private Map<String, String> convertParams(User user, Map<String, String> p,
+            Param[] q) {
         Map<String, String> ret = new HashMap<String, String>();
         for (String key : p.keySet()) {
-            Object o = p.get(key);
+            String o = p.get(key);
             for (Param param : q) {
                 if (key.equals(param.getName())
                         || key.indexOf(param.getName()) != -1) {
                     if (param instanceof DatasetParam) {
                         logger.info("Working on a DatasetParam");
                         try {
-                            String sig = (String) p.get("signature");
-                            String compId = sig + ":" + o.toString();
+                            String compId = user.getSignature() + ":" + o;
                             compId = convertDatasetId2DatasetChecksum(compId);
                             o = compId;
                             logger.info("full input ======== " + compId);
