@@ -141,7 +141,7 @@ public class WuBlastPlugin extends BlastPlugin {
                 line = in.readLine();
             }
 
-            logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
+            //logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
         } while ((!line.startsWith("Sequence")) && (!line.startsWith("FATAL")));
 
         // show stderr
@@ -168,12 +168,11 @@ public class WuBlastPlugin extends BlastPlugin {
 
         // Loop on Tabular Rows
         while ((line = in.readLine()) != null) {
-            // logger.info("\nWB prepareResult() Unless no hits, this should be
-            // a tabular row line: " + line + "\n");
+            logger.debug("\nWB prepareResult() Unless no hits, this should be a tabular row line: " + line + "\n");
 
             if (line.trim().length() == 0) {
-                logger.debug("\nWB prepareResult(): Line length 0!!, END OF tabular rows\n");
- logger.info("\n\n ********** NUMBER OF HITS: "+ rows.size() +"\n\n");
+                logger.debug("\nWB prepareResult(): ***********Line length 0!!, END OF tabular rows\n");
+		logger.info("\n\n ********** NUMBER OF HITS: "+ rows.size() +"\n\n");
                 break;
             }
 
@@ -284,8 +283,7 @@ public class WuBlastPlugin extends BlastPlugin {
 		//     with the regex provided in config file
 		miniblock = new StringBuffer();
 		while ( !(line.trim().startsWith("Length ="))   ) {
-		    logger.debug("\nWB prepareResult() concatenating defline: " + line
-				+ "\n");
+		    //logger.debug("\nWB prepareResult() concatenating defline: " + line + "\n");
 		    miniblock.append(line.trim() + " ");
 		    line = in.readLine(); // get next line
 		}
@@ -300,12 +298,11 @@ public class WuBlastPlugin extends BlastPlugin {
                 // get organism
                 int[] organismPos = findField(line, organismRegex);
                 hit_organism = line.substring(organismPos[0], organismPos[1]);
-                logger.debug("\nWB prepareResult() Organism extracted from defline is: "
-                        + hit_organism);
+                //logger.debug("\nWB prepareResult() Organism extracted from defline is: " + hit_organism);
 
                 if (useProjectId) {
                     hit_projectId = getProjectId(hit_organism);
-                    logger.debug("\nWB prepareResult() projectId : " + hit_projectId+"\n\n");
+                    //logger.debug("\nWB prepareResult() projectId : " + hit_projectId+"\n\n");
                     alignment[columns.get(COLUMN_PROJECT_ID)] = hit_projectId;
                 }
 	

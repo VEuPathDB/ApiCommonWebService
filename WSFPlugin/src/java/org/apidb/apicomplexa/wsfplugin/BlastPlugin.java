@@ -234,7 +234,7 @@ orderedColumns[5] + "--" +
              * if (signal != 0) throw new WsfServiceException("The invocation is
              * failed: " + output);
              */
-            logger.debug("BLAST output: " + output.toString());
+            logger.debug("BLAST output: \n------------------\n" + output.toString() + "\n-----------------\n");
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
@@ -393,21 +393,19 @@ orderedColumns[5] + "--" +
 
  protected String insertIdUrl(String defline, String dbType, String organism) {
         // extract organism from the defline
-        logger.debug("\ninsertIdUrl() line is: " + defline + "   --- dbType is "
-                + dbType + "   --- organism is " + organism + "\n");
+        //logger.debug("\ninsertIdUrl() line is: " + defline + "   --- dbType is " + dbType + "   --- organism is " + organism + "\n");
 
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
-        logger.debug("\ninsertIdUrl() organism is: " + organism
-                + "\nand sourceId is " + sourceId + "\n");
+        //logger.debug("\ninsertIdUrl() organism is: " + organism  + "\nand sourceId is " + sourceId + "\n");
 
         String projectId = getProjectId(organism);
-        logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
+        //logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
         // get the url mapping for this organsim
 
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-        logger.debug("\ninsertIdUrl() mapkey=" + mapkey + ", mapurl=" + mapurl);
+        //logger.debug("\ninsertIdUrl() mapkey=" + mapkey + ", mapurl=" + mapurl +"/n");
 
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$",
