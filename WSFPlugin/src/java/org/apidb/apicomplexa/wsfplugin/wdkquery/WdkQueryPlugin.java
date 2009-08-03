@@ -318,7 +318,9 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = -2;
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
                 resultSize = 0;
-            } else {
+            } else if (msg.contains("Invalid term")) {
+                resultSize = 0;
+	        } else {
                 ex.printStackTrace();
                 resultSize = -1;
             }
