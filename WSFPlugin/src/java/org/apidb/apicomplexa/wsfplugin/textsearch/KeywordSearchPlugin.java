@@ -4,7 +4,6 @@
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,10 +11,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-import org.gusdb.wdk.model.ModelConfig;
+import org.apidb.apicommon.controller.CommentActionUtility;
+import org.apidb.apicommon.model.CommentFactory;
+import org.gusdb.wdk.model.dbms.DBPlatform;
+import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfResult;
@@ -28,7 +29,7 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 public class KeywordSearchPlugin extends WsfPlugin {
 
     // private static final String PROPERTY_FILE = "keywordsearch-config.xml";
-    private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
+    //private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
 
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
@@ -44,11 +45,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String COLUMN_MAX_SCORE = "MaxScore";
 
     // field definition
-    private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
-    private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
+    //private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
+    //private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
 
-    private Connection commentDbConnection;
-    private Connection componentDbConnection;
     private PreparedStatement validationQuery = null;
     private String projectId;
 
@@ -153,29 +152,20 @@ public class KeywordSearchPlugin extends WsfPlugin {
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
             } finally {
-                if (ps != null) try {
-                    ps.close();
-                } catch (SQLException ex) {
-                    throw new WsfServiceException(ex);
-                }
+                SqlUtils.closeStatement(ps);
             }
         }
 
         if (searchComponent) {
             PreparedStatement ps = null;
             try {
-                ps = getComponentQuery(
-                        getComponentDbConnection(), recordType, organisms,
-                        oracleTextExpression, fields, maxPvalue);
-            componentMatches = textSearch(ps);
+                ps = getComponentQuery(getComponentDbConnection(), recordType,
+                        organisms, oracleTextExpression, fields, maxPvalue);
+                componentMatches = textSearch(ps);
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
             } finally {
-                if (ps != null) try {
-                    ps.close();
-                } catch (SQLException ex) {
-                    throw new WsfServiceException(ex);
-                }
+                SqlUtils.closeStatement(ps);
             }
         }
 
@@ -218,7 +208,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         ArrayList<String> tokenized = new ArrayList<String>();
 
-        String[] quoteSplit = input.split("\"");
         boolean insideQuotes = false;
         for (String quoteChunk : input.split("\"")) {
             if (insideQuotes && quoteChunk.length() > 0) {
@@ -295,7 +284,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
             String recordType, String organisms, String oracleTextExpression,
             String fields, String maxPvalue) {
 
-        String pvalueTerm;
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
         }
@@ -383,12 +371,18 @@ public class KeywordSearchPlugin extends WsfPlugin {
                             + "where alias.alias = ? \n"
                             + "  and alias.gene = attrs.source_id \n"
                             + "  and attrs.project_id = ?");
-
+            Connection dbConnection = null;
             try {
-                Connection dbConnection = getComponentDbConnection();
-                validationQuery = dbConnection.prepareStatement(sql);
-            } catch (SQLException e) {
-                logger.info("caught SQLException " + e.getMessage());
+                try {
+                    dbConnection = getComponentDbConnection();
+                    validationQuery = dbConnection.prepareStatement(sql);
+                } catch (SQLException ex) {
+                    logger.info("caught SQLException " + ex.getMessage());
+                    if (dbConnection != null) dbConnection.close();
+                    throw ex;
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
 
         }
@@ -428,43 +422,54 @@ public class KeywordSearchPlugin extends WsfPlugin {
     private Map<String, SearchResult> validateRecords(
             Map<String, SearchResult> commentMatches) {
 
-        PreparedStatement validationQuery = getValidationQuery();
         Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
         newCommentMatches.putAll(commentMatches);
 
-        Iterator commentIterator = commentMatches.keySet().iterator();
-        while (commentIterator.hasNext()) {
-            String sourceId = (String) commentIterator.next();
-            logger.debug("validating sourceId \"" + sourceId + "\"");
-            try {
-                validationQuery.setString(1, sourceId);
-                validationQuery.setString(2, projectId);
-                ResultSet rs = validationQuery.executeQuery();
-                if (!rs.next()) {
-                    // no match; drop result
-                    logger.info("dropping unrecognized ID \"" + sourceId
-                            + "\" from comment-search result set.");
-                    newCommentMatches.remove(sourceId);
-                } else {
-                    String returnedSourceId = rs.getString("source_id");
-                    logger.debug("validation query returned \""
-                            + returnedSourceId + "\"");
-                    if (!returnedSourceId.equals(sourceId)) {
-                        // ID changed; substitute returned value
-                        logger.info("Substituting valid ID \""
-                                + returnedSourceId + "\" for ID \"" + sourceId
-                                + "\" returned from comment-search result set.");
-                        SearchResult result = newCommentMatches.get(sourceId);
-                        result.setSourceId(returnedSourceId);
+        PreparedStatement validationQuery = null;
+        try {
+            validationQuery = getValidationQuery();
+            for (String sourceId : commentMatches.keySet()) {
+                logger.debug("validating sourceId \"" + sourceId + "\"");
+                ResultSet rs = null;
+                try {
+                    validationQuery.setString(1, sourceId);
+                    validationQuery.setString(2, projectId);
+                    rs = validationQuery.executeQuery();
+                    if (!rs.next()) {
+                        // no match; drop result
+                        logger.info("dropping unrecognized ID \"" + sourceId
+                                + "\" from comment-search result set.");
                         newCommentMatches.remove(sourceId);
-                        newCommentMatches.put(returnedSourceId, result);
+                    } else {
+                        String returnedSourceId = rs.getString("source_id");
+                        logger.debug("validation query returned \""
+                                + returnedSourceId + "\"");
+                        if (!returnedSourceId.equals(sourceId)) {
+                            // ID changed; substitute returned value
+                            logger.info("Substituting valid ID \""
+                                    + returnedSourceId
+                                    + "\" for ID \""
+                                    + sourceId
+                                    + "\" returned from comment-search result set.");
+                            SearchResult result = newCommentMatches.get(sourceId);
+                            result.setSourceId(returnedSourceId);
+                            newCommentMatches.remove(sourceId);
+                            newCommentMatches.put(returnedSourceId, result);
+                        }
+                    }
+
+                } catch (SQLException ex) {
+                    logger.info("caught SQLException " + ex.getMessage());
+                } finally {
+                    try {
+                        rs.close();
+                    } catch (SQLException ex) {
+                        logger.info("caught SQLException " + ex.getMessage());
                     }
                 }
-                rs.close();
-            } catch (SQLException e) {
-                logger.info("caught SQLException " + e.getMessage());
             }
-
+        } finally {
+            SqlUtils.closeStatement(validationQuery);
         }
         // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
         // SearchResult>();
@@ -475,9 +480,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             Map<String, SearchResult> commentMatches,
             Map<String, SearchResult> componentMatches) {
 
-        Iterator commentIterator = commentMatches.keySet().iterator();
-        while (commentIterator.hasNext()) {
-            String sourceId = (String) commentIterator.next();
+        for (String sourceId : commentMatches.keySet()) {
             SearchResult commentMatch = commentMatches.get(sourceId);
             SearchResult componentMatch = componentMatches.get(sourceId);
 
@@ -528,41 +531,15 @@ public class KeywordSearchPlugin extends WsfPlugin {
         return flat;
     }
 
-    Connection getCommentDbConnection() {
-
-        WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
-        ModelConfig modelConfig = wdkModel.getModel().getModelConfig();
-
-        if (commentDbConnection == null) {
-            try {
-                DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
-                commentDbConnection = DriverManager.getConnection(
-                        modelConfig.getUserDB().getConnectionUrl(),
-                        modelConfig.getUserDB().getLogin(),
-                        modelConfig.getUserDB().getPassword());
-            } catch (SQLException e) {
-                logger.info("caught SQLException " + e.getMessage());
-            }
-        }
-        return commentDbConnection;
+    private Connection getCommentDbConnection() throws SQLException {
+        CommentFactory factory = CommentActionUtility.getCommentFactory(servletContext);
+        DBPlatform platform = factory.getCommentPlatform();
+        return platform.getDataSource().getConnection();
     }
 
-    Connection getComponentDbConnection() {
-
+    private Connection getComponentDbConnection() throws SQLException {
         WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
-        ModelConfig modelConfig = wdkModel.getModel().getModelConfig();
-
-        if (componentDbConnection == null) {
-            try {
-                DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
-                componentDbConnection = DriverManager.getConnection(
-                        modelConfig.getApplicationDB().getConnectionUrl(),
-                        modelConfig.getApplicationDB().getLogin(),
-                        modelConfig.getApplicationDB().getPassword());
-            } catch (SQLException e) {
-                logger.info("caught SQLException " + e.getMessage());
-            }
-        }
-        return componentDbConnection;
+        DBPlatform platform = wdkModel.getModel().getQueryPlatform();
+        return platform.getDataSource().getConnection();
     }
 }

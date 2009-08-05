@@ -13,5 +13,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/WSF Plugin"/>
 	<classpathentry kind="lib" path="/WDK Model/lib/java/db_driver/ojdbc14.jar"/>
 	<classpathentry kind="lib" path="/WDK Model/lib/java/WSF-Client.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
