@@ -104,7 +104,6 @@
         <![CDATA[/plasmo/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
-<
 <entry key="UrlMap_Toxoplasma_Transcripts">
         <![CDATA[/toxo/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
