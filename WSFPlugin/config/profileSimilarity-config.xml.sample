@@ -7,4 +7,5 @@
 <entry key="dbConnection">(The DBI connection string)</entry>
 <entry key="dbLogin">(The account used to access the database)</entry>
 <entry key="dbPassword">(The password of the account to access the database)</entry>
+<entry key="projectId">(project id aka model aka product)</entry>
 </properties>
