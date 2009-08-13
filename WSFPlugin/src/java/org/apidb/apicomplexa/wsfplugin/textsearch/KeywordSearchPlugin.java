@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.apidb.apicommon.controller.CommentActionUtility;
 import org.apidb.apicommon.model.CommentFactory;
 import org.gusdb.wdk.model.dbms.DBPlatform;
@@ -29,7 +31,8 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 public class KeywordSearchPlugin extends WsfPlugin {
 
     // private static final String PROPERTY_FILE = "keywordsearch-config.xml";
-    //private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
+    // private static final String PROPERTY_FILE =
+    // "profileSimilarity-config.xml";
 
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
@@ -45,10 +48,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
     public static final String COLUMN_MAX_SCORE = "MaxScore";
 
     // field definition
-    //private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
-    //private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
+    // private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
+    // private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
 
-    private PreparedStatement validationQuery = null;
     private String projectId;
 
     /**
@@ -363,30 +365,21 @@ public class KeywordSearchPlugin extends WsfPlugin {
     }
 
     private PreparedStatement getValidationQuery() {
+        String sql = new String("select attrs.source_id, attrs.project_id \n"
+                + "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
+                + "where alias.alias = ? \n"
+                + "  and alias.gene = attrs.source_id \n"
+                + "  and attrs.project_id = ?");
 
-        if (validationQuery == null) {
-            String sql = new String(
-                    "select attrs.source_id, attrs.project_id \n"
-                            + "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
-                            + "where alias.alias = ? \n"
-                            + "  and alias.gene = attrs.source_id \n"
-                            + "  and attrs.project_id = ?");
-            Connection dbConnection = null;
-            try {
-                try {
-                    dbConnection = getComponentDbConnection();
-                    validationQuery = dbConnection.prepareStatement(sql);
-                } catch (SQLException ex) {
-                    logger.info("caught SQLException " + ex.getMessage());
-                    if (dbConnection != null) dbConnection.close();
-                    throw ex;
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
+        WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
+        DBPlatform platform = wdkModel.getModel().getQueryPlatform();
+        DataSource dataSource = platform.getDataSource();
 
+        try {
+            return SqlUtils.getPreparedStatement(dataSource, sql);
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
-        return validationQuery;
     }
 
     private Map<String, SearchResult> textSearch(PreparedStatement query)

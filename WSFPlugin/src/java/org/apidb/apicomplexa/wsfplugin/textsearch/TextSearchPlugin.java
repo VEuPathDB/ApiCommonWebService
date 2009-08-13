@@ -22,6 +22,7 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  * @author John I
  * @created Aug 23, 2006
  */
+@Deprecated
 public class TextSearchPlugin extends WsfPlugin {
 
     private String scriptDir;
