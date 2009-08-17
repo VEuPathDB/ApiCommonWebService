@@ -34,15 +34,15 @@ public class MotifSearchPlugin extends WsfPlugin {
 
         @Override
         public int hashCode() {
-            return geneID.hashCode() ^ projectId.hashCode();
+            return (geneID + projectId).hashCode();
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj != null && obj instanceof Match) {
                 Match match = (Match) obj;
-                return geneID.equals(match.geneID)
-                        && projectId.equals(match.projectId);
+                return (geneID + projectId).equals(match.geneID
+                        + match.projectId);
             } else return false;
         }
     }
@@ -483,7 +483,7 @@ public class MotifSearchPlugin extends WsfPlugin {
             orders.put(cols[i], i);
 
         int i = 0;
-        for (Match match: matches) {
+        for (Match match : matches) {
             result[i][orders.get(COLUMN_GENE_ID)] = match.geneID;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
             result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
