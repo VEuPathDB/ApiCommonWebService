@@ -7,10 +7,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +31,20 @@ public class MotifSearchPlugin extends WsfPlugin {
         public String locations;
         public int matchCount = 0;
         public String sequence;
+
+        @Override
+        public int hashCode() {
+            return geneID.hashCode() ^ projectId.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj != null && obj instanceof Match) {
+                Match match = (Match) obj;
+                return geneID.equals(match.geneID)
+                        && projectId.equals(match.projectId);
+            } else return false;
+        }
     }
 
     private static final String PROPERTY_FILE = "motifSearch-config.xml";
@@ -191,12 +205,14 @@ public class MotifSearchPlugin extends WsfPlugin {
 
         // open the flatfile database assigned by the user
         try {
-            List<Match> matches = new ArrayList<Match>();
+            Set<Match> matches = new HashSet<Match>();
             String[] dsIds = datasetIDs.split(",");
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
-                logger.info("execute(): dsId: " + dsId + " , input expression: " + expression + " , expr translated to regex: " + regex + "\n");
+                logger.info("execute(): dsId: " + dsId
+                        + " , input expression: " + expression
+                        + " , expr translated to regex: " + regex + "\n");
                 matches.addAll(findMatches(dsId.trim(), regex, colorCode,
                         contextLength));
             }
@@ -348,7 +364,7 @@ public class MotifSearchPlugin extends WsfPlugin {
         return sb.toString();
     }
 
-    private List<Match> findMatches(String datasetID, String regex,
+    private Set<Match> findMatches(String datasetID, String regex,
             String colorCode, int contextLength) throws IOException,
             WsfServiceException {
         File datasetFile = openDataFile(datasetID);
@@ -358,7 +374,7 @@ public class MotifSearchPlugin extends WsfPlugin {
         if (regex.endsWith("$") && !regex.endsWith("\\**$"))
             regex = regex.substring(0, regex.length() - 1) + "\\**$";
 
-        List<Match> matches = new ArrayList<Match>();
+        Set<Match> matches = new HashSet<Match>();
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 
         // read header of the first sequence
@@ -401,7 +417,7 @@ public class MotifSearchPlugin extends WsfPlugin {
             // scan the sequence to find all matched locations
             Match match = findLocations(geneID, pattern, seq.toString(),
                     colorCode, contextLength);
-            if (match != null) {
+            if (match != null && !matches.contains(match)) {
                 if (useProjectId) match.projectId = projectId;
                 matches.add(match);
             }
@@ -459,16 +475,15 @@ public class MotifSearchPlugin extends WsfPlugin {
         return match;
     }
 
-    private String[][] prepareResult(List<Match> matches, String[] cols) {
+    private String[][] prepareResult(Set<Match> matches, String[] cols) {
         String[][] result = new String[matches.size()][cols.length];
         // create an column order map
         Map<String, Integer> orders = new HashMap<String, Integer>();
         for (int i = 0; i < cols.length; i++)
             orders.put(cols[i], i);
 
-        for (int i = 0; i < matches.size(); i++) {
-            Match match = matches.get(i);
-
+        int i = 0;
+        for (Match match: matches) {
             result[i][orders.get(COLUMN_GENE_ID)] = match.geneID;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
             result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
@@ -477,6 +492,7 @@ public class MotifSearchPlugin extends WsfPlugin {
             // put project id into result, if required
             if (useProjectId)
                 result[i][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
+            i++;
         }
         logger.info("hits found: " + result.length + "\n");
         // logger.debug("result " + resultToString(result) + "\n");
@@ -497,18 +513,5 @@ public class MotifSearchPlugin extends WsfPlugin {
         String projectId = getProperty(mapKey);
         if (projectId == null) projectId = projectMapOthers;
         return projectId;
-    }
-    
-    private StringBuffer resultToString(String[][] result) {
-        StringBuffer toString = new StringBuffer();
-        for (int i=0; i < result.length; i++) {
-            for (int j=0; j < result[i].length; j++) {
-                toString.append(result[i][j]);
-                if (j != result[i].length)
-                    toString.append(", ");
-            }
-            toString.append("\n");
-        }
-        return toString;
     }
 }
