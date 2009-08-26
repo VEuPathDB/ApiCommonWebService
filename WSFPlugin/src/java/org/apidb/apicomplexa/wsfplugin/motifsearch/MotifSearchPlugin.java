@@ -415,7 +415,7 @@ public class MotifSearchPlugin extends WsfPlugin {
             if (line == null) break;
 
             // scan the sequence to find all matched locations
-            Match match = findLocations(geneID, pattern, seq.toString(),
+            Match match = findLocations(geneID, projectId, pattern, seq.toString(),
                     colorCode, contextLength);
             if (match != null && !matches.contains(match)) {
                 if (useProjectId) match.projectId = projectId;
@@ -425,11 +425,12 @@ public class MotifSearchPlugin extends WsfPlugin {
         return matches;
     }
 
-    private Match findLocations(String geneID, Pattern pattern,
+    private Match findLocations(String geneID, String projectId, Pattern pattern,
             String sequence, String colorCode, int contextLength)
             throws WsfServiceException {
         Match match = new Match();
         match.geneID = geneID;
+        match.projectId = projectId;
         StringBuffer sbLoc = new StringBuffer();
         StringBuffer sbSeq = new StringBuffer();
         int prev = 0;
