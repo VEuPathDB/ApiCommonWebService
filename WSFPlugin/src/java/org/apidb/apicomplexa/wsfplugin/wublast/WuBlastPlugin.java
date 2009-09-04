@@ -10,6 +10,8 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apidb.apicomplexa.wsfplugin.BlastPlugin;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -236,6 +238,8 @@ public class WuBlastPlugin extends BlastPlugin {
         StringBuffer warnings = new StringBuffer();
         counter = 0;
 
+	String myLink; // for gbrowse link
+
         while ((line = in.readLine()) != null) {
             // found a warning before parameters
             if (line.trim().startsWith("WARNING")) {
@@ -258,6 +262,56 @@ public class WuBlastPlugin extends BlastPlugin {
                 // output the last block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
+
+		    // add gbrowse link here START
+		    if (dbType.equals("Genomics")){
+			String alignLine= block.toString();
+			Integer indx = alignLine.indexOf("Score");
+			String subline = alignLine.substring(indx);
+			Integer indx1;
+
+			Pattern pattern;
+			Matcher matcher;
+
+			String[] x = Pattern.compile("Strand =").split(subline);
+			for (int i=1; i<x.length; i++) {
+			    String hspStart="";
+			    String hspEnd="";
+
+			    // discard lines between HSPs
+			    x[i] = x[i].replaceAll("\\s*Minus Strand HSPs(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Plus Strand HSPs(.*)\\z","");
+
+			    // get start of HSP
+			    pattern = Pattern.compile("Sbjct:\\s*\\d+");
+			    matcher = pattern.matcher(x[i].trim());
+			    if (matcher.find()) { 
+				hspStart = matcher.group();
+				hspStart = hspStart.split("Sbjct:\\s*")[1];
+			    }			    
+			    // get end of HSP
+			    x[i] = x[i].replaceAll("\\s*Identities(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Score(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Minus Strand HSPs:(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Plus Strand HSPs:(.*)\\z","");
+			    pattern = Pattern.compile("\\d+\\z");
+			    matcher = pattern.matcher(x[i].trim());
+			    if (matcher.find()) { 
+				hspEnd = matcher.group();
+			    }
+			    //add gbrowse link just before the 'Strand = Minus / Plus' in HSP hit
+			    if (hspStart.length() > 0 || hspEnd.length() > 0){ 
+				myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd, hit_projectId);
+				indx1 = block.indexOf(x[i]);
+				block.insert(indx1 - 8, myLink);
+				alignment[columns.get(COLUMN_BLOCK)] = block.toString();
+			    } else {
+				logger.info("prepareResult() hspStart/hspEnd not found in " + x[i] + "\n");
+			    }
+			}
+		    }
+		    // add gbrowse link here END
+
                     blocks.add(alignment);
                 }
                 break;
@@ -271,6 +325,56 @@ public class WuBlastPlugin extends BlastPlugin {
                 // output the previous block, if have
                 if (alignment != null) {
                     alignment[columns.get(COLUMN_BLOCK)] = block.toString();
+
+		    // add gbrowse link here START
+		    if (dbType.equals("Genomics")){
+			String alignLine= block.toString();
+			Integer indx = alignLine.indexOf("Score");
+			String subline = alignLine.substring(indx);
+			Integer indx1;
+
+			Pattern pattern;
+			Matcher matcher;
+
+			String[] x = Pattern.compile("Strand =").split(subline);
+			for (int i=1; i<x.length; i++) {
+			    String hspStart="";
+			    String hspEnd="";
+
+			    // discard lines between HSPs
+			    x[i] = x[i].replaceAll("\\s*Minus Strand HSPs(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Plus Strand HSPs(.*)\\z","");
+
+			    // get start of HSP
+			    pattern = Pattern.compile("Sbjct:\\s*\\d+");
+			    matcher = pattern.matcher(x[i].trim());
+			    if (matcher.find()) { 
+				hspStart = matcher.group();
+				hspStart = hspStart.split("Sbjct:\\s*")[1];
+			    }
+			    // get end of HSP
+			    x[i] = x[i].replaceAll("\\s*Identities(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Score(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Minus Strand HSPs:(.*)\\z","");
+			    x[i] = x[i].replaceAll("\\s*Plus Strand HSPs:(.*)\\z","");
+			    pattern = Pattern.compile("\\d+\\z");
+			    matcher = pattern.matcher(x[i].trim());
+			    if (matcher.find()) { 
+				hspEnd = matcher.group();
+			    }
+			    //add gbrowse link just before the 'Strand = Minus / Plus' in HSP hit
+			    if (hspStart.length() > 0 && hspEnd.length() > 0){ 
+				myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd, hit_projectId);
+				indx1 = block.indexOf(x[i]);
+				block.insert(indx1 - 8, myLink); // 8 is length of "Strand =" pattern
+				alignment[columns.get(COLUMN_BLOCK)] = block.toString();
+			    } else {
+				logger.info("prepareResult() hspStart/hspEnd not found in " + x[i] + "\n");
+			    }
+			}
+		    }
+		    // add gbrowse link here END
+
                     blocks.add(alignment);
                 }
                 // create a new alignment and block

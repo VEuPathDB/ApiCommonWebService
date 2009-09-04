@@ -425,6 +425,11 @@ orderedColumns[5] + "--" +
 
     }
 
+    protected String insertGbrowseLink(String hit_sourceId, String hspStart, String hspEnd, String projectId) {
+	String gb_url = "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;
+	String gb_link = "\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">Link to Genome Browser</font></B></a>,   ";
+	return gb_link;
+    }
 
     protected void insertBookmark(String[][] result, String[] orderedColumns) {
         // get the position of source_id, tabular row and alignment block
