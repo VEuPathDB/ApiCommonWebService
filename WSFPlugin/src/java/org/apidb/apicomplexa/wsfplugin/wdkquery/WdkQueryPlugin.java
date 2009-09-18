@@ -457,7 +457,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         if (param.getName().equalsIgnoreCase(
                                 "phyletic_indent_map")) valList = "Archaea";
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_term_map")) valList = "rno";
+                                "phyletic_term_map")) valList = "rnor";
                         // end workaround
 
                         String[] vals;
