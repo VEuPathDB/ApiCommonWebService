@@ -451,7 +451,8 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-
+						if(param.allowEmpty && valList.length == 0)
+							valList = param.getDefault();
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
@@ -473,7 +474,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
-                                if (validateSingleValues(
+								if (validateSingleValues(
                                         (AbstractEnumParam) param,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
@@ -481,7 +482,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                                     logger.info("validated-------------\n ParamName = "
                                             + param.getName()
                                             + " ------ Value = " + mystring);
-                                }
+								}
                             } catch (Exception e) {
                                 logger.info(e);
                             }
@@ -661,7 +662,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         // initVocabMap();
-        for (String v : conVocab) {
+		for (String v : conVocab) {
             if (value.equalsIgnoreCase(v)) return true;
         }
         return false;
