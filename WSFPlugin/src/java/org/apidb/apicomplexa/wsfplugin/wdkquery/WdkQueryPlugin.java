@@ -667,6 +667,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
+		logger.info("conVocab.length = " + conVocab.length);
         // initVocabMap();
 		for (String v : conVocab) {
 			logger.info("value: " + value + " | vocabTerm: " + v);
