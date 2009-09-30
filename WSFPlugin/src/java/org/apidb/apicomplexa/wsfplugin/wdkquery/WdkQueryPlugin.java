@@ -452,12 +452,16 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
+						AbstractEnumParam abparam = (AbstractEnumParam) param;
 						if((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0){
 							try{
 								valList = param.getDefault();
 							}catch(Exception e){
 								logger.info("error using default value.");
 							}
+						}
+						if(abparam.getDependedParam() != null){
+							abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
 						}
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
@@ -481,7 +485,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
 								if (validateSingleValues(
-                                        (AbstractEnumParam) param,
+                                        (AbstractEnumParam) abparam,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
                                     newVals = newVals + "," + mystring.trim();
