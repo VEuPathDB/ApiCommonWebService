@@ -30,6 +30,7 @@ import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
 import org.gusdb.wdk.model.query.param.DatasetParam;
 import org.gusdb.wdk.model.query.param.EnumParam;
+import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.ParamSet;
 import org.gusdb.wdk.model.user.DatasetFactory;
@@ -451,7 +452,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-						if((param.isAllowEmpty() || (param instanceof FlatVocabParam)) && valList.length() == 0){
+						if((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0){
 							try{
 								valList = param.getDefault();
 							}catch(Exception e){
