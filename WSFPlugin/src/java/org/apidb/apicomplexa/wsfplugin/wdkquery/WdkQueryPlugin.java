@@ -669,6 +669,7 @@ public class WdkQueryPlugin extends WsfPlugin {
         String[] conVocab = p.getVocab();
         // initVocabMap();
 		for (String v : conVocab) {
+			logger.info("value: " + value + " | vocabTerm: " + v);
             if (value.equalsIgnoreCase(v)) return true;
         }
         return false;
