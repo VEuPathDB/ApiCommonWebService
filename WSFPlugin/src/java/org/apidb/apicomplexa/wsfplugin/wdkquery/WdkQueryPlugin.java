@@ -451,7 +451,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-						if(param.allowEmpty && valList.length == 0)
+						if(param.isAllowEmpty() && valList.length() == 0)
 							valList = param.getDefault();
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
