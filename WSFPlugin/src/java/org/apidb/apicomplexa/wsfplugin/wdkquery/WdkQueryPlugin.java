@@ -451,12 +451,13 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-						if(param.isAllowEmpty() && valList.length() == 0)
+						if((param.isAllowEmpty() || param instanceof FlatVocabParam) && valList.length() == 0){
 							try{
 								valList = param.getDefault();
 							}catch(Exception e){
 								logger.info("error using default value.");
 							}
+						}
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
