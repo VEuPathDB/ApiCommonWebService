@@ -666,6 +666,7 @@ public class WdkQueryPlugin extends WsfPlugin {
     private boolean validateSingleValues(AbstractEnumParam p, String value)
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
+		logger.info("DependedParam = " + p.getDependedParam().getName() + " ||| DependedValue = " + p.getDependedValue());
         String[] conVocab = p.getVocab();
 		logger.info("conVocab.length = " + conVocab.length);
         // initVocabMap();
