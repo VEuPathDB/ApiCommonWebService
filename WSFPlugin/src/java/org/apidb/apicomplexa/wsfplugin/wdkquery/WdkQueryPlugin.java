@@ -30,6 +30,7 @@ import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
 import org.gusdb.wdk.model.query.param.DatasetParam;
 import org.gusdb.wdk.model.query.param.EnumParam;
+import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.ParamSet;
 import org.gusdb.wdk.model.user.DatasetFactory;
@@ -451,7 +452,17 @@ public class WdkQueryPlugin extends WsfPlugin {
                         }
                     } else if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-
+						AbstractEnumParam abparam = (AbstractEnumParam) param;
+						if((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0){
+							try{
+								valList = param.getDefault();
+							}catch(Exception e){
+								logger.info("error using default value.");
+							}
+						}
+						if(abparam.getDependedParam() != null){
+							abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
+						}
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
@@ -473,15 +484,15 @@ public class WdkQueryPlugin extends WsfPlugin {
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
-                                if (validateSingleValues(
-                                        (AbstractEnumParam) param,
+								if (validateSingleValues(
+                                        (AbstractEnumParam) abparam,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
                                     newVals = newVals + "," + mystring.trim();
                                     logger.info("validated-------------\n ParamName = "
                                             + param.getName()
                                             + " ------ Value = " + mystring);
-                                }
+								}
                             } catch (Exception e) {
                                 logger.info(e);
                             }
@@ -660,8 +671,10 @@ public class WdkQueryPlugin extends WsfPlugin {
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
+		logger.info("conVocab.length = " + conVocab.length);
         // initVocabMap();
-        for (String v : conVocab) {
+		for (String v : conVocab) {
+			logger.info("value: " + value + " | vocabTerm: " + v);
             if (value.equalsIgnoreCase(v)) return true;
         }
         return false;
