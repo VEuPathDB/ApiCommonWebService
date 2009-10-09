@@ -146,9 +146,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
             PreparedStatement ps = null;
             try {
                 ps = getCommentQuery(getCommentDbConnection(), recordType,
-                        organisms, oracleTextExpression);
+                        oracleTextExpression);
                 commentMatches = textSearch(ps);
-                commentMatches = validateRecords(commentMatches);
+                commentMatches = validateRecords(commentMatches, organisms);
                 logger.debug("after validation commentMatches = "
                         + commentMatches.toString());
             } catch (SQLException ex) {
@@ -246,7 +246,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     }
 
     private PreparedStatement getCommentQuery(Connection dbConnection,
-            String recordType, String organisms, String oracleTextExpression) {
+            String recordType, String oracleTextExpression) {
 
         String sql = new String(
                 "SELECT source_id, project_id, \n"
@@ -259,22 +259,19 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "                     as scoring, \n"
                         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
                         + "            FROM apidb.TextSearchableComment tsc \n"
-                        + "            WHERE ? like '%' || tsc.organism || '%' \n"
-                        + "              AND CONTAINS(tsc.content, ?, 1) > 0  \n"
+                        + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
                         + "      ORDER BY max_score desc \n" + "     )");
 
         logger.debug("comment SQL: " + sql);
-        logger.debug("organisms = \"" + organisms
-                + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+        logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
 
         PreparedStatement ps = null;
         ;
         try {
             ps = dbConnection.prepareStatement(sql);
-            ps.setString(1, organisms);
-            ps.setString(2, oracleTextExpression);
+            ps.setString(1, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
         }
@@ -366,10 +363,11 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private PreparedStatement getValidationQuery() {
         String sql = new String("select attrs.source_id, attrs.project_id \n"
-                + "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
-                + "where alias.alias = ? \n"
-                + "  and alias.gene = attrs.source_id \n"
-                + "  and attrs.project_id = ?");
+				+ "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
+				+ "where alias.alias = ? \n"
+				+ "  and alias.gene = attrs.source_id \n"
+				+ "  and attrs.project_id = ? \n"
+				+ "  and ? like '%' || attrs.species || '%'");
 
         WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
@@ -413,10 +411,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
     }
 
     private Map<String, SearchResult> validateRecords(
-            Map<String, SearchResult> commentMatches) {
+            Map<String, SearchResult> commentMatches, String organisms) {
 
         Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
         newCommentMatches.putAll(commentMatches);
+
+        logger.debug("organisms = \"" + organisms + "\"");
 
         PreparedStatement validationQuery = null;
         try {
@@ -427,6 +427,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 try {
                     validationQuery.setString(1, sourceId);
                     validationQuery.setString(2, projectId);
+                    validationQuery.setString(3, organisms);
                     rs = validationQuery.executeQuery();
                     if (!rs.next()) {
                         // no match; drop result
