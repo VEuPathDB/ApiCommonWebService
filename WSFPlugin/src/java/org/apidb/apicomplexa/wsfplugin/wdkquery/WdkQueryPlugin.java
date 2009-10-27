@@ -255,7 +255,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 user = model.getModel().getUserFactory().getUser(signature);
             } catch (Exception ex) {
                 // the given user signature is invalid, use a system user instead.
-                logger.warn(ex.toString());
+                logger.error(ex);
                 user = model.getModel().getSystemUser();
             }
 
