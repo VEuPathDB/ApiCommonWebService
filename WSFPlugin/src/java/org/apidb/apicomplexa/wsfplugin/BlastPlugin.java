@@ -41,6 +41,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     public static final String PARAM_SEQUENCE = "BlastQuerySequence";
 
     // field definitions in the config file
+    private static final String FIELD_PROJECT = "Project";
     private static final String FIELD_APP_PATH = "AppPath";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TEMP_PATH = "TempPath";
@@ -58,6 +59,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     private static final String FIELD_PROJECT_MAP_OTHER = PROJECT_MAP_PREFIX
             + "Others";
 
+    protected String project;
     protected String appPath;
     protected String dataPath;
     protected String filePathPattern;
@@ -81,7 +83,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         super(propertyFile);
 
         // load properties
-        appPath = getProperty(FIELD_APP_PATH);
+	project = getProperty(FIELD_PROJECT);
+	appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
         tempPath = getProperty(FIELD_TEMP_PATH);
         filePathPattern = getProperty(FIELD_FILE_PATH_PATTERN);
@@ -426,7 +429,11 @@ orderedColumns[5] + "--" +
     }
 
     protected String insertGbrowseLink(String hit_sourceId, String hspStart, String hspEnd, String projectId) {
-	String gb_url = "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;
+	String gb_url;
+	if ( null == project )
+	    gb_url = "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;
+	else
+	    gb_url = "http://" + projectId + ".org/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;	   
 	String gb_link = "\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">Link to Genome Browser</font></B></a>,   ";
 	return gb_link;
     }
