@@ -28,7 +28,6 @@ import org.gusdb.wdk.model.query.QuerySet;
 import org.gusdb.wdk.model.query.SqlQuery;
 import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
-import org.gusdb.wdk.model.query.param.DatasetParam;
 import org.gusdb.wdk.model.query.param.EnumParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
@@ -254,7 +253,8 @@ public class WdkQueryPlugin extends WsfPlugin {
             try {
                 user = model.getModel().getUserFactory().getUser(signature);
             } catch (Exception ex) {
-                // the given user signature is invalid, use a system user instead.
+                // the given user signature is invalid, use a system user
+                // instead.
                 logger.error(ex);
                 user = model.getModel().getSystemUser();
             }
@@ -321,7 +321,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
-	        } else {
+            } else {
                 ex.printStackTrace();
                 resultSize = -1;
             }
@@ -439,30 +439,35 @@ public class WdkQueryPlugin extends WsfPlugin {
             for (Param param : q) {
                 if (key.equals(param.getName())
                         || key.indexOf(param.getName()) != -1) {
-                    if (param instanceof DatasetParam) {
-                        logger.info("Working on a DatasetParam");
-                        try {
-                            String compId = user.getSignature() + ":" + o;
-                            compId = convertDatasetId2DatasetChecksum(compId);
-                            o = compId;
-                            logger.info("full input ======== " + compId);
-                            ret.put(param.getName(), compId);
-                        } catch (Exception e) {
-                            logger.info(e);
-                        }
-                    } else if (param instanceof AbstractEnumParam) {
+                    // Jerric - no longer need to convert it with the
+                    // noTranslation flag to true.
+                    
+                    // if (param instanceof DatasetParam) {
+                    // logger.info("Working on a DatasetParam");
+                    // try {
+                    // String compId = user.getSignature() + ":" + o;
+                    // compId = convertDatasetId2DatasetChecksum(compId);
+                    // o = compId;
+                    // logger.info("full input ======== " + compId);
+                    // ret.put(param.getName(), compId);
+                    // } catch (Exception e) {
+                    // logger.info(e);
+                    // }
+                    // } else
+                    if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
-						AbstractEnumParam abparam = (AbstractEnumParam) param;
-						if((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0){
-							try{
-								valList = param.getDefault();
-							}catch(Exception e){
-								logger.info("error using default value.");
-							}
-						}
-						if(abparam.getDependedParam() != null){
-							abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
-						}
+                        AbstractEnumParam abparam = (AbstractEnumParam) param;
+                        if ((param instanceof FlatVocabParam || param.isAllowEmpty())
+                                && valList.length() == 0) {
+                            try {
+                                valList = param.getDefault();
+                            } catch (Exception e) {
+                                logger.info("error using default value.");
+                            }
+                        }
+                        if (abparam.getDependedParam() != null) {
+                            abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
+                        }
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
@@ -484,7 +489,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
-								if (validateSingleValues(
+                                if (validateSingleValues(
                                         (AbstractEnumParam) abparam,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
@@ -492,7 +497,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                                     logger.info("validated-------------\n ParamName = "
                                             + param.getName()
                                             + " ------ Value = " + mystring);
-								}
+                                }
                             } catch (Exception e) {
                                 logger.info(e);
                             }
@@ -671,10 +676,10 @@ public class WdkQueryPlugin extends WsfPlugin {
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
-		logger.info("conVocab.length = " + conVocab.length);
+        logger.info("conVocab.length = " + conVocab.length);
         // initVocabMap();
-		for (String v : conVocab) {
-			logger.info("value: " + value + " | vocabTerm: " + v);
+        for (String v : conVocab) {
+            logger.info("value: " + value + " | vocabTerm: " + v);
             if (value.equalsIgnoreCase(v)) return true;
         }
         return false;
