@@ -258,8 +258,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "      FROM (SELECT SCORE(1) \n"
                         + "                     as scoring, \n"
                         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
-                        + "            FROM apidb.TextSearchableComment tsc \n"
+                        + "            FROM apidb.TextSearchableComment tsc, comments2.Comments c \n"
                         + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
+                        + "              AND tsc.comment_id = c.comment_id\n"
+                        + "              AND c.is_visible = 1\n"
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
                         + "      ORDER BY max_score desc \n" + "     )");
