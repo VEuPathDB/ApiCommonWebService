@@ -120,7 +120,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll(
                 "'", "").replaceAll("[-&|~,=;%]", "\\\\$0").replaceAll("\\*",
                 "%");
-        // String x = params.get(X);
+
         String organisms = params.get(PARAM_ORGANISMS);
         logger.debug("organisms = \"" + organisms + "\"");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
@@ -131,8 +131,14 @@ public class KeywordSearchPlugin extends WsfPlugin {
         boolean searchComments = false;
         boolean searchComponent = false;
 
+        StringBuffer quotedFields = new StringBuffer("");
+        boolean notFirst = false;
         String[] ds = fields.split(",\\s*");
         for (String field : ds) {
+	    if (notFirst) quotedFields.append(",");
+            quotedFields.append("'" + field + "'");
+            notFirst = true;
+
             if (field.equals("Comments")) {
                 searchComments = true;
             } else {
@@ -162,7 +168,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             PreparedStatement ps = null;
             try {
                 ps = getComponentQuery(getComponentDbConnection(), recordType,
-                        organisms, oracleTextExpression, fields, maxPvalue);
+                        organisms, oracleTextExpression, quotedFields.toString(), maxPvalue);
                 componentMatches = textSearch(ps);
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
@@ -302,30 +308,30 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n"
                         + "                    external_database_name as table_name \n"
                         + "              FROM apidb.Blastp b \n"
-                        + "              WHERE CONTAINS(b.description, ?, 1) > 0 \n"
-                        + "                AND ? like '%Blastp%' \n"
-                        + "                AND ? = 'gene' \n"
-                        + "                AND b.pvalue_exp < ? \n"
-                        + "                AND ? like  '%' || b.query_organism  || '%' \n"
+                        + "              WHERE CONTAINS(b.description, '" + oracleTextExpression + "', 1) > 0 \n"
+                        + "                AND 'Blastp' in (" + fields + ") \n"
+                        + "                AND '" + recordType + "' = 'gene' \n"
+                        + "                AND b.pvalue_exp < " + maxPvalue + " \n"
+                        + "                AND b.query_organism in (" + organisms + ") \n"
                         + "            UNION \n"
                         + "              SELECT SCORE(1)* nvl(tw.weight, 1) \n"
                         + "                       as scoring, \n"
                         + "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n"
                         + "              FROM apidb.GeneDetail gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n"
-                        + "              WHERE CONTAINS(content, ?, 1) > 0\n"
-                        + "                AND ? like '%' || gt.field_name || '%' \n"
-                        + "                AND ? = 'gene' \n"
+                        + "              WHERE CONTAINS(content, '" + oracleTextExpression + "', 1) > 0\n"
+                        + "                AND gt.field_name in (" + fields + ") \n"
+                        + "                AND '" + recordType + "' = 'gene' \n"
                         + "                AND gt.field_name = tw.table_name(+) \n"
                         + "                AND gt.source_id = ga.source_id \n"
-                        + "                AND ? like '%' || ga.species || '%' \n"
+                        + "                AND ga.species in (" + organisms + ") \n"
                         + "            UNION \n"
                         + "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n"
                         + "                       as scoring, \n"
                         + "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
                         + "              FROM apidb.IsolateDetail wit, apidb.TableWeight tw \n"
-                        + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
-                        + "                AND ? like '%' || wit.field_name || '%' \n"
-                        + "                AND ? = 'isolate' \n"
+                        + "              WHERE CONTAINS(content, '" + oracleTextExpression + "', 1) > 0 \n"
+                        + "                AND wit.field_name in (" + fields + ") \n"
+                        + "                AND '" + recordType + "' = 'isolate' \n"
                         + "                AND wit.field_name = tw.table_name(+) \n"
                         + "           ) \n"
                         + "      GROUP BY source_id, project_id \n"
@@ -341,21 +347,6 @@ public class KeywordSearchPlugin extends WsfPlugin {
         PreparedStatement ps = null;
         try {
             ps = dbConnection.prepareStatement(sql);
-            // Blastp
-            ps.setString(1, oracleTextExpression);
-            ps.setString(2, fields);
-            ps.setString(3, recordType);
-            ps.setInt(4, Integer.parseInt(maxPvalue));
-            ps.setString(5, organisms);
-            // GeneTable
-            ps.setString(6, oracleTextExpression);
-            ps.setString(7, fields);
-            ps.setString(8, recordType);
-            ps.setString(9, organisms);
-            // WdkIsolateTable
-            ps.setString(10, oracleTextExpression);
-            ps.setString(11, fields);
-            ps.setString(12, recordType);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
         }
@@ -387,7 +378,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
         ResultSet rs = null;
         try {
+	    logger.info("about to execute (one or the other) text-search query");
             rs = query.executeQuery();
+	    logger.info("finshed execute");
             while (rs.next()) {
                 String sourceId = rs.getString("source_id");
 
@@ -402,6 +395,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     matches.put(sourceId, match);
                 }
             }
+	    logger.info("finished fetching rows");
         } catch (SQLException ex) {
             logger.info("caught SQLException " + ex.getMessage());
             ex.printStackTrace();
