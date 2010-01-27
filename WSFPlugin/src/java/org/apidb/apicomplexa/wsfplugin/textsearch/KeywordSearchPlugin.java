@@ -383,6 +383,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         ResultSet rs = null;
         try {
 	    logger.info("about to execute (one or the other) text-search query");
+            query.setFetchSize(5000);
             rs = query.executeQuery();
 	    logger.info("finshed execute");
             while (rs.next()) {
