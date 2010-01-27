@@ -308,17 +308,17 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n"
                         + "                    external_database_name as table_name \n"
                         + "              FROM apidb.Blastp b \n"
-                        + "              WHERE CONTAINS(b.description, '" + oracleTextExpression + "', 1) > 0 \n"
+                        + "              WHERE CONTAINS(b.description, ?, 1) > 0 \n"
                         + "                AND 'Blastp' in (" + fields + ") \n"
                         + "                AND '" + recordType + "' = 'gene' \n"
-                        + "                AND b.pvalue_exp < " + maxPvalue + " \n"
+                        + "                AND b.pvalue_exp < ? \n"
                         + "                AND b.query_organism in (" + organisms + ") \n"
                         + "            UNION \n"
                         + "              SELECT SCORE(1)* nvl(tw.weight, 1) \n"
                         + "                       as scoring, \n"
                         + "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n"
                         + "              FROM apidb.GeneDetail gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n"
-                        + "              WHERE CONTAINS(content, '" + oracleTextExpression + "', 1) > 0\n"
+                        + "              WHERE CONTAINS(content, ?, 1) > 0\n"
                         + "                AND gt.field_name in (" + fields + ") \n"
                         + "                AND '" + recordType + "' = 'gene' \n"
                         + "                AND gt.field_name = tw.table_name(+) \n"
@@ -329,7 +329,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "                       as scoring, \n"
                         + "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
                         + "              FROM apidb.IsolateDetail wit, apidb.TableWeight tw \n"
-                        + "              WHERE CONTAINS(content, '" + oracleTextExpression + "', 1) > 0 \n"
+                        + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
                         + "                AND wit.field_name in (" + fields + ") \n"
                         + "                AND '" + recordType + "' = 'isolate' \n"
                         + "                AND wit.field_name = tw.table_name(+) \n"
@@ -347,6 +347,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
         PreparedStatement ps = null;
         try {
             ps = dbConnection.prepareStatement(sql);
+            ps.setString(1, oracleTextExpression);
+            ps.setInt(2, Integer.parseInt(maxPvalue));
+            ps.setString(3, oracleTextExpression);
+            ps.setString(4, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
         }
