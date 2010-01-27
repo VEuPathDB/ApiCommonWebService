@@ -5,6 +5,10 @@
 
 <Config>
   <Sites>
+    <model name="AmoebaDB"
+           projectId="AmoebaDB"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="^E$|^Entamoeba\s*.*" />
     <model name="CryptoDB"
            projectId="CryptoDB"
            url="(URL FOR WSF WEB SERVICE)" 
@@ -13,6 +17,10 @@
            projectId="GiardiaDB"
            url="(URL FOR WSF WEB SERVICE)"
            marker="^G$|^Giardia\s*.*" />
+    <model name="MicrosporidiaDB"
+           projectId="MicrosporidiaDB"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="^E$|^Encephalitozoon\s*.*" />
     <model name="PlasmoDB"
            projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
