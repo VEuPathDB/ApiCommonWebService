@@ -282,16 +282,20 @@ public class WdkQueryPlugin extends WsfPlugin {
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
+                // assign the weight to 0 here, since the assigned weight will
+                // be applied on the portal when it's being cached.
                 ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
-                        user, SOParams, true);
+                        user, SOParams, true, 0);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
+                // assign the weight to 0 here, since the assigned weight will
+                // be applied on the portal when it's being cached.
                 SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
-                        user, SOParams, true);
+                        user, SOParams, true, 0);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -441,7 +445,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         || key.indexOf(param.getName()) != -1) {
                     // Jerric - no longer need to convert it with the
                     // noTranslation flag to true.
-                    
+
                     // if (param instanceof DatasetParam) {
                     // logger.info("Working on a DatasetParam");
                     // try {

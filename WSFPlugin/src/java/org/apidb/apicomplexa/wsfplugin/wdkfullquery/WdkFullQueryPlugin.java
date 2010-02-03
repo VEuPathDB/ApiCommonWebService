@@ -235,7 +235,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
                 ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
-                        user, SOParams, true);
+                        user, SOParams, true, 0);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
@@ -243,7 +243,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
                 SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
-                        user, SOParams, true);
+                        user, SOParams, true, 0);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -629,6 +629,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             for (String column : pkColumns) {
                 pkValues.put(column, rl.get(column));
             }
+
             RecordInstance ri = new RecordInstance(user, rc, pkValues);
             for (int i = 2; i < cols.length; i++) {
                 String col = cols[i];
