@@ -118,7 +118,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
         logger.debug("fields = \"" + fields + "\"");
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll(
-                "'", "").replaceAll("[-&|~,=;%]", "\\\\$0").replaceAll("\\*",
+                "'", "").replaceAll("[-&|~,=;%_]", "\\\\$0").replaceAll("\\*",
                 "%");
 
         String organisms = params.get(PARAM_ORGANISMS);
