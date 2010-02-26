@@ -10,7 +10,6 @@
 
 <entry key="UseProjectId">yes</entry>
 
-<!-- not sure this will work without separation between orga dn dbtype as in plasmo and toxo -->
 <entry key="FilePathPattern">$$Organism$$$$DbType$$</entry>
 
 <!-- CDS means source_id in third position in defline, used by transcripts, proteins and orfs -->
@@ -36,42 +35,42 @@
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 
-<entry key="UrlMap_Amoeba_Transcripts">
-        <![CDATA[/amoebadb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_Transcripts">
+        <![CDATA[/amoeba/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Amoeba_Proteins">
-        <![CDATA[/amoebadb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_Proteins">
+        <![CDATA[/amoeba/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Amoeba_ORF">
-        <![CDATA[/amoebadb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_ORF">
+        <![CDATA[/amoeba/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Amoeba_Genomics">
-        <![CDATA[/amoebadb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_Genomics">
+        <![CDATA[/amoeba/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Amoeba_EST">
-        <![CDATA[/amoebadb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_EST">
+        <![CDATA[/amoeba/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Amoeba_Assemblies">
-        <![CDATA[/amoebadb/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Entamoeba_Assemblies">
+        <![CDATA[/amoeba/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
-<entry key="UrlMap_Microsporidia_Transcripts">
-        <![CDATA[/microsporidiadb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_Transcripts">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Microsporidia_Proteins">
-        <![CDATA[/microsporidiadb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_Proteins">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Microsporidia_ORF">
-        <![CDATA[/microsporidiadb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_ORF">
+        <![CDATA[/micro/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Microsporidia_Genomics">
-        <![CDATA[/microsporidiadb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_Genomics">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Microsporidia_EST">
-        <![CDATA[/microsporidiadb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_EST">
+        <![CDATA[/micro/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Microsporidia_Assemblies">
-        <![CDATA[/microsporidiadb/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+<entry key="UrlMap_Encephalitozoon_Assemblies">
+        <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
 <entry key="UrlMap_Cryptosporidium_Transcripts">
@@ -123,7 +122,7 @@
 </entry>
 
 <entry key="UrlMap_Plasmodium_Isolates">
-    <![CDATA[showRecord.do?name=IsolateRecordClasses.IsolateRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+    <![CDATA[/plasmo/showRecord.do?name=IsolateRecordClasses.IsolateRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
 <entry key="UrlMap_Plasmodium_Transcripts">
@@ -135,7 +134,9 @@
 <entry key="UrlMap_Plasmodium_ORF">
         <![CDATA[/plasmo/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Plasmodium_Genomics"><![CDATA[/plasmo/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Plasmodium_Genomics">
+    <![CDATA[/plasmo/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Plasmodium_EST">
         <![CDATA[/plasmo/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -198,7 +199,9 @@
 <entry key="UrlMap_Trichomonas_Proteins">
         <![CDATA[/trichdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Trichomonas_Genomics"><![CDATA[/trichdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Trichomonas_Genomics">
+    <![CDATA[/trichdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Trichomonas_EST">
         <![CDATA[/trichdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -213,7 +216,9 @@
 <entry key="UrlMap_Trypanosoma_Proteins">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Trypanosoma_Genomics"><![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Trypanosoma_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Trypanosoma_EST">
         <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -227,7 +232,9 @@
 <entry key="UrlMap_Trypanosoma_Proteins">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Trypanosoma_Genomics"><![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Trypanosoma_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Trypanosoma_EST">
         <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -240,7 +247,9 @@
 <entry key="UrlMap_Leishmania_Proteins">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Leishmania_Genomics"><![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Leishmania_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Leishmania_EST">
         <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -254,7 +263,9 @@
 <entry key="UrlMap_Leishmania_Proteins">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-<entry key="UrlMap_Leishmania_Genomics"><![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]></entry>
+<entry key="UrlMap_Leishmania_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
 <entry key="UrlMap_Leishmania_EST">
         <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -289,6 +300,8 @@
 </entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
+<entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
+<entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
 <entry key="ProjectMap_Giardia">GiardiaDB</entry>
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
@@ -297,8 +310,6 @@
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
 <entry key="ProjectMap_Trichomonas">TrichDB</entry>
 <entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
-<entry key="ProjectMap_Amoeba">AmoebaDB</entry>
-<entry key="ProjectMap_Microsporidia">MicrosporidiaDB</entry>
 
 <!-- ApiDB 3.2 Assemblies...+ crypto amd toxo from their sites  -->
 <entry key="ProjectMap_Eimeria">Apidots</entry>
