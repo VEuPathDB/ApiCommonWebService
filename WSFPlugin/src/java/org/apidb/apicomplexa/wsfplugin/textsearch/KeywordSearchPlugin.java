@@ -130,6 +130,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
         boolean searchComments = false;
         boolean searchComponent = false;
+        boolean communityAnnotationRecords = false;
+        boolean commentRecords = false;
 
         StringBuffer quotedFields = new StringBuffer("");
         boolean notFirst = false;
@@ -141,6 +143,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
             if (field.equals("Comments")) {
                 searchComments = true;
+		commentRecords = true;
+            } else if (field.equals("CommunityAnnotation")) {
+                searchComments = true;
+		communityAnnotationRecords = true;
             } else {
                 searchComponent = true;
             }
@@ -152,7 +158,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             PreparedStatement ps = null;
             try {
                 ps = getCommentQuery(getCommentDbConnection(), recordType,
-                        oracleTextExpression);
+                        oracleTextExpression, commentRecords, communityAnnotationRecords);
                 commentMatches = textSearch(ps);
                 commentMatches = validateRecords(commentMatches, organisms);
                 logger.debug("after validation commentMatches = "
@@ -252,22 +258,34 @@ public class KeywordSearchPlugin extends WsfPlugin {
     }
 
     private PreparedStatement getCommentQuery(Connection dbConnection,
-            String recordType, String oracleTextExpression) {
+            String recordType, String oracleTextExpression,
+            boolean commentRecords, boolean communityAnnotationRecords) {
+
+	String recordTypePredicate = new String("");
+
+	if (commentRecords && !communityAnnotationRecords) {
+	    recordTypePredicate = new String(" and review_status_id != 'community' ");
+	} else if (!commentRecords && communityAnnotationRecords) {
+	    recordTypePredicate = new String(" and review_status_id = 'community' ");
+	}
+
 
         String sql = new String(
                 "SELECT source_id, project_id, \n"
                         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
                         + "       fields_matched \n"
                         + "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n"
-                        + "             'community comments' as fields_matched, \n"
+                        + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
                         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
                         + "      FROM (SELECT SCORE(1) \n"
                         + "                     as scoring, \n"
+                        + "             DECODE(c.review_status_id, 'community', 'community annotation', 'user comments') as table_name, \n"
                         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
                         + "            FROM apidb.TextSearchableComment tsc, comments2.Comments c \n"
                         + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
                         + "              AND tsc.comment_id = c.comment_id\n"
                         + "              AND c.is_visible = 1\n"
+                        + recordTypePredicate
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
                         + "      ORDER BY max_score desc \n" + "     )");
