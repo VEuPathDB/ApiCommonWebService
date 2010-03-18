@@ -475,7 +475,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_indent_map")) valList = "Archaea";
+                                "phyletic_indent_map")) valList = "ARCH";
                         if (param.getName().equalsIgnoreCase(
                                 "phyletic_term_map")) valList = "rnor";
                         // end workaround
