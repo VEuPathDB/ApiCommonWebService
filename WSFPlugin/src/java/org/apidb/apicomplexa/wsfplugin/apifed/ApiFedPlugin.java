@@ -86,6 +86,7 @@ public class ApiFedPlugin extends WsfPlugin {
     }
 
     private void loadProps() {
+  logger.debug("******in loadProps()*******\n\n\n");
         String propFilename = getMapFilePath().concat(PROPERTY_FILE);
         Document propDoc = null;
         try {
@@ -233,13 +234,22 @@ public class ApiFedPlugin extends WsfPlugin {
 		String ocStr = "";
 		for(String s : orderedColumns)
 			ocStr = ocStr + "-------" + s;
-		logger.info("****************" + ocStr);
+		logger.debug("****************execute(): orderedColumns are: " + ocStr);
 		primaryKey = null;
         hasProjectId = false;
         doAll = false;
         logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
         boolean isParam = false;
-        logger.debug("Sites Array Initialized ... ");
+        logger.debug("Sites Array being Initialized ... ");
+	logger.debug("***sites organisms are: \n\n" + 
+	     sites[0].getName() + ":" + sites[0].getOrganism() + "\n" +
+	     sites[1].getName() + ":" + sites[1].getOrganism() + "\n" +
+	     sites[2].getName() + ":" + sites[2].getOrganism() + "\n" +
+	     sites[3].getName() + ":" + sites[3].getOrganism() + "\n" +
+	     sites[4].getName() + ":" + sites[4].getOrganism() + "\n" +
+	     sites[5].getName() + ":" + sites[5].getOrganism() + "\n" +
+	     sites[6].getName() + ":" + sites[6].getOrganism() + "\n" +
+	     sites[7].getName() + ":" + sites[7].getOrganism() + "\n\n");
 
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
@@ -265,40 +275,43 @@ public class ApiFedPlugin extends WsfPlugin {
         } else {
 
             orgName = hasOrganism(params);
+	    logger.debug("orgName is " + orgName);
             datasetName = hasDataset(params);
             if (orgName != null) {
                 if (orgName.indexOf("primaryKey") != -1) {
-	
-					this.primaryKey = params.get(orgName); //WORKAROUND FOR COLUMN RESTRICTIONS
-    
-                	logger.debug("Working with AjaxRecordClass primaryKey calculations");
+		    
+		    this.primaryKey = params.get(orgName); //WORKAROUND FOR COLUMN RESTRICTIONS
+		    
+		    logger.debug("Working with AjaxRecordClass primaryKey calculations");
                     String pk = params.get(orgName);
                     logger.debug("orgName = " + orgName + ",   pk = " + pk);
                     String[] parts = new String[2];
                     if (pk.indexOf(":") != -1) {
                         parts = pk.split(":");
                         logger.debug("Query = " + parts[0] + ", primaryKey = "
-                                + parts[1]);
+				     + parts[1]);
                         params.put("Query", parts[0]);
                         getRemoteCalls(parts[1], sites);
                     } else {
                         getRemoteCalls(doAll, sites);
                         logger.debug("Query = " + queryName + ", primaryKey = "
-                                + pk);
+				     + pk);
                     }
                 } else {
+		    
                     String orgsString = params.get(orgName);
+		    logger.debug("orgsString is:---|" + orgsString + "|----\n");
                     getRemoteCalls(orgsString, sites);
                 }
             } else if (datasetName != null) {
                 String datasetString = params.get(datasetName);
                 getRemoteCalls(datasetString, sites);
-            } else {
+	    } else {
                 doAll = true;
                 getRemoteCalls(doAll, sites);
             }
         }
-
+	
         String[] componentColumns = orderedColumns;
         if (!isParam) {
             //componentColumns = removeProjectId(orderedColumns);
@@ -316,8 +329,19 @@ public class ApiFedPlugin extends WsfPlugin {
 
         // Preparing and executing the propriate component sites for this Query
         logger.info("invoking the web services");
-        logger.info("***if the next message you see says: *Entering Combine Results* we are not accessing any component site: probably your apifed-config does not have all necessary organism values used to select site\n");
+        logger.info("******if the next message you see says: *Entering Combine Results* we are not accessing any component site: probably your apifed-config does not have all necessary organism values used to select site; or maybe the value stored in the organism parameter cannot be read as a string\n");
         int thread_counter = 0;
+ logger.debug("***sites organisms are: \n\n" + 
+	     sites[0].getName() + ":" + sites[0].getOrganism() + "\n" +
+	     sites[1].getName() + ":" + sites[1].getOrganism() + "\n" +
+	     sites[2].getName() + ":" + sites[2].getOrganism() + "\n" +
+	     sites[3].getName() + ":" + sites[3].getOrganism() + "\n" +
+	     sites[4].getName() + ":" + sites[4].getOrganism() + "\n" +
+	     sites[5].getName() + ":" + sites[5].getOrganism() + "\n" +
+	     sites[6].getName() + ":" + sites[6].getOrganism() + "\n" +
+	     sites[7].getName() + ":" + sites[7].getOrganism() + "\n\n");
+
+
         for (Site site : sites) {
             if (site.hasOrganism()) {
                 String compQueryFullName = queryName;
@@ -348,7 +372,8 @@ public class ApiFedPlugin extends WsfPlugin {
                 compThreads[thread_counter].start();
             }
             thread_counter++;
-        }
+        } //end for
+
         long tTime = System.currentTimeMillis();
 
         while (!allDone(compStatus)) {
