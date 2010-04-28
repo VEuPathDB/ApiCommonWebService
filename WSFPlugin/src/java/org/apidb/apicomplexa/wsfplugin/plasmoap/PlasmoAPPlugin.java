@@ -82,8 +82,9 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
         logger.info("Invoking PlasmoAPPlugin...");
 
         try {

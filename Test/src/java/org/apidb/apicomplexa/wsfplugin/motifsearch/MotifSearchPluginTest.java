@@ -38,7 +38,7 @@ public class MotifSearchPluginTest {
 
         MotifSearchPlugin search = new MotifSearchPlugin();
         // invoke the plugin and get result back
-        WsfResult wsfResult = search.invoke("", params, columns);
+        WsfResult wsfResult = search.invoke("PlasmoDB", null, params, columns);
 
         logger.info("Result Message: " + wsfResult.getMessage());
         logger.info("Result Signal: " + wsfResult.getSignal());

@@ -6,7 +6,6 @@
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,9 +31,7 @@ import org.gusdb.wdk.model.query.param.EnumParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.ParamSet;
-import org.gusdb.wdk.model.user.DatasetFactory;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wdk.model.user.UserFactory;
 import org.gusdb.wsf.plugin.WsfPlugin;
 import org.gusdb.wsf.plugin.WsfResult;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -175,8 +172,9 @@ public class WdkQueryPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
         // logger.info("Invoking WdkQueryPlugin......");
@@ -248,15 +246,12 @@ public class WdkQueryPlugin extends WsfPlugin {
             }
 
             // get the user
-            String signature = params.get("signature");
             User user;
-            try {
-                user = model.getModel().getUserFactory().getUser(signature);
-            } catch (Exception ex) {
-                // the given user signature is invalid, use a system user
-                // instead.
-                logger.error(ex);
-                user = model.getModel().getSystemUser();
+            WdkModel wdkModel = model.getModel();
+            if (userSignature == null) {
+                user = wdkModel.getSystemUser();
+            } else {
+                user = wdkModel.getUserFactory().getUser(userSignature);
             }
 
             // converting from internal values to dependent values
@@ -416,24 +411,24 @@ public class WdkQueryPlugin extends WsfPlugin {
      * } return ret; }
      */
 
-    private String convertDatasetId2DatasetChecksum(String sig_id)
-            throws Exception {
-        String[] parts = sig_id.split(":");
-        String sig = parts[0];
-        String id = parts[1];
-        UserFactory userfactory = model.getModel().getUserFactory();
-        User user = userfactory.getUser(sig);
-        Integer datasetId = new Integer(id);
-        DatasetFactory datasetFactory = model.getModel().getDatasetFactory();
-        Connection connection = model.getModel().getUserPlatform().getDataSource().getConnection();
-        try {
-            int userDatasetId = datasetFactory.getUserDatasetId(connection,
-                    user, datasetId);
-            return Integer.toString(userDatasetId);
-        } finally {
-            connection.close();
-        }
-    }
+//    private String convertDatasetId2DatasetChecksum(String sig_id)
+//            throws Exception {
+//        String[] parts = sig_id.split(":");
+//        String sig = parts[0];
+//        String id = parts[1];
+//        UserFactory userfactory = model.getModel().getUserFactory();
+//        User user = userfactory.getUser(sig);
+//        Integer datasetId = new Integer(id);
+//        DatasetFactory datasetFactory = model.getModel().getDatasetFactory();
+//        Connection connection = model.getModel().getUserPlatform().getDataSource().getConnection();
+//        try {
+//            int userDatasetId = datasetFactory.getUserDatasetId(connection,
+//                    user, datasetId);
+//            return Integer.toString(userDatasetId);
+//        } finally {
+//            connection.close();
+//        }
+//    }
 
     private Map<String, String> convertParams(User user, Map<String, String> p,
             Param[] q) {

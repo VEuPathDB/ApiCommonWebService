@@ -83,8 +83,8 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
         super(propertyFile);
 
         // load properties
-	project = getProperty(FIELD_PROJECT);
-	appPath = getProperty(FIELD_APP_PATH);
+        project = getProperty(FIELD_PROJECT);
+        appPath = getProperty(FIELD_APP_PATH);
         dataPath = getProperty(FIELD_DATA_PATH);
         tempPath = getProperty(FIELD_TEMP_PATH);
         filePathPattern = getProperty(FIELD_FILE_PATH_PATTERN);
@@ -124,9 +124,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
     @Override
     protected String[] getColumns() {
         if (useProjectId) return new String[] { COLUMN_PROJECT_ID, COLUMN_ID,
-                COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK, COLUMN_COUNTER };
+                COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK,
+                COLUMN_COUNTER };
         else return new String[] { COLUMN_ID, COLUMN_HEADER, COLUMN_FOOTER,
-                COLUMN_ROW, COLUMN_BLOCK,COLUMN_COUNTER };
+                COLUMN_ROW, COLUMN_BLOCK, COLUMN_COUNTER };
     }
 
     /*
@@ -155,21 +156,19 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      * (non-Javadoc)
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
-     *      java.lang.String[])
+     * java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
 
-	//Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
-        logger.debug("BlastPlugin.java: ordered columns are:"+
-		    orderedColumns[0] + "--" +
-		    orderedColumns[1] + "--" +
-		    orderedColumns[2] + "--" +
-		    orderedColumns[3] + "--" +
-		    orderedColumns[4] + "--" +
-orderedColumns[5] + "--" +
-		    orderedColumns[6] + "--" );
+        // Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
+        logger.debug("BlastPlugin.java: ordered columns are:"
+                + orderedColumns[0] + "--" + orderedColumns[1] + "--"
+                + orderedColumns[2] + "--" + orderedColumns[3] + "--"
+                + orderedColumns[4] + "--" + orderedColumns[5] + "--"
+                + orderedColumns[6] + "--");
 
         // get plugin name
         String pluginName = getClass().getSimpleName();
@@ -237,7 +236,8 @@ orderedColumns[5] + "--" +
              * if (signal != 0) throw new WsfServiceException("The invocation is
              * failed: " + output);
              */
-            logger.debug("BLAST output: \n------------------\n" + output.toString() + "\n-----------------\n");
+            logger.debug("BLAST output: \n------------------\n"
+                    + output.toString() + "\n-----------------\n");
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
@@ -249,9 +249,10 @@ orderedColumns[5] + "--" +
 
             // insert a bookmark into the tabular row, linking to alignment
             insertBookmark(result, orderedColumns);
-            //logger.info(Formatter.printArray(result));
+            // logger.info(Formatter.printArray(result));
 
-	    //logger.info("\nID: " + result[0][0] + "\nID: " + result[1][0] + "\nID: " + result[2][0] + "\nID: " + result[3][0]);
+            // logger.info("\nID: " + result[0][0] + "\nID: " + result[1][0] +
+            // "\nID: " + result[2][0] + "\nID: " + result[3][0]);
 
             if (message.length() == 0) message.append(output);
 
@@ -280,8 +281,8 @@ orderedColumns[5] + "--" +
         // remove files older than a week (500000000)
         for (int i = 0; i < allFiles.length; i++) {
             tempFile = new File(dir, allFiles[i]);
-            if ( tempFile.canWrite() &&
-                 (todayLong - (tempFile.lastModified())) > 500000000) {
+            if (tempFile.canWrite()
+                    && (todayLong - (tempFile.lastModified())) > 500000000) {
                 logger.info("Temp file to be deleted: " + allFiles[i] + "\n");
                 tempFile.delete();
             }
@@ -353,13 +354,12 @@ orderedColumns[5] + "--" +
         }
     }
 
-
-  protected String insertIdUrl(String defline, String dbType) {
+    protected String insertIdUrl(String defline, String dbType) {
         // extract organism from the defline
-        logger.debug("\ninsertIdUrl() line is: " + defline + "   --- dbType is "
-                + dbType + "\n");
+        logger.debug("\ninsertIdUrl() line is: " + defline
+                + "   --- dbType is " + dbType + "\n");
 
-	int[] orgPos = findField(defline, organismRegex);
+        int[] orgPos = findField(defline, organismRegex);
         String organism = defline.substring(orgPos[0], orgPos[1]);
 
         int[] srcPos = findField(defline, sourceIdRegex);
@@ -389,26 +389,29 @@ orderedColumns[5] + "--" +
         sb.append(sourceId);
         sb.append("</a>");
         sb.append(defline.substring(srcPos[1]));
-	return sb.toString();
+        return sb.toString();
 
     }
 
-
- protected String insertIdUrl(String defline, String dbType, String organism) {
+    protected String insertIdUrl(String defline, String dbType, String organism) {
         // extract organism from the defline
-        //logger.debug("\ninsertIdUrl() line is: " + defline + "   --- dbType is " + dbType + "   --- organism is " + organism + "\n");
+        // logger.debug("\ninsertIdUrl() line is: " + defline +
+        // "   --- dbType is " + dbType + "   --- organism is " + organism +
+        // "\n");
 
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);
-        //logger.debug("\ninsertIdUrl() organism is: " + organism  + "\nand sourceId is " + sourceId + "\n");
+        // logger.debug("\ninsertIdUrl() organism is: " + organism +
+        // "\nand sourceId is " + sourceId + "\n");
 
         String projectId = getProjectId(organism);
-        //logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
+        // logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
         // get the url mapping for this organsim
 
         String mapkey = URL_MAP_PREFIX + organism + "_" + dbType;
         String mapurl = getProperty(mapkey);
-        //logger.debug("\ninsertIdUrl() mapkey=" + mapkey + ", mapurl=" + mapurl +"/n");
+        // logger.debug("\ninsertIdUrl() mapkey=" + mapkey + ", mapurl=" +
+        // mapurl +"/n");
 
         if (mapurl == null) mapurl = urlMapOthers; // use default url
         mapurl = mapurl.trim().replaceAll("\\$\\$source_id\\$\\$",
@@ -424,18 +427,23 @@ orderedColumns[5] + "--" +
         sb.append(sourceId);
         sb.append("</a>");
         sb.append(defline.substring(srcPos[1]));
-	return sb.toString();
+        return sb.toString();
 
     }
 
-    protected String insertGbrowseLink(String hit_sourceId, String hspStart, String hspEnd, String projectId) {
-	String gb_url;
-	if ( null == project )
-	    gb_url = "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;
-	else
-	    gb_url = "http://" + projectId + ".org/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":" + hspStart + "-" + hspEnd;	   
-	String gb_link = "\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">Link to Genome Browser</font></B></a>,   ";
-	return gb_link;
+    protected String insertGbrowseLink(String hit_sourceId, String hspStart,
+            String hspEnd, String projectId) {
+        String gb_url;
+        if (null == project) gb_url = "/cgi-bin/gbrowse/"
+                + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":"
+                + hspStart + "-" + hspEnd;
+        else gb_url = "http://" + projectId + ".org/cgi-bin/gbrowse/"
+                + projectId.toLowerCase() + "/?name=" + hit_sourceId + ":"
+                + hspStart + "-" + hspEnd;
+        String gb_link = "\n<a href=\""
+                + gb_url
+                + "\"> <B><font color=\"red\">Link to Genome Browser</font></B></a>,   ";
+        return gb_link;
     }
 
     protected void insertBookmark(String[][] result, String[] orderedColumns) {

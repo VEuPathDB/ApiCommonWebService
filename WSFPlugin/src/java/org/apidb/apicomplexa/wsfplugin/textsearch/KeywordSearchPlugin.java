@@ -102,8 +102,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
         logger.info("Invoking KeywordSearchPlugin...");
 
         int signal = 0;
@@ -137,16 +138,16 @@ public class KeywordSearchPlugin extends WsfPlugin {
         boolean notFirst = false;
         String[] ds = fields.split(",\\s*");
         for (String field : ds) {
-	    if (notFirst) quotedFields.append(",");
+            if (notFirst) quotedFields.append(",");
             quotedFields.append("'" + field + "'");
             notFirst = true;
 
             if (field.equals("Comments")) {
                 searchComments = true;
-		commentRecords = true;
+                commentRecords = true;
             } else if (field.equals("CommunityAnnotation")) {
                 searchComments = true;
-		communityAnnotationRecords = true;
+                communityAnnotationRecords = true;
             } else {
                 searchComponent = true;
             }
@@ -158,7 +159,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
             PreparedStatement ps = null;
             try {
                 ps = getCommentQuery(getCommentDbConnection(), recordType,
-                        oracleTextExpression, commentRecords, communityAnnotationRecords);
+                        oracleTextExpression, commentRecords,
+                        communityAnnotationRecords);
                 commentMatches = textSearch(ps);
                 commentMatches = validateRecords(commentMatches, organisms);
                 logger.debug("after validation commentMatches = "
@@ -174,7 +176,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
             PreparedStatement ps = null;
             try {
                 ps = getComponentQuery(getComponentDbConnection(), recordType,
-                        organisms, oracleTextExpression, quotedFields.toString(), maxPvalue);
+                        organisms, oracleTextExpression,
+                        quotedFields.toString(), maxPvalue);
                 componentMatches = textSearch(ps);
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
@@ -261,14 +264,15 @@ public class KeywordSearchPlugin extends WsfPlugin {
             String recordType, String oracleTextExpression,
             boolean commentRecords, boolean communityAnnotationRecords) {
 
-	String recordTypePredicate = new String("");
+        String recordTypePredicate = new String("");
 
-	if (commentRecords && !communityAnnotationRecords) {
-	    recordTypePredicate = new String(" and review_status_id != 'community' ");
-	} else if (!commentRecords && communityAnnotationRecords) {
-	    recordTypePredicate = new String(" and review_status_id = 'community' ");
-	}
-
+        if (commentRecords && !communityAnnotationRecords) {
+            recordTypePredicate = new String(
+                    " and review_status_id != 'community' ");
+        } else if (!commentRecords && communityAnnotationRecords) {
+            recordTypePredicate = new String(
+                    " and review_status_id = 'community' ");
+        }
 
         String sql = new String(
                 "SELECT source_id, project_id, \n"
@@ -327,29 +331,45 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "                    external_database_name as table_name \n"
                         + "              FROM apidb.Blastp b \n"
                         + "              WHERE CONTAINS(b.description, ?, 1) > 0 \n"
-                        + "                AND 'Blastp' in (" + fields + ") \n"
-                        + "                AND '" + recordType + "' = 'gene' \n"
+                        + "                AND 'Blastp' in ("
+                        + fields
+                        + ") \n"
+                        + "                AND '"
+                        + recordType
+                        + "' = 'gene' \n"
                         + "                AND b.pvalue_exp < ? \n"
-                        + "                AND b.query_organism in (" + organisms + ") \n"
+                        + "                AND b.query_organism in ("
+                        + organisms
+                        + ") \n"
                         + "            UNION ALL \n"
                         + "              SELECT SCORE(1)* nvl(tw.weight, 1) \n"
                         + "                       as scoring, \n"
                         + "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n"
                         + "              FROM apidb.GeneDetail gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n"
                         + "              WHERE CONTAINS(content, ?, 1) > 0\n"
-                        + "                AND gt.field_name in (" + fields + ") \n"
-                        + "                AND '" + recordType + "' = 'gene' \n"
+                        + "                AND gt.field_name in ("
+                        + fields
+                        + ") \n"
+                        + "                AND '"
+                        + recordType
+                        + "' = 'gene' \n"
                         + "                AND gt.field_name = tw.table_name(+) \n"
                         + "                AND gt.source_id = ga.source_id \n"
-                        + "                AND ga.species in (" + organisms + ") \n"
+                        + "                AND ga.species in ("
+                        + organisms
+                        + ") \n"
                         + "            UNION ALL \n"
                         + "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n"
                         + "                       as scoring, \n"
                         + "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
                         + "              FROM apidb.IsolateDetail wit, apidb.TableWeight tw \n"
                         + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
-                        + "                AND wit.field_name in (" + fields + ") \n"
-                        + "                AND '" + recordType + "' = 'isolate' \n"
+                        + "                AND wit.field_name in ("
+                        + fields
+                        + ") \n"
+                        + "                AND '"
+                        + recordType
+                        + "' = 'isolate' \n"
                         + "                AND wit.field_name = tw.table_name(+) \n"
                         + "           ) \n"
                         + "      GROUP BY source_id, project_id \n"
@@ -378,11 +398,11 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private PreparedStatement getValidationQuery() {
         String sql = new String("select attrs.source_id, attrs.project_id \n"
-				+ "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
-				+ "where alias.alias = ? \n"
-				+ "  and alias.gene = attrs.source_id \n"
-				+ "  and attrs.project_id = ? \n"
-				+ "  and ? like '%' || attrs.species || '%'");
+                + "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
+                + "where alias.alias = ? \n"
+                + "  and alias.gene = attrs.source_id \n"
+                + "  and attrs.project_id = ? \n"
+                + "  and ? like '%' || attrs.species || '%'");
 
         WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
@@ -400,10 +420,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
         ResultSet rs = null;
         try {
-	    logger.info("about to execute (one or the other) text-search query");
+            logger.info("about to execute (one or the other) text-search query");
             query.setFetchSize(5000);
             rs = query.executeQuery();
-	    logger.info("finshed execute");
+            logger.info("finshed execute");
             while (rs.next()) {
                 String sourceId = rs.getString("source_id");
 
@@ -418,7 +438,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                     matches.put(sourceId, match);
                 }
             }
-	    logger.info("finished fetching rows");
+            logger.info("finished fetching rows");
         } catch (SQLException ex) {
             logger.info("caught SQLException " + ex.getMessage());
             ex.printStackTrace();

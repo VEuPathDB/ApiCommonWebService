@@ -174,8 +174,9 @@ public class WdkFullQueryPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkFullQueryPlugin.VERSION);
         // logger.info("Invoking WdkQueryPlugin......");
@@ -230,7 +231,13 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             }
 
             // WS Query processing
-            User user = model.getModel().getSystemUser();
+            User user;
+            WdkModel wdkModel = model.getModel();
+            if (userSignature == null) {
+                user = wdkModel.getSystemUser();
+            } else {
+                user = wdkModel.getUserFactory().getUser(userSignature);
+            }
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;

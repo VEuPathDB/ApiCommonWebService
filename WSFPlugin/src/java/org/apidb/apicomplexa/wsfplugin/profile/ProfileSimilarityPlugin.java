@@ -193,7 +193,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      *      java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
+    protected WsfResult execute(String invokeKey, String userSignature, Map<String, String> params,
             String[] orderedColumns) throws WsfServiceException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 

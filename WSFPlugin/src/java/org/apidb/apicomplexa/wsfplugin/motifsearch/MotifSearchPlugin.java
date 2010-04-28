@@ -172,8 +172,9 @@ public class MotifSearchPlugin extends WsfPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    protected WsfResult execute(String invokeKey, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    protected WsfResult execute(String invokeKey, String userSignature,
+            Map<String, String> params, String[] orderedColumns)
+            throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
         // get parameters
@@ -415,8 +416,8 @@ public class MotifSearchPlugin extends WsfPlugin {
             if (line == null) break;
 
             // scan the sequence to find all matched locations
-            Match match = findLocations(geneID, projectId, pattern, seq.toString(),
-                    colorCode, contextLength);
+            Match match = findLocations(geneID, projectId, pattern,
+                    seq.toString(), colorCode, contextLength);
             if (match != null && !matches.contains(match)) {
                 if (useProjectId) match.projectId = projectId;
                 matches.add(match);
@@ -425,9 +426,9 @@ public class MotifSearchPlugin extends WsfPlugin {
         return matches;
     }
 
-    private Match findLocations(String geneID, String projectId, Pattern pattern,
-            String sequence, String colorCode, int contextLength)
-            throws WsfServiceException {
+    private Match findLocations(String geneID, String projectId,
+            Pattern pattern, String sequence, String colorCode,
+            int contextLength) throws WsfServiceException {
         Match match = new Match();
         match.geneID = geneID;
         match.projectId = projectId;

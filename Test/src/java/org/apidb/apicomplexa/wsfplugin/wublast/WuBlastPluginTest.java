@@ -51,7 +51,7 @@ public class WuBlastPluginTest extends TestCase {
 
         // invoke the blast process
         IWsfPlugin processor = new WuBlastPlugin();
-        WsfResult wsfResult = processor.invoke("", params, columns);
+        WsfResult wsfResult = processor.invoke("PlasmoDB", null, params, columns);
 
         logger.info("Result Message: " + wsfResult.getMessage());
         logger.info("Result Signal: " + wsfResult.getSignal());
