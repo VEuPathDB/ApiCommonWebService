@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.apidb.apicomplexa.wsfplugin.dnamotifsearch;
+package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import java.io.BufferedReader;
 import java.io.File;
