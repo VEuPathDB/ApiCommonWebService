@@ -16,14 +16,16 @@ import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.json.JSONException;
 
-public class SpanCompositionPlugin extends WsfPlugin {
+public class SpanCompositionPlugin extends AbstractPlugin {
 
     public static String COLUMN_SOURCE_ID = "source_id";
     public static String COLUMN_PROJECT_ID = "project_id";
@@ -52,28 +54,24 @@ public class SpanCompositionPlugin extends WsfPlugin {
     public static String PARAM_VALUE_UPSTREAM = "+";
     public static String PARAM_VALUE_DOWNSTREAM = "-";
 
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
                 COLUMN_WDK_WEIGHT };
     }
 
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_OPERATION, PARAM_SPAN + "a",
                 PARAM_SPAN + "b" };
     }
 
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing
     }
 
-    @Override
-    protected WsfResult execute(String projectId, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
+    public WsfResponse execute(WsfRequest request)
             throws WsfServiceException {
+        Map<String, String> params = request.getParams();
         String operation = params.get(PARAM_OPERATION);
         String output = params.get(PARAM_OUTPUT);
         if (output == null || !output.equalsIgnoreCase("b")) output = "a";
@@ -81,17 +79,19 @@ public class SpanCompositionPlugin extends WsfPlugin {
         String[] startStopA = getStartStop(params, "a");
         String[] startStopB = getStartStop(params, "b");
 
-        WdkModelBean wdkModelBean = (WdkModelBean) servletContext.getAttribute(CConstants.WDK_MODEL_KEY);
+        WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
         WdkModel wdkModel = wdkModelBean.getModel();
-
+        
+        Map<String, String> context = request.getContext();
+        String userSignature = context.get(ProcessQueryInstance.CTX_USER);
         try {
             String cacheA = getCache(wdkModel, userSignature, params, "a");
             String cacheB = getCache(wdkModel, userSignature, params, "b");
 
-            String sql = composeSql(projectId, operation, cacheA, cacheB,
+            String sql = composeSql(request.getProjectId(), operation, cacheA, cacheB,
                     startStopA, startStopB, output);
 
-            return getResult(wdkModel, sql, orderedColumns);
+            return getResult(wdkModel, sql, request.getOrderedColumns());
         } catch (Exception ex) {
             throw new WsfServiceException(ex);
         }
@@ -201,7 +201,7 @@ public class SpanCompositionPlugin extends WsfPlugin {
         return builder.toString();
     }
 
-    private WsfResult getResult(WdkModel wdkModel, String sql,
+    private WsfResponse getResult(WdkModel wdkModel, String sql,
             String[] orderedColumns) throws WdkUserException,
             WdkModelException, SQLException {
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
@@ -224,11 +224,16 @@ public class SpanCompositionPlugin extends WsfPlugin {
                 System.arraycopy(record, 0, array[i], 0, record.length);
             }
 
-            WsfResult wsfResult = new WsfResult();
+            WsfResponse wsfResult = new WsfResponse();
             wsfResult.setResult(array);
             return wsfResult;
         } finally {
             SqlUtils.closeResultSet(results);
         }
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return new String[]{CConstants.WDK_MODEL_KEY};
     }
 }

@@ -36,8 +36,9 @@ import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.user.Dataset;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wdk.model.user.UserFactory;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.json.JSONException;
 
@@ -45,7 +46,7 @@ import org.json.JSONException;
  * @author Cary Pennington
  * @created Dec 20, 2006
  */
-public class WdkFullQueryPlugin extends WsfPlugin {
+public class WdkFullQueryPlugin extends AbstractPlugin {
 
     // Propert values
     public static final String PROPERTY_FILE = "wdkquery-config.xml";
@@ -96,8 +97,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] {};
     }
 
@@ -106,8 +106,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] {};
     }
 
@@ -116,28 +115,10 @@ public class WdkFullQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
     }
-
-    @Override
-    protected void validateColumns(String[] orderedColumns) {
-    // Overriding the parent class to do nothing in this plugin
-    }
-
-    // private void validateQueryParams(Map<String, String> params, Query q)
-    // throws WsfServiceException {
-    // logger.info("--------Validating Parameters---------------");
-    // String[] reqParams = getParamsFromQuery(q);
-    // for (String param : reqParams) {
-    // if (!params.containsKey(param)) {
-    // throw new WsfServiceException(
-    // "The required parameter is missing: " + param);
-    // }
-    // }
-    // }
 
     private void validateQueryColumns(String[] orderedColumns, Query query)
             throws WsfServiceException {
@@ -173,9 +154,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
+    public WsfResponse execute(WsfRequest request)
             throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkFullQueryPlugin.VERSION);
@@ -183,8 +162,12 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         String[][] componentResults = null;
         int resultSize = 1;
         ResultList results = null;
+        Map<String, String> params = request.getParams();
+        Map<String, String> context = request.getContext();
+        
+        String queryName = context.get(ProcessQueryInstance.CTX_QUERY);
         if (params.containsKey("Query")) {
-            invokeKey = params.get("Query");
+            queryName = params.get("Query");
             params.remove("Query");
         }
         String siteModel = params.get(SITE_MODEL);
@@ -195,21 +178,22 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 
         // Map<String,Object>SOParams = convertParams(params);
         // logger.info("Parameters were processed");
+        String[] orderedColumns = request.getOrderedColumns();
         Integer[] colindicies = new Integer[orderedColumns.length];
         try {
 
             // Reset the QueryName for testing reasons
             // invokeKey = "GeneFeatureIds.GeneByLocusTag";
 
-            invokeKey = invokeKey.replace('.', ':');
-            logger.info(invokeKey);
-            String[] queryName = invokeKey.split(":");
-            QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-            Query q = qs.getQuery(queryName[1]);
+            queryName = queryName.replace('.', ':');
+            logger.info(queryName);
+            String[] twoPartName = queryName.split(":");
+            QuerySet qs = model.getModel().getQuerySet(twoPartName[0]);
+            Query q = qs.getQuery(twoPartName[1]);
             logger.info("Query found : " + q.getFullName());
-            String recordClassName = determineRecordClass(queryName[0]);
+            String recordClassName = determineRecordClass(twoPartName[0]);
             logger.info(recordClassName + " Determined from QuerySet "
-                    + queryName[0]);
+                    + twoPartName[0]);
             RecordClass recordClass = model.getModel().getRecordClass(
                     recordClassName);
             logger.info("RecordClass found : " + recordClass.getFullName());
@@ -233,6 +217,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
             // WS Query processing
             User user;
             WdkModel wdkModel = model.getModel();
+            String userSignature = context.get(ProcessQueryInstance.CTX_USER);
             if (userSignature == null) {
                 user = wdkModel.getSystemUser();
             } else {
@@ -325,7 +310,7 @@ public class WdkFullQueryPlugin extends WsfPlugin {
 
         if (resultSize > 0) resultSize = componentResults.length;
 
-        WsfResult result = new WsfResult();
+        WsfResponse result = new WsfResponse();
         result.setResult(responseT);
         result.setMessage(Integer.toString(resultSize));
         result.setSignal(resultSize);
@@ -662,6 +647,11 @@ public class WdkFullQueryPlugin extends WsfPlugin {
         // logResults(arr[x]);
         // }
         return arr;// rows.toArray(arr);
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 
     // private void logResults(String[] vals) {

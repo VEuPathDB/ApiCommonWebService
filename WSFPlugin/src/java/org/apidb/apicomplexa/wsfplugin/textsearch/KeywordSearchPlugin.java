@@ -17,18 +17,20 @@ import javax.sql.DataSource;
 
 import org.apidb.apicommon.controller.CommentActionUtility;
 import org.apidb.apicommon.model.CommentFactory;
+import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.dbms.DBPlatform;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * @author John I
  * @created Nov 16, 2008
  */
-public class KeywordSearchPlugin extends WsfPlugin {
+public class KeywordSearchPlugin extends AbstractPlugin {
 
     // private static final String PROPERTY_FILE = "keywordsearch-config.xml";
     // private static final String PROPERTY_FILE =
@@ -51,16 +53,12 @@ public class KeywordSearchPlugin extends WsfPlugin {
     // private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
     // private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
 
-    private String projectId;
-
     /**
      * @throws WsfServiceException
      * 
      */
     public KeywordSearchPlugin() throws WsfServiceException {
         super();
-
-        projectId = servletContext.getInitParameter("model");
     }
 
     /*
@@ -68,8 +66,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
 
@@ -78,8 +75,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
                 COLUMN_DATASETS, COLUMN_MAX_SCORE };
     }
@@ -89,11 +85,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
-
     }
 
     /*
@@ -101,15 +95,13 @@ public class KeywordSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking KeywordSearchPlugin...");
 
         int signal = 0;
         // get parameters
         String recordType;
+        Map<String, String> params = request.getParams();
         if (params.get(PARAM_WDK_RECORD_TYPE) == null) {
             recordType = "gene";
         } else {
@@ -154,15 +146,16 @@ public class KeywordSearchPlugin extends WsfPlugin {
         }
 
         String oracleTextExpression = transformQueryString(textExpression);
-
+        String projectId = request.getProjectId();
         if (searchComments) {
             PreparedStatement ps = null;
             try {
-                ps = getCommentQuery(getCommentDbConnection(), recordType,
+                ps = getCommentQuery(projectId, recordType,
                         oracleTextExpression, commentRecords,
                         communityAnnotationRecords);
                 commentMatches = textSearch(ps);
-                commentMatches = validateRecords(commentMatches, organisms);
+                commentMatches = validateRecords(projectId, commentMatches,
+                        organisms);
                 logger.debug("after validation commentMatches = "
                         + commentMatches.toString());
             } catch (SQLException ex) {
@@ -175,9 +168,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
         if (searchComponent) {
             PreparedStatement ps = null;
             try {
-                ps = getComponentQuery(getComponentDbConnection(), recordType,
-                        organisms, oracleTextExpression,
-                        quotedFields.toString(), maxPvalue);
+                ps = getComponentQuery(projectId, recordType, organisms,
+                        oracleTextExpression, quotedFields.toString(),
+                        maxPvalue);
                 componentMatches = textSearch(ps);
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
@@ -189,8 +182,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
         SearchResult[] matches = joinMatches(commentMatches, componentMatches);
 
         // construct results
-        String[][] result = flattenMatches(matches, orderedColumns);
-        WsfResult wsfResult = new WsfResult();
+        String[][] result = flattenMatches(matches, request.getOrderedColumns());
+        WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(result);
         wsfResult.setSignal(signal);
         return wsfResult;
@@ -260,10 +253,11 @@ public class KeywordSearchPlugin extends WsfPlugin {
         return conjunction.toString();
     }
 
-    private PreparedStatement getCommentQuery(Connection dbConnection,
+    private PreparedStatement getCommentQuery(String projectId,
             String recordType, String oracleTextExpression,
-            boolean commentRecords, boolean communityAnnotationRecords) {
-
+            boolean commentRecords, boolean communityAnnotationRecords)
+            throws SQLException {
+        Connection dbConnection = getCommentDbConnection(projectId);
         String recordTypePredicate = new String("");
 
         if (commentRecords && !communityAnnotationRecords) {
@@ -309,10 +303,10 @@ public class KeywordSearchPlugin extends WsfPlugin {
         return ps;
     }
 
-    private PreparedStatement getComponentQuery(Connection dbConnection,
+    private PreparedStatement getComponentQuery(String projectId,
             String recordType, String organisms, String oracleTextExpression,
-            String fields, String maxPvalue) {
-
+            String fields, String maxPvalue) throws SQLException {
+        Connection dbConnection = getComponentDbConnection();
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
         }
@@ -404,7 +398,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 + "  and attrs.project_id = ? \n"
                 + "  and ? like '%' || attrs.species || '%'");
 
-        WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
+        WdkModelBean wdkModel = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
         DataSource dataSource = platform.getDataSource();
 
@@ -449,7 +443,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         return matches;
     }
 
-    private Map<String, SearchResult> validateRecords(
+    private Map<String, SearchResult> validateRecords(String projectId,
             Map<String, SearchResult> commentMatches, String organisms) {
 
         Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
@@ -564,15 +558,25 @@ public class KeywordSearchPlugin extends WsfPlugin {
         return flat;
     }
 
-    private Connection getCommentDbConnection() throws SQLException {
-        CommentFactory factory = CommentActionUtility.getCommentFactory(servletContext);
+    private Connection getCommentDbConnection(String projectId)
+            throws SQLException {
+        CommentFactory factory = (CommentFactory) context.get(CommentActionUtility.COMMENT_FACTORY_KEY);
+        if (factory == null) {
+            String gusHome = (String) context.get(CConstants.GUS_HOME_KEY);
+            factory = CommentFactory.getInstance(gusHome, projectId);
+        }
         DBPlatform platform = factory.getCommentPlatform();
         return platform.getDataSource().getConnection();
     }
 
     private Connection getComponentDbConnection() throws SQLException {
-        WdkModelBean wdkModel = (WdkModelBean) servletContext.getAttribute("wdkModel");
+        WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
         return platform.getDataSource().getConnection();
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return new String[] { CConstants.WDK_MODEL_KEY, CConstants.GUS_HOME_KEY };
     }
 }

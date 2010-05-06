@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Test;
@@ -36,9 +37,14 @@ public class MotifSearchPluginTest {
                 MotifSearchPlugin.COLUMN_LOCATIONS,
                 MotifSearchPlugin.COLUMN_SEQUENCE };
 
+        WsfRequest request = new WsfRequest();
+        request.setParams(params);
+        request.setOrderedColumns(columns);
+        request.setContext(new HashMap<String, String>());
+
         MotifSearchPlugin search = new MotifSearchPlugin();
         // invoke the plugin and get result back
-        WsfResult wsfResult = search.invoke("PlasmoDB", null, params, columns);
+        WsfResponse wsfResult = search.execute(request);
 
         logger.info("Result Message: " + wsfResult.getMessage());
         logger.info("Result Signal: " + wsfResult.getSignal());

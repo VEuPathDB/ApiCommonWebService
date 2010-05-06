@@ -14,15 +14,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * @author Jerric, modified by Cristina
  * @created Apr 30, 2010
  */
-public class DnaMotifSearchPlugin extends WsfPlugin {
+public class DnaMotifSearchPlugin extends AbstractPlugin {
 
     private class Match {
 
@@ -122,8 +123,7 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_EXPRESSION }; // , PARAM_DATASET };
     }
 
@@ -132,8 +132,7 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         if (useProjectId) return new String[] { COLUMN_DYNSPAN_ID,
                 COLUMN_PROJECT_ID, COLUMN_LOCATIONS, COLUMN_MATCH_COUNT,
                 COLUMN_SEQUENCE };
@@ -146,12 +145,12 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         // do nothing in this plugin
 
         boolean datasetPresent = false;
+        Map<String, String> params = request.getParams();
         for (String param : params.keySet()) {
             logger.debug("Param - name=" + param + ", value="
                     + params.get(param));
@@ -171,14 +170,13 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking DnaMotifSearchPlugin...");
 
         // get parameters
         // String datasetIDs = params.get(PARAM_DATASET);
         String datasetIDs = null;
+        Map<String, String> params = request.getParams();
         for (String paramName : params.keySet()) {
             if (paramName.startsWith(PARAM_DATASET)) {
                 datasetIDs = params.get(paramName);
@@ -218,8 +216,8 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
             }
 
             // construct results
-            String[][] result = prepareResult(matches, orderedColumns);
-            WsfResult wsfResult = new WsfResult();
+            String[][] result = prepareResult(matches, request.getOrderedColumns());
+            WsfResponse wsfResult = new WsfResponse();
             wsfResult.setResult(result);
             return wsfResult;
         } catch (IOException ex) {
@@ -470,5 +468,10 @@ public class DnaMotifSearchPlugin extends WsfPlugin {
         String projectId = getProperty(mapKey);
         if (projectId == null) projectId = projectMapOthers;
         return projectId;
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 }

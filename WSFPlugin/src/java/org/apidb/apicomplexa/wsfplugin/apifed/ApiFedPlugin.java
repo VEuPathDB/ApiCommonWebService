@@ -4,19 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-
-import org.apache.axis.MessageContext;
 import org.gusdb.wdk.model.Utilities;
+import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -34,7 +33,7 @@ import org.jdom.input.SAXBuilder;
  *          -- Changed the combineResults to use a LinkedHashMap to eliminate
  *          duplicates for the parameter queries
  */
-public class ApiFedPlugin extends WsfPlugin {
+public class ApiFedPlugin extends AbstractPlugin {
 
     // Static Property Values
     public static final String PROPERTY_FILE = "apifed-config.xml";
@@ -72,18 +71,13 @@ public class ApiFedPlugin extends WsfPlugin {
     // Mapping Functions
 
     private String getMapFilePath() {
-        MessageContext msgContext = MessageContext.getCurrentContext();
-        ServletContext servletContext = ((Servlet) msgContext.getProperty(org.apache.axis.transport.http.HTTPConstants.MC_HTTP_SERVLET)).getServletConfig().getServletContext();
-        String root = servletContext.getRealPath("/");
-
-        String wsfConfigDir = servletContext.getInitParameter("wsfConfigDir_param");
-        if (wsfConfigDir == null) {
-            wsfConfigDir = "WEB-INF/wsf-config/";
+        String configDir = (String) context.get(CTX_CONFIG_PATH);
+        if (configDir == null) {
+            URL url = this.getClass().getResource("/");
+            configDir = url.toString() + "/../wsf-config/";
         }
-
-        root = root + wsfConfigDir;
-        logger.debug("Mapping File Path == " + root);
-        return root;
+        logger.debug("Mapping File Path == " + configDir);
+        return configDir;
     }
 
     private void loadProps() {
@@ -94,7 +88,7 @@ public class ApiFedPlugin extends WsfPlugin {
             propDoc = new SAXBuilder().build(new File(propFilename));
             Element config_e = propDoc.getRootElement();
             Element sites_e = config_e.getChild("Sites");
-            List models = sites_e.getChildren();
+            List<?> models = sites_e.getChildren();
             int sites_count = models.size();
             sites = new Site[sites_count];
             for (int i = 0; i < sites_count; i++) {
@@ -186,8 +180,7 @@ public class ApiFedPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] {};
     }
 
@@ -196,8 +189,7 @@ public class ApiFedPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
 
         return new String[] {};
 
@@ -208,15 +200,9 @@ public class ApiFedPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // Do Nothing in this plugin
-    }
-
-    @Override
-    protected void validateColumns(String[] orderedColumns) {
-    // Overriding the parent class to do nothing in this plugin
     }
 
     /*
@@ -224,16 +210,14 @@ public class ApiFedPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String queryName, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         Site[] sites = new Site[this.sites.length];
         for (int i = 0; i < sites.length; i++) {
             sites[i] = (Site) this.sites[i].clone();
         }
 
         String ocStr = "";
+        String[] orderedColumns = request.getOrderedColumns();
         for (String s : orderedColumns)
             ocStr = ocStr + "-------" + s;
         logger.debug("****************execute(): orderedColumns are: " + ocStr);
@@ -256,6 +240,7 @@ public class ApiFedPlugin extends WsfPlugin {
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
         // Spliting the QueryName up for Mapping
+        String queryName = request.getContext().get(ProcessQueryInstance.CTX_QUERY);
         logger.info("QueryName = " + queryName);
         String apiQueryFullName = queryName.replace('.', ':');
         logger.debug("ApiQueryFullName = " + apiQueryFullName);
@@ -267,6 +252,7 @@ public class ApiFedPlugin extends WsfPlugin {
         // Determine if the Query is a Parameter Query
         if (apiQuerySetName.contains(PARAM_SET_NAME)) isParam = true;
 
+        Map<String, String> params = request.getParams();
         String orgName = null;
         String datasetName = null;
         if (isParam) {
@@ -275,7 +261,6 @@ public class ApiFedPlugin extends WsfPlugin {
             getRemoteCalls(doAll, sites);
             logger.debug("RemoteCalls Returned successfully");
         } else {
-
             orgName = hasOrganism(params);
             logger.debug("orgName is " + orgName);
             datasetName = hasDataset(params);
@@ -357,7 +342,7 @@ public class ApiFedPlugin extends WsfPlugin {
                         logger.debug("organism Parameter Removed");
                     }
                 }
-                String[] arrayParams = getParams(siteParams,
+                Map<String, String> arrayParams = getParams(siteParams,
                         site.getOrganism(), orgName, datasetName,
                         site.getName(), apiQuerySetName, apiQueryName);
                 logger.debug("getParams DONE   Organism = "
@@ -368,9 +353,17 @@ public class ApiFedPlugin extends WsfPlugin {
                 logger.debug("compResults initialized");
                 compResults[thread_counter].setSiteName(site.getProjectId());
                 logger.debug("siteName = projectId Done");
+
+                WsfRequest compRequest = new WsfRequest();
+                compRequest.setParams(arrayParams);
+                compRequest.setOrderedColumns(componentColumns);
+
+                Map<String, String> compContext = request.getContext();
+                compContext.put(ProcessQueryInstance.CTX_QUERY,
+                        compQueryFullName);
+
                 compThreads[thread_counter] = new WdkQuery(site.getUrl(),
-                        processName, compQueryFullName, arrayParams,
-                        componentColumns, compResults[thread_counter],
+                        processName, compRequest, compResults[thread_counter],
                         compStatus[thread_counter]);
                 compThreads[thread_counter].start();
             }
@@ -404,7 +397,7 @@ public class ApiFedPlugin extends WsfPlugin {
         StringBuffer message = new StringBuffer();
         String[][] result = combineResults(compResults, orderedColumns,
                 isParam, message);
-        WsfResult wsfResult = new WsfResult();
+        WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(result);
         wsfResult.setMessage(message.toString());
         return wsfResult;
@@ -448,28 +441,26 @@ public class ApiFedPlugin extends WsfPlugin {
         return dsName;
     }
 
-    private String[] getParams(Map<String, String> params, String localOrgs,
-            String orgParam, String datasetParam, String modelName,
-            String querySetName, String queryName) {
-        String[] arrParams = new String[params.size() + 1];
-        int i = 0;
+    private Map<String, String> getParams(Map<String, String> params,
+            String localOrgs, String orgParam, String datasetParam,
+            String modelName, String querySetName, String queryName) {
+        Map<String, String> arrParams = new HashMap<String, String>();
         logger.info("ORGPARAM = " + orgParam);
         for (String key : params.keySet()) {
             logger.info("getParams------> key = " + key + ", value = "
                     + params.get(key));
             String compKey = key;
+            String val;
             if ((key.equals(orgParam)) && !(orgParam.equals("primaryKey"))) {
-                arrParams[i] = compKey + "=" + localOrgs;
+                val = localOrgs;
             } else if (key.equals(datasetParam)) {
-                arrParams[i] = compKey + "=" + localOrgs;
+                val = localOrgs;
             } else {
-                String val = params.get(key);
-                arrParams[i] = compKey + "=" + val;
+                val = params.get(key);
             }
-            logger.info(arrParams[i]);
-            i++;
+            arrParams.put(compKey, val);
         }
-        arrParams[params.size()] = "SiteModel=" + modelName;
+        arrParams.put("SiteModel", modelName);
         return arrParams;
     }
 
@@ -681,19 +672,15 @@ public class ApiFedPlugin extends WsfPlugin {
     class WdkQuery extends Thread {
         private String url;
         private String pluginName;
-        private String queryName;
-        private String[] params;
-        private String[] cols;
+        private WsfRequest request;
         private CompResult result;
         private Status status;
 
-        WdkQuery(String URL, String pluginname, String query, String[] p,
-                String[] c, CompResult r, Status s) {
+        WdkQuery(String URL, String pluginname, WsfRequest request,
+                CompResult r, Status s) {
             url = URL;
             pluginName = pluginname;
-            queryName = query;
-            params = p;
-            cols = c;
+            this.request = request;
             result = r;
             status = s;
         }
@@ -710,8 +697,7 @@ public class ApiFedPlugin extends WsfPlugin {
                 // HACK
                 // in the future, this inovcation should be replaced by the
                 // newer version, invokeEx()
-                WsfResult wsfResult = service.invokeEx(pluginName, queryName,
-                        params, cols);
+                WsfResponse wsfResult = service.invoke(pluginName, request);
                 int packets = wsfResult.getTotalPackets();
                 if (packets > 1) {
                     StringBuffer buffer = new StringBuffer(
@@ -816,4 +802,8 @@ public class ApiFedPlugin extends WsfPlugin {
         }
     }
 
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
+    }
 }

@@ -12,9 +12,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.gusdb.wsf.plugin.IWsfPlugin;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.Plugin;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 
@@ -22,7 +23,7 @@ import org.gusdb.wsf.util.Formatter;
  * @author xingao
  * 
  */
-public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
+public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
 
     // column definitions
     public static final String COLUMN_ID = "Identifier";
@@ -110,8 +111,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_ALGORITHM, PARAM_DATABASE_ORGANISM,
                 PARAM_SEQUENCE };
     }
@@ -121,8 +121,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         if (useProjectId) return new String[] { COLUMN_PROJECT_ID, COLUMN_ID,
                 COLUMN_HEADER, COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK,
                 COLUMN_COUNTER };
@@ -135,10 +134,10 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         boolean dbTypePresent = false;
+        Map<String, String> params = request.getParams();
         for (String param : params.keySet()) {
             logger.debug("Param - name=" + param + ", value="
                     + params.get(param));
@@ -151,24 +150,21 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             throw new WsfServiceException(
                     "The required database type parameter is not presented.");
     }
-
+    
     /*
      * (non-Javadoc)
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
      * java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
-            throws WsfServiceException {
-
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         // Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
-        logger.debug("BlastPlugin.java: ordered columns are:"
-                + orderedColumns[0] + "--" + orderedColumns[1] + "--"
-                + orderedColumns[2] + "--" + orderedColumns[3] + "--"
-                + orderedColumns[4] + "--" + orderedColumns[5] + "--"
-                + orderedColumns[6] + "--");
+        String[] orderedColumns = request.getOrderedColumns();
+        StringBuilder builder = new StringBuilder();
+        for (String column : orderedColumns) {
+            builder.append(column + " -- ");
+        }
+        logger.debug("BlastPlugin.java: ordered columns are:" + builder);
 
         // get plugin name
         String pluginName = getClass().getSimpleName();
@@ -185,6 +181,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
             // get database type parameter
             String dbType = null;
             String dbTypeName = null;
+            Map<String, String> params = request.getParams();
             for (String param : params.keySet()) {
                 if (param.startsWith(PARAM_DATABASE_TYPE)) {
                     dbTypeName = param;
@@ -256,7 +253,7 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
 
             if (message.length() == 0) message.append(output);
 
-            WsfResult wsfResult = new WsfResult();
+            WsfResponse wsfResult = new WsfResponse();
             wsfResult.setMessage(message.toString());
             wsfResult.setSignal(signal);
             wsfResult.setResult(result);
@@ -271,6 +268,14 @@ public abstract class BlastPlugin extends WsfPlugin implements IWsfPlugin {
              */
             cleanup();
         }
+    }
+
+    /* (non-Javadoc)
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#defineContextKeys()
+     */
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 
     protected void cleanup() {

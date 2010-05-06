@@ -6,14 +6,13 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/WDK Model"/>
 	<classpathentry kind="lib" path="lib/java/jdom-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/java/junit-4.3.1.jar"/>
-	<classpathentry kind="lib" path="/WSF Plugin/lib/java/axis-1.4.jar"/>
 	<classpathentry kind="lib" path="/WSF Service/lib/java/jaxrpc-1.4.jar"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/log4j-1.2.15.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WSF Plugin"/>
 	<classpathentry kind="lib" path="/WDK Model/lib/java/db_driver/ojdbc14.jar"/>
 	<classpathentry kind="lib" path="/WDK Model/lib/java/WSF-Client.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web"/>
-	<classpathentry kind="lib" path="/WSF Plugin/lib/java/not-deployed/servlet-api-2.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WDK Controller"/>
+	<classpathentry kind="lib" path="/WSF Service/lib/java/axis-1.4.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

@@ -7,15 +7,16 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Vector;
 
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * @author Jerric
  * @created Jan 13, 2006
  */
-public class PlasmoAPPlugin extends WsfPlugin {
+public class PlasmoAPPlugin extends AbstractPlugin {
 
     private static final String PROPERTY_FILE = "plasmoAP-config.xml";
 
@@ -50,8 +51,7 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_SEQUENCE };
     }
 
@@ -60,8 +60,7 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] { COLUMN_REPORT, COLUMN_SIGNAL };
     }
 
@@ -70,8 +69,7 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
     }
@@ -81,15 +79,12 @@ public class PlasmoAPPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking PlasmoAPPlugin...");
 
         try {
             // invoke the PlasmoAP application
-            String[] command = prepareCommand(params);
+            String[] command = prepareCommand(request.getParams());
             StringBuffer buffer = new StringBuffer();
             // wait for infinite time
             int signal = invokeCommand(command, buffer, 0);
@@ -103,6 +98,7 @@ public class PlasmoAPPlugin extends WsfPlugin {
             String match = parseResult(output);
 
             // construct the result
+            String[] orderedColumns = request.getOrderedColumns();
             String[][] result = new String[1][orderedColumns.length];
             for (int i = 0; i < orderedColumns.length; i++) {
                 if (orderedColumns[i].equalsIgnoreCase(COLUMN_REPORT)) {
@@ -111,7 +107,7 @@ public class PlasmoAPPlugin extends WsfPlugin {
                     result[0][i] = match;
                 }
             }
-            WsfResult wsfResult = new WsfResult();
+            WsfResponse wsfResult = new WsfResponse();
             wsfResult.setResult(result);
             wsfResult.setMessage(output);
             wsfResult.setSignal(signal);
@@ -151,5 +147,10 @@ public class PlasmoAPPlugin extends WsfPlugin {
         if (temp.equalsIgnoreCase("does not")) signal = "false";
         else signal = "true";
         return signal;
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 }

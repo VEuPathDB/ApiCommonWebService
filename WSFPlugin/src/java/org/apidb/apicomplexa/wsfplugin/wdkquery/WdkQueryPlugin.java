@@ -32,8 +32,9 @@ import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.ParamSet;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.json.JSONException;
 
@@ -45,7 +46,7 @@ import org.json.JSONException;
  *          number versioning... not that many changes -- Added support for
  *          accessing Enum Parameters on the componet Sites
  */
-public class WdkQueryPlugin extends WsfPlugin {
+public class WdkQueryPlugin extends AbstractPlugin {
 
     // Propert values
     public static final String PROPERTY_FILE = "wdkquery-config.xml";
@@ -96,8 +97,7 @@ public class WdkQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] {};
     }
 
@@ -106,8 +106,7 @@ public class WdkQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] {};
     }
 
@@ -116,15 +115,9 @@ public class WdkQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
-    }
-
-    @Override
-    protected void validateColumns(String[] orderedColumns) {
-    // Overriding the parent class to do nothing in this plugin
     }
 
     // private void validateQueryParams(Map<String, String> params, Query q)
@@ -171,9 +164,7 @@ public class WdkQueryPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature,
-            Map<String, String> params, String[] orderedColumns)
+    public WsfResponse execute(WsfRequest request)
             throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
@@ -181,8 +172,12 @@ public class WdkQueryPlugin extends WsfPlugin {
         String[][] componentResults = null;
         int resultSize = 1;
         ResultList results = null;
+        Map<String, String> params = request.getParams();
+        Map<String, String> context = request.getContext();
+        
+        String queryName = context.get(ProcessQueryInstance.CTX_QUERY);
         if (params.containsKey("Query")) {
-            invokeKey = params.get("Query");
+            queryName = params.get("Query");
             params.remove("Query");
         }
         String siteModel = params.get(SITE_MODEL);
@@ -195,16 +190,17 @@ public class WdkQueryPlugin extends WsfPlugin {
 
         // Variable to maintain the order of columns in the result... maintains
         // order given by Federation Plugin
+        String[] orderedColumns = request.getOrderedColumns();
         Integer[] colindicies = new Integer[orderedColumns.length];
         try {
 
             // Reset the QueryName for testing reasons
             // invokeKey = "GeneFeatureIds.GeneByLocusTag";
 
-            invokeKey = invokeKey.replace('.', ':');
-            logger.info(invokeKey);
+            queryName = queryName.replace('.', ':');
+            logger.info(queryName);
             Query q = null;
-            String[] queryName = invokeKey.split(":");
+            String[] twoPartName = queryName.split(":");
 
             // TODO: check parameters starting with its paramSet, finding out
             // the type (enum, flatvocab, etc)
@@ -218,7 +214,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             // we want to have component sites defining the parameter enum or
             // flat as they wish
             //
-            if (model.getModel().hasQuerySet(queryName[0])) {
+            if (model.getModel().hasQuerySet(twoPartName[0])) {
                 // if(params.containsKey("ServedQuery")){
                 // String servedquery = params.get("servedQuery");
                 // String[] sQuery = servedquery.split(".");
@@ -230,17 +226,17 @@ public class WdkQueryPlugin extends WsfPlugin {
                 // logger.info("Query found : " + q.getFullName());
                 // }
                 // }else{
-                QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-                q = qs.getQuery(queryName[1]);
+                QuerySet qs = model.getModel().getQuerySet(twoPartName[0]);
+                q = qs.getQuery(twoPartName[1]);
                 logger.info("Query found : " + q.getFullName());
                 // }
             } else {
-                ParamSet ps = model.getModel().getParamSet(queryName[0]);
-                Param p = ps.getParam(queryName[1]);
+                ParamSet ps = model.getModel().getParamSet(twoPartName[0]);
+                Param p = ps.getParam(twoPartName[1]);
                 logger.info("Parameter found : " + p.getFullName());
                 String[][] enumValues = handleEnumParameters(p, orderedColumns);
 
-                WsfResult wsfResult = new WsfResult();
+                WsfResponse wsfResult = new WsfResponse();
                 wsfResult.setResult(enumValues);
                 return wsfResult;
             }
@@ -248,6 +244,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             // get the user
             User user;
             WdkModel wdkModel = model.getModel();
+            String userSignature = context.get(ProcessQueryInstance.CTX_USER);
             if (userSignature == null) {
                 user = wdkModel.getSystemUser();
             } else {
@@ -367,7 +364,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 
         if (resultSize > 0) resultSize = componentResults.length;
 
-        WsfResult wsfResult = new WsfResult();
+        WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(responseT);
         wsfResult.setMessage(Integer.toString(resultSize));
         wsfResult.setSignal(resultSize);
@@ -717,5 +714,10 @@ public class WdkQueryPlugin extends WsfPlugin {
             index++;
         }
         return ePValues;
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 }

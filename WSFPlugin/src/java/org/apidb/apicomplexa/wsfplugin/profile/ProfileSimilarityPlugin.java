@@ -13,15 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.wsf.plugin.WsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
  * @author xingao
  * 
  */
-public class ProfileSimilarityPlugin extends WsfPlugin {
+public class ProfileSimilarityPlugin extends AbstractPlugin {
 
     private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
 
@@ -98,8 +99,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
      */
-    @Override
-    protected String[] getRequiredParameterNames() {
+    public String[] getRequiredParameterNames() {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
                 PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
                 PARAM_TIME_SHIFT, PARAM_SCALE_DATA, PARAM_MIN_SHIFT,
@@ -111,8 +111,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
      */
-    @Override
-    protected String[] getColumns() {
+    public String[] getColumns() {
         return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
                 COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
     }
@@ -122,10 +121,10 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
-    @Override
-    protected void validateParameters(Map<String, String> params)
+    public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         // validate distance method
+        Map<String, String> params = request.getParams();
         String distanceMethod = params.get(PARAM_DISTANCE_METHOD);
         if (!distanceMethod.equalsIgnoreCase("pearson_correlation")
                 && !distanceMethod.equalsIgnoreCase("euclidean_distance"))
@@ -190,14 +189,13 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
      * (non-Javadoc)
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
-     *      java.lang.String[])
+     * java.lang.String[])
      */
-    @Override
-    protected WsfResult execute(String invokeKey, String userSignature, Map<String, String> params,
-            String[] orderedColumns) throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
         // prepare the command
+        Map<String, String> params = request.getParams();
         String[] cmds = prepareCommand(params);
 
         // measure the time used for invocation
@@ -217,9 +215,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             // prepare the result
             String queryGeneId = params.get(PARAM_GENE_ID);
             String[][] result = prepareResult(output.toString(),
-                    orderedColumns, queryGeneId);
+                    request.getOrderedColumns(), queryGeneId);
 
-            WsfResult wsfResult = new WsfResult();
+            WsfResponse wsfResult = new WsfResponse();
             wsfResult.setResult(result);
             wsfResult.setSignal(signal);
             return wsfResult;
@@ -309,5 +307,10 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             array[i] = results.get(i);
         }
         return array;
+    }
+
+    @Override
+    protected String[] defineContextKeys() {
+        return null;
     }
 }
