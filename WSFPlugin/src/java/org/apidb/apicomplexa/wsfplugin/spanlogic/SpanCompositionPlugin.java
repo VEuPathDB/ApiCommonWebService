@@ -90,6 +90,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
             String sql = composeSql(request.getProjectId(), operation, cacheA, cacheB,
                     startStopA, startStopB, output);
+            
+            logger.debug("SPAN LOGIC SQL:\n" + sql);
 
             return getResult(wdkModel, sql, request.getOrderedColumns());
         } catch (Exception ex) {
@@ -173,28 +175,28 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private String composeSql(String projectId, String operation, String sqlA,
             String sqlB, String[] regionA, String[] regionB, String output) {
         StringBuilder builder = new StringBuilder("SELECT ");
-        builder.append(" f" + output + ".* FROM ");
+        builder.append(" DISTINCT f" + output + ".* FROM ");
         builder.append("(SELECT fla.feature_source_id AS source_id, ");
-        builder.append("        ca.project_id, ca.wdk_weight, ");
+        builder.append("   fla.na_sequence_id, ca.project_id, ca.wdk_weight, ");
         builder.append(regionA[0] + " AS begin_a, " + regionA[1] + " AS end_a");
         builder.append(" FROM apidb.FEATURELOCATION fla, " + sqlA + " ca ");
         builder.append(" WHERE fla.feature_source_id = ca.source_id ");
         builder.append("   AND fla.is_top_level = 1) fa, ");
         builder.append("(SELECT flb.feature_source_id AS source_id, ");
-        builder.append("        cb.project_id, cb.wdk_weight, ");
-        builder.append(regionA[0] + " AS begin_b, " + regionA[1] + " AS end_b");
+        builder.append("   flb.na_sequence_id, cb.project_id, cb.wdk_weight, ");
+        builder.append(regionB[0] + " AS begin_b, " + regionB[1] + " AS end_b");
         builder.append(" FROM apidb.FEATURELOCATION flb, " + sqlB + " cb ");
         builder.append(" WHERE flb.feature_source_id = cb.source_id ");
         builder.append("   AND flb.is_top_level = 1) fb ");
-
+        builder.append(" WHERE fa.na_sequence_id = fb.na_sequence_id ");
         if (operation.equals(PARAM_VALUE_OVERLAP)) {
-            builder.append("WHERE fa.begin_a <= fb.end_b ");
+            builder.append("  AND fa.begin_a <= fb.end_b ");
             builder.append("  AND fa.end_a >= fb.begin_b ");
         } else if (operation.equals(PARAM_VALUE_A_CONTAIN_B)) {
-            builder.append("WHERE fa.begin_a <= fb.begin_b ");
+            builder.append("  AND fa.begin_a <= fb.begin_b ");
             builder.append("  AND fa.end_a >= fb.end_b ");
         } else { // b_contain_a
-            builder.append("WHERE fa.begin_a >= fb.begin_b ");
+            builder.append("  AND fa.begin_a >= fb.begin_b ");
             builder.append("  AND fa.end_a <= fb.end_b ");
         }
 
