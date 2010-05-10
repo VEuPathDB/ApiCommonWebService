@@ -20,10 +20,14 @@ import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
- * @author Jerric
+ * @author Jerric, modified by Cristina 2010 to add DNA motif
  * @created Jan 31, 2006
  */
+
+
+// geneID could be an ORF or a genomic sequence deending on who uses the plugin
 public class MotifSearchPlugin extends AbstractPlugin {
+
 
     private class Match {
 
@@ -48,6 +52,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
         }
     }
 
+    //let's store files in same directory
     private static final String PROPERTY_FILE = "motifSearch-config.xml";
 
     // class string definition
@@ -154,7 +159,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
         for (String param : params.keySet()) {
             logger.debug("Param - name=" + param + ", value="
                     + params.get(param));
-            if (param.startsWith(PARAM_DATASET)) {
+            if (param.contains(PARAM_DATASET)) {
                 datasetPresent = true;
                 break;
             }
@@ -173,13 +178,15 @@ public class MotifSearchPlugin extends AbstractPlugin {
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
-        // get parameters
+        // get parameters -- find out if this is a dna motif or not
+	Boolean dnamotif = false;
         // String datasetIDs = params.get(PARAM_DATASET);
         String datasetIDs = null;
         Map<String, String> params = request.getParams();
         for (String paramName : params.keySet()) {
-            if (paramName.startsWith(PARAM_DATASET)) {
+            if (paramName.contains(PARAM_DATASET)) {
                 datasetIDs = params.get(paramName);
+		if (paramName.contains("dna")) dnamotif=true;
                 break;
             }
         }
@@ -189,17 +196,18 @@ public class MotifSearchPlugin extends AbstractPlugin {
 
         String expression = params.get(PARAM_EXPRESSION);
 
-        // get optional parameters
-        String colorCode = "Red";
-        if (params.containsKey("ColorCode"))
-            colorCode = params.get("ColorCode");
-        int contextLength = 0;
-        if (params.containsKey("ContextLength"))
-            contextLength = Integer.parseInt(params.get("ContextLength"));
-        if (contextLength <= 0) contextLength = 20;
+	// get optional parameters
+	String colorCode = "Red";
+	if (params.containsKey("ColorCode"))
+	    colorCode = params.get("ColorCode");
+	int contextLength = 0;
+	if (params.containsKey("ContextLength"))
+	    contextLength = Integer.parseInt(params.get("ContextLength"));
+	if (contextLength <= 0) contextLength = 20;
 
-        // translate the expression
-        String regex = translateExpression(expression);
+	// translate the expression
+	String regex = translateExpression(expression);
+
 
         // open the flatfile database assigned by the user
         try {
@@ -208,23 +216,35 @@ public class MotifSearchPlugin extends AbstractPlugin {
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
-                logger.info("execute(): dsId: " + dsId
-                        + " , input expression: " + expression
-                        + " , expr translated to regex: " + regex + "\n");
-                matches.addAll(findMatches(dsId.trim(), regex, colorCode,
-                        contextLength));
+		logger.debug("execute(): dsId: " + dsId
+			     + " , input expression: " + expression
+			     + " , expr translated to regex: " + regex + "\n");
+		matches.addAll(findMatches(dsId.trim(), regex, colorCode,
+					   contextLength));
             }
+	    
+	    //locations contains (xxx-yyy), (xxx-yyyy), ...
+	    //sequence contains sequences from matches, separated by a space (so it wraps in summary page)
 
+	    String[][] result;
             // construct results
-            String[][] result = prepareResult(matches,
-                    request.getOrderedColumns());
+
+	    if(dnamotif){
+		result = dnaPrepareResult(matches, orderedColumns, expression);
+	    }
+	    else {
+		  result = prepareResult(matches, orderedColumns);
+	    }
+    
             WsfResponse wsfResult = new WsfResponse();
+
             wsfResult.setResult(result);
             return wsfResult;
         } catch (IOException ex) {
             throw new WsfServiceException(ex);
         }
     }
+
 
     /**
      * Available flatfile databases are listed here:
@@ -497,6 +517,75 @@ public class MotifSearchPlugin extends AbstractPlugin {
         logger.info("hits found: " + result.length + "\n");
         // logger.debug("result " + resultToString(result) + "\n");
         return result;
+    }
+
+
+    private String[][] dnaPrepareResult(Set<Match> matches, String[] cols, String sequence) {
+	logger.debug("dnaPrepareResult() ***************\n");
+
+        // create an column order map
+        Map<String, Integer> orders = new HashMap<String, Integer>();
+        for (int i = 0; i < cols.length; i++)
+            orders.put(cols[i], i);
+
+        int i = 0; int j = 0; int count = 0; int resultsize = 0;
+	String ID ="";
+	String[] locations,sequences,dynSpanIDs = null;
+
+	for (Match match : matches) {
+	    //check for each match how many matches in a genomic sequence
+            resultsize+=match.matchCount;
+	    logger.debug("\nMatch: " + i + ", count: " + match.matchCount + ", total result size is: " + resultsize + "\n");
+	    i++;
+	}
+
+        String[][] result = new String[resultsize][cols.length];
+	logger.debug("\nThere are " + i + " genomic sequences matched\nAnd we will generate a result with " + resultsize + " dynamic spans\n");
+
+	i=0;
+        for (Match match : matches) {
+	    //store match info (geneID contains a genomic sequence ID)
+            ID = match.geneID;
+            count = match.matchCount;
+	    match.locations = match.locations.replace("(","");
+	    match.locations = match.locations.replace(")","");
+	    locations = match.locations.split(", ");
+	    dynSpanIDs = prepareIDs(ID,locations,count);
+
+	    logger.debug("\n\n\nsequences before split: " + match.sequence + "\n\n\n");
+	    sequences = match.sequence.split(". ");
+
+	    for (j=0; j<count;j++) {
+		logger.debug("\n\n preparing result[" + i + "+" + j + 
+			     "]\nCOLUMN_GENE_ID: " + dynSpanIDs[j] +
+			     "\nCOLUMN_MATCH_COUNT: " + count +
+			     "\nCOLUMN_LOCATIONS: " + locations[j] +
+			     "\nCOLUMN_SEQUENCE: " + sequences[j+1]  
+			     );
+		
+		result[i+j][orders.get(COLUMN_GENE_ID)] = dynSpanIDs[j];
+		result[i+j][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(count);
+		result[i+j][orders.get(COLUMN_LOCATIONS)] = locations[j];
+		result[i+j][orders.get(COLUMN_SEQUENCE)] = sequence;
+		if (useProjectId) result[i+j][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
+	    }
+            i++;
+        }
+        logger.info("hits found: " + result.length + "\n");
+        // logger.debug("result " + resultToString(result) + "\n");
+        return result;
+    }
+
+
+    private String[] prepareIDs(String ID,String[] locations,int count) {
+	logger.debug("\n\nNext match: prepareIDs() *************** \nID: " + ID + "\nlocations[0]: " + locations[0] + "\ncount: " + count + "\n");
+
+	String[] result = new String[count];
+
+	for (int j=0; j<count;j++) {
+	    result[j]= ID + ":" + locations[j] + ":0";
+	}
+	return result;
     }
 
     private String extractField(String defline, String regex) {
