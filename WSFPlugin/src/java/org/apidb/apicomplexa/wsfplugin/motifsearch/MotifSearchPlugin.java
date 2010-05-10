@@ -230,10 +230,10 @@ public class MotifSearchPlugin extends AbstractPlugin {
             // construct results
 
 	    if(dnamotif){
-		result = dnaPrepareResult(matches, orderedColumns, expression);
+		result = dnaPrepareResult(matches, request.getOrderedColumns(), expression);
 	    }
 	    else {
-		  result = prepareResult(matches, orderedColumns);
+		  result = prepareResult(matches, request.getOrderedColumns());
 	    }
     
             WsfResponse wsfResult = new WsfResponse();
