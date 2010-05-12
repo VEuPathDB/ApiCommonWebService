@@ -685,7 +685,6 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     class WdkQuery extends Thread {
         private String url;
-        private String pluginName;
         private WsfRequest request;
         private CompResult result;
         private Status status;
@@ -693,8 +692,8 @@ public class ApiFedPlugin extends AbstractPlugin {
         WdkQuery(String URL, String pluginname, WsfRequest request,
                 CompResult r, Status s) {
             url = URL;
-            pluginName = pluginname;
             this.request = request;
+            this.request.setPluginClass(pluginname);
             result = r;
             status = s;
         }
@@ -711,7 +710,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 // HACK
                 // in the future, this inovcation should be replaced by the
                 // newer version, invokeEx()
-                WsfResponse wsfResult = service.invoke(pluginName, request);
+                WsfResponse wsfResult = service.invoke(request.toString());
                 int packets = wsfResult.getTotalPackets();
                 if (packets > 1) {
                     StringBuffer buffer = new StringBuffer(
