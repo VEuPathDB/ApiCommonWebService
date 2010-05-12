@@ -82,6 +82,19 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
      */
     public BlastPlugin(String propertyFile) throws WsfServiceException {
         super(propertyFile);
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
 
         // load properties
         project = getProperty(FIELD_PROJECT);
@@ -150,7 +163,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
             throw new WsfServiceException(
                     "The required database type parameter is not presented.");
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -270,7 +283,9 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.gusdb.wsf.plugin.AbstractPlugin#defineContextKeys()
      */
     @Override

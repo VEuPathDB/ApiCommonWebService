@@ -65,6 +65,19 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      */
     public ProfileSimilarityPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
 
         // load properties
         perlExec = getProperty(FIELD_PERL_EXECUTABLE);

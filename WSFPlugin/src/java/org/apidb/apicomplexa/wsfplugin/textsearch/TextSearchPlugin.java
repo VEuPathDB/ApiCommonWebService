@@ -59,6 +59,20 @@ public class TextSearchPlugin extends AbstractPlugin {
      */
     public TextSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
+
         // load properties
         String dir = getProperty(FIELD_DATA_DIR);
         if (dir == null)

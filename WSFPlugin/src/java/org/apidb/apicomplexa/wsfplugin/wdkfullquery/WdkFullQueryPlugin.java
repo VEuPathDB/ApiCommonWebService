@@ -78,6 +78,20 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
 
     public WdkFullQueryPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
+
         String modelName = getProperty(MODEL_NAME);
         modelNames = modelName.split(",");
 

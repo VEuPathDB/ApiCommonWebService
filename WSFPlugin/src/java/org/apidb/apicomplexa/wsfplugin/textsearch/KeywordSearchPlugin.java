@@ -53,14 +53,6 @@ public class KeywordSearchPlugin extends AbstractPlugin {
     // private static final String FIELD_COMMENT_INSTANCE = "commentInstance";
     // private static final String FIELD_COMMENT_PASSWORD = "commentPassword";
 
-    /**
-     * @throws WsfServiceException
-     * 
-     */
-    public KeywordSearchPlugin() throws WsfServiceException {
-        super();
-    }
-
     /*
      * (non-Javadoc)
      * 

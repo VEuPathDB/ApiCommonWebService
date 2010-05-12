@@ -37,6 +37,20 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      */
     public PlasmoAPPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
+
         // load properties
         perlExe = getProperty(FIELD_PERL_EXE);
         plasmoapScript = getProperty(FIELD_SCRIPT);

@@ -36,6 +36,7 @@ import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.json.JSONException;
 import org.junit.Test;
@@ -72,12 +73,12 @@ public class SpanCompositionTest {
         logger.info(Formatter.printArray(wsfResult.getResult()));
     }
 
-    private SpanCompositionPlugin createPlugin() {
+    private SpanCompositionPlugin createPlugin() throws WsfServiceException {
         SpanCompositionPlugin plugin = new SpanCompositionPlugin();
 
         Map<String, Object> context = new HashMap<String, Object>();
         context.put(CConstants.WDK_MODEL_KEY, new WdkModelBean(wdkModel));
-        plugin.setContext(context);
+        plugin.initialize(context);
 
         return plugin;
     }

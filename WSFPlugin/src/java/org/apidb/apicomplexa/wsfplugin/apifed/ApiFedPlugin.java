@@ -63,6 +63,20 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     public ApiFedPlugin() throws WsfServiceException {
         super();
+    }
+
+    // load properties
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
+     */
+    @Override
+    public void initialize(Map<String, Object> context)
+            throws WsfServiceException {
+        super.initialize(context);
+
         logger.debug("Parent Constructor Finished");
         loadProps();
         logger.debug("Properties File Loaded");
