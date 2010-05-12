@@ -165,7 +165,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
         // do nothing in this plugin
 
         boolean datasetPresent = false;
-        Map<String, String> params = request.getContext();
+        Map<String, String> params = request.getParams();
         for (String param : params.keySet()) {
             logger.debug("Param - name=" + param + ", value="
                     + params.get(param));

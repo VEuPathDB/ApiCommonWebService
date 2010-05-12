@@ -125,7 +125,7 @@ public class TextSearchPlugin extends AbstractPlugin {
         logger.info("Invoking TextSearchPlugin...");
 
         // get parameters
-        Map<String, String> params = request.getContext();
+        Map<String, String> params = request.getParams();
         String datasets = params.get(PARAM_DATASETS);
         String whole_words = params.get(PARAM_WHOLE_WORDS);
         String textExpression = rewriteExpression(
