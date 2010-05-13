@@ -69,30 +69,36 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // do nothing
     }
 
-    public WsfResponse execute(WsfRequest request)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         Map<String, String> params = request.getParams();
         String operation = params.get(PARAM_OPERATION);
         String output = params.get(PARAM_OUTPUT);
-        if (output == null || !output.equalsIgnoreCase(PARAM_VALUE_OUTPUT_B)) output = PARAM_VALUE_OUTPUT_A;
+        if (output == null || !output.equalsIgnoreCase(PARAM_VALUE_OUTPUT_B))
+            output = PARAM_VALUE_OUTPUT_A;
 
+        // get the proper begin & end of the derived regions.
         String[] startStopA = getStartStop(params, "a");
         String[] startStopB = getStartStop(params, "b");
 
         WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
         WdkModel wdkModel = wdkModelBean.getModel();
-        
+
         Map<String, String> context = request.getContext();
         String userSignature = context.get(ProcessQueryInstance.CTX_USER);
         try {
+            // get the sql to the cache table that represents user's two input
+            // operands.
             String cacheA = getCache(wdkModel, userSignature, params, "a");
             String cacheB = getCache(wdkModel, userSignature, params, "b");
 
-            String sql = composeSql(request.getProjectId(), operation, cacheA, cacheB,
-                    startStopA, startStopB, output);
-            
+            // compose the final sql by comparing two regions with span
+            // operation.
+            String sql = composeSql(request.getProjectId(), operation, cacheA,
+                    cacheB, startStopA, startStopB, output);
+
             logger.debug("SPAN LOGIC SQL:\n" + sql);
 
+            // execute the final sql, and fetch the result for the output.
             return getResult(wdkModel, sql, request.getOrderedColumns());
         } catch (Exception ex) {
             throw new WsfServiceException(ex);
@@ -116,6 +122,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
 
     private String[] getStartStop(Map<String, String> params, String suffix) {
+        // get the user's choice of begin & end, and the offsets from params.
         String begin = params.get(PARAM_SPAN_BEGIN + suffix);
         if (begin == null) begin = PARAM_VALUE_START;
         String end = params.get(PARAM_SPAN_END + suffix);
@@ -139,6 +146,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         String table = "fl" + suffix + ".";
 
+        // depending on whether the feature is on forward or reversed strand,
+        // and user's choice of begin and end, we get the proper begin of the
+        // region.
         StringBuilder builder = new StringBuilder("(CASE ");
         builder.append("WHEN " + table + "is_reversed = 0 ");
         builder.append(" AND '" + begin + "' = 'start' ");
@@ -153,8 +163,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         builder.append("END)");
         String start = builder.toString();
 
-        // (CASE fla.IS_REVERSED WHEN 0 THEN fla.end_max - 80 ELSE fla.start_min
-        // + 50 END)
+        // we get the proper end of the region.
         builder = new StringBuilder("(CASE ");
         builder.append("WHEN " + table + "is_reversed = 0 ");
         builder.append(" AND '" + end + "' = 'start' ");
@@ -175,29 +184,43 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private String composeSql(String projectId, String operation, String sqlA,
             String sqlB, String[] regionA, String[] regionB, String output) {
         StringBuilder builder = new StringBuilder("SELECT ");
+        
+        // determine the output type
         builder.append(" DISTINCT f" + output + ".* FROM ");
+        
+        // construct the first sub-sql for region A.
         builder.append("(SELECT fla.feature_source_id AS source_id, ");
         builder.append("   fla.na_sequence_id, ca.project_id, ca.wdk_weight, ");
-        builder.append(regionA[0] + " AS begin_a, " + regionA[1] + " AS end_a");
+        builder.append(regionA[0] + " AS begin, " + regionA[1] + " AS end");
         builder.append(" FROM apidb.FEATURELOCATION fla, " + sqlA + " ca ");
         builder.append(" WHERE fla.feature_source_id = ca.source_id ");
         builder.append("   AND fla.is_top_level = 1) fa, ");
+        
+        // construct the second sub-sql for region B.
         builder.append("(SELECT flb.feature_source_id AS source_id, ");
         builder.append("   flb.na_sequence_id, cb.project_id, cb.wdk_weight, ");
-        builder.append(regionB[0] + " AS begin_b, " + regionB[1] + " AS end_b");
+        builder.append(regionB[0] + " AS begin, " + regionB[1] + " AS end");
         builder.append(" FROM apidb.FEATURELOCATION flb, " + sqlB + " cb ");
         builder.append(" WHERE flb.feature_source_id = cb.source_id ");
         builder.append("   AND flb.is_top_level = 1) fb ");
+        
+        // make sure the regions come from sequence source.
         builder.append(" WHERE fa.na_sequence_id = fb.na_sequence_id ");
+        
+        // restrict the regions to have start_min <= end_max
+        builder.append("   AND fa.begin <= fa.end ");
+        builder.append("   AND fb.begin <= fb.end ");
+        
+        // apply span operation.
         if (operation.equals(PARAM_VALUE_OVERLAP)) {
-            builder.append("  AND fa.begin_a <= fb.end_b ");
-            builder.append("  AND fa.end_a >= fb.begin_b ");
+            builder.append("  AND fa.begin <= fb.end ");
+            builder.append("  AND fa.end >= fb.begin ");
         } else if (operation.equals(PARAM_VALUE_A_CONTAIN_B)) {
-            builder.append("  AND fa.begin_a <= fb.begin_b ");
-            builder.append("  AND fa.end_a >= fb.end_b ");
+            builder.append("  AND fa.begin <= fb.begin ");
+            builder.append("  AND fa.end >= fb.end ");
         } else { // b_contain_a
-            builder.append("  AND fa.begin_a >= fb.begin_b ");
-            builder.append("  AND fa.end_a <= fb.end_b ");
+            builder.append("  AND fa.begin >= fb.begin ");
+            builder.append("  AND fa.end <= fb.end ");
         }
 
         return builder.toString();
@@ -236,6 +259,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     @Override
     protected String[] defineContextKeys() {
-        return new String[]{CConstants.WDK_MODEL_KEY};
+        return new String[] { CConstants.WDK_MODEL_KEY };
     }
 }
