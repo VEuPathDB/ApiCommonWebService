@@ -506,7 +506,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
 
     private String[][] prepareResult(Set<Match> matches, String[] cols) {
         String[][] result = new String[matches.size()][cols.length];
-        // create an column order map
+        // create a column order map
         Map<String, Integer> orders = new HashMap<String, Integer>();
         for (int i = 0; i < cols.length; i++)
             orders.put(cols[i], i);
@@ -532,7 +532,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
             String sequence) {
         logger.debug("dnaPrepareResult() ***************\n");
 
-        // create an column order map
+        // create a column order map
         Map<String, Integer> orders = new HashMap<String, Integer>();
         for (int i = 0; i < cols.length; i++)
             orders.put(cols[i], i);
@@ -586,7 +586,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
                 if (useProjectId)
                     result[i + j][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
             }
-            i++;
+            i = i+j;
         }
         logger.info("hits found: " + result.length + "\n");
         // logger.debug("result " + resultToString(result) + "\n");
