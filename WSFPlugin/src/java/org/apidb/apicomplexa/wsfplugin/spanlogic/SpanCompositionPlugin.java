@@ -74,7 +74,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         Map<String, String> params = request.getParams();
         String operation = params.get(PARAM_OPERATION);
         String output = params.get(PARAM_OUTPUT);
-        if (output == null || !output.equalsIgnoreCase("b")) output = "a";
+        if (output == null || !output.equalsIgnoreCase(PARAM_VALUE_OUTPUT_B)) output = PARAM_VALUE_OUTPUT_A;
 
         String[] startStopA = getStartStop(params, "a");
         String[] startStopB = getStartStop(params, "b");

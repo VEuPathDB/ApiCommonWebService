@@ -1,27 +1,13 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_PROJECT_ID;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_SOURCE_ID;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_WDK_WEIGHT;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OPERATION;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OUTPUT;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_BEGIN;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_BEGIN_DIRECTION;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_BEGIN_OFFSET;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_END;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_END_DIRECTION;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_END_OFFSET;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_VALUE_DOWNSTREAM;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_VALUE_OUTPUT_A;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_VALUE_OVERLAP;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_VALUE_START;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_VALUE_STOP;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.*;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wdk.controller.CConstants;
@@ -39,6 +25,7 @@ import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class SpanCompositionTest {
@@ -50,6 +37,22 @@ public class SpanCompositionTest {
     private WsfRequest request;
     private SpanCompositionPlugin plugin;
 
+    private String[] pureOverlapGenes = { "PFC0965w", "PFD0540c", "PFI1425w", "PFC0271c" };
+    private String[] pureOverlapIsolates = { "G37988", "G37943", "G44484", "G37806" };
+
+    private String[] containGenes = {"PFI0180w", "PFI0400c", "PFI0235w", "PFI0265c"};
+    private String[] containIsolates = {"G37837", "G44516", "G44518", "G44510"};
+
+    // none exist.
+    private String[] containedGenes = {};
+    private String[] containedIsolates = {};
+
+    private String[] nearByGenes = {"PFI0875w", "PF13_0305", "PFI0135c", "PFI0960w", "PFI0415c"};
+    private String[] nearByIsolates = {"G37836", "G37829", "G44522", "G44494", "G44512"};
+
+    private String[] diffSeqGenes = {"PVX_118415", "PKH_145590", "PKH_146330", "PF14_0534"};
+    private String[] diffSeqIsolates = {"G41070", "G41068", "G41073", "G44620"};
+
     public SpanCompositionTest() throws Exception {
         wdkModel = UnitTestHelper.getModel();
         user = UnitTestHelper.getRegisteredUser();
@@ -58,19 +61,177 @@ public class SpanCompositionTest {
     }
 
     @Test
-    public void testOverlapZeroOffset() throws Exception {
-        logger.info("====== TEST overlap no offset ======");
+    public void testGenesOverlapZeroOffset() throws Exception {
+        logger.info("====== TEST genes overlap no offset ======");
         Map<String, String> params = request.getParams();
         params.put(PARAM_OPERATION, PARAM_VALUE_OVERLAP);
+        request.setParams(params);
 
         // invoke the plugin and get result back
-        WsfResponse wsfResult = plugin.execute(request);
+        WsfResponse response = plugin.execute(request);
 
-        logger.info("Result Message: " + wsfResult.getMessage());
-        logger.info("Result Signal: " + wsfResult.getSignal());
-
+        logger.info("Result Message: " + response.getMessage());
+        logger.info("Result Signal: " + response.getSignal());
+        
+        Set<String> ids = new HashSet<String>();
+        String[][] results = response.getResult();
+        for (String[] record : results) {
+            String source_id = record[1];
+            ids.add(source_id);
+        }
+        
         // print results
-        logger.info(Formatter.printArray(wsfResult.getResult()));
+        logger.info(Formatter.printArray(results));
+   
+        // it should include all pure-overlap, contains, and contained by genes
+        for(String id : pureOverlapGenes) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        for(String id : containGenes) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        for(String id : containedGenes) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        
+        // it won't include adjacent genes, nor genes from difference sequences
+        for(String id : nearByGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : diffSeqGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+    }
+
+    @Test
+    public void testIsolatesOverlapZeroOffset() throws Exception {
+        logger.info("====== TEST isolates overlap no offset ======");
+        Map<String, String> params = request.getParams();
+        params.put(PARAM_OPERATION, PARAM_VALUE_OVERLAP);
+        params.put(PARAM_OUTPUT, PARAM_VALUE_OUTPUT_B);
+        request.setParams(params);
+
+        // invoke the plugin and get result back
+        WsfResponse response = plugin.execute(request);
+
+        logger.info("Result Message: " + response.getMessage());
+        logger.info("Result Signal: " + response.getSignal());
+        
+        Set<String> ids = new HashSet<String>();
+        String[][] results = response.getResult();
+        for (String[] record : results) {
+            String source_id = record[1];
+            ids.add(source_id);
+        }
+        
+        // print results
+        logger.info(Formatter.printArray(results));
+        
+        // it should include all pure-overlap, contains, and contained by isolates
+        for(String id : pureOverlapIsolates) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        for(String id : containIsolates) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        for(String id : containedIsolates) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        
+        // it won't include adjacent isolates, nor isolates from difference sequences
+        for(String id : nearByIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : diffSeqIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
+    }
+
+    @Test
+    public void testGeneContainsIsolate() throws Exception {
+        logger.info("====== TEST gene contains isolate ======");
+        Map<String, String> params = request.getParams();
+        params.put(PARAM_OPERATION, PARAM_VALUE_A_CONTAIN_B);
+        request.setParams(params);
+
+        // invoke the plugin and get result back
+        WsfResponse response = plugin.execute(request);
+
+        logger.info("Result Message: " + response.getMessage());
+        logger.info("Result Signal: " + response.getSignal());
+        
+        Set<String> ids = new HashSet<String>();
+        String[][] results = response.getResult();
+        for (String[] record : results) {
+            String source_id = record[1];
+            ids.add(source_id);
+        }
+        
+        // print results
+        logger.info(Formatter.printArray(results));
+   
+        // it should include contains
+        for(String id : containGenes) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        
+        // it won't include any other genes
+        for(String id : pureOverlapGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : containedGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : nearByGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : diffSeqGenes) {
+            Assert.assertFalse(ids.contains(id));
+        }
+    }
+
+    @Test
+    public void testIsolateContainedByGene() throws Exception {
+        logger.info("====== TEST isolate contains gene ======");
+        Map<String, String> params = request.getParams();
+        params.put(PARAM_OPERATION, PARAM_VALUE_A_CONTAIN_B);
+        params.put(PARAM_OUTPUT, PARAM_VALUE_OUTPUT_B);
+        request.setParams(params);
+
+        // invoke the plugin and get result back
+        WsfResponse response = plugin.execute(request);
+
+        logger.info("Result Message: " + response.getMessage());
+        logger.info("Result Signal: " + response.getSignal());
+        
+        Set<String> ids = new HashSet<String>();
+        String[][] results = response.getResult();
+        for (String[] record : results) {
+            String source_id = record[1];
+            ids.add(source_id);
+        }
+        
+        // print results
+        logger.info(Formatter.printArray(results));
+        
+        // it should include all pure-overlap, contains, and contained by isolates
+        for(String id : containIsolates) {
+            Assert.assertTrue(ids.contains(id));
+        }
+        
+        // it won't include adjacent isolates, nor isolates from difference sequences
+        for(String id : pureOverlapIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : containedIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : nearByIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
+        for(String id : diffSeqIsolates) {
+            Assert.assertFalse(ids.contains(id));
+        }
     }
 
     private SpanCompositionPlugin createPlugin() throws WsfServiceException {
@@ -132,7 +293,25 @@ public class SpanCompositionTest {
             NoSuchAlgorithmException, SQLException, JSONException {
         Question question = wdkModel.getQuestion("GeneQuestions.GeneByLocusTag");
         Map<String, String> params = new HashMap<String, String>();
-        params.put("ds_gene_ids", "PF10_0346 PFC0365w PFC0710w-a PFC0770c PFD0125c PFA0120c");
+
+        StringBuilder builder = new StringBuilder();
+        for (String gene : pureOverlapGenes) {
+            builder.append(gene + " ");
+        }
+        for (String gene : containGenes) {
+            builder.append(gene + " ");
+        }
+        for (String gene : containedGenes) {
+            builder.append(gene + " ");
+        }
+        for (String gene : nearByGenes) {
+            builder.append(gene + " ");
+        }
+        for (String gene : diffSeqGenes) {
+            builder.append(gene + " ");
+        }
+
+        params.put("ds_gene_ids", builder.toString().trim());
 
         return user.createStep(question, params, (String) null, false, true, 0);
     }
@@ -142,7 +321,25 @@ public class SpanCompositionTest {
             JSONException {
         Question question = wdkModel.getQuestion("IsolateQuestions.IsolateByIsolateId");
         Map<String, String> params = new HashMap<String, String>();
-        params.put("isolate_id", "G44639 G37983 G37950 G41031 G37936 G42735");
+ 
+        StringBuilder builder = new StringBuilder();
+        for (String isolate : pureOverlapIsolates) {
+            builder.append(isolate + " ");
+        }
+        for (String isolate : containIsolates) {
+            builder.append(isolate + " ");
+        }
+        for (String isolate : containedIsolates) {
+            builder.append(isolate + " ");
+        }
+        for (String isolate : nearByIsolates) {
+            builder.append(isolate + " ");
+        }
+        for (String isolate : diffSeqIsolates) {
+            builder.append(isolate + " ");
+        }
+
+        params.put("isolate_id",  builder.toString().trim());
 
         return user.createStep(question, params, (String) null, false, true, 0);
     }
