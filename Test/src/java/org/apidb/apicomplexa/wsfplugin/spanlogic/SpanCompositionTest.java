@@ -1,11 +1,31 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.*;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_PROJECT_ID;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_SOURCE_ID;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_WDK_WEIGHT;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OPERATION;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OUTPUT;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_DIRECTION_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_OFFSET_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_DIRECTION_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_OFFSET_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_STRAND;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,244 +54,93 @@ public class SpanCompositionTest {
 
     private WdkModel wdkModel;
     private User user;
-    private WsfRequest request;
     private SpanCompositionPlugin plugin;
-
-    private String[] pureOverlapGenes = { "PFC0965w", "PFD0540c", "PFI1425w", "PFC0271c" };
-    private String[] pureOverlapIsolates = { "G37988", "G37943", "G44484", "G37806" };
-
-    private String[] containGenes = {"PFI0180w", "PFI0400c", "PFI0235w", "PFI0265c"};
-    private String[] containIsolates = {"G37837", "G44516", "G44518", "G44510"};
-
-    // none exist.
-    private String[] containedGenes = {};
-    private String[] containedIsolates = {};
-
-    private String[] nearByGenes = {"PFI0875w", "PF13_0305", "PFI0135c", "PFI0960w", "PFI0415c"};
-    private String[] nearByIsolates = {"G37836", "G37829", "G44522", "G44494", "G44512"};
-
-    private String[] diffSeqGenes = {"PVX_118415", "PKH_145590", "PKH_146330", "PF14_0534"};
-    private String[] diffSeqIsolates = {"G41070", "G41068", "G41073", "G44620"};
+    private Map<String, String> steps;
 
     public SpanCompositionTest() throws Exception {
         wdkModel = UnitTestHelper.getModel();
         user = UnitTestHelper.getRegisteredUser();
         plugin = createPlugin();
-        request = createRequest();
+        steps = new HashMap<String, String>();
     }
 
     @Test
-    public void testGenesOverlapZeroOffset() throws Exception {
-        logger.info("====== TEST genes overlap no offset ======");
-        Map<String, String> params = request.getParams();
-        params.put(PARAM_OPERATION, PARAM_VALUE_OVERLAP);
-        request.setParams(params);
+    public void testSpanLogic() throws URISyntaxException, IOException,
+            WsfServiceException, WdkUserException, WdkModelException,
+            NoSuchAlgorithmException, SQLException, JSONException {
+        List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
-        // invoke the plugin and get result back
-        WsfResponse response = plugin.execute(request);
-
-        logger.info("Result Message: " + response.getMessage());
-        logger.info("Result Signal: " + response.getSignal());
-        
-        Set<String> ids = new HashSet<String>();
-        String[][] results = response.getResult();
-        for (String[] record : results) {
-            String source_id = record[1];
-            ids.add(source_id);
+        for (SpanCompositionTestCase testCase : testCases) {
+            logger.warn("++++++++++++++++++++ Test #" + testCase.id + ": " + testCase.description);
+            WsfRequest request = createRequest(testCase);
+            WsfResponse response = plugin.execute(request);
+            String[][] results = response.getResult();
+            validateResults(testCase, results);
         }
-        
-        // print results
-        logger.info(Formatter.printArray(results));
-   
-        // it should include all pure-overlap, contains, and contained by genes
-        for(String id : pureOverlapGenes) {
-            Assert.assertTrue(ids.contains(id));
+        boolean success = true;
+        int count = 0;
+        for (SpanCompositionTestCase testCase : testCases) {
+            if (!testCase.success) {
+                logger.warn("Test #" + testCase.id + " FAILED: " + testCase.description);
+                logger.warn("============= EXPECT: "
+                        + Formatter.printArray(testCase.expectedOutput));
+                logger.warn("============= ACTUAL: "
+                        + Formatter.printArray(testCase.actualOutput));
+                success = false;
+                count++;
+            }
         }
-        for(String id : containGenes) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        for(String id : containedGenes) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        
-        // it won't include adjacent genes, nor genes from difference sequences
-        for(String id : nearByGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : diffSeqGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
+        logger.info("Failed: " + count);
+        Assert.assertTrue(success);
     }
 
-    @Test
-    public void testIsolatesOverlapZeroOffset() throws Exception {
-        logger.info("====== TEST isolates overlap no offset ======");
-        Map<String, String> params = request.getParams();
-        params.put(PARAM_OPERATION, PARAM_VALUE_OVERLAP);
-        params.put(PARAM_OUTPUT, PARAM_VALUE_OUTPUT_B);
-        request.setParams(params);
-
-        // invoke the plugin and get result back
-        WsfResponse response = plugin.execute(request);
-
-        logger.info("Result Message: " + response.getMessage());
-        logger.info("Result Signal: " + response.getSignal());
-        
-        Set<String> ids = new HashSet<String>();
-        String[][] results = response.getResult();
-        for (String[] record : results) {
-            String source_id = record[1];
-            ids.add(source_id);
+    private List<SpanCompositionTestCase> loadTestCases(String resourceName)
+            throws URISyntaxException, IOException, WsfServiceException {
+        List<SpanCompositionTestCase> testCases = new ArrayList<SpanCompositionTestCase>();
+        URL url = SpanCompositionTest.class.getResource(resourceName);
+        if (url != null) {
+            File file = new File(url.toURI());
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            int id = 1;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.length() == 0) continue;
+                SpanCompositionTestCase testCase = new SpanCompositionTestCase(line);
+                testCase.id = id++;
+                testCases.add(testCase);
+            }
+            reader.close();
         }
-        
-        // print results
-        logger.info(Formatter.printArray(results));
-        
-        // it should include all pure-overlap, contains, and contained by isolates
-        for(String id : pureOverlapIsolates) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        for(String id : containIsolates) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        for(String id : containedIsolates) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        
-        // it won't include adjacent isolates, nor isolates from difference sequences
-        for(String id : nearByIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : diffSeqIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
+        return testCases;
     }
 
-    @Test
-    public void testGeneContainsIsolate() throws Exception {
-        logger.info("====== TEST gene contains isolate ======");
-        Map<String, String> params = request.getParams();
-        params.put(PARAM_OPERATION, PARAM_VALUE_A_CONTAIN_B);
-        request.setParams(params);
-
-        // invoke the plugin and get result back
-        WsfResponse response = plugin.execute(request);
-
-        logger.info("Result Message: " + response.getMessage());
-        logger.info("Result Signal: " + response.getSignal());
-        
-        Set<String> ids = new HashSet<String>();
-        String[][] results = response.getResult();
-        for (String[] record : results) {
-            String source_id = record[1];
-            ids.add(source_id);
-        }
-        
-        // print results
-        logger.info(Formatter.printArray(results));
-   
-        // it should include contains
-        for(String id : containGenes) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        
-        // it won't include any other genes
-        for(String id : pureOverlapGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : containedGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : nearByGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : diffSeqGenes) {
-            Assert.assertFalse(ids.contains(id));
-        }
-    }
-
-    @Test
-    public void testIsolateContainedByGene() throws Exception {
-        logger.info("====== TEST isolate contains gene ======");
-        Map<String, String> params = request.getParams();
-        params.put(PARAM_OPERATION, PARAM_VALUE_A_CONTAIN_B);
-        params.put(PARAM_OUTPUT, PARAM_VALUE_OUTPUT_B);
-        request.setParams(params);
-
-        // invoke the plugin and get result back
-        WsfResponse response = plugin.execute(request);
-
-        logger.info("Result Message: " + response.getMessage());
-        logger.info("Result Signal: " + response.getSignal());
-        
-        Set<String> ids = new HashSet<String>();
-        String[][] results = response.getResult();
-        for (String[] record : results) {
-            String source_id = record[1];
-            ids.add(source_id);
-        }
-        
-        // print results
-        logger.info(Formatter.printArray(results));
-        
-        // it should include all pure-overlap, contains, and contained by isolates
-        for(String id : containIsolates) {
-            Assert.assertTrue(ids.contains(id));
-        }
-        
-        // it won't include adjacent isolates, nor isolates from difference sequences
-        for(String id : pureOverlapIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : containedIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : nearByIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
-        for(String id : diffSeqIsolates) {
-            Assert.assertFalse(ids.contains(id));
-        }
-    }
-
-    private SpanCompositionPlugin createPlugin() throws WsfServiceException {
-        SpanCompositionPlugin plugin = new SpanCompositionPlugin();
-
-        Map<String, Object> context = new HashMap<String, Object>();
-        context.put(CConstants.WDK_MODEL_KEY, new WdkModelBean(wdkModel));
-        plugin.initialize(context);
-
-        return plugin;
-    }
-
-    private WsfRequest createRequest() throws Exception {
-        Step geneStep = createGeneStep();
-        Step isolateStep = createIsolateStep();
-
+    private WsfRequest createRequest(SpanCompositionTestCase testCase)
+            throws WdkUserException, WdkModelException,
+            NoSuchAlgorithmException, SQLException, JSONException {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
 
-        params.put(PARAM_OPERATION, PARAM_VALUE_OVERLAP);
+        params.put(PARAM_OPERATION, testCase.operator);
 
-        String spanA = Integer.toString(geneStep.getDisplayId());
-        params.put(PARAM_SPAN + "a", spanA);
-        params.put(PARAM_SPAN_BEGIN + "a", PARAM_VALUE_START);
-        params.put(PARAM_SPAN_BEGIN_DIRECTION + "a", PARAM_VALUE_DOWNSTREAM);
-        params.put(PARAM_SPAN_BEGIN_OFFSET + "a", "0");
-        params.put(PARAM_SPAN_END + "a", PARAM_VALUE_STOP);
-        params.put(PARAM_SPAN_END_DIRECTION + "a", PARAM_VALUE_DOWNSTREAM);
-        params.put(PARAM_SPAN_END_OFFSET + "a", "0");
+        params.put(PARAM_SPAN_PREFIX + "a", createGeneStep(testCase.inputA));
+        params.put(PARAM_BEGIN_PREFIX + "a", testCase.beginA);
+        params.put(PARAM_BEGIN_DIRECTION_PREFIX + "a", testCase.beginDirectionA);
+        params.put(PARAM_BEGIN_OFFSET_PREFIX + "a", testCase.beginOffsetA);
+        params.put(PARAM_END_PREFIX + "a", testCase.endA);
+        params.put(PARAM_END_DIRECTION_PREFIX + "a", testCase.endDirectionA);
+        params.put(PARAM_END_OFFSET_PREFIX + "a", testCase.endOffsetA);
 
-        String spanB = Integer.toString(isolateStep.getDisplayId());
-        params.put(SpanCompositionPlugin.PARAM_SPAN + "b", spanB);
-        params.put(PARAM_SPAN_BEGIN + "b", PARAM_VALUE_START);
-        params.put(PARAM_SPAN_BEGIN_DIRECTION + "b", PARAM_VALUE_DOWNSTREAM);
-        params.put(PARAM_SPAN_BEGIN_OFFSET + "b", "0");
-        params.put(PARAM_SPAN_END + "b", PARAM_VALUE_STOP);
-        params.put(PARAM_SPAN_END_DIRECTION + "b", PARAM_VALUE_DOWNSTREAM);
-        params.put(PARAM_SPAN_END_OFFSET + "b", "0");
+        params.put(PARAM_SPAN_PREFIX + "b", createGeneStep(testCase.inputB));
+        params.put(PARAM_BEGIN_PREFIX + "b", testCase.beginB);
+        params.put(PARAM_BEGIN_DIRECTION_PREFIX + "b", testCase.beginDirectionB);
+        params.put(PARAM_BEGIN_OFFSET_PREFIX + "b", testCase.beginOffsetB);
+        params.put(PARAM_END_PREFIX + "b", testCase.endB);
+        params.put(PARAM_END_DIRECTION_PREFIX + "b", testCase.endDirectionB);
+        params.put(PARAM_END_OFFSET_PREFIX + "b", testCase.endOffsetB);
 
-        params.put(PARAM_OUTPUT, PARAM_VALUE_OUTPUT_A);
+        params.put(PARAM_STRAND, testCase.strand);
+        params.put(PARAM_OUTPUT, testCase.outputFrom);
 
         // prepare columns
         String[] columns = { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
@@ -289,58 +158,68 @@ public class SpanCompositionTest {
         return request;
     }
 
-    private Step createGeneStep() throws WdkUserException, WdkModelException,
-            NoSuchAlgorithmException, SQLException, JSONException {
+    private String createGeneStep(String[] input) throws WdkUserException,
+            WdkModelException, NoSuchAlgorithmException, SQLException,
+            JSONException {
+        String key = Formatter.printArray(input).intern();
+        if (steps.containsKey(key)) return steps.get(key);
+
+        // IsolateQuestions.IsolateByIsolateId
         Question question = wdkModel.getQuestion("GeneQuestions.GeneByLocusTag");
         Map<String, String> params = new HashMap<String, String>();
 
         StringBuilder builder = new StringBuilder();
-        for (String gene : pureOverlapGenes) {
-            builder.append(gene + " ");
-        }
-        for (String gene : containGenes) {
-            builder.append(gene + " ");
-        }
-        for (String gene : containedGenes) {
-            builder.append(gene + " ");
-        }
-        for (String gene : nearByGenes) {
-            builder.append(gene + " ");
-        }
-        for (String gene : diffSeqGenes) {
+        for (String gene : input) {
             builder.append(gene + " ");
         }
 
+        // isolate_id
         params.put("ds_gene_ids", builder.toString().trim());
 
-        return user.createStep(question, params, (String) null, false, true, 0);
+        Step step = user.createStep(question, params, (String) null, false,
+                true, 0);
+        String stepId = Integer.toString(step.getDisplayId());
+        steps.put(key, stepId);
+        return stepId;
     }
 
-    private Step createIsolateStep() throws WdkUserException,
-            WdkModelException, NoSuchAlgorithmException, SQLException,
-            JSONException {
-        Question question = wdkModel.getQuestion("IsolateQuestions.IsolateByIsolateId");
-        Map<String, String> params = new HashMap<String, String>();
- 
-        StringBuilder builder = new StringBuilder();
-        for (String isolate : pureOverlapIsolates) {
-            builder.append(isolate + " ");
-        }
-        for (String isolate : containIsolates) {
-            builder.append(isolate + " ");
-        }
-        for (String isolate : containedIsolates) {
-            builder.append(isolate + " ");
-        }
-        for (String isolate : nearByIsolates) {
-            builder.append(isolate + " ");
-        }
-        for (String isolate : diffSeqIsolates) {
-            builder.append(isolate + " ");
+    private void validateResults(SpanCompositionTestCase testCase,
+            String[][] actualResults) {
+        Set<String> expected = new HashSet<String>();
+        for (String value : testCase.expectedOutput) {
+            expected.add(value);
         }
 
-        params.put("isolate_id",  builder.toString().trim());
+        Set<String> actual = new HashSet<String>();
+        for (int i = 0; i < actualResults.length; i++) {
+            String value = actualResults[i][1];
+            actual.add(value);
+        }
+        testCase.actualOutput = new String[actual.size()];
+        actual.toArray(testCase.actualOutput);
 
-        return user.createStep(question, params, (String) null, false, true, 0);
+        for (String value : expected) {
+            if (!actual.contains(value)) {
+                testCase.success = false;
+                return;
+            }
+        }
+        for (String value : actual) {
+            if (!expected.contains(value)) {
+                testCase.success = false;
+                return;
+            }
+        }
+        testCase.success = true;
+    }
+
+    private SpanCompositionPlugin createPlugin() throws WsfServiceException {
+        SpanCompositionPlugin plugin = new SpanCompositionPlugin();
+
+        Map<String, Object> context = new HashMap<String, Object>();
+        context.put(CConstants.WDK_MODEL_KEY, new WdkModelBean(wdkModel));
+        plugin.initialize(context);
+
+        return plugin;
     }
 }
