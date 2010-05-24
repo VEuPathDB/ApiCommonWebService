@@ -1,6 +1,5 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,20 +12,15 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.gusdb.wdk.controller.CConstants;
-import org.gusdb.wdk.model.AnswerValue;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wdk.model.query.ProcessQueryInstance;
-import org.gusdb.wdk.model.user.Step;
-import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
-import org.json.JSONException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -63,7 +57,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public static String PARAM_VALUE_DOWNSTREAM = "+";
 
     // values for span_strand
-    public static String PARAM_VALUE_BOTH_STRANDS = "same_strands";
+    public static String PARAM_VALUE_BOTH_STRANDS = "both_strands";
     public static String PARAM_VALUE_SAME_STRAND = "same_strand";
     public static String PARAM_VALUE_OPPOSITE_STRANDS = "opposite_strands";
 
@@ -192,14 +186,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
         WdkModel wdkModel = wdkModelBean.getModel();
-
-        Map<String, String> context = request.getContext();
-        String userSignature = context.get(ProcessQueryInstance.CTX_USER);
         try {
             // get the sql to the cache table that represents user's two input
             // operands.
-            String cacheA = getCache(wdkModel, userSignature, params, "a");
-            String cacheB = getCache(wdkModel, userSignature, params, "b");
+            String cacheA = params.get(PARAM_SPAN_PREFIX + "a");
+            String cacheB = params.get(PARAM_SPAN_PREFIX + "b");
 
             // compose the final sql by comparing two regions with span
             // operation.
@@ -213,22 +204,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         } catch (Exception ex) {
             throw new WsfServiceException(ex);
         }
-    }
-
-    private String getCache(WdkModel wdkModel, String userSignature,
-            Map<String, String> params, String suffix)
-            throws NoSuchAlgorithmException, WdkUserException,
-            WdkModelException, SQLException, JSONException {
-        User user;
-        if (userSignature == null) {
-            user = wdkModel.getSystemUser();
-        } else {
-            user = wdkModel.getUserFactory().getUser(userSignature);
-        }
-        int stepId = Integer.valueOf(params.get(PARAM_SPAN_PREFIX + suffix));
-        Step step = user.getStep(stepId);
-        AnswerValue answerValue = step.getAnswerValue();
-        return answerValue.getIdSql();
     }
 
     private String[] getStartStop(Map<String, String> params, String suffix) {
@@ -265,7 +240,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         sql.append(begin.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + beginOff + ")) ");
         sql.append(" WHEN " + table + "is_reversed = 1 THEN (");
-        sql.append (end.equals(PARAM_VALUE_START)? "end_max":"start_min");
+        sql.append(end.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + endOff + ")) ");
         sql.append("END)");
         String start = sql.toString();
@@ -273,10 +248,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // we get the proper end of the region.
         sql = new StringBuilder("(CASE ");
         sql.append("WHEN " + table + "is_reversed = 0 THEN (");
-        sql.append(end.equals(PARAM_VALUE_START) ? "start_min" :"end_max");
+        sql.append(end.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + endOff + ")) ");
         sql.append(" WHEN " + table + "is_reversed = 1 THEN (");
-        sql.append (begin.equals(PARAM_VALUE_START)? "end_max":"start_min");
+        sql.append(begin.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + beginOff + ")) ");
         sql.append("END)");
         String stop = sql.toString();

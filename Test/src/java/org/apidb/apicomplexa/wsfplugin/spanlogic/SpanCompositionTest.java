@@ -180,7 +180,7 @@ public class SpanCompositionTest {
                 true, 0);
         String stepId = Integer.toString(step.getDisplayId());
         steps.put(key, stepId);
-        return stepId;
+        return step.getAnswerValue().getIdSql();
     }
 
     private void validateResults(SpanCompositionTestCase testCase,
