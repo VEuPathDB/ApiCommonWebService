@@ -178,9 +178,9 @@ public class SpanCompositionTest {
 
         Step step = user.createStep(question, params, (String) null, false,
                 true, 0);
-        String stepId = Integer.toString(step.getDisplayId());
-        steps.put(key, stepId);
-        return step.getAnswerValue().getIdSql();
+        String sql = step.getAnswerValue().getIdSql();
+        steps.put(key, sql);
+        return sql;
     }
 
     private void validateResults(SpanCompositionTestCase testCase,
