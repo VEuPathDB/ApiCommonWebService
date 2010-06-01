@@ -74,39 +74,36 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         Map<String, String> params = request.getParams();
-        Set<String> operators = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B,
-                PARAM_VALUE_B_CONTAIN_A));
         Set<String> anchors = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_START, PARAM_VALUE_STOP));
+                PARAM_VALUE_START.intern(), PARAM_VALUE_STOP.intern()));
         Set<String> directions = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_DOWNSTREAM, PARAM_VALUE_UPSTREAM));
-        Set<String> outputs = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_OUTPUT_A, PARAM_VALUE_OUTPUT_B));
-        Set<String> strands = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_BOTH_STRANDS, PARAM_VALUE_SAME_STRAND,
-                PARAM_VALUE_OPPOSITE_STRANDS));
+                PARAM_VALUE_DOWNSTREAM.intern(), PARAM_VALUE_UPSTREAM.intern()));
 
         // validate operator
         if (params.containsKey(PARAM_OPERATION)) {
-            String operator = params.get(PARAM_OPERATION);
-            if (!operators.contains(operator))
+            String op = params.get(PARAM_OPERATION);
+            if (!op.equals(PARAM_VALUE_OVERLAP)
+                    && !op.equals(PARAM_VALUE_A_CONTAIN_B)
+                    && !op.equals(PARAM_VALUE_B_CONTAIN_A))
                 throw new WsfServiceException("Invalid " + PARAM_OPERATION
-                        + ": " + operator);
+                        + ": " + op);
         }
 
         // validate output choice
         if (params.containsKey(PARAM_OUTPUT)) {
-            String output = params.get(PARAM_OUTPUT);
-            if (!outputs.contains(output))
+            String out = params.get(PARAM_OUTPUT);
+            if (!out.equals(PARAM_VALUE_OUTPUT_A)
+                    && !out.equals(PARAM_VALUE_OUTPUT_B))
                 throw new WsfServiceException("Invalid " + PARAM_OUTPUT + ": "
-                        + output);
+                        + out);
         }
 
         // validate strand
         if (params.containsKey(PARAM_STRAND)) {
             String strand = params.get(PARAM_STRAND);
-            if (!strands.contains(strand))
+            if (!strand.equals(PARAM_VALUE_BOTH_STRANDS)
+                    && !strand.equals(PARAM_VALUE_SAME_STRAND)
+                    && !strand.equals(PARAM_VALUE_OPPOSITE_STRANDS))
                 throw new WsfServiceException("Invalid " + PARAM_STRAND + ": "
                         + strand);
         }
@@ -139,7 +136,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private void validateAnchorParams(Map<String, String> params,
             Set<String> anchors, String param) throws WsfServiceException {
         if (params.containsKey(param)) {
-            String anchor = params.get(param);
+            String anchor = params.get(param).intern();
             if (!anchors.contains(anchor))
                 throw new WsfServiceException("Invalid " + param + ": "
                         + anchor);
@@ -149,7 +146,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private void validateDirectionParams(Map<String, String> params,
             Set<String> directions, String param) throws WsfServiceException {
         if (params.containsKey(param)) {
-            String direction = params.get(param);
+            String direction = params.get(param).intern();
             if (!directions.contains(direction))
                 throw new WsfServiceException("Invalid " + param + ": "
                         + direction);
