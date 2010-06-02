@@ -2,6 +2,8 @@
  *Version 2.0.0 --
  * Updated to work with the new Wdk Model.  The loading subroutine was updated to call parse() correctly for the new code in teh WDK
  * 2/27/2008 -- Removed valiadtion of the columns and inserted code to insert "N/A" into the result is a column does not exists on a component site
+ * 6/2/2010  -- if a querySet such as SharedVQ is received, and not found, the site will check sharedParams paramSet.
+ *              This will allow to access enums from a flatvocab in portal (only way to access a site) --cris
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
@@ -220,7 +222,8 @@ public class WdkQueryPlugin extends WsfPlugin {
             // we want to have component sites defining the parameter enum or
             // flat as they wish
             //
-            if (model.getModel().hasQuerySet(queryName[0])) {
+            if ( model.getModel().hasQuerySet(queryName[0]) &&  
+		model.getModel().getQuerySet(queryName[0]).contains(queryName[1])  ) {
                 // if(params.containsKey("ServedQuery")){
                 // String servedquery = params.get("servedQuery");
                 // String[] sQuery = servedquery.split(".");
@@ -236,8 +239,15 @@ public class WdkQueryPlugin extends WsfPlugin {
                 q = qs.getQuery(queryName[1]);
                 logger.info("Query found : " + q.getFullName());
                 // }
-            } else {
-                ParamSet ps = model.getModel().getParamSet(queryName[0]);
+ 
+           } else {
+		if (queryName[0].endsWith("VQ")) {
+		// convert a xxxxVQ into a xxxxParams (first letter in lower case)
+		    String[] temp = queryName[0].toLowerCase().split("vq");
+		    logger.info("Query set becomes: " + temp[0] + "Params");
+		    queryName[0] = temp[0] + "Params";
+		}
+		ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
                 logger.info("Parameter found : " + p.getFullName());
                 String[][] enumValues = handleEnumParameters(p, orderedColumns);
@@ -245,6 +255,7 @@ public class WdkQueryPlugin extends WsfPlugin {
                 WsfResult wsfResult = new WsfResult();
                 wsfResult.setResult(enumValues);
                 return wsfResult;
+
             }
 
             // get the user
