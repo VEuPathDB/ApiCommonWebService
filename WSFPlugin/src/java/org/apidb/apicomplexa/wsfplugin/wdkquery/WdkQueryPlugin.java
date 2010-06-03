@@ -250,12 +250,18 @@ public class WdkQueryPlugin extends WsfPlugin {
 		ParamSet ps = model.getModel().getParamSet(queryName[0]);
                 Param p = ps.getParam(queryName[1]);
                 logger.info("Parameter found : " + p.getFullName());
-                String[][] enumValues = handleEnumParameters(p, orderedColumns);
 
-                WsfResult wsfResult = new WsfResult();
-                wsfResult.setResult(enumValues);
-                return wsfResult;
-
+		if (p instanceof FlatVocabParam) {
+		    String queryRef = ((FlatVocabParam)p).getQuery().getFullName();
+		    logger.info("Parameter is flatvocab, queryRef is: " + queryRef + "\n");
+		    q = ((FlatVocabParam)p).getQuery();
+		} else {
+		    String[][] enumValues = handleEnumParameters(p, orderedColumns);
+		    
+		    WsfResult wsfResult = new WsfResult();
+		    wsfResult.setResult(enumValues);
+		    return wsfResult;
+		}
             }
 
             // get the user
