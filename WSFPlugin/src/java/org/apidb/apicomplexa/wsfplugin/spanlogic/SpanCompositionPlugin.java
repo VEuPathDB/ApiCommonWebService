@@ -74,7 +74,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
 // there are errors in the validation code. bypass them for now
-if (true) return;
+//if (true) return;
 
         Map<String, String> params = request.getParams();
         Set<String> anchors = new HashSet<String>(Arrays.asList(
@@ -209,8 +209,10 @@ if (true) return;
     private String[] getStartStop(Map<String, String> params, String suffix) {
         // get the user's choice of begin & end, and the offsets from params.
         String begin = params.get(PARAM_BEGIN_PREFIX + suffix);
+logger.debug("begin='"+begin+"', PARAM_VALUE_START='"+PARAM_VALUE_START+"'");
         if (begin == null) begin = PARAM_VALUE_START;
         String end = params.get(PARAM_END_PREFIX + suffix);
+logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         if (end == null) end = PARAM_VALUE_STOP;
 
         String beginDir = params.get(PARAM_BEGIN_DIRECTION_PREFIX + suffix);
