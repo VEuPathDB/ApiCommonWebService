@@ -74,7 +74,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
 // there are errors in the validation code. bypass them for now
-if (true) return;
+//if (true) return;
 
         Map<String, String> params = request.getParams();
         Set<String> anchors = new HashSet<String>(Arrays.asList(
@@ -263,6 +263,8 @@ if (true) return;
             String sqlB, String[] regionA, String[] regionB, String strand,
             String output) {
         StringBuilder builder = new StringBuilder("SELECT ");
+        // use oracle hints to get a better performance.
+        builder.append("/*+ NO_MERGE(fa) NO_MERGE(fb) NO_PUSH_PRED(fa) NO_PUSH_PRED(fb) */");
 
         // determine the output type
         builder.append(" DISTINCT f" + output + ".* FROM ");
