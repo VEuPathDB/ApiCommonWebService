@@ -74,7 +74,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
 // there are errors in the validation code. bypass them for now
-//if (true) return;
+if (true) return;
 
         Map<String, String> params = request.getParams();
         Set<String> anchors = new HashSet<String>(Arrays.asList(
