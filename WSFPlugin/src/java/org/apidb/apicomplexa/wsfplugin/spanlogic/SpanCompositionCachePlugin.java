@@ -309,7 +309,7 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
             SQLException {
         String table = "WdkSpan" + random.nextInt(Integer.MAX_VALUE);
         StringBuilder builder = new StringBuilder();
-        builder.append("CREATE TABLE " + table + " NOLOGGING AS ");
+        builder.append("CREATE TABLE " + table + " NOLOGGING PARALLEL AS ");
         builder.append("(SELECT fl.feature_source_id AS source_id, ");
         builder.append("   fl.na_sequence_id, ca.project_id, ca.wdk_weight, ");
         builder.append(region[0] + " AS begin, " + region[1] + " AS end");
