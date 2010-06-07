@@ -310,18 +310,18 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
         String table = "WdkSpan" + random.nextInt(Integer.MAX_VALUE);
         StringBuilder builder = new StringBuilder();
         builder.append("CREATE TABLE " + table + " NOLOGGING AS ");
-        builder.append("(SELECT fla.feature_source_id AS source_id, ");
-        builder.append("   fla.na_sequence_id, ca.project_id, ca.wdk_weight, ");
+        builder.append("(SELECT fl.feature_source_id AS source_id, ");
+        builder.append("   fl.na_sequence_id, ca.project_id, ca.wdk_weight, ");
         builder.append(region[0] + " AS begin, " + region[1] + " AS end");
-        builder.append(" FROM apidb.FEATURELOCATION fla, " + cacheSql + " ca ");
-        builder.append(" WHERE fla.feature_source_id = ca.source_id ");
-        builder.append("   AND fla.is_top_level = 1)");
+        builder.append(" FROM apidb.FEATURELOCATION fl, " + cacheSql + " ca ");
+        builder.append(" WHERE fl.feature_source_id = ca.source_id ");
+        builder.append("   AND fl.is_top_level = 1)");
         String sql = builder.toString();
 
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
         SqlUtils.executeUpdate(wdkModel, dataSource, sql);
 
-        return sql;
+        return table;
     }
 
     private void dropTempTables(WdkModel wdkModel, String tempA, String tempB)
