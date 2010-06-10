@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Arrays;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 
@@ -536,13 +536,13 @@ public class ApiFedPlugin extends WsfPlugin {
                                             compResult.getSiteName());
                                 // logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
-                                // combined.put(Arrays.deepHashCode(rec), rec);
-                                combined.put(i, rec);
+                                combined.put(Arrays.deepHashCode(rec), rec);
+                                //combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
                                 // (combined size) ----------> " +
                                 // combined.size() );
-                                i++;
+                                //i++;
                                 // logger.debug("\n*********\n***number of
                                 // records in combined is: " + i);
                             }// Loop for records
@@ -555,7 +555,7 @@ public class ApiFedPlugin extends WsfPlugin {
 
         logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "
                 + combined.size());
-        logger.debug("\n*******\n**********IF THE NUMBERS DO NOT COINCIDE, PROBLEM ");
+        logger.debug("\n*******\n**********IF THE FIRST NUMBER IS LESS THAN SECOND NUMBER, PROBLEM ");
         Collection<String[]> combinedColl = combined.values();
         String[][] combinedArr = new String[combined.size()][];
         return combinedColl.toArray(combinedArr);
