@@ -536,13 +536,14 @@ public class ApiFedPlugin extends WsfPlugin {
                                             compResult.getSiteName());
                                 // logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
-                                combined.put(Arrays.deepHashCode(rec), rec);
+                                //combined.put(Arrays.deepHashCode(rec), rec);
+								combined.put(Arrays.deepToString(rec).hashCode(), rec);
                                 //combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
                                 // (combined size) ----------> " +
                                 // combined.size() );
-                                //i++;
+                                i++;
                                 // logger.debug("\n*********\n***number of
                                 // records in combined is: " + i);
                             }// Loop for records
