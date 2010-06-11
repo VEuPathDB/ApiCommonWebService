@@ -530,14 +530,18 @@ public class ApiFedPlugin extends WsfPlugin {
                         if (!answer[0][0].equals("ERROR")) {
 
                             for (String[] rec : answer) {
-
+								int keyVal = 0;
                                 if (!isParamResult && hasProjectId && primaryKey == null)
                                     rec = insertProjectId(rec, projectIndex,
                                             compResult.getSiteName());
-                                // logger.debug("\n\n*********\n***rec[0] and
+                                if(isParamResult)
+									keyVal = Arrays.deepToString(rec).hashCode(); //Use a HashCode to prevent duplicate values from parameters
+								else
+									keyVal = i; //Use incremented integer for results to ensure that a hash function does not inadvertently ommit results
+								// logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
                                 //combined.put(Arrays.deepHashCode(rec), rec);
-								combined.put(Arrays.deepToString(rec).hashCode(), rec);
+								combined.put(keyVal, rec);
                                 //combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
