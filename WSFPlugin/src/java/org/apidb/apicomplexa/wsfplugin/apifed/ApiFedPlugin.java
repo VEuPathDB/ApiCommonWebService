@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Arrays;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wsf.client.WsfService;
@@ -539,15 +539,20 @@ public class ApiFedPlugin extends AbstractPlugin {
                         if (!answer[0][0].equals("ERROR")) {
 
                             for (String[] rec : answer) {
-
+								int keyVal = 0;
                                 if (!isParamResult && hasProjectId
                                         && primaryKey == null)
                                     rec = insertProjectId(rec, projectIndex,
                                             compResult.getSiteName());
-                                // logger.debug("\n\n*********\n***rec[0] and
+                                if(isParamResult)
+									keyVal = Arrays.deepToString(rec).hashCode(); //Use a HashCode to prevent duplicate values from parameters
+								else
+									keyVal = i; //Use incremented integer for results to ensure that a hash function does not inadvertently ommit results
+								// logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
-                                // combined.put(Arrays.deepHashCode(rec), rec);
-                                combined.put(i, rec);
+                                //combined.put(Arrays.deepHashCode(rec), rec);
+								combined.put(keyVal, rec);
+                                //combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
                                 // (combined size) ----------> " +
@@ -565,7 +570,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         logger.debug("\n*******\n**********Total Number of Rows in Combined Result is (combined size) ----------> "
                 + combined.size());
-        logger.debug("\n*******\n**********IF THE NUMBERS DO NOT COINCIDE, PROBLEM ");
+        logger.debug("\n*******\n**********IF THE FIRST NUMBER IS LESS THAN SECOND NUMBER, PROBLEM ");
         Collection<String[]> combinedColl = combined.values();
         String[][] combinedArr = new String[combined.size()][];
         return combinedColl.toArray(combinedArr);
