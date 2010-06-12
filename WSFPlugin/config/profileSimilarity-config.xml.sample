@@ -4,6 +4,8 @@
 <comment>The configuration file for Profile Similarity Search WSF Plugin.</comment>
 <entry key="perlExecutable">(The absolute path to the perl command)</entry>
 <entry key="perlScript">(The absolute path to expressionSimilarity.pl)</entry>
+<entry key="numTimePoints">(The number of time points in the data files)</entry>
+<entry key="skipTimes">(comma-separated list of time points that are to be skipped in the input)</entry>
 <entry key="dbConnection">(The DBI connection string)</entry>
 <entry key="dbLogin">(The account used to access the database)</entry>
 <entry key="dbPassword">(The password of the account to access the database)</entry>
