@@ -11,14 +11,6 @@ use DBD::Oracle;
 # Configuration
 # -----------------------------------------------------------------------------
 
-# Number of time points in the data files
-# 
-my $NUM_TIME_POINTS = 48;
-
-# Hack - time points that are allowed to be skipped in the input
-#
-my $SKIP_TIMES = [23,29];
-
 # Expression profiles with more than this number of datapoints missing
 # will not be returned.
 #
@@ -67,9 +59,11 @@ my $DISTANCE_MEASURES = {
 # ARGV[6] - scaledata, choose from 0 or 1
 # ARGV[7] - minshift, choose from 0 ~ 47
 # ARGV[8] - maxshift, choose from 0 ~ 47
-# ARGV[9] - db_connection
-# ARGV[10] - db_login
-# ARGV[11] - db_password
+# ARGV[9] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
+# ARGV[10] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
+# ARGV[11] - db_connection
+# ARGV[12] - db_login
+# ARGV[13] - db_password
 
 my $dist_method_param = $ARGV[0];
 $dist_method_param =~ s/[^\_A-Za-z]//g;
@@ -110,10 +104,21 @@ $minShift =~ s/[^0-9]//g;
 my $maxShift = $ARGV[8];
 $maxShift =~ s/[^0-9]//g;
 
+
+# Number of time points in the data files
+my $NUM_TIME_POINTS = $ARGV[9];
+
+# Hack - time points that are allowed to be skipped in the input
+my $skipTimeStr =  $ARGV[10];
+$skipTimeStr =~s/\s//g;
+my $SKIP_TIMES = [];
+@$SKIP_TIMES = split(/,/, $skipTimeStr);
+
+
 # read the db connection information
-my $dbConnection = $ARGV[9];
-my $dbLogin = $ARGV[10];
-my $dbPassword = $ARGV[11];
+my $dbConnection = $ARGV[11];
+my $dbLogin = $ARGV[12];
+my $dbPassword = $ARGV[13];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
