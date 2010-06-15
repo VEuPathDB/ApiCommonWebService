@@ -327,11 +327,13 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
         String rcName = answerValue.getQuestion().getRecordClass().getFullName();
         String locTable;
         if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
-            locTable = "(SELECT source_id AS fl.feature_source_id, project_id, "
+            locTable = "(SELECT source_id AS feature_source_id, project_id, "
                     + "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, "
                     + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, "
                     + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, "
-                    + "        regexp_substr(source_id, '[^:]+', 1, 3) AS is_reversed "
+                    + "        regexp_substr(source_id, '[^:]+', 1, 3) AS is_reversed, "
+                    + "        1 AS is_top_level                  "
+
                     + "  FROM (" + cacheSql + "))";
         } else {
             locTable = "apidb.FEATURELOCATION";
