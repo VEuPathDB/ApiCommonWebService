@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.AnswerValue;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
@@ -22,6 +23,8 @@ import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.AnswerValueBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.ProcessQueryInstance;
+import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
@@ -197,8 +200,8 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
         String tempA = null, tempB = null;
         try {
             // create temp tables from caches
-            tempA = createTempTable(wdkModel, params, startStopA, "a");
-            tempB = createTempTable(wdkModel, params, startStopB, "b");
+            tempA = createTempTable(wdkModel, request, params, startStopA, "a");
+            tempB = createTempTable(wdkModel, request, params, startStopB, "b");
 
             // compose the final sql by comparing two regions with span
             // operation.
@@ -306,20 +309,22 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
         return builder.toString();
     }
 
-    private String createTempTable(WdkModel wdkModel,
+    private String createTempTable(WdkModel wdkModel, WsfRequest request,
             Map<String, String> params, String[] region, String inputKey)
             throws WdkUserException, WdkModelException, SQLException,
             NoSuchAlgorithmException, JSONException {
         // get the answerValue from the step id
         int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + inputKey));
-        UserBean user = (UserBean) this.context.get(CConstants.WDK_USER_KEY);
-        AnswerValueBean answerValue = user.getStep(stepId).getAnswerValue();
+        String signature = request.getContext().get(
+                ProcessQueryInstance.CTX_USER);
+        User user = wdkModel.getUserFactory().getUser(signature);
+        AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
 
         // get the sql to the cache table
-        String cacheSql = answerValue.getAnswerValue().getIdSql();
+        String cacheSql = answerValue.getIdSql();
 
         // get the table or sql that returns the location information
-        String rcName = answerValue.getRecordClass().getFullName();
+        String rcName = answerValue.getQuestion().getRecordClass().getFullName();
         String locTable;
         if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
             locTable = "(SELECT source_id AS fl.feature_source_id, project_id, "
@@ -404,6 +409,6 @@ public class SpanCompositionCachePlugin extends AbstractPlugin {
 
     @Override
     protected String[] defineContextKeys() {
-        return new String[] { CConstants.WDK_MODEL_KEY, CConstants.WDK_USER_KEY };
+        return new String[] { CConstants.WDK_MODEL_KEY };
     }
 }
