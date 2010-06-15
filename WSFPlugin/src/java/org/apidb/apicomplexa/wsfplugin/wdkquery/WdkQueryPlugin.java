@@ -180,8 +180,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    public WsfResponse execute(WsfRequest request)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
         // logger.info("Invoking WdkQueryPlugin......");
@@ -190,7 +189,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         ResultList results = null;
         Map<String, String> params = request.getParams();
         Map<String, String> context = request.getContext();
-        
+
         String queryName = context.get(ProcessQueryInstance.CTX_QUERY);
         if (params.containsKey("Query")) {
             queryName = params.get("Query");
@@ -230,8 +229,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // we want to have component sites defining the parameter enum or
             // flat as they wish
             //
-            if ( model.getModel().hasQuerySet(queryName[0]) &&  
-		model.getModel().getQuerySet(queryName[0]).contains(queryName[1])  ) {
+            if (model.getModel().hasQuerySet(twoPartName[0])
+                    && model.getModel().getQuerySet(twoPartName[0]).contains(
+                            twoPartName[1])) {
                 // if(params.containsKey("ServedQuery")){
                 // String servedquery = params.get("servedQuery");
                 // String[] sQuery = servedquery.split(".");
@@ -247,29 +247,32 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 q = qs.getQuery(twoPartName[1]);
                 logger.info("Query found : " + q.getFullName());
                 // }
- 
-           } else {
-		if (queryName[0].endsWith("VQ")) {
-		// convert a xxxxVQ into a xxxxParams (first letter in lower case)
-		    String[] temp = queryName[0].toLowerCase().split("vq");
-		    logger.info("Query set becomes: " + temp[0] + "Params");
-		    queryName[0] = temp[0] + "Params";
-		}
-		ParamSet ps = model.getModel().getParamSet(queryName[0]);
-                Param p = ps.getParam(queryName[1]);
+
+            } else {
+                if (twoPartName[0].endsWith("VQ")) {
+                    // convert a xxxxVQ into a xxxxParams (first letter in lower
+                    // case)
+                    String[] temp = twoPartName[0].toLowerCase().split("vq");
+                    logger.info("Query set becomes: " + temp[0] + "Params");
+                    twoPartName[0] = temp[0] + "Params";
+                }
+                ParamSet ps = model.getModel().getParamSet(twoPartName[0]);
+                Param p = ps.getParam(twoPartName[1]);
                 logger.info("Parameter found : " + p.getFullName());
 
-		if (p instanceof FlatVocabParam) {
-		    String queryRef = ((FlatVocabParam)p).getQuery().getFullName();
-		    logger.info("Parameter is flatvocab, queryRef is: " + queryRef + "\n");
-		    q = ((FlatVocabParam)p).getQuery();
-		} else {
-		    String[][] enumValues = handleEnumParameters(p, orderedColumns);
-		    
-		    WsfResult wsfResult = new WsfResult();
-		    wsfResult.setResult(enumValues);
-		    return wsfResult;
-		}
+                if (p instanceof FlatVocabParam) {
+                    String queryRef = ((FlatVocabParam) p).getQuery().getFullName();
+                    logger.info("Parameter is flatvocab, queryRef is: "
+                            + queryRef + "\n");
+                    q = ((FlatVocabParam) p).getQuery();
+                } else {
+                    String[][] enumValues = handleEnumParameters(p,
+                            orderedColumns);
+
+                    WsfResponse wsfResponse = new WsfResponse();
+                    wsfResponse.setResult(enumValues);
+                    return wsfResponse;
+                }
             }
 
             // get the user
@@ -439,24 +442,25 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * } return ret; }
      */
 
-//    private String convertDatasetId2DatasetChecksum(String sig_id)
-//            throws Exception {
-//        String[] parts = sig_id.split(":");
-//        String sig = parts[0];
-//        String id = parts[1];
-//        UserFactory userfactory = model.getModel().getUserFactory();
-//        User user = userfactory.getUser(sig);
-//        Integer datasetId = new Integer(id);
-//        DatasetFactory datasetFactory = model.getModel().getDatasetFactory();
-//        Connection connection = model.getModel().getUserPlatform().getDataSource().getConnection();
-//        try {
-//            int userDatasetId = datasetFactory.getUserDatasetId(connection,
-//                    user, datasetId);
-//            return Integer.toString(userDatasetId);
-//        } finally {
-//            connection.close();
-//        }
-//    }
+    // private String convertDatasetId2DatasetChecksum(String sig_id)
+    // throws Exception {
+    // String[] parts = sig_id.split(":");
+    // String sig = parts[0];
+    // String id = parts[1];
+    // UserFactory userfactory = model.getModel().getUserFactory();
+    // User user = userfactory.getUser(sig);
+    // Integer datasetId = new Integer(id);
+    // DatasetFactory datasetFactory = model.getModel().getDatasetFactory();
+    // Connection connection =
+    // model.getModel().getUserPlatform().getDataSource().getConnection();
+    // try {
+    // int userDatasetId = datasetFactory.getUserDatasetId(connection,
+    // user, datasetId);
+    // return Integer.toString(userDatasetId);
+    // } finally {
+    // connection.close();
+    // }
+    // }
 
     private Map<String, String> convertParams(User user, Map<String, String> p,
             Param[] q) {
