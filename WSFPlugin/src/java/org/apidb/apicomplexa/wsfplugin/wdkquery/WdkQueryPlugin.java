@@ -256,7 +256,7 @@ public class WdkQueryPlugin extends WsfPlugin {
 		    logger.info("Parameter is flatvocab, queryRef is: " + queryRef + "\n");
 		    q = ((FlatVocabParam)p).getQuery();
 		} else {
-		    String[][] enumValues = handleEnumParameters(p, orderedColumns);
+		    String[][] enumValues = handleEnumParameters(p, params, orderedColumns);
 		    
 		    WsfResult wsfResult = new WsfResult();
 		    wsfResult.setResult(enumValues);
@@ -706,11 +706,14 @@ public class WdkQueryPlugin extends WsfPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p, String[] ordCols)
+    private String[][] handleEnumParameters(Param p, Map<String, String> ps, String[] ordCols)
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
         logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
         EnumParam eParam = (EnumParam) p;
+		logger.info(eParam.getDependedParam().getName() + " ==== " + eParam.getDependedValue());
+		eParam.setDependedValue(ps.get(eParam.getDependedParam().getName()));
+		logger.info(eParam.getDependedParam().getName() + " ==== " + eParam.getDependedValue());
         Map<String, String> termDisp = eParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
         int tI = 0;
