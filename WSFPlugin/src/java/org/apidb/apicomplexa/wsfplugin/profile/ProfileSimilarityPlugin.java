@@ -47,6 +47,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     // field definition
     private static final String FIELD_PERL_EXECUTABLE = "perlExecutable";
     private static final String FIELD_PERL_SCRIPT = "perlScript";
+    private static final String FIELD_NUM_TIME_POINTS = "numTimePoints";
+    private static final String FIELD_SKIP_TIMES = "skipTimes";
     private static final String FIELD_DB_CONNECTION = "dbConnection";
     private static final String FIELD_DB_LOGIN = "dbLogin";
     private static final String FIELD_DB_PASSWORD = "dbPassword";
@@ -54,6 +56,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 
     private String perlExec;
     private String perlScript;
+    private String numTimePoints;
+    private String skipTimes;
     private String dbConnection;
     private String dbLogin;
     private String dbPassword;
@@ -82,6 +86,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         // load properties
         perlExec = getProperty(FIELD_PERL_EXECUTABLE);
         perlScript = getProperty(FIELD_PERL_SCRIPT);
+	numTimePoints = getProperty(FIELD_NUM_TIME_POINTS);
+	skipTimes = getProperty(FIELD_SKIP_TIMES);
         dbConnection = getProperty(FIELD_DB_CONNECTION);
         dbLogin = getProperty(FIELD_DB_LOGIN);
         dbPassword = getProperty(FIELD_DB_PASSWORD);
@@ -92,6 +98,12 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
                     + " field is missing from the configuration file.");
         if (perlScript == null)
             throw new WsfServiceException("The " + FIELD_PERL_SCRIPT
+                    + "field is missing from the configuration file");
+        if (numTimePoints == null)
+            throw new WsfServiceException("The " + FIELD_NUM_TIME_POINTS
+                    + "field is missing from the configuration file");
+        if (skipTimes == null)
+            throw new WsfServiceException("The " + FIELD_SKIP_TIMES
                     + "field is missing from the configuration file");
         if (dbConnection == null)
             throw new WsfServiceException("The " + FIELD_DB_CONNECTION
@@ -258,6 +270,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         cmds.add(params.get(PARAM_SCALE_DATA));
         cmds.add(params.get(PARAM_MIN_SHIFT));
         cmds.add(params.get(PARAM_MAX_SHIFT));
+        cmds.add(numTimePoints);
+        cmds.add(skipTimes);
         cmds.add(dbConnection);
         cmds.add(dbLogin);
         cmds.add(dbPassword);

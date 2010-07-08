@@ -20,7 +20,7 @@
     <model name="MicrosporidiaDB"
            projectId="MicrosporidiaDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="^E$|^Encephalitozoon\s*.*" />
+           marker="^E$|^Encephalitozoon\s*.*|^Enterocytozoon\s*.*" />
     <model name="PlasmoDB"
            projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
