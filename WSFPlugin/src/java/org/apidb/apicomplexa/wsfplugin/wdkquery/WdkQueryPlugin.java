@@ -266,7 +266,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                             + queryRef + "\n");
                     q = ((FlatVocabParam) p).getQuery();
                 } else {
-                    String[][] enumValues = handleEnumParameters(p,
+                    String[][] enumValues = handleEnumParameters(p, params,
                             orderedColumns);
 
                     WsfResponse wsfResponse = new WsfResponse();
