@@ -321,6 +321,7 @@
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 <entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
 <entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
 <entry key="ProjectMap_Giardia">GiardiaDB</entry>
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
