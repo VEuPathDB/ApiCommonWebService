@@ -73,6 +73,25 @@
         <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
+<entry key="UrlMap_Enterocytozoon_Transcripts">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Enterocytozoon_Proteins">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Enterocytozoon_ORF">
+        <![CDATA[/micro/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Enterocytozoon_Genomics">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Enterocytozoon_EST">
+        <![CDATA[/micro/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Enterocytozoon_Assemblies">
+        <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
 <entry key="UrlMap_Cryptosporidium_Transcripts">
         <![CDATA[/cryptodb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
