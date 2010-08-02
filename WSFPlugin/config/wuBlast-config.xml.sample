@@ -229,6 +229,25 @@
 </entry>
 
 
+<entry key="UrlMap_Crithidia_Transcripts">
+        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Crithidia_Proteins">
+        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Crithidia_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Crithidia_EST">
+        <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Crithidia_ORF">
+        <![CDATA[/tritrypdb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Crithidia_Assemblies">
+        <![CDATA[/tritrypdb/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
 <entry key="UrlMap_Trypanosoma_Transcripts">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -244,22 +263,10 @@
 <entry key="UrlMap_Trypanosoma_ORF">
         <![CDATA[/tritrypdb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
-
-<entry key="UrlMap_Trypanosoma_Transcripts">
-        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Trypanosoma_Proteins">
-        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Trypanosoma_Genomics">
-    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Trypanosoma_EST">
-        <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
-</entry>
 <entry key="UrlMap_Trypanosoma_Assemblies">
         <![CDATA[/tritrypdb/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
+
 <entry key="UrlMap_Leishmania_Transcripts">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -330,6 +337,7 @@
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
 <entry key="ProjectMap_Trichomonas">TrichDB</entry>
 <entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
+<entry key="ProjectMap_Crithidia">TriTrypDB</entry>
 
 <!-- ApiDB 3.2 Assemblies...+ crypto amd toxo from their sites  -->
 <entry key="ProjectMap_Eimeria">Apidots</entry>
