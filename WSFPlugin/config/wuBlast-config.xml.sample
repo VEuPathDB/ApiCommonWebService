@@ -21,6 +21,7 @@
 <entry key="SourceIdRegex_EST"><![CDATA[^>*(?:\w*\|)*(\S+)]]></entry>
 <entry key="SourceIdRegex_Isolates"><![CDATA[^>*(?:\w*\|)*(\S+)]]></entry>
 <entry key="SourceIdRegex_Assemblies"><![CDATA[^>*(?:\w*\|)*(\S+)]]></entry>
+<entry key="SourceIdRegex_GSS"><![CDATA[^>*(?:\w*\|)*(\S+)]]></entry>
 
 <entry key="OrganismRegex"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
 <entry key="OrganismRegex_Transcripts"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
@@ -30,6 +31,7 @@
 <entry key="OrganismRegex_EST"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
 <entry key="OrganismRegex_Isolates"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
 <entry key="OrganismRegex_Assemblies"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
+<entry key="OrganismRegex_GSS"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
 
 <entry key="ScoreRegex"><![CDATA[^.+?\s\s+(?:[+-]\d\s+)?(\d+)]]></entry>
 
@@ -90,6 +92,18 @@
 </entry>
 <entry key="UrlMap_Enterocytozoon_Assemblies">
         <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Anncaliia_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Edhazardia_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nosema_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Vittaforma_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
 <entry key="UrlMap_Cryptosporidium_Transcripts">
@@ -329,6 +343,10 @@
 <entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
 <entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Anncaliia">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Edhazardia">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Nosema">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Vittaforma">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
 <entry key="ProjectMap_Giardia">GiardiaDB</entry>
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
