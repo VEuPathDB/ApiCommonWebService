@@ -32,7 +32,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     public static final String PARAM_PROFILE_SET = "ProfileProfileSet";
     public static final String PARAM_SEARCH_GOAL = "ProfileSearchGoal";
     public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
-    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
+    //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
     public static final String PARAM_MIN_SHIFT = "ProfileMinShift";
     public static final String PARAM_MAX_SHIFT = "ProfileMaxShift";
 
@@ -113,9 +113,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     @Override
     protected String[] getRequiredParameterNames() {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
-                PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
-                PARAM_TIME_SHIFT, PARAM_SCALE_DATA, PARAM_MIN_SHIFT,
-                PARAM_MAX_SHIFT };
+			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
+			      //PARAM_SCALE_DATA, 
+			      PARAM_TIME_SHIFT, PARAM_MIN_SHIFT, PARAM_MAX_SHIFT };
     }
 
     /*
@@ -169,12 +169,12 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         } else timeShift = "0";
         params.put(PARAM_TIME_SHIFT, timeShift);
 
-        // validate scale data
-        String scaleData = params.get(PARAM_SCALE_DATA);
+        // validate scale data - NOT IMPLEMENTED
+        /**  String scaleData = params.get(PARAM_SCALE_DATA);
         if (scaleData.equalsIgnoreCase("true") || scaleData.equals("1")) {
             scaleData = "1";
         } else scaleData = "0";
-        params.put(PARAM_SCALE_DATA, scaleData);
+	params.put(PARAM_SCALE_DATA, scaleData);  **/
 
         // validate min shift & max shift
         int minShift = 0, maxShift = 0;
@@ -256,7 +256,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         cmds.add(params.get(PARAM_PROFILE_SET));
         cmds.add(params.get(PARAM_SEARCH_GOAL));
         cmds.add(params.get(PARAM_TIME_SHIFT));
-        cmds.add(params.get(PARAM_SCALE_DATA));
+        //cmds.add(params.get(PARAM_SCALE_DATA));
         cmds.add(params.get(PARAM_MIN_SHIFT));
         cmds.add(params.get(PARAM_MAX_SHIFT));
         cmds.add(numTimePoints);

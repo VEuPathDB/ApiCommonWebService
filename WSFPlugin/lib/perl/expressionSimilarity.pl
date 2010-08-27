@@ -56,14 +56,13 @@ my $DISTANCE_MEASURES = {
 # ARGV[3] - profileset, example: "DeRisi 3D7 Smoothed Averaged", "DeRisi HB3 Smoothed Averaged"
 # ARGV[4] - search_goal, choose from "dissimilar" or "similar"
 # ARGV[5] - timeshift, choose from 0 or 1
-# ARGV[6] - scaledata, choose from 0 or 1
-# ARGV[7] - minshift, choose from 0 ~ 47
-# ARGV[8] - maxshift, choose from 0 ~ 47
-# ARGV[9] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
-# ARGV[10] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
-# ARGV[11] - db_connection
-# ARGV[12] - db_login
-# ARGV[13] - db_password
+# ARGV[6] - minshift, choose from 0 ~ 47
+# ARGV[7] - maxshift, choose from 0 ~ 47
+# ARGV[8] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
+# ARGV[9] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
+# ARGV[10] - db_connection
+# ARGV[11] - db_login
+# ARGV[12] - db_password
 
 my $dist_method_param = $ARGV[0];
 $dist_method_param =~ s/[^\_A-Za-z]//g;
@@ -92,33 +91,28 @@ my $searchGoal = ($ARGV[4] =~ /dissimilar/i) ? 'dissimilar' : 'similar';
 my $timeShift = $ARGV[5];
 $timeShift =~ s/[^01]//g;
 
-# whether to scale query vector and all expression data into the range [-1, +1]
-# has less impact on Pearson correlation
-my $scaleData = $ARGV[6];
-$scaleData =~ s/[^01]//g;
-
 # minimum shift value to try
-my $minShift = $ARGV[7];
+my $minShift = $ARGV[6];
 $minShift =~ s/[^0-9]//g;
 
-my $maxShift = $ARGV[8];
+my $maxShift = $ARGV[7];
 $maxShift =~ s/[^0-9]//g;
 
 
 # Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[9];
+my $NUM_TIME_POINTS = $ARGV[8];
 
 # Hack - time points that are allowed to be skipped in the input
-my $skipTimeStr =  $ARGV[10];
+my $skipTimeStr =  $ARGV[9];
 $skipTimeStr =~s/\s//g;
 my $SKIP_TIMES = [];
 @$SKIP_TIMES = split(/,/, $skipTimeStr);
 
 
 # read the db connection information
-my $dbConnection = $ARGV[11];
-my $dbLogin = $ARGV[12];
-my $dbPassword = $ARGV[13];
+my $dbConnection = $ARGV[10];
+my $dbLogin = $ARGV[11];
+my $dbPassword = $ARGV[12];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
@@ -240,7 +234,7 @@ if ($inputValid) {
 	$num_requested *= 2;
     }
 
-    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $timeShift, $scaleData, $minShift, $maxShift);
+    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $timeShift, $minShift, $maxShift);
 
     foreach my $nbr (@$neighbors) {
 	# print "\n<BR CLEAR=\"both\">\n" if ($hitnum > 1);
@@ -275,14 +269,11 @@ $dbh->disconnect();
 # w_ref: (ref to) the vector of weights
 # profileSet: the name of the profile for genes
 # time_shift: whether to try shifting each profile
-# scale_data: whether to scale query vector and all data into [-1, +1]
 # min_shift: minimum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # max_shift: maximum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # ----------------------------------------------------------------------
 sub get_neighbors_perl {
-    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $time_shift, $scale_data, $min_shift, $max_shift) = @_;
-
-    # TO DO - implement support for $scale_data in get_neighbors_perl
+    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $time_shift, $min_shift, $max_shift) = @_;
 
     my $distanceSub = $distance_method->{sub};
     my $sortOrder = $distance_method->{order};
