@@ -55,14 +55,13 @@ my $DISTANCE_MEASURES = {
 # ARGV[2] - gene_id, example: "M56059_3"
 # ARGV[3] - profileset, example: "DeRisi 3D7 Smoothed Averaged", "DeRisi HB3 Smoothed Averaged"
 # ARGV[4] - search_goal, choose from "dissimilar" or "similar"
-# ARGV[5] - timeshift, choose from 0 or 1
-# ARGV[6] - minshift, choose from 0 ~ 47
-# ARGV[7] - maxshift, choose from 0 ~ 47
-# ARGV[8] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
-# ARGV[9] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
-# ARGV[10] - db_connection
-# ARGV[11] - db_login
-# ARGV[12] - db_password
+# ARGV[5] - time_shift, choose from -24 ~ 24
+# ARGV[6] - time_shift_plus_minus, choose from 0 ~ 12
+# ARGV[7] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
+# ARGV[8] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
+# ARGV[9] - db_connection
+# ARGV[10] - db_login
+# ARGV[11] - db_password
 
 my $dist_method_param = $ARGV[0];
 $dist_method_param =~ s/[^\_A-Za-z]//g;
@@ -86,33 +85,33 @@ my $profileSet = $ARGV[3];
 # whether to query for similar profiles or dissimilar profiles
 my $searchGoal = ($ARGV[4] =~ /dissimilar/i) ? 'dissimilar' : 'similar';
 
-# whether to do a timeshift query i.e., look for profiles that are nearby/
-# far away when timeshifted.  Default = no.
-my $timeShift = $ARGV[5];
-$timeShift =~ s/[^01]//g;
+# whether to do a time shift query i.e., look for profiles that are nearby/
+# far away when timeshifted.
+# keeping this variable, as it is needed for a hack (see below)
+my $tShift = 1;
 
 # minimum shift value to try
-my $minShift = $ARGV[6];
-$minShift =~ s/[^0-9]//g;
+my $timeShift = $ARGV[5];
+$timeShift =~ s/[^-0-9]//g;
 
-my $maxShift = $ARGV[7];
-$maxShift =~ s/[^0-9]//g;
+my $shiftPlusMinus = $ARGV[6];
+$shiftPlusMinus =~ s/[^0-9]//g;
 
 
 # Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[8];
+my $NUM_TIME_POINTS = $ARGV[7];
 
 # Hack - time points that are allowed to be skipped in the input
-my $skipTimeStr =  $ARGV[9];
+my $skipTimeStr =  $ARGV[8];
 $skipTimeStr =~s/\s//g;
 my $SKIP_TIMES = [];
 @$SKIP_TIMES = split(/,/, $skipTimeStr);
 
 
 # read the db connection information
-my $dbConnection = $ARGV[10];
-my $dbLogin = $ARGV[11];
-my $dbPassword = $ARGV[12];
+my $dbConnection = $ARGV[9];
+my $dbLogin = $ARGV[10];
+my $dbPassword = $ARGV[11];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
@@ -230,11 +229,24 @@ if ($inputValid) {
     # HACK - if doing a time shift query, request some extra hits and then ignore 
     # those that are merely shifted by +1 or -1 from one we've already seen.
     #
-    if ($timeShift) {
+    if ($tShift) {
 	$num_requested *= 2;
     }
 
-    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $timeShift, $minShift, $maxShift);
+    # adjust the min and max time shifts
+    my ($minShift, $maxShift);
+    my $boolNegShift = 0; # to be set when shift is negative
+
+    if ($timeShift < 0) {
+      $minShift = ($NUM_TIME_POINTS) + $timeShift - $shiftPlusMinus;
+      $maxShift = ($NUM_TIME_POINTS) + $timeShift + $shiftPlusMinus;
+      $boolNegShift = 1;
+    } else {
+      $minShift = $timeShift - $shiftPlusMinus;
+      $maxShift = $timeShift + $shiftPlusMinus;
+    }
+
+    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $minShift, $maxShift, $boolNegShift);
 
     foreach my $nbr (@$neighbors) {
 	# print "\n<BR CLEAR=\"both\">\n" if ($hitnum > 1);
@@ -268,12 +280,11 @@ $dbh->disconnect();
 # query_vector_ref: (ref to) the vector we are looking for neighbors of
 # w_ref: (ref to) the vector of weights
 # profileSet: the name of the profile for genes
-# time_shift: whether to try shifting each profile
 # min_shift: minimum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # max_shift: maximum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # ----------------------------------------------------------------------
 sub get_neighbors_perl {
-    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $time_shift, $min_shift, $max_shift) = @_;
+    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $min_shift, $max_shift, $boolNegShift) = @_;
 
     my $distanceSub = $distance_method->{sub};
     my $sortOrder = $distance_method->{order};
@@ -367,7 +378,6 @@ EOSQL
 	    my $startShift = 0;
 	    my $endShift = 0;
 
-        if ($time_shift) {
             if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < $NUM_TIME_POINTS)) {
                 $startShift = $min_shift;
             }
@@ -376,9 +386,8 @@ EOSQL
             } else {
                 $endShift = $NUM_TIME_POINTS - 1;  # i.e., try them all
             }
-        }
 
-	    # Compute and store distance for this row/element, for each timeshift
+	    # Compute and store distance for this row/element, for each time shift
 	    my $bestDist = &$distanceSub($query_vector_ref, \@cd, $startShift, $w_ref, $W);
 	    my $bestShift = $startShift;
         for (my $shiftAmount = $startShift+1;$shiftAmount <= $endShift;++$shiftAmount) {
@@ -397,7 +406,9 @@ EOSQL
 
         # It belongs among the top hits found so far
         if ($arrayInd < $number_to_return) {
+	    $bestShift = $bestShift - $NUM_TIME_POINTS if ($boolNegShift == 1);
             my $hit = { elementId => $eltId, shift => $bestShift, distance => $bestDist };
+
             splice(@$bestDistances,$arrayInd,0,$bestDist);
             splice(@$bestHits,$arrayInd,0,$hit);
 

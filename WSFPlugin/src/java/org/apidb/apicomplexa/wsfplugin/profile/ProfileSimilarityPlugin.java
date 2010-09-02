@@ -31,10 +31,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     public static final String PARAM_NUM_RETURN = "ProfileNumToReturn";
     public static final String PARAM_PROFILE_SET = "ProfileProfileSet";
     public static final String PARAM_SEARCH_GOAL = "ProfileSearchGoal";
-    public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
-    public static final String PARAM_MIN_SHIFT = "ProfileMinShift";
-    public static final String PARAM_MAX_SHIFT = "ProfileMaxShift";
+    public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
+    public static final String PARAM_SHIFT_PLUS_MINUS = "ProfileShiftPlusMinus";
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
@@ -115,7 +114,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
 			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
 			      //PARAM_SCALE_DATA, 
-			      PARAM_TIME_SHIFT, PARAM_MIN_SHIFT, PARAM_MAX_SHIFT };
+			      PARAM_TIME_SHIFT, PARAM_SHIFT_PLUS_MINUS };
     }
 
     /*
@@ -162,12 +161,6 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
                     + ". Should be either \"similar\" or \"dissimilar\"");
         params.put(PARAM_SEARCH_GOAL, searchGoal.toLowerCase());
 
-        // validate time Shift
-        String timeShift = params.get(PARAM_TIME_SHIFT);
-        if (timeShift.equalsIgnoreCase("true") || timeShift.equals("1")) {
-            timeShift = "1";
-        } else timeShift = "0";
-        params.put(PARAM_TIME_SHIFT, timeShift);
 
         // validate scale data - NOT IMPLEMENTED
         /**  String scaleData = params.get(PARAM_SCALE_DATA);
@@ -176,24 +169,24 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         } else scaleData = "0";
 	params.put(PARAM_SCALE_DATA, scaleData);  **/
 
-        // validate min shift & max shift
-        int minShift = 0, maxShift = 0;
+        // validate time_shift and time_shift_minus_plus
+        int timeShift = 0, shiftPlusMinus = 0;
         try {
-            minShift = Integer.parseInt(params.get(PARAM_MIN_SHIFT));
-            if (minShift < 0 || minShift >= 48)
+            timeShift = Integer.parseInt(params.get(PARAM_TIME_SHIFT));
+            if (timeShift < -24 || timeShift > 24)
                 throw new WsfServiceException(
-                        "The minShift should be within the range of [0 - 47]");
+                        "The timeShift should be within the range of [-24 - 24]");
         } catch (NumberFormatException ex) {
-            throw new WsfServiceException("Invalid minShift value: " + minShift
+            throw new WsfServiceException("Invalid time shift value: " + timeShift
                     + ", a number is expected.");
         }
         try {
-            maxShift = Integer.parseInt(params.get(PARAM_MAX_SHIFT));
-            if (maxShift < minShift || minShift >= 48)
-                throw new WsfServiceException("The maxShift should be within "
-                        + "the range of [" + minShift + " - 47]");
+            shiftPlusMinus = Integer.parseInt(params.get(PARAM_SHIFT_PLUS_MINUS));
+            if (shiftPlusMinus < 0 || shiftPlusMinus > 12)
+                throw new WsfServiceException("The time shift_plus/minus should be within "
+                        + "the range of [0 - 12]");
         } catch (NumberFormatException e) {
-            throw new WsfServiceException("Invalid minShift value: " + maxShift
+            throw new WsfServiceException("Invalid time shift_plus/minus value: " + shiftPlusMinus
                     + ", a number is expected.");
         }
     }
@@ -217,6 +210,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         try {
             // invoke the command, and set default 10 min as timeout limit
             StringBuffer output = new StringBuffer();
+
             int signal = invokeCommand(cmds, output, 10 * 60);
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
@@ -255,10 +249,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         cmds.add(params.get(PARAM_GENE_ID));
         cmds.add(params.get(PARAM_PROFILE_SET));
         cmds.add(params.get(PARAM_SEARCH_GOAL));
-        cmds.add(params.get(PARAM_TIME_SHIFT));
         //cmds.add(params.get(PARAM_SCALE_DATA));
-        cmds.add(params.get(PARAM_MIN_SHIFT));
-        cmds.add(params.get(PARAM_MAX_SHIFT));
+        cmds.add(params.get(PARAM_TIME_SHIFT));
+        cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
         cmds.add(numTimePoints);
         cmds.add(skipTimes);
         cmds.add(dbConnection);
