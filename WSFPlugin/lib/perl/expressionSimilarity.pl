@@ -398,7 +398,7 @@ EOSQL
             if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < ($NUM_TIME_POINTS * $scaleFactor))) {
                 $startShift = $min_shift;
             }
-            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < ($NUM_TIME_POINTS * $scaleFactor)) && ($max_shift > $min_shift)) {
+            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < ($NUM_TIME_POINTS * $scaleFactor)) && ($max_shift >= $min_shift)) {
                 $endShift = $max_shift;
             } else {
                 $endShift = $NUM_TIME_POINTS - 1;  # i.e., try them all
