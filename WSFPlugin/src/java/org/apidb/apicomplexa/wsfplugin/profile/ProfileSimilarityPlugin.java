@@ -33,7 +33,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     public static final String PARAM_SEARCH_GOAL = "ProfileSearchGoal";
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
     public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
-    public static final String PARAM_SHIFT_PLUS_MINUS = "ProfileShiftPlusMinus";
+    //    public static final String PARAM_SHIFT_PLUS_MINUS = "ProfileShiftPlusMinus";
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
@@ -113,8 +113,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
     protected String[] getRequiredParameterNames() {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
 			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
-			      //PARAM_SCALE_DATA, 
-			      PARAM_TIME_SHIFT, PARAM_SHIFT_PLUS_MINUS };
+			      //PARAM_SCALE_DATA, PARAM_SHIFT_PLUS_MINUS, 
+			      PARAM_TIME_SHIFT };
     }
 
     /*
@@ -169,8 +169,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         } else scaleData = "0";
 	params.put(PARAM_SCALE_DATA, scaleData);  **/
 
-        // validate time_shift and time_shift_minus_plus
-        int timeShift = 0, shiftPlusMinus = 0;
+        // validate time_shift
+        int timeShift = 0;
         try {
             timeShift = Integer.parseInt(params.get(PARAM_TIME_SHIFT));
             if (timeShift < -24 || timeShift > 24)
@@ -180,6 +180,9 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
             throw new WsfServiceException("Invalid time shift value: " + timeShift
                     + ", a number is expected.");
         }
+	/*** 
+        // validate time_shift_minus_plus
+        int shiftPlusMinus = 0;
         try {
             shiftPlusMinus = Integer.parseInt(params.get(PARAM_SHIFT_PLUS_MINUS));
             if (shiftPlusMinus < 0 || shiftPlusMinus > 12)
@@ -188,7 +191,8 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         } catch (NumberFormatException e) {
             throw new WsfServiceException("Invalid time shift_plus/minus value: " + shiftPlusMinus
                     + ", a number is expected.");
-        }
+        }  
+	***/
     }
 
     /*
@@ -251,7 +255,7 @@ public class ProfileSimilarityPlugin extends WsfPlugin {
         cmds.add(params.get(PARAM_SEARCH_GOAL));
         //cmds.add(params.get(PARAM_SCALE_DATA));
         cmds.add(params.get(PARAM_TIME_SHIFT));
-        cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
+	//    cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
         cmds.add(numTimePoints);
         cmds.add(skipTimes);
         cmds.add(dbConnection);

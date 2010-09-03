@@ -87,12 +87,13 @@ my $tShift = 1;
 my $timeShift = $ARGV[5];
 $timeShift =~ s/[^-0-9]//g;
 
-my $shiftPlusMinus = $ARGV[6];
-$shiftPlusMinus =~ s/[^0-9]//g;
-
+# not using for now
+#my $shiftPlusMinus = $ARGV[6];
+#$shiftPlusMinus =~ s/[^0-9]//g;
+my $shiftPlusMinus = 0;
 
 # Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[7];
+my $NUM_TIME_POINTS = $ARGV[6];
 
 # comma-delimited list of weights; these can't be negative
 my $weights;
@@ -107,16 +108,16 @@ my $numWeights = @weightArray;
 
 
 # Hack - time points that are allowed to be skipped in the input
-my $skipTimeStr =  $ARGV[8];
+my $skipTimeStr =  $ARGV[7];
 $skipTimeStr =~s/\s//g;
 my $SKIP_TIMES = [];
 @$SKIP_TIMES = split(/,/, $skipTimeStr);
 
 
 # read the db connection information
-my $dbConnection = $ARGV[9];
-my $dbLogin = $ARGV[10];
-my $dbPassword = $ARGV[11];
+my $dbConnection = $ARGV[8];
+my $dbLogin = $ARGV[9];
+my $dbPassword = $ARGV[10];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
