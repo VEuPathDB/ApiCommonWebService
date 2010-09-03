@@ -72,13 +72,6 @@ $num_to_return =~ s/[^0-9]//g;
 
 my $gene_id = $ARGV[2];
 
-# comma-delimited list of weights; these can't be negative
-#my $weights = $ARGV[3];
-my $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
-$weights =~ s/[^,0-9\.-]//g;
-my @weightArray = split(/,/, $weights);
-my $numWeights = @weightArray;
-
 # get the profileset to query against
 my $profileSet = $ARGV[3];
 
@@ -100,6 +93,18 @@ $shiftPlusMinus =~ s/[^0-9]//g;
 
 # Number of time points in the data files
 my $NUM_TIME_POINTS = $ARGV[7];
+
+# comma-delimited list of weights; these can't be negative
+my $weights;
+if ($NUM_TIME_POINTS == 12) {  ## for Toxo M.White Cell Cycle data
+  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
+} else {  ## for Plasmo DeRisi data
+  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
+}
+$weights =~ s/[^,0-9\.-]//g;
+my @weightArray = split(/,/, $weights);
+my $numWeights = @weightArray;
+
 
 # Hack - time points that are allowed to be skipped in the input
 my $skipTimeStr =  $ARGV[8];
@@ -238,12 +243,22 @@ if ($inputValid) {
     my $boolNegShift = 0; # to be set when shift is negative
 
     if ($timeShift < 0) {
-      $minShift = ($NUM_TIME_POINTS) + $timeShift - $shiftPlusMinus;
-      $maxShift = ($NUM_TIME_POINTS) + $timeShift + $shiftPlusMinus;
+      $minShift = $NUM_TIME_POINTS + $timeShift - $shiftPlusMinus;
+      $maxShift = $NUM_TIME_POINTS + $timeShift + $shiftPlusMinus;
       $boolNegShift = 1;
     } else {
       $minShift = $timeShift - $shiftPlusMinus;
       $maxShift = $timeShift + $shiftPlusMinus;
+    }
+
+    # In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
+    # i.e. there are 12 hours * 5 = 60 data points.
+    # fix minShift and maxShift:
+    my $scaleFactor = 1;
+    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12); 
+    if ($NUM_TIME_POINTS == 12) {
+      $minShift *= $scaleFactor;
+      $maxShift *= $scaleFactor;
     }
 
     $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $minShift, $maxShift, $boolNegShift);
@@ -377,11 +392,13 @@ EOSQL
 	    # Range of time shifts to apply to the data
 	    my $startShift = 0;
 	    my $endShift = 0;
+	    my $scaleFactor = 1;  ## Needed for Toxo M.White Cell Cycle data
+	    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12);
 
-            if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < $NUM_TIME_POINTS)) {
+            if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < ($NUM_TIME_POINTS * $scaleFactor))) {
                 $startShift = $min_shift;
             }
-            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < $NUM_TIME_POINTS) && ($max_shift > $min_shift)) {
+            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < ($NUM_TIME_POINTS * $scaleFactor)) && ($max_shift > $min_shift)) {
                 $endShift = $max_shift;
             } else {
                 $endShift = $NUM_TIME_POINTS - 1;  # i.e., try them all
@@ -406,6 +423,11 @@ EOSQL
 
         # It belongs among the top hits found so far
         if ($arrayInd < $number_to_return) {
+	    # adjust shift for Toxo
+	    if ($NUM_TIME_POINTS == 12) {
+	      $bestShift = int($bestShift / 5);
+	    }
+
 	    $bestShift = $bestShift - $NUM_TIME_POINTS if ($boolNegShift == 1);
             my $hit = { elementId => $eltId, shift => $bestShift, distance => $bestDist };
 
