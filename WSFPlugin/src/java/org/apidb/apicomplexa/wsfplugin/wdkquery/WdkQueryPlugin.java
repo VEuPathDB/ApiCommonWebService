@@ -698,6 +698,7 @@ public class WdkQueryPlugin extends WsfPlugin {
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         logger.info("conVocab.length = " + conVocab.length);
+	if (p.isSkipValidation()) return true;
         // initVocabMap();
         for (String v : conVocab) {
             logger.info("value: " + value + " | vocabTerm: " + v);
