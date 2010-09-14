@@ -20,7 +20,7 @@
     <model name="MicrosporidiaDB"
            projectId="MicrosporidiaDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="^E$|^Encephalitozoon\s*.*|^Enterocytozoon\s*.*" />
+           marker="^E$|^Encephalitozoon\s*.*|^Enterocytozoon\s*.*|^Anncaliia\s*.*|^Edhazardia\s*.*|^Nosema\s*.*|^Vittaforma\s*.*" />
     <model name="PlasmoDB"
            projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
@@ -33,6 +33,11 @@
            projectId="TrichDB"
            url="(URL FOR WSF WEB SERVICE)" 
            marker="^Tr$|^Trichomonas\s*.*" />
+    <model name="TriTrypDB"
+           projectId="TriTrypDB"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="^T$|^Trypanosoma\s*.*|^Leishmania\s*.*|^Crithidia\s*.*" />
+
 
   </Sites>
   <MappingFile name="QueryMap.xml"/>
