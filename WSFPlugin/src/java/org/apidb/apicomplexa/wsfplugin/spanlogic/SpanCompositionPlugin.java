@@ -1,5 +1,6 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -7,20 +8,28 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.sql.DataSource;
 
 import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.AnswerValue;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
+import org.gusdb.wdk.model.dbms.DBPlatform;
 import org.gusdb.wdk.model.dbms.SqlUtils;
+import org.gusdb.wdk.model.jspwrap.AnswerValueBean;
+import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.query.ProcessQueryInstance;
+import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
+import org.json.JSONException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -61,6 +70,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public static String PARAM_VALUE_SAME_STRAND = "same_strand";
     public static String PARAM_VALUE_OPPOSITE_STRANDS = "opposite_strands";
 
+    private Random random = new Random();
+
     public String[] getColumns() {
         return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
                 COLUMN_WDK_WEIGHT };
@@ -73,21 +84,24 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-// there are errors in the validation code. bypass them for now
-//if (true) return;
-
         Map<String, String> params = request.getParams();
+        Set<String> operators = new HashSet<String>(Arrays.asList(
+                PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B,
+                PARAM_VALUE_B_CONTAIN_A));
+        Set<String> outputs = new HashSet<String>(Arrays.asList(
+                PARAM_VALUE_OUTPUT_A, PARAM_VALUE_OUTPUT_B));
+        Set<String> strands = new HashSet<String>(Arrays.asList(
+                PARAM_VALUE_BOTH_STRANDS, PARAM_VALUE_SAME_STRAND,
+                PARAM_VALUE_OPPOSITE_STRANDS));
         Set<String> anchors = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_START.intern(), PARAM_VALUE_STOP.intern()));
+                PARAM_VALUE_START, PARAM_VALUE_STOP));
         Set<String> directions = new HashSet<String>(Arrays.asList(
-                PARAM_VALUE_DOWNSTREAM.intern(), PARAM_VALUE_UPSTREAM.intern()));
+                PARAM_VALUE_DOWNSTREAM, PARAM_VALUE_UPSTREAM));
 
         // validate operator
         if (params.containsKey(PARAM_OPERATION)) {
             String op = params.get(PARAM_OPERATION);
-            if (!op.equals(PARAM_VALUE_OVERLAP)
-                    && !op.equals(PARAM_VALUE_A_CONTAIN_B)
-                    && !op.equals(PARAM_VALUE_B_CONTAIN_A))
+            if (!operators.contains(op))
                 throw new WsfServiceException("Invalid " + PARAM_OPERATION
                         + ": " + op);
         }
@@ -95,8 +109,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // validate output choice
         if (params.containsKey(PARAM_OUTPUT)) {
             String out = params.get(PARAM_OUTPUT);
-            if (!out.equals(PARAM_VALUE_OUTPUT_A)
-                    && !out.equals(PARAM_VALUE_OUTPUT_B))
+            if (!outputs.contains(out))
                 throw new WsfServiceException("Invalid " + PARAM_OUTPUT + ": "
                         + out);
         }
@@ -104,9 +117,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // validate strand
         if (params.containsKey(PARAM_STRAND)) {
             String strand = params.get(PARAM_STRAND);
-            if (!strand.equals(PARAM_VALUE_BOTH_STRANDS)
-                    && !strand.equals(PARAM_VALUE_SAME_STRAND)
-                    && !strand.equals(PARAM_VALUE_OPPOSITE_STRANDS))
+            if (!strands.contains(strand))
                 throw new WsfServiceException("Invalid " + PARAM_STRAND + ": "
                         + strand);
         }
@@ -186,16 +197,16 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
         WdkModel wdkModel = wdkModelBean.getModel();
+        String tempA = null, tempB = null;
         try {
-            // get the sql to the cache table that represents user's two input
-            // operands.
-            String cacheA = params.get(PARAM_SPAN_PREFIX + "a");
-            String cacheB = params.get(PARAM_SPAN_PREFIX + "b");
+            // create temp tables from caches
+            tempA = createTempTable(wdkModel, request, params, startStopA, "a");
+            tempB = createTempTable(wdkModel, request, params, startStopB, "b");
 
             // compose the final sql by comparing two regions with span
             // operation.
-            String sql = composeSql(request.getProjectId(), operation, cacheA,
-                    cacheB, startStopA, startStopB, strand, output);
+            String sql = composeSql(request.getProjectId(), operation, tempA,
+                    tempB, strand, output);
 
             logger.debug("SPAN LOGIC SQL:\n" + sql);
 
@@ -203,16 +214,16 @@ public class SpanCompositionPlugin extends AbstractPlugin {
             return getResult(wdkModel, sql, request.getOrderedColumns());
         } catch (Exception ex) {
             throw new WsfServiceException(ex);
+        } finally {
+            dropTempTables(wdkModel, tempA, tempB);
         }
     }
 
     private String[] getStartStop(Map<String, String> params, String suffix) {
         // get the user's choice of begin & end, and the offsets from params.
         String begin = params.get(PARAM_BEGIN_PREFIX + suffix);
-logger.debug("begin='"+begin+"', PARAM_VALUE_START='"+PARAM_VALUE_START+"'");
         if (begin == null) begin = PARAM_VALUE_START;
         String end = params.get(PARAM_END_PREFIX + suffix);
-logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         if (end == null) end = PARAM_VALUE_STOP;
 
         String beginDir = params.get(PARAM_BEGIN_DIRECTION_PREFIX + suffix);
@@ -232,16 +243,16 @@ logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         if (beginDir.equals(PARAM_VALUE_UPSTREAM)) beginOff *= -1;
         if (endDir.equals(PARAM_VALUE_UPSTREAM)) endOff *= -1;
 
-        String table = "fl" + suffix + ".";
+        String table = "fl.";
 
         // depending on whether the feature is on forward or reversed strand,
         // and user's choice of begin and end, we get the proper begin of the
         // region.
         StringBuilder sql = new StringBuilder("(CASE ");
-        sql.append(" WHEN " + table + "is_reversed = 0 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 0 THEN (");
         sql.append(begin.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + beginOff + ")) ");
-        sql.append(" WHEN " + table + "is_reversed = 1 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 1 THEN (");
         sql.append(end.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + endOff + ")) ");
         sql.append("END)");
@@ -249,10 +260,10 @@ logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
 
         // we get the proper end of the region.
         sql = new StringBuilder("(CASE ");
-        sql.append("WHEN " + table + "is_reversed = 0 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 0 THEN (");
         sql.append(end.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + endOff + ")) ");
-        sql.append(" WHEN " + table + "is_reversed = 1 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 1 THEN (");
         sql.append(begin.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + beginOff + ")) ");
         sql.append("END)");
@@ -261,44 +272,26 @@ logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         return new String[] { start, stop };
     }
 
-    private String composeSql(String projectId, String operation, String sqlA,
-            String sqlB, String[] regionA, String[] regionB, String strand,
-            String output) {
-        StringBuilder builder = new StringBuilder("SELECT ");
-        // use oracle hints to get a better performance.
-        builder.append("/*+ NO_MERGE(fa) NO_MERGE(fb) NO_PUSH_PRED(fa) NO_PUSH_PRED(fb) */");
+    private String composeSql(String projectId, String operation,
+            String tempTableA, String tempTableB, String strand, String output) {
+        StringBuilder builder = new StringBuilder();
 
         // determine the output type
-        builder.append(" DISTINCT f" + output + ".* FROM ");
-
-        // construct the first sub-sql for region A.
-        builder.append("(SELECT fla.feature_source_id AS source_id, ");
-        builder.append("   fla.na_sequence_id, ca.project_id, ca.wdk_weight, ");
-        builder.append(regionA[0] + " AS begin, " + regionA[1] + " AS end");
-        builder.append(" FROM apidb.FEATURELOCATION fla, " + sqlA + " ca ");
-        builder.append(" WHERE fla.feature_source_id = ca.source_id ");
-        builder.append("   AND fla.is_top_level = 1) fa, ");
-
-        // construct the second sub-sql for region B.
-        builder.append("(SELECT flb.feature_source_id AS source_id, ");
-        builder.append("   flb.na_sequence_id, cb.project_id, cb.wdk_weight, ");
-        builder.append(regionB[0] + " AS begin, " + regionB[1] + " AS end");
-        builder.append(" FROM apidb.FEATURELOCATION flb, " + sqlB + " cb ");
-        builder.append(" WHERE flb.feature_source_id = cb.source_id ");
-        builder.append("   AND flb.is_top_level = 1) fb ");
+        builder.append("SELECT  DISTINCT f" + output + ".* ");
+        builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
         // make sure the regions come from sequence source.
-        builder.append(" WHERE fa.na_sequence_id = fb.na_sequence_id ");
+        builder.append("WHERE fa.sequence_source_id = fb.sequence_source_id ");
 
         // restrict the regions to have start_min <= end_max
-        builder.append("   AND fa.begin <= fa.end ");
-        builder.append("   AND fb.begin <= fb.end ");
+        builder.append("  AND fa.begin <= fa.end ");
+        builder.append("  AND fb.begin <= fb.end ");
 
         // check the strand choice
         if (strand.equalsIgnoreCase(PARAM_VALUE_SAME_STRAND)) {
-            builder.append("   AND fa.is_reversed = fb.is_reversed ");
+            builder.append("  AND fa.is_reversed = fb.is_reversed ");
         } else if (strand.equalsIgnoreCase(PARAM_VALUE_OPPOSITE_STRANDS)) {
-            builder.append("   AND fa.is_reversed != fb.is_reversed ");
+            builder.append("  AND fa.is_reversed != fb.is_reversed ");
         }
 
         // apply span operation.
@@ -314,6 +307,75 @@ logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         }
 
         return builder.toString();
+    }
+
+    private String createTempTable(WdkModel wdkModel, WsfRequest request,
+            Map<String, String> params, String[] region, String inputKey)
+            throws WdkUserException, WdkModelException, SQLException,
+            NoSuchAlgorithmException, JSONException {
+        // get the answerValue from the step id
+        int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + inputKey));
+        String signature = request.getContext().get(
+                ProcessQueryInstance.CTX_USER);
+        User user = wdkModel.getUserFactory().getUser(signature);
+        AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
+
+        // get the sql to the cache table
+        String cacheSql = answerValue.getIdSql();
+
+        // get the table or sql that returns the location information
+        String rcName = answerValue.getQuestion().getRecordClass().getFullName();
+        String locTable;
+        if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
+            locTable = "(SELECT source_id AS feature_source_id, project_id, "
+                    + "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, "
+                    + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, "
+                    + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, "
+                    + "        regexp_substr(source_id, '[^:]+', 1, 3) AS is_reversed, "
+                    + "        1 AS is_top_level                  "
+
+                    + "  FROM (" + cacheSql + "))";
+        } else {
+            locTable = "apidb.FEATURELOCATION";
+        }
+
+        String table = "WdkSpan" + random.nextInt(Integer.MAX_VALUE);
+        StringBuilder builder = new StringBuilder();
+        builder.append("CREATE TABLE " + table + " NOLOGGING PARALLEL AS ");
+        builder.append("(SELECT DISTINCT fl.feature_source_id AS source_id, ");
+        builder.append("   fl.sequence_source_id, ca.project_id, ca.wdk_weight, ");
+        builder.append("   NVL(fl.is_reversed, 0) AS is_reversed, ");
+        builder.append(region[0] + " AS begin, " + region[1] + " AS end");
+        builder.append(" FROM " + locTable + " fl, " + cacheSql + " ca ");
+        builder.append(" WHERE fl.feature_source_id = ca.source_id ");
+        builder.append("   AND fl.is_top_level = 1)");
+        String sql = builder.toString();
+
+        logger.debug("SPAN cache: " + sql);
+        DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
+        SqlUtils.executeUpdate(wdkModel, dataSource, sql);
+
+        return table;
+    }
+
+    private void dropTempTables(WdkModel wdkModel, String tempA, String tempB)
+            throws WsfServiceException {
+        Exception exp = null;
+        // drop the temp table
+        DBPlatform platform = wdkModel.getQueryPlatform();
+        if (tempA != null) try {
+            platform.dropTable(null, tempA, false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            exp = ex;
+        }
+        if (tempB != null) try {
+            platform.dropTable(null, tempB, false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            exp = ex;
+        }
+        if (exp != null) throw new WsfServiceException(exp);
     }
 
     private WsfResponse getResult(WdkModel wdkModel, String sql,
