@@ -148,9 +148,12 @@ public class WuBlastPlugin extends BlastPlugin {
 
         // show stderr
         if (line.startsWith("FATAL")) {
-            line = in.readLine();
-            header.append(line + newline);
+	    // in BlastPlugin we append the output to the message, even when it is not empty. 
+	    //     The output, when FATAL, contains the important info, so we do not need to keep adding lines to the message.
+	    // line = in.readLine();
+	    // header.append(line + newline);
             message.append(header.toString());
+	    //logger.debug("\nWB prepareResult(): message is: *******************\n" +  message + "\n");
             return new String[0][columns.size()];
         }
 

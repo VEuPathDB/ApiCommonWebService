@@ -233,17 +233,18 @@ orderedColumns[5] + "--" +
 
             // signal is int, defined in WsfPlugin.java
             // we want to show the stderr to the user
-            /*
-             * if (signal != 0) throw new WsfServiceException("The invocation is
-             * failed: " + output);
-             */
+            
+	    // ******this does not stop processquery from caching a 0 result and no message is shown to user ******
+	    // if (signal != 0) throw new WsfServiceException("The invocation is failed: " + output);
+            // also, if an IO exception is caught (such as Invalid BLAST output format --when the wublast output only contains a header with nothing)
+	    //       the user will see 0 results with no message
             logger.debug("BLAST output: \n------------------\n" + output.toString() + "\n-----------------\n");
 
             // if the invocation succeeds, prepare the result; otherwise,
             // prepare results for failure scenario
             logger.info("\nPreparing the result");
             StringBuffer message = new StringBuffer();
-            String[][] result = prepareResult(orderedColumns, outFile, dbType,
+	    String[][] result = prepareResult(orderedColumns, outFile, dbType,
                     message);
             logger.info("\nResult prepared");
 
@@ -253,7 +254,8 @@ orderedColumns[5] + "--" +
 
 	    //logger.info("\nID: " + result[0][0] + "\nID: " + result[1][0] + "\nID: " + result[2][0] + "\nID: " + result[3][0]);
 
-            if (message.length() == 0) message.append(output);
+	    //            if (message.length() == 0) message.append(output);
+            message.append(output);
 
             WsfResult wsfResult = new WsfResult();
             wsfResult.setMessage(message.toString());
