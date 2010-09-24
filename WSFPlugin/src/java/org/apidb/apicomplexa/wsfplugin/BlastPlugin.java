@@ -233,11 +233,11 @@ orderedColumns[5] + "--" +
 
             // signal is int, defined in WsfPlugin.java
             // we want to show the stderr to the user
-            
+       
 	    // ******this does not stop processquery from caching a 0 result and no message is shown to user ******
+	    // the signal should be read by whoever called execute in the plugin (processquery?) the message would contain the error message....
+	    // if we do it here, we do not show anything to the user and only results 0 are seen.
 	    // if (signal != 0) throw new WsfServiceException("The invocation is failed: " + output);
-            // also, if an IO exception is caught (such as Invalid BLAST output format --when the wublast output only contains a header with nothing)
-	    //       the user will see 0 results with no message
             logger.debug("BLAST output: \n------------------\n" + output.toString() + "\n-----------------\n");
 
             // if the invocation succeeds, prepare the result; otherwise,
