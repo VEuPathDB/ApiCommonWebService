@@ -131,8 +131,12 @@ public class WuBlastPlugin extends BlastPlugin {
         StringBuffer header = new StringBuffer();
         do {
             line = in.readLine();
-            if (line == null)
-                throw new IOException("Invalid BLAST output format");
+	    logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
+	    if (line == null) {
+		message.append(header.toString());
+		return new String[0][columns.size()];
+	    }
+	    //  throw new IOException("Invalid BLAST output format");
 
             // if this is a WARNING complaining about the numbers in some fasta
             // files, do not append this line and the two following
