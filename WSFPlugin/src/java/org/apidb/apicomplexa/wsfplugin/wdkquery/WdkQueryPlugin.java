@@ -249,6 +249,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 // }
 
             } else {
+                // the input is enum param, therefore the query set doesn't exist
                 if (twoPartName[0].endsWith("VQ")) {
                     // convert a xxxxVQ into a xxxxParams (first letter in lower
                     // case)
@@ -344,16 +345,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
             } else if (msg.contains("does not exist")) {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
-                resultSize = -2;
+                resultSize = -2;    // query set or query doesn't exist
             } else if (msg.indexOf("does not include") != -1) {
-                resultSize = -2;
+                resultSize = -2;    // query set or query doesn't exist
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
             } else {
                 ex.printStackTrace();
-                resultSize = -1;
+                resultSize = -1;    // actual error, can't handle
             }
             // } catch(WdkUserException ex){
             // logger.info("WdkUSERexception IN execute()" + ex.toString());

@@ -254,7 +254,8 @@ public class ApiFedPlugin extends AbstractPlugin {
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
         // Spliting the QueryName up for Mapping
-        String queryName = request.getContext().get(ProcessQueryInstance.CTX_QUERY);
+        String queryName = request.getContext().get(
+                ProcessQueryInstance.CTX_QUERY);
         logger.info("QueryName = " + queryName);
         String apiQueryFullName = queryName.replace('.', ':');
         logger.debug("ApiQueryFullName = " + apiQueryFullName);
@@ -274,7 +275,7 @@ public class ApiFedPlugin extends AbstractPlugin {
             doAll = true;
             getRemoteCalls(doAll, sites);
             logger.debug("RemoteCalls Returned successfully");
-        } else {
+        } else { // not a param query
             orgName = hasOrganism(params);
             logger.debug("orgName is " + orgName);
             datasetName = hasDataset(params);
@@ -533,26 +534,33 @@ public class ApiFedPlugin extends AbstractPlugin {
                 if (answer != null) {
                     if (answer.length >= 0)
                         if (message.length() > 0) message.append(",");
+                    // the message was parsed in JSP, here just combine the
+                    // result message from all component into one big message.
                     message.append(compResult.getSiteName() + ":"
                             + compResult.getMessage());
                     if (answer.length > 0) {
                         if (!answer[0][0].equals("ERROR")) {
 
                             for (String[] rec : answer) {
-								int keyVal = 0;
+                                int keyVal = 0;
                                 if (!isParamResult && hasProjectId
                                         && primaryKey == null)
                                     rec = insertProjectId(rec, projectIndex,
                                             compResult.getSiteName());
-                                if(isParamResult)
-									keyVal = Arrays.deepToString(rec).hashCode(); //Use a HashCode to prevent duplicate values from parameters
-								else
-									keyVal = i; //Use incremented integer for results to ensure that a hash function does not inadvertently ommit results
-								// logger.debug("\n\n*********\n***rec[0] and
+                                if (isParamResult) keyVal = Arrays.deepToString(
+                                        rec).hashCode(); // Use a HashCode to
+                                                         // prevent duplicate
+                                                         // values from
+                                                         // parameters
+                                else keyVal = i; // Use incremented integer for
+                                                 // results to ensure that a
+                                                 // hash function does not
+                                                 // inadvertently ommit results
+                                // logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
-                                //combined.put(Arrays.deepHashCode(rec), rec);
-								combined.put(keyVal, rec);
-                                //combined.put(i, rec);
+                                // combined.put(Arrays.deepHashCode(rec), rec);
+                                combined.put(keyVal, rec);
+                                // combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
                                 // (combined size) ----------> " +
