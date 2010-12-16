@@ -242,10 +242,11 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
 
             // signal is int, defined in WsfPlugin.java
             // we want to show the stderr to the user
-            /*
-             * if (signal != 0) throw new WsfServiceException("The invocation is
-             * failed: " + output);
-             */
+       
+	    // ******this does not stop processquery from caching a 0 result and no message is shown to user ******
+	    // the signal should be read by whoever called execute in the plugin (processquery?) the message would contain the error message....
+	    // if we do it here, we do not show anything to the user and only results 0 are seen.
+	    // if (signal != 0) throw new WsfServiceException("The invocation is failed: " + output);
             logger.debug("BLAST output: \n------------------\n"
                     + output.toString() + "\n-----------------\n");
 
@@ -253,7 +254,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
             // prepare results for failure scenario
             logger.info("\nPreparing the result");
             StringBuffer message = new StringBuffer();
-            String[][] result = prepareResult(orderedColumns, outFile, dbType,
+	    String[][] result = prepareResult(orderedColumns, outFile, dbType,
                     message);
             logger.info("\nResult prepared");
 
@@ -264,7 +265,8 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
             // logger.info("\nID: " + result[0][0] + "\nID: " + result[1][0] +
             // "\nID: " + result[2][0] + "\nID: " + result[3][0]);
 
-            if (message.length() == 0) message.append(output);
+	    //            if (message.length() == 0) message.append(output);
+            message.append(output);
 
             WsfResponse wsfResult = new WsfResponse();
             wsfResult.setMessage(message.toString());

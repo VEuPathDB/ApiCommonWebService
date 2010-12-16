@@ -329,7 +329,7 @@ logger.debug("end='"+end+"', PARAM_VALUE_STOP='"+PARAM_VALUE_STOP+"'");
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
         ResultSet results = null;
         try {
-            results = SqlUtils.executeQuery(wdkModel, dataSource, sql);
+            results = SqlUtils.executeQuery(wdkModel, dataSource, sql, "span-logic-uncached");
             List<String[]> records = new ArrayList<String[]>();
             while (results.next()) {
                 String[] record = new String[orderedColumns.length];

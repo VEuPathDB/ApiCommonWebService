@@ -55,15 +55,13 @@ my $DISTANCE_MEASURES = {
 # ARGV[2] - gene_id, example: "M56059_3"
 # ARGV[3] - profileset, example: "DeRisi 3D7 Smoothed Averaged", "DeRisi HB3 Smoothed Averaged"
 # ARGV[4] - search_goal, choose from "dissimilar" or "similar"
-# ARGV[5] - timeshift, choose from 0 or 1
-# ARGV[6] - scaledata, choose from 0 or 1
-# ARGV[7] - minshift, choose from 0 ~ 47
-# ARGV[8] - maxshift, choose from 0 ~ 47
-# ARGV[9] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
-# ARGV[10] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
-# ARGV[11] - db_connection
-# ARGV[12] - db_login
-# ARGV[13] - db_password
+# ARGV[5] - time_shift, choose from -24 ~ 24
+# ARGV[6] - time_shift_plus_minus, choose from 0 ~ 12
+# ARGV[7] - # Number of time points in the data files  (48 for Plasmo DeRisi data, for example)
+# ARGV[8] - # time points that are allowed to be skipped in the input ( has to be [23,29] for Plasmo Derisi data)
+# ARGV[9] - db_connection
+# ARGV[10] - db_login
+# ARGV[11] - db_password
 
 my $dist_method_param = $ARGV[0];
 $dist_method_param =~ s/[^\_A-Za-z]//g;
@@ -74,51 +72,52 @@ $num_to_return =~ s/[^0-9]//g;
 
 my $gene_id = $ARGV[2];
 
-# comma-delimited list of weights; these can't be negative
-#my $weights = $ARGV[3];
-my $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
-$weights =~ s/[^,0-9\.-]//g;
-my @weightArray = split(/,/, $weights);
-my $numWeights = @weightArray;
-
 # get the profileset to query against
 my $profileSet = $ARGV[3];
 
 # whether to query for similar profiles or dissimilar profiles
 my $searchGoal = ($ARGV[4] =~ /dissimilar/i) ? 'dissimilar' : 'similar';
 
-# whether to do a timeshift query i.e., look for profiles that are nearby/
-# far away when timeshifted.  Default = no.
-my $timeShift = $ARGV[5];
-$timeShift =~ s/[^01]//g;
-
-# whether to scale query vector and all expression data into the range [-1, +1]
-# has less impact on Pearson correlation
-my $scaleData = $ARGV[6];
-$scaleData =~ s/[^01]//g;
+# whether to do a time shift query i.e., look for profiles that are nearby/
+# far away when timeshifted.
+# keeping this variable, as it is needed for a hack (see below)
+my $tShift = 1;
 
 # minimum shift value to try
-my $minShift = $ARGV[7];
-$minShift =~ s/[^0-9]//g;
+my $timeShift = $ARGV[5];
+$timeShift =~ s/[^-0-9]//g;
 
-my $maxShift = $ARGV[8];
-$maxShift =~ s/[^0-9]//g;
-
+# not using for now
+#my $shiftPlusMinus = $ARGV[6];
+#$shiftPlusMinus =~ s/[^0-9]//g;
+my $shiftPlusMinus = 0;
 
 # Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[9];
+my $NUM_TIME_POINTS = $ARGV[6];
+
+# comma-delimited list of weights; these can't be negative
+my $weights;
+if ($NUM_TIME_POINTS == 12) {  ## for Toxo M.White Cell Cycle data
+  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
+} else {  ## for Plasmo DeRisi data
+  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
+}
+$weights =~ s/[^,0-9\.-]//g;
+my @weightArray = split(/,/, $weights);
+my $numWeights = @weightArray;
+
 
 # Hack - time points that are allowed to be skipped in the input
-my $skipTimeStr =  $ARGV[10];
+my $skipTimeStr =  $ARGV[7];
 $skipTimeStr =~s/\s//g;
 my $SKIP_TIMES = [];
 @$SKIP_TIMES = split(/,/, $skipTimeStr);
 
 
 # read the db connection information
-my $dbConnection = $ARGV[11];
-my $dbLogin = $ARGV[12];
-my $dbPassword = $ARGV[13];
+my $dbConnection = $ARGV[8];
+my $dbLogin = $ARGV[9];
+my $dbPassword = $ARGV[10];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
@@ -236,11 +235,34 @@ if ($inputValid) {
     # HACK - if doing a time shift query, request some extra hits and then ignore 
     # those that are merely shifted by +1 or -1 from one we've already seen.
     #
-    if ($timeShift) {
+    if ($tShift) {
 	$num_requested *= 2;
     }
 
-    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $timeShift, $scaleData, $minShift, $maxShift);
+    # adjust the min and max time shifts
+    my ($minShift, $maxShift);
+    my $boolNegShift = 0; # to be set when shift is negative
+
+    if ($timeShift < 0) {
+      $minShift = $NUM_TIME_POINTS + $timeShift - $shiftPlusMinus;
+      $maxShift = $NUM_TIME_POINTS + $timeShift + $shiftPlusMinus;
+      $boolNegShift = 1;
+    } else {
+      $minShift = $timeShift - $shiftPlusMinus;
+      $maxShift = $timeShift + $shiftPlusMinus;
+    }
+
+    # In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
+    # i.e. there are 12 hours * 5 = 60 data points.
+    # fix minShift and maxShift:
+    my $scaleFactor = 1;
+    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12); 
+    if ($NUM_TIME_POINTS == 12) {
+      $minShift *= $scaleFactor;
+      $maxShift *= $scaleFactor;
+    }
+
+    $neighbors = &get_neighbors_perl($dbh, $dist_method, $num_requested, \@queryArray, \@weightArray, $profileSet, $minShift, $maxShift, $boolNegShift);
 
     foreach my $nbr (@$neighbors) {
 	# print "\n<BR CLEAR=\"both\">\n" if ($hitnum > 1);
@@ -274,15 +296,11 @@ $dbh->disconnect();
 # query_vector_ref: (ref to) the vector we are looking for neighbors of
 # w_ref: (ref to) the vector of weights
 # profileSet: the name of the profile for genes
-# time_shift: whether to try shifting each profile
-# scale_data: whether to scale query vector and all data into [-1, +1]
 # min_shift: minimum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # max_shift: maximum shift amount; must be >= 0 and < $NUM_TIME_POINTS
 # ----------------------------------------------------------------------
 sub get_neighbors_perl {
-    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $time_shift, $scale_data, $min_shift, $max_shift) = @_;
-
-    # TO DO - implement support for $scale_data in get_neighbors_perl
+    my ($dbh, $distance_method, $number_to_return, $query_vector_ref, $w_ref, $profileset, $min_shift, $max_shift, $boolNegShift) = @_;
 
     my $distanceSub = $distance_method->{sub};
     my $sortOrder = $distance_method->{order};
@@ -375,19 +393,19 @@ EOSQL
 	    # Range of time shifts to apply to the data
 	    my $startShift = 0;
 	    my $endShift = 0;
+	    my $scaleFactor = 1;  ## Needed for Toxo M.White Cell Cycle data
+	    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12);
 
-        if ($time_shift) {
-            if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < $NUM_TIME_POINTS)) {
+            if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < ($NUM_TIME_POINTS * $scaleFactor))) {
                 $startShift = $min_shift;
             }
-            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < $NUM_TIME_POINTS) && ($max_shift > $min_shift)) {
+            if (($max_shift =~ /\d/) && ($max_shift >= 0) && ($max_shift < ($NUM_TIME_POINTS * $scaleFactor)) && ($max_shift >= $min_shift)) {
                 $endShift = $max_shift;
             } else {
                 $endShift = $NUM_TIME_POINTS - 1;  # i.e., try them all
             }
-        }
 
-	    # Compute and store distance for this row/element, for each timeshift
+	    # Compute and store distance for this row/element, for each time shift
 	    my $bestDist = &$distanceSub($query_vector_ref, \@cd, $startShift, $w_ref, $W);
 	    my $bestShift = $startShift;
         for (my $shiftAmount = $startShift+1;$shiftAmount <= $endShift;++$shiftAmount) {
@@ -406,7 +424,14 @@ EOSQL
 
         # It belongs among the top hits found so far
         if ($arrayInd < $number_to_return) {
+	    # adjust shift for Toxo
+	    if ($NUM_TIME_POINTS == 12) {
+	      $bestShift = int($bestShift / 5);
+	    }
+
+	    $bestShift = $bestShift - $NUM_TIME_POINTS if ($boolNegShift == 1);
             my $hit = { elementId => $eltId, shift => $bestShift, distance => $bestDist };
+
             splice(@$bestDistances,$arrayInd,0,$bestDist);
             splice(@$bestHits,$arrayInd,0,$hit);
 

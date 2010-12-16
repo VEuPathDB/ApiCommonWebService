@@ -351,7 +351,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         logger.debug("SPAN cache: " + sql);
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
-        SqlUtils.executeUpdate(wdkModel, dataSource, sql);
+        SqlUtils.executeUpdate(wdkModel, dataSource, sql, "span-logic-cache-region");
 
         return table;
     }
@@ -382,7 +382,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
         ResultSet results = null;
         try {
-            results = SqlUtils.executeQuery(wdkModel, dataSource, sql);
+            results = SqlUtils.executeQuery(wdkModel, dataSource, sql, "span-logic-cached");
             List<String[]> records = new ArrayList<String[]>();
             while (results.next()) {
                 String[] record = new String[orderedColumns.length];
