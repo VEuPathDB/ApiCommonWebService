@@ -41,6 +41,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         public String projectId;
         public int begin;
         public int end;
+        public int weight;
         public List<Feature> matched = new ArrayList<Feature>();
     }
 
@@ -88,7 +89,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     public String[] getColumns() {
         return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
-                COLUMN_WDK_WEIGHT };
+                COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION, COLUMN_MATCHED_COUNT,
+                COLUMN_MATCHED_REGIONS };
     }
 
     public String[] getRequiredParameterNames() {
@@ -293,9 +295,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // determine the output type
         builder.append("SELECT fa.source_id AS source_id_a, "
                 + "fa.project_id AS project_id_a, "
+                + "fa.wdk_weight AS wdk_weight_a, "
                 + "fa.begin AS begin_a, fa.end AS end_a, "
                 + "fb.source_id AS source_id_b, "
                 + "fb.project_id AS project_id_b, "
+                + "fb.wdk_weight AS wdk_weight_b, "
                 + "fb.begin AS begin_b, fb.end AS end_b ");
         builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
@@ -407,6 +411,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         for (Map<String, String> result : results) {
             String[] record = new String[orderedColumns.length];
             for (int i = 0; i < record.length; i++) {
+                if (result.get(orderedColumns[i]) == null)
+                    logger.error("No value match for column: " + orderedColumns[i]);
                 record[i] = result.get(orderedColumns[i]).toString();
             }
             records.add(record);
@@ -445,6 +451,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                     a.projectId = results.getString("project_id_a");
                     a.begin = results.getInt("begin_a");
                     a.end = results.getInt("end_a");
+                    a.weight = results.getInt("wdk_weight_a");
                     fas.put(sourceIdA, a);
                 }
 
@@ -457,6 +464,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                     b.projectId = results.getString("project_id_b");
                     b.begin = results.getInt("begin_b");
                     b.end = results.getInt("end_b");
+                    b.weight = results.getInt("wdk_weight_b");
                     fbs.put(sourceIdB, b);
                 }
                 
@@ -474,13 +482,17 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 String region = "[" + feature.begin + ", " + feature.end + "]";
                 record.put(COLUMN_FEATURE_REGION, region);
                 record.put(COLUMN_MATCHED_COUNT, "" + feature.matched.size());
+                record.put(COLUMN_WDK_WEIGHT, "" + feature.weight);
 
                 StringBuilder builder = new StringBuilder();
                 for (Feature fr : feature.matched) {
                     if (builder.length() > 0) builder.append(";");
-                    builder.append("[" + fr.begin + ", " + fr.end + "]");
+                    builder.append(fr.sourceId);
+                    builder.append(" [" + fr.begin + ", " + fr.end + "]");
                 }
-                record.put(COLUMN_MATCHED_REGIONS, builder.toString());
+                String regions = builder.toString();
+                if (regions.length() > 4000) regions = regions.substring(0, 3998) + "...";
+                record.put(COLUMN_MATCHED_REGIONS, regions);
                 records.add(record);
             }
             return records;
