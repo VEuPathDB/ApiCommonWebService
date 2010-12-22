@@ -1,17 +1,21 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
+import java.beans.beancontext.BeanContext;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import javax.sql.DataSource;
+import javax.xml.parsers.FactoryConfigurationError;
 
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.AnswerValue;
@@ -31,9 +35,21 @@ import org.json.JSONException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
+    private static class Feature {
+
+        public String sourceId;
+        public String projectId;
+        public int begin;
+        public int end;
+        public List<Feature> matched = new ArrayList<Feature>();
+    }
+
     public static String COLUMN_SOURCE_ID = "source_id";
     public static String COLUMN_PROJECT_ID = "project_id";
     public static String COLUMN_WDK_WEIGHT = "wdk_weight";
+    public static String COLUMN_FEATURE_REGION = "feature_region";
+    public static String COLUMN_MATCHED_COUNT = "matched_count";
+    public static String COLUMN_MATCHED_REGIONS = "matched_regions";
 
     public static String PARAM_OPERATION = "span_operation";
     public static String PARAM_STRAND = "span_strand";
@@ -204,12 +220,12 @@ public class SpanCompositionPlugin extends AbstractPlugin {
             // compose the final sql by comparing two regions with span
             // operation.
             String sql = composeSql(request.getProjectId(), operation, tempA,
-                    tempB, strand, output);
+                    tempB, strand);
 
             logger.debug("SPAN LOGIC SQL:\n" + sql);
 
             // execute the final sql, and fetch the result for the output.
-            return getResult(wdkModel, sql, request.getOrderedColumns());
+            return getResult(wdkModel, sql, request.getOrderedColumns(), output);
         } catch (Exception ex) {
             throw new WsfServiceException(ex);
         } finally {
@@ -271,11 +287,16 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
 
     private String composeSql(String projectId, String operation,
-            String tempTableA, String tempTableB, String strand, String output) {
+            String tempTableA, String tempTableB, String strand) {
         StringBuilder builder = new StringBuilder();
 
         // determine the output type
-        builder.append("SELECT  DISTINCT f" + output + ".* ");
+        builder.append("SELECT fa.source_id AS source_id_a, "
+                + "fa.project_id AS project_id_a, "
+                + "fa.begin AS begin_a, fa.end AS end_a, "
+                + "fb.source_id AS source_id_b, "
+                + "fb.project_id AS project_id_b, "
+                + "fb.begin AS begin_b, fb.end AS end_b ");
         builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
         // make sure the regions come from sequence source.
@@ -351,7 +372,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         logger.debug("SPAN cache: " + sql);
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
-        SqlUtils.executeUpdate(wdkModel, dataSource, sql, "span-logic-cache-region");
+        SqlUtils.executeUpdate(wdkModel, dataSource, sql,
+                "span-logic-cache-region");
 
         return table;
     }
@@ -377,31 +399,91 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
 
     private WsfResponse getResult(WdkModel wdkModel, String sql,
-            String[] orderedColumns) throws WdkUserException,
+            String[] orderedColumns, String output) throws WdkUserException,
             WdkModelException, SQLException {
+        List<Map<String, String>> results = prepareResults(wdkModel, sql,
+                output);
+        List<String[]> records = new ArrayList<String[]>();
+        for (Map<String, String> result : results) {
+            String[] record = new String[orderedColumns.length];
+            for (int i = 0; i < record.length; i++) {
+                record[i] = result.get(orderedColumns[i]).toString();
+            }
+            records.add(record);
+        }
+
+        // now copy the records into an array
+        String[][] array = new String[records.size()][orderedColumns.length];
+        for (int i = 0; i < array.length; i++) {
+            String[] record = records.get(i);
+            System.arraycopy(record, 0, array[i], 0, record.length);
+        }
+
+        WsfResponse wsfResult = new WsfResponse();
+        wsfResult.setResult(array);
+        return wsfResult;
+    }
+
+    private List<Map<String, String>> prepareResults(WdkModel wdkModel,
+            String sql, String output) throws SQLException, WdkUserException,
+            WdkModelException {
         DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
         ResultSet results = null;
+
         try {
-            results = SqlUtils.executeQuery(wdkModel, dataSource, sql, "span-logic-cached");
-            List<String[]> records = new ArrayList<String[]>();
+            results = SqlUtils.executeQuery(wdkModel, dataSource, sql,
+                    "span-logic-cached");
+            Map<String, Feature> fas = new LinkedHashMap<String, Feature>();
+            Map<String, Feature> fbs = new LinkedHashMap<String, Feature>();
             while (results.next()) {
-                String[] record = new String[orderedColumns.length];
-                for (int i = 0; i < record.length; i++) {
-                    record[i] = results.getObject(orderedColumns[i]).toString();
+                // get feature a
+                String sourceIdA = results.getString("source_id_a");
+                Feature a = fas.get(sourceIdA);
+                if (a == null) {
+                    a = new Feature();
+                    a.sourceId = sourceIdA;
+                    a.projectId = results.getString("project_id_a");
+                    a.begin = results.getInt("begin_a");
+                    a.end = results.getInt("end_a");
+                    fas.put(sourceIdA, a);
                 }
+
+                // get feature b
+                String sourceIdB = results.getString("source_id_b");
+                Feature b = fbs.get(sourceIdB);
+                if (b == null) {
+                    b = new Feature();
+                    b.sourceId = sourceIdB;
+                    b.projectId = results.getString("project_id_b");
+                    b.begin = results.getInt("begin_b");
+                    b.end = results.getInt("end_b");
+                    fbs.put(sourceIdB, b);
+                }
+                
+                a.matched.add(b);
+                b.matched.add(a);
+            }
+
+            // now format the features int map
+            Map<String, Feature> fs = output.equals("a") ? fas : fbs;
+            List<Map<String, String>> records = new ArrayList<Map<String, String>>();
+            for (Feature feature : fs.values()) {
+                Map<String, String> record = new LinkedHashMap<String, String>();
+                record.put(COLUMN_SOURCE_ID, feature.sourceId);
+                record.put(COLUMN_PROJECT_ID, feature.projectId);
+                String region = "[" + feature.begin + ", " + feature.end + "]";
+                record.put(COLUMN_FEATURE_REGION, region);
+                record.put(COLUMN_MATCHED_COUNT, "" + feature.matched.size());
+
+                StringBuilder builder = new StringBuilder();
+                for (Feature fr : feature.matched) {
+                    if (builder.length() > 0) builder.append(";");
+                    builder.append("[" + fr.begin + ", " + fr.end + "]");
+                }
+                record.put(COLUMN_MATCHED_REGIONS, builder.toString());
                 records.add(record);
             }
-
-            // now copy the records into an array
-            String[][] array = new String[records.size()][orderedColumns.length];
-            for (int i = 0; i < array.length; i++) {
-                String[] record = records.get(i);
-                System.arraycopy(record, 0, array[i], 0, record.length);
-            }
-
-            WsfResponse wsfResult = new WsfResponse();
-            wsfResult.setResult(array);
-            return wsfResult;
+            return records;
         } finally {
             SqlUtils.closeResultSet(results);
         }
