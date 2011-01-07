@@ -315,7 +315,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 + "fb.project_id AS project_id_b, "
                 + "fb.wdk_weight AS wdk_weight_b, "
                 + "fb.begin AS begin_b, fb.end AS end_b, "
-                + "fb.is_reversed AS is_reversed_b, ");
+                + "fb.is_reversed AS is_reversed_b ");
         builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
         // make sure the regions come from sequence source.
