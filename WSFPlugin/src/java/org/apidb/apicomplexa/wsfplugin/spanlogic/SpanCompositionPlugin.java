@@ -1,21 +1,19 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-import java.beans.beancontext.BeanContext;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import javax.sql.DataSource;
-import javax.xml.parsers.FactoryConfigurationError;
 
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.AnswerValue;
@@ -37,12 +35,27 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     private static class Feature {
 
+        private static NumberFormat format = NumberFormat.getIntegerInstance();
+
         public String sourceId;
         public String projectId;
         public int begin;
         public int end;
         public int weight;
+        public boolean reversed;
         public List<Feature> matched = new ArrayList<Feature>();
+
+        public String getBegin() {
+            return format.format(begin);
+        }
+
+        public String getEnd() {
+            return format.format(end);
+        }
+
+        public String getReversed() {
+            return reversed ? "-" : "+";
+        }
     }
 
     public static String COLUMN_SOURCE_ID = "source_id";
@@ -297,10 +310,12 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 + "fa.project_id AS project_id_a, "
                 + "fa.wdk_weight AS wdk_weight_a, "
                 + "fa.begin AS begin_a, fa.end AS end_a, "
+                + "fa.is_reversed AS is_reversed_a, "
                 + "fb.source_id AS source_id_b, "
                 + "fb.project_id AS project_id_b, "
                 + "fb.wdk_weight AS wdk_weight_b, "
-                + "fb.begin AS begin_b, fb.end AS end_b ");
+                + "fb.begin AS begin_b, fb.end AS end_b, "
+                + "fb.is_reversed AS is_reversed_b, ");
         builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
         // make sure the regions come from sequence source.
@@ -412,7 +427,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
             String[] record = new String[orderedColumns.length];
             for (int i = 0; i < record.length; i++) {
                 if (result.get(orderedColumns[i]) == null)
-                    logger.error("No value match for column: " + orderedColumns[i]);
+                    logger.error("No value match for column: "
+                            + orderedColumns[i]);
                 record[i] = result.get(orderedColumns[i]).toString();
             }
             records.add(record);
@@ -452,6 +468,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                     a.begin = results.getInt("begin_a");
                     a.end = results.getInt("end_a");
                     a.weight = results.getInt("wdk_weight_a");
+                    a.reversed = results.getBoolean("is_reversed_a");
                     fas.put(sourceIdA, a);
                 }
 
@@ -465,9 +482,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                     b.begin = results.getInt("begin_b");
                     b.end = results.getInt("end_b");
                     b.weight = results.getInt("wdk_weight_b");
+                    b.reversed = results.getBoolean("is_reversed_b");
                     fbs.put(sourceIdB, b);
                 }
-                
+
                 a.matched.add(b);
                 b.matched.add(a);
             }
@@ -479,7 +497,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 Map<String, String> record = new LinkedHashMap<String, String>();
                 record.put(COLUMN_SOURCE_ID, feature.sourceId);
                 record.put(COLUMN_PROJECT_ID, feature.projectId);
-                String region = "[" + feature.begin + ", " + feature.end + "]";
+                String region = feature.sourceId + ":&nbsp;"
+                        + feature.getBegin() + "&nbsp;-&nbsp;"
+                        + feature.getEnd() + "&nbsp;(" + feature.getReversed()
+                        + ")";
                 record.put(COLUMN_FEATURE_REGION, region);
                 record.put(COLUMN_MATCHED_COUNT, "" + feature.matched.size());
                 record.put(COLUMN_WDK_WEIGHT, "" + feature.weight);
@@ -487,11 +508,13 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 StringBuilder builder = new StringBuilder();
                 for (Feature fr : feature.matched) {
                     if (builder.length() > 0) builder.append(";");
-                    builder.append(fr.sourceId);
-                    builder.append(" [" + fr.begin + ", " + fr.end + "]");
+                    builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin()
+                            + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;("
+                            + fr.getReversed() + ")");
                 }
                 String regions = builder.toString();
-                if (regions.length() > 4000) regions = regions.substring(0, 3998) + "...";
+                if (regions.length() > 4000)
+                    regions = regions.substring(0, 3998) + "...";
                 record.put(COLUMN_MATCHED_REGIONS, regions);
                 records.add(record);
             }
