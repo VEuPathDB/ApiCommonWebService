@@ -18,6 +18,7 @@ import org.gusdb.wdk.model.ModelXmlParser;
 import org.gusdb.wdk.model.PrimaryKeyAttributeField;
 import org.gusdb.wdk.model.RecordClass;
 import org.gusdb.wdk.model.RecordInstance;
+import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
@@ -45,7 +46,11 @@ import org.json.JSONException;
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
+ * 
+ *          Jerric - this class is deprecated and no longer maintained. Please
+ *          use WdlQueryPlugin instead.
  */
+@Deprecated
 public class WdkFullQueryPlugin extends AbstractPlugin {
 
     // Propert values
@@ -64,7 +69,7 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
 
     // Member Variables
     // private WdkModelBean[] models = null;
-    private WdkModelBean model = null;
+    private WdkModel wdkModel = null;
     // private static File m_modelFile = null;
     // private static File m_modelPropFile = null;
     // private static File m_schemaFile = null;
@@ -168,8 +173,7 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
-    public WsfResponse execute(WsfRequest request)
-            throws WsfServiceException {
+    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkFullQueryPlugin.VERSION);
         // logger.info("Invoking WdkQueryPlugin......");
@@ -178,16 +182,13 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
         ResultList results = null;
         Map<String, String> params = request.getParams();
         Map<String, String> context = request.getContext();
-        
-        String queryName = context.get(ProcessQueryInstance.CTX_QUERY);
-        if (params.containsKey("Query")) {
-            queryName = params.get("Query");
-            params.remove("Query");
-        }
-        String siteModel = params.get(SITE_MODEL);
-        params.remove(SITE_MODEL);
-        model = modelName2Model.get(siteModel);
-        logger.info("Model = " + model.getProjectId());
+
+        String queryName = context.get(Utilities.QUERY_CTX_QUERY);
+
+        if (params.containsKey("Query")) params.remove("Query");
+        String siteModel = params.remove(SITE_MODEL);
+        wdkModel = modelName2Model.get(siteModel).getModel();
+        logger.info("Model = " + wdkModel.getProjectId());
         // logger.info("QueryName = "+ invokeKey);
 
         // Map<String,Object>SOParams = convertParams(params);
@@ -202,14 +203,13 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
             queryName = queryName.replace('.', ':');
             logger.info(queryName);
             String[] twoPartName = queryName.split(":");
-            QuerySet qs = model.getModel().getQuerySet(twoPartName[0]);
+            QuerySet qs = wdkModel.getQuerySet(twoPartName[0]);
             Query q = qs.getQuery(twoPartName[1]);
             logger.info("Query found : " + q.getFullName());
             String recordClassName = determineRecordClass(twoPartName[0]);
             logger.info(recordClassName + " Determined from QuerySet "
                     + twoPartName[0]);
-            RecordClass recordClass = model.getModel().getRecordClass(
-                    recordClassName);
+            RecordClass recordClass = wdkModel.getRecordClass(recordClassName);
             logger.info("RecordClass found : " + recordClass.getFullName());
             Map<String, String> SOParams = convertParams(params, q.getParams());// getParamsFromQuery(q));
 
@@ -229,14 +229,8 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
             }
 
             // WS Query processing
-            User user;
-            WdkModel wdkModel = model.getModel();
-            String userSignature = context.get(ProcessQueryInstance.CTX_USER);
-            if (userSignature == null) {
-                user = wdkModel.getSystemUser();
-            } else {
-                user = wdkModel.getUserFactory().getUser(userSignature);
-            }
+            String userSignature = context.get(Utilities.QUERY_CTX_USER);
+            User user = wdkModel.getUserFactory().getUser(userSignature);
             if (q instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
@@ -372,7 +366,7 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
         String[] parts = sig_id.split(":");
         String sig = parts[0];
         String id = parts[1];
-        UserFactory userfactory = model.getModel().getUserFactory();
+        UserFactory userfactory = wdkModel.getUserFactory();
         User user = userfactory.getUser(sig);
         Integer idInt = new Integer(id);
         Dataset dataset = user.getDataset(idInt.intValue());

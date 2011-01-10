@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.gusdb.wdk.model.ModelXmlParser;
+import org.gusdb.wdk.model.Question;
+import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
@@ -25,14 +27,11 @@ import org.gusdb.wdk.model.query.Column;
 import org.gusdb.wdk.model.query.ProcessQuery;
 import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.query.Query;
-import org.gusdb.wdk.model.query.QuerySet;
 import org.gusdb.wdk.model.query.SqlQuery;
 import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
-import org.gusdb.wdk.model.query.param.EnumParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
-import org.gusdb.wdk.model.query.param.ParamSet;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
@@ -66,7 +65,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // Member Variables
     // private WdkModelBean[] models = null;
-    private WdkModelBean model = null;
+    private WdkModel wdkModel = null;
     // private static File m_modelFile = null;
     // private static File m_modelPropFile = null;
     // private static File m_schemaFile = null;
@@ -190,14 +189,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Map<String, String> params = request.getParams();
         Map<String, String> context = request.getContext();
 
-        String queryName = context.get(ProcessQueryInstance.CTX_QUERY);
-        if (params.containsKey("Query")) {
-            queryName = params.get("Query");
-            params.remove("Query");
-        }
-        String siteModel = params.get(SITE_MODEL);
-        params.remove(SITE_MODEL);
-        model = modelName2Model.get(siteModel);
+        String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
+        String paramName = context.get(Utilities.QUERY_CTX_PARAM);
+        String queryName = context.get(Utilities.QUERY_CTX_QUERY);
+
+        if (params.containsKey("Query")) params.remove("Query");
+        String siteModel = params.remove(SITE_MODEL);
+        wdkModel = modelName2Model.get(siteModel).getModel();
         // logger.info("QueryName = "+ invokeKey);
 
         // Map<String,Object>SOParams = convertParams(params);
@@ -208,87 +206,40 @@ public class WdkQueryPlugin extends AbstractPlugin {
         String[] orderedColumns = request.getOrderedColumns();
         Integer[] colindicies = new Integer[orderedColumns.length];
         try {
+            if (paramName != null) {
+                // the call is to get param values
+                Param param = (Param) this.wdkModel.resolveReference(paramName);
+                logger.info("Parameter found : " + param.getFullName());
 
-            // Reset the QueryName for testing reasons
-            // invokeKey = "GeneFeatureIds.GeneByLocusTag";
-
-            queryName = queryName.replace('.', ':');
-            logger.info(queryName);
-            Query q = null;
-            String[] twoPartName = queryName.split(":");
-
-            // TODO: check parameters starting with its paramSet, finding out
-            // the type (enum, flatvocab, etc)
-            // then if flatvocab, find the queryRef, if enum as below...
-            // As it is, the javascript provides the param full name OR the
-            // queryRef:
-            // -- if it is a queryRef it is understood it is a flat vocab param
-            // fro ALL COMP SITES
-            // -- if it is not a queryRef, it is assumed to be enum FOR ALL
-            // COMPONENT SITES: this is wrong:
-            // we want to have component sites defining the parameter enum or
-            // flat as they wish
-            //
-            if (model.getModel().hasQuerySet(twoPartName[0])
-                    && model.getModel().getQuerySet(twoPartName[0]).contains(
-                            twoPartName[1])) {
-                // if(params.containsKey("ServedQuery")){
-                // String servedquery = params.get("servedQuery");
-                // String[] sQuery = servedquery.split(".");
-                // if(model.getModel().hasQuerySet(sQuery[0])){
-                // Query que =
-                // model.getModel().getQuerySet(sQuery[0]).getQuery(sQuery[1]);
-                // QuerySet qs = model.getModel().getQuerySet(queryName[0]);
-                // q = qs.getQuery(queryName[1]);
-                // logger.info("Query found : " + q.getFullName());
-                // }
-                // }else{
-                QuerySet qs = model.getModel().getQuerySet(twoPartName[0]);
-                q = qs.getQuery(twoPartName[1]);
-                logger.info("Query found : " + q.getFullName());
-                // }
-
-            } else {
-                // the input is enum param, therefore the query set doesn't exist
-                if (twoPartName[0].endsWith("VQ")) {
-                    // convert a xxxxVQ into a xxxxParams (first letter in lower
-                    // case)
-                    String[] temp = twoPartName[0].toLowerCase().split("vq");
-                    logger.info("Query set becomes: " + temp[0] + "Params");
-                    twoPartName[0] = temp[0] + "Params";
-                }
-                ParamSet ps = model.getModel().getParamSet(twoPartName[0]);
-                Param p = ps.getParam(twoPartName[1]);
-                logger.info("Parameter found : " + p.getFullName());
-
-                if (p instanceof FlatVocabParam) {
-                    String queryRef = ((FlatVocabParam) p).getQuery().getFullName();
-                    logger.info("Parameter is flatvocab, queryRef is: "
-                            + queryRef + "\n");
-                    q = ((FlatVocabParam) p).getQuery();
+                String[][] paramValues;
+                if (param instanceof AbstractEnumParam) {
+                    paramValues = handleVocabParams((AbstractEnumParam) param,
+                            params, orderedColumns);
                 } else {
-                    String[][] enumValues = handleEnumParameters(p, params,
-                            orderedColumns);
-
-                    WsfResponse wsfResponse = new WsfResponse();
-                    wsfResponse.setResult(enumValues);
-                    return wsfResponse;
+                    paramValues = new String[0][0];
                 }
+                WsfResponse wsfResponse = new WsfResponse();
+                wsfResponse.setResult(paramValues);
+                return wsfResponse;
+
+            }
+
+            // check if question is set
+            Query query;
+            if (questionName != null) {
+                Question question = wdkModel.getQuestion(questionName);
+                query = question.getQuery();
+            } else {
+                query = (Query) wdkModel.resolveReference(queryName);
             }
 
             // get the user
-            User user;
-            WdkModel wdkModel = model.getModel();
-            String userSignature = context.get(ProcessQueryInstance.CTX_USER);
-            if (userSignature == null) {
-                user = wdkModel.getSystemUser();
-            } else {
-                user = wdkModel.getUserFactory().getUser(userSignature);
-            }
+            String userSignature = context.get(Utilities.QUERY_CTX_USER);
+            User user = wdkModel.getUserFactory().getUser(userSignature);
 
             // converting from internal values to dependent values
             Map<String, String> SOParams = convertParams(user, params,
-                    q.getParams());// getParamsFromQuery(q));
+                    query.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
             // logger.info("Parameters Validated...");
@@ -299,16 +250,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
             int i = 0;
             for (String oCol : orderedColumns) {
-                int value = findColumnIndex(q, oCol);
+                int value = findColumnIndex(query, oCol);
                 Integer iValue = new Integer(value);
                 colindicies[i] = iValue;
                 i++;
             }
 
             // WS Query processing
-            if (q instanceof ProcessQuery) {
+            if (query instanceof ProcessQuery) {
                 logger.info("Processing WSQuery ...");
-                ProcessQuery wsquery = (ProcessQuery) q;
+                ProcessQuery wsquery = (ProcessQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
                 ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
@@ -318,7 +269,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // SQL Query Processing
             else {
                 logger.info("Process SqlQuery ...");
-                SqlQuery sqlquery = (SqlQuery) q;
+                SqlQuery sqlquery = (SqlQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
                 SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
@@ -326,7 +277,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
-            componentResults = results2StringArray(q.getColumns(), results);
+            componentResults = results2StringArray(query.getColumns(), results);
             logger.info("Results have been processed.... "
                     + componentResults.length);
 
@@ -345,16 +296,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
             } else if (msg.contains("does not exist")) {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
-                resultSize = -2;    // query set or query doesn't exist
+                resultSize = -2; // query set or query doesn't exist
             } else if (msg.indexOf("does not include") != -1) {
-                resultSize = -2;    // query set or query doesn't exist
+                resultSize = -2; // query set or query doesn't exist
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
             } else {
                 ex.printStackTrace();
-                resultSize = -1;    // actual error, can't handle
+                resultSize = -1; // actual error, can't handle
             }
             // } catch(WdkUserException ex){
             // logger.info("WdkUSERexception IN execute()" + ex.toString());
@@ -709,7 +660,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         logger.info("conVocab.length = " + conVocab.length);
-	if (p.isSkipValidation()) return true;
+        if (p.isSkipValidation()) return true;
         // initVocabMap();
         for (String v : conVocab) {
             logger.info("value: " + value + " | vocabTerm: " + v);
@@ -718,39 +669,45 @@ public class WdkQueryPlugin extends AbstractPlugin {
         return false;
     }
 
-    private String[][] handleEnumParameters(Param p, Map<String, String> ps, String[] ordCols)
-            throws WdkModelException, NoSuchAlgorithmException, SQLException,
-            JSONException, WdkUserException {
-        logger.info("Function to Handle a Enum Parameter in WdkQueryPlugin");
-        EnumParam eParam = (EnumParam) p;
-		logger.info(eParam.getDependedParam().getName() + " ==== " + eParam.getDependedValue());
-		eParam.setDependedValue(ps.get(eParam.getDependedParam().getName()));
-		logger.info(eParam.getDependedParam().getName() + " ==== " + eParam.getDependedValue());
-        Map<String, String> termDisp = eParam.getDisplayMap();
+    private String[][] handleVocabParams(AbstractEnumParam vocabParam,
+            Map<String, String> ps, String[] ordCols) throws WdkModelException,
+            NoSuchAlgorithmException, SQLException, JSONException,
+            WdkUserException {
+        logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
+                + vocabParam.getFullName());
+
+        // set depended value if needed
+        Param dependedParam = vocabParam.getDependedParam();
+        if (dependedParam != null) {
+            String dependedValue = ps.get(dependedParam.getName());
+            vocabParam.setDependedValue(dependedValue);
+            logger.debug(dependedParam.getName() + " ==== " + dependedValue);
+        }
+        Map<String, String> termDisp = vocabParam.getDisplayMap();
         Set<String> terms = termDisp.keySet();
-        int tI = 0;
-        int iI = 0;
+        int termColumnIndex = 0;
+        int displayColumnIndex = 0;
         int i = 0;
         for (String c : ordCols) {
-            logger.info("current Column = " + c + " ,,,, i = " + i);
+            logger.debug("current Column = " + c + " ,,,, i = " + i);
             if (c.equals("term")) {
-                tI = i;
-            } else if (c.equals("internal")) {
-                iI = i;
+                termColumnIndex = i;
+            } else if (c.equals("display")) {
+                displayColumnIndex = i;
             }
             i++;
         }
-        logger.info("OrderedColumns.length = " + ordCols.length + ", term = "
-                + tI + ", Internal = " + iI);
+        logger.debug("OrderedColumns.length = " + ordCols.length + ", term = "
+                + termColumnIndex + ", display = " + displayColumnIndex);
         String[][] ePValues = new String[terms.size()][ordCols.length];
         int index = 0;
         for (String term : terms) {
             for (int j = 0; j < ePValues[index].length; j++)
                 ePValues[index][j] = "N/A";
             String disp = termDisp.get(term);
-            ePValues[index][tI] = disp;
-            ePValues[index][iI] = term;
-            logger.info("Term = " + term + ",     Display = " + disp);
+            ePValues[index][termColumnIndex] = disp;
+            ePValues[index][displayColumnIndex] = term;
+            logger.debug("Term = " + term + ",     Display = " + disp);
             index++;
         }
         return ePValues;

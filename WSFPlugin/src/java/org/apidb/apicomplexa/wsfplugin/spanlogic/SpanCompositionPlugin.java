@@ -17,13 +17,13 @@ import javax.sql.DataSource;
 
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.AnswerValue;
+import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.DBPlatform;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
@@ -354,7 +354,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // get the answerValue from the step id
         int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + inputKey));
         String signature = request.getContext().get(
-                ProcessQueryInstance.CTX_USER);
+                Utilities.QUERY_CTX_USER);
         User user = wdkModel.getUserFactory().getUser(signature);
         AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
 

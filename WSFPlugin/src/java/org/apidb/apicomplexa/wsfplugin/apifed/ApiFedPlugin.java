@@ -1,16 +1,15 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
+
 import org.gusdb.wdk.model.Utilities;
-import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -19,7 +18,6 @@ import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 /**
@@ -58,7 +56,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     private boolean doAll;
     private boolean hasProjectId;
     private int timeOutInMinutes;
-    private Document mapDoc = null;
+    // private Document mapDoc = null;
     private String primaryKey = null;
 
     public ApiFedPlugin() throws WsfServiceException {
@@ -127,67 +125,71 @@ public class ApiFedPlugin extends AbstractPlugin {
         }
     }
 
-    private Document createMap(String mapFile) {
-
-        Document doc = null;
-        try {
-            doc = new SAXBuilder().build(new File(mapFile));
-        } catch (JDOMException e) {
-            logger.debug(e.toString());
-            e.printStackTrace();
-        } catch (IOException e) {
-            logger.debug(e.toString());
-            e.printStackTrace();
-        }
-
-        return doc;
-    }
-
-    private String mapQuerySet(String querySet, String project) {
-        Element querySetMapping = null;
-        try {
-            if (mapDoc == null)
-                logger.debug("Error:::::::MapDocument is empty");
-            querySetMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(
-                    querySet);
-            String componentQuerySet = querySetMapping.getAttributeValue(project);
-            return componentQuerySet;
-        } catch (NullPointerException e) {
-            String ret = "";
-            return ret;
-        }
-    }
-
-    private String mapQuery(String querySet, String queryName, String project) {
-        String xPath = "/FederationMapping/QuerySets/" + querySet
-                + "/wsQueries/" + queryName;
-        try {
-            Element queryMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(
-                    querySet).getChild("wsQueries").getChild(queryName);
-            String componentQuery = queryMapping.getAttributeValue(project);
-
-            return componentQuery;
-        } catch (NullPointerException e) {
-            String ret = "";
-            return ret;
-        }
-    }
-
-    private String mapParam(String querySet, String queryName,
-            String paramName, String project) {
-        String xPath = "/FederationMapping/QuerySets/" + querySet
-                + "/wsQueries/" + queryName + "/Params/params." + paramName;
-        try {
-            Element paramMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(
-                    querySet).getChild("wsQueries").getChild(queryName).getChild(
-                    "Params").getChild("params." + paramName);
-            String componentParam = paramMapping.getAttributeValue(project);
-            return componentParam;
-        } catch (NullPointerException e) {
-            String ret = "";
-            return ret;
-        }
-    }
+    //
+    // private Document createMap(String mapFile) {
+    //
+    // Document doc = null;
+    // try {
+    // doc = new SAXBuilder().build(new File(mapFile));
+    // } catch (JDOMException e) {
+    // logger.debug(e.toString());
+    // e.printStackTrace();
+    // } catch (IOException e) {
+    // logger.debug(e.toString());
+    // e.printStackTrace();
+    // }
+    //
+    // return doc;
+    // }
+    //
+    // private String mapQuerySet(String querySet, String project) {
+    // Element querySetMapping = null;
+    // try {
+    // if (mapDoc == null)
+    // logger.debug("Error:::::::MapDocument is empty");
+    // querySetMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(
+    // querySet);
+    // String componentQuerySet = querySetMapping.getAttributeValue(project);
+    // return componentQuerySet;
+    // } catch (NullPointerException e) {
+    // String ret = "";
+    // return ret;
+    // }
+    // }
+    //
+    // private String mapQuery(String querySet, String queryName, String
+    // project) {
+    // String xPath = "/FederationMapping/QuerySets/" + querySet
+    // + "/wsQueries/" + queryName;
+    // try {
+    // Element queryMapping =
+    // mapDoc.getRootElement().getChild("QuerySets").getChild(
+    // querySet).getChild("wsQueries").getChild(queryName);
+    // String componentQuery = queryMapping.getAttributeValue(project);
+    //
+    // return componentQuery;
+    // } catch (NullPointerException e) {
+    // String ret = "";
+    // return ret;
+    // }
+    // }
+    //
+    // private String mapParam(String querySet, String queryName,
+    // String paramName, String project) {
+    // String xPath = "/FederationMapping/QuerySets/" + querySet
+    // + "/wsQueries/" + queryName + "/Params/params." + paramName;
+    // try {
+    // Element paramMapping =
+    // mapDoc.getRootElement().getChild("QuerySets").getChild(
+    // querySet).getChild("wsQueries").getChild(queryName).getChild(
+    // "Params").getChild("params." + paramName);
+    // String componentParam = paramMapping.getAttributeValue(project);
+    // return componentParam;
+    // } catch (NullPointerException e) {
+    // String ret = "";
+    // return ret;
+    // }
+    // }
 
     /*
      * (non-Javadoc)
@@ -254,37 +256,30 @@ public class ApiFedPlugin extends AbstractPlugin {
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
         // Spliting the QueryName up for Mapping
-        String queryName = request.getContext().get(
-                ProcessQueryInstance.CTX_QUERY);
-        logger.info("QueryName = " + queryName);
-        String apiQueryFullName = queryName.replace('.', ':');
-        logger.debug("ApiQueryFullName = " + apiQueryFullName);
-        String[] apiQueryNameArray = apiQueryFullName.split(":");
-        String apiQuerySetName = apiQueryNameArray[0];
-        String apiQueryName = apiQueryNameArray[1];
-        logger.debug("Full QueryName = " + queryName);
+        Map<String, String> context = request.getContext();
+        String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
+        String paramName = context.get(Utilities.QUERY_CTX_PARAM);
+        logger.debug("question: " + questionName + ", param: " + paramName);
 
         // Determine if the Query is a Parameter Query
-        if (apiQuerySetName.contains(PARAM_SET_NAME)) isParam = true;
+        if (paramName != null) isParam = true;
 
         Map<String, String> params = request.getParams();
         String orgName = null;
         String datasetName = null;
-        if (isParam) {
-            logger.info("Found that QuerySet Name = VQ");
+        if (isParam) { // get param values
+            logger.debug("Get param values from remote");
             doAll = true;
             getRemoteCalls(doAll, sites);
             logger.debug("RemoteCalls Returned successfully");
-        } else { // not a param query
+        } else { // run id query and get results
             orgName = hasOrganism(params);
             logger.debug("orgName is " + orgName);
             datasetName = hasDataset(params);
             if (orgName != null) {
                 if (orgName.indexOf("primaryKey") != -1) {
-
-                    this.primaryKey = params.get(orgName); // WORKAROUND FOR
-                    // COLUMN
-                    // RESTRICTIONS
+                    // WORKAROUND FOR COLUMN RESTRICTIONS
+                    this.primaryKey = params.get(orgName);
 
                     logger.debug("Working with AjaxRecordClass primaryKey calculations");
                     String pk = params.get(orgName);
@@ -298,8 +293,6 @@ public class ApiFedPlugin extends AbstractPlugin {
                         getRemoteCalls(parts[1], sites);
                     } else {
                         getRemoteCalls(doAll, sites);
-                        logger.debug("Query = " + queryName + ", primaryKey = "
-                                + pk);
                     }
                 } else {
 
@@ -333,7 +326,11 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         // Preparing and executing the propriate component sites for this Query
         logger.info("invoking the web services");
-        logger.info("******if the next message you see says: *Entering Combine Results* we are not accessing any component site: probably your apifed-config does not have all necessary organism values used to select site; or maybe the value stored in the organism parameter cannot be read as a string\n");
+        logger.info("******if the next message you see says: *Entering Combine "
+                + "Results* we are not accessing any component site: probably "
+                + "your apifed-config does not have all necessary organism "
+                + "values used to select site; or maybe the value stored in "
+                + "the organism parameter cannot be read as a string\n");
         int thread_counter = 0;
         logger.debug("***sites organisms are: \n\n" + sites[0].getName() + ":"
                 + sites[0].getOrganism() + "\n" + sites[1].getName() + ":"
@@ -347,7 +344,6 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         for (Site site : sites) {
             if (site.hasOrganism()) {
-                String compQueryFullName = queryName;
                 Map<String, String> siteParams = params;
                 logger.debug("organismParameterName = " + orgName);
                 if (orgName != null) {
@@ -359,7 +355,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 }
                 Map<String, String> arrayParams = getParams(siteParams,
                         site.getOrganism(), orgName, datasetName,
-                        site.getName(), apiQuerySetName, apiQueryName);
+                        site.getName());
                 logger.debug("getParams DONE   Organism = "
                         + site.getOrganism());
                 compStatus[thread_counter] = new Status(false);
@@ -373,9 +369,9 @@ public class ApiFedPlugin extends AbstractPlugin {
                 compRequest.setParams(arrayParams);
                 compRequest.setOrderedColumns(componentColumns);
 
-                Map<String, String> compContext = request.getContext();
-                compContext.put(ProcessQueryInstance.CTX_QUERY,
-                        compQueryFullName);
+                Map<String, String> compContext = new LinkedHashMap<String, String>(
+                        context);
+                compRequest.setContext(compContext);
 
                 compThreads[thread_counter] = new WdkQuery(site.getUrl(),
                         processName, compRequest, compResults[thread_counter],
@@ -418,10 +414,11 @@ public class ApiFedPlugin extends AbstractPlugin {
         return wsfResult;
     }
 
-    private void initSites() {
-        for (int i = 0; i < sites.length; i++)
-            sites[i].setOrganism("");
-    }
+    //
+    // private void initSites() {
+    // for (int i = 0; i < sites.length; i++)
+    // sites[i].setOrganism("");
+    // }
 
     private boolean allDone(Status[] S) {
         for (Status s : S) {
@@ -458,7 +455,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     private Map<String, String> getParams(Map<String, String> params,
             String localOrgs, String orgParam, String datasetParam,
-            String modelName, String querySetName, String queryName) {
+            String modelName) {
         Map<String, String> arrParams = new HashMap<String, String>();
         logger.info("ORGPARAM = " + orgParam);
         for (String key : params.keySet()) {
@@ -549,13 +546,13 @@ public class ApiFedPlugin extends AbstractPlugin {
                                             compResult.getSiteName());
                                 if (isParamResult) keyVal = Arrays.deepToString(
                                         rec).hashCode(); // Use a HashCode to
-                                                         // prevent duplicate
-                                                         // values from
-                                                         // parameters
+                                // prevent duplicate
+                                // values from
+                                // parameters
                                 else keyVal = i; // Use incremented integer for
-                                                 // results to ensure that a
-                                                 // hash function does not
-                                                 // inadvertently ommit results
+                                // results to ensure that a
+                                // hash function does not
+                                // inadvertently ommit results
                                 // logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
                                 // combined.put(Arrays.deepHashCode(rec), rec);
@@ -584,11 +581,12 @@ public class ApiFedPlugin extends AbstractPlugin {
         return combinedColl.toArray(combinedArr);
     }
 
-    private void logResults(String[] r, int i) {
-        for (String cr : r) {
-            logger.debug("------- Record :" + i + " " + cr);
-        }
-    }
+    //
+    // private void logResults(String[] r, int i) {
+    // for (String cr : r) {
+    // logger.debug("------- Record :" + i + " " + cr);
+    // }
+    // }
 
     // Method to insert the projectId in the proper place in the return data
     private String[] insertProjectId(String[] rec, int index, String projectId) {
@@ -616,32 +614,32 @@ public class ApiFedPlugin extends AbstractPlugin {
         return newRec;
     }
 
-    // Method to remove the projectId column from the colums sent to the
-    // component sites
-    private String[] removeProjectId(String[] cols) {
-        hasProjectId = false;
-        int projectIndex = 0;
-        for (String col : cols) {
-            if (col.equals("project_id")) {
-                hasProjectId = true;
-                break;
-            } else {
-                projectIndex++;
-            }
-        }
-        if (!hasProjectId) return cols;
-
-        int newindex = 0;
-        String[] newCols = new String[cols.length - 1];
-        for (int i = 0; i < cols.length; i++) {
-            if (i == projectIndex) {
-                continue;
-            }
-            newCols[newindex] = cols[i];
-            newindex++;
-        }
-        return newCols;
-    }
+    // // Method to remove the projectId column from the colums sent to the
+    // // component sites
+    // private String[] removeProjectId(String[] cols) {
+    // hasProjectId = false;
+    // int projectIndex = 0;
+    // for (String col : cols) {
+    // if (col.equals("project_id")) {
+    // hasProjectId = true;
+    // break;
+    // } else {
+    // projectIndex++;
+    // }
+    // }
+    // if (!hasProjectId) return cols;
+    //
+    // int newindex = 0;
+    // String[] newCols = new String[cols.length - 1];
+    // for (int i = 0; i < cols.length; i++) {
+    // if (i == projectIndex) {
+    // continue;
+    // }
+    // newCols[newindex] = cols[i];
+    // newindex++;
+    // }
+    // return newCols;
+    // }
 
     // Inner Class to do invokations
     class CompResult {
