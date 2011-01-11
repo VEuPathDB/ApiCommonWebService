@@ -259,7 +259,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private PreparedStatement getCommentQuery(Connection dbConnection,
             String recordType, String oracleTextExpression,
-            boolean commentRecords, boolean communityAnnotationRecords) {
+            boolean commentRecords, boolean communityAnnotationRecords) throws WsfServiceException {
 
 	String recordTypePredicate = new String("");
 
@@ -300,6 +300,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
             ps.setString(1, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
+	    throw new WsfServiceException(e);
         }
 
         return ps;
@@ -307,7 +308,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
     private PreparedStatement getComponentQuery(Connection dbConnection,
             String recordType, String organisms, String oracleTextExpression,
-            String fields, String maxPvalue) {
+            String fields, String maxPvalue) throws WsfServiceException {
 
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
@@ -371,12 +372,13 @@ public class KeywordSearchPlugin extends WsfPlugin {
             ps.setString(4, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
+	    throw new WsfServiceException(e);
         }
 
         return ps;
     }
 
-    private PreparedStatement getValidationQuery() {
+    private PreparedStatement getValidationQuery() throws WsfServiceException {
         String sql = new String("select attrs.source_id, attrs.project_id \n"
 				+ "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
 				+ "where alias.alias = ? \n"
@@ -391,7 +393,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         try {
             return SqlUtils.getPreparedStatement(dataSource, sql);
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+	    throw new WsfServiceException(ex);
         }
     }
 
@@ -422,6 +424,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
         } catch (SQLException ex) {
             logger.info("caught SQLException " + ex.getMessage());
             ex.printStackTrace();
+	    throw new WsfServiceException(ex);
         } finally {
             if (rs != null) rs.close();
         }
@@ -430,7 +433,7 @@ public class KeywordSearchPlugin extends WsfPlugin {
     }
 
     private Map<String, SearchResult> validateRecords(
-            Map<String, SearchResult> commentMatches, String organisms) {
+            Map<String, SearchResult> commentMatches, String organisms) throws WsfServiceException {
 
         Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
         newCommentMatches.putAll(commentMatches);
@@ -473,11 +476,13 @@ public class KeywordSearchPlugin extends WsfPlugin {
 
                 } catch (SQLException ex) {
                     logger.info("caught SQLException " + ex.getMessage());
+		    throw new WsfServiceException(ex);
                 } finally {
                     try {
                         rs.close();
                     } catch (SQLException ex) {
                         logger.info("caught SQLException " + ex.getMessage());
+			throw new WsfServiceException(ex);
                     }
                 }
             }
