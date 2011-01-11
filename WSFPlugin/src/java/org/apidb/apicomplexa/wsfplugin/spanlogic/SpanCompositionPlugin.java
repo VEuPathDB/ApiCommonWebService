@@ -497,8 +497,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                 Map<String, String> record = new LinkedHashMap<String, String>();
                 record.put(COLUMN_SOURCE_ID, feature.sourceId);
                 record.put(COLUMN_PROJECT_ID, feature.projectId);
-                String region = feature.sourceId + ":&nbsp;"
-                        + feature.getBegin() + "&nbsp;-&nbsp;"
+                String region = feature.getBegin() + "&nbsp;-&nbsp;"
                         + feature.getEnd() + "&nbsp;(" + feature.getReversed()
                         + ")";
                 record.put(COLUMN_FEATURE_REGION, region);
@@ -507,7 +506,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
                 StringBuilder builder = new StringBuilder();
                 for (Feature fr : feature.matched) {
-                    if (builder.length() > 0) builder.append(";");
+                    if (builder.length() > 0) builder.append("; ");
                     builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin()
                             + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;("
                             + fr.getReversed() + ")");
