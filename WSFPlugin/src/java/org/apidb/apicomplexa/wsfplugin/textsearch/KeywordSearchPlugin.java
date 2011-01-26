@@ -421,8 +421,8 @@ public class KeywordSearchPlugin extends WsfPlugin {
                 }
             }
 	    logger.info("finished fetching rows");
-        } catch (SQLException ex) {
-            logger.info("caught SQLException " + ex.getMessage());
+        } catch (Exception ex) {
+            logger.info("caught Exception " + ex.getMessage());
             ex.printStackTrace();
 	    throw new WsfServiceException(ex);
         } finally {
