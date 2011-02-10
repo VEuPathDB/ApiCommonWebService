@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -25,54 +24,42 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  */
 
 // geneID could be an ORF or a genomic sequence deending on who uses the plugin
-public class MotifSearchPlugin extends AbstractPlugin {
+public abstract class MotifSearchPlugin extends AbstractPlugin {
 
-    private class Match {
+    protected class Match {
 
-        public String geneID;
+        public String sourceId;
         public String projectId;
         public String locations;
         public int matchCount = 0;
         public String sequence;
 
+        public String getKey() {
+            return sourceId + projectId;
+        }
+
         @Override
         public int hashCode() {
-            return (geneID + projectId).hashCode();
+            return getKey().hashCode();
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj != null && obj instanceof Match) {
                 Match match = (Match) obj;
-                return (geneID + projectId).equals(match.geneID
-                        + match.projectId);
+                return getKey().equals(match.getKey());
             } else return false;
         }
     }
 
-    // let's store files in same directory
-    private static final String PROPERTY_FILE = "motifSearch-config.xml";
-
-    // class string definition
-    public static final String CLASS_ACIDIC = "[de]";
-    public static final String CLASS_ALCOHOL = "[st]";
-    public static final String CLASS_ALIPHATIC = "[ilv]";
-    public static final String CLASS_AROMATIC = "[fhwy]";
-    public static final String CLASS_BASIC = "[krh]";
-    public static final String CLASS_CHARGED = "[dehkr]";
-    public static final String CLASS_HYDROPHOBIC = "[avilmfyw]";
-    public static final String CLASS_HYDROPHILIC = "[krhdenq]";
-    public static final String CLASS_POLAR = "[cdehknqrst]";
-    public static final String CLASS_SMALL = "[acdgnpstv]";
-    public static final String CLASS_TINY = "[ags]";
-    public static final String CLASS_TURNLIKE = "[acdeghknqrst]";
-
     // required parameter definition
+    public static final String PROPERTY_FILE = "motifSearch-config.xml";
+
     public static final String PARAM_DATASET = "motif_organism";
     public static final String PARAM_EXPRESSION = "motif_expression";
 
     // column definitions for returnd results
-    public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_SOURCE_ID = "SourceID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_LOCATIONS = "Locations";
     public static final String COLUMN_MATCH_COUNT = "MatchCount";
@@ -81,17 +68,15 @@ public class MotifSearchPlugin extends AbstractPlugin {
     // field definition
     private static final String FIELD_DATA_DIR = "DataDir";
     private static final String FIELD_USE_PROJECT_ID = "UseProjectId";
-    private static final String FIELD_SOURCEID_REGEX = "SourceIdRegex";
-    private static final String FIELD_ORGANISM_REGEX = "OrganismRegex";
     private static final String FIELD_PROJECT_MAP_PREFIX = "ProjectMap_";
     private static final String FIELD_PROJECT_MAP_OTHER = FIELD_PROJECT_MAP_PREFIX
             + "Others";
 
+    private static final String DEFAULT_COLOR_CODE = "red";
+    private static final int DEFAULT_CONTEXT_LENGTH = 20;
+
     private File dataDir;
     private boolean useProjectId;
-
-    private String sourceIdRegex;
-    private String organismRegex;
 
     private String projectMapOthers;
 
@@ -99,9 +84,15 @@ public class MotifSearchPlugin extends AbstractPlugin {
      * @throws WsfServiceException
      * 
      */
-    public MotifSearchPlugin() throws WsfServiceException {
+    protected MotifSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
     }
+
+    protected abstract Map<Character, String> getSymbols();
+
+    protected abstract void findMatches(Set<Match> matches, String headline,
+            Pattern searchPattern, String sequence, String colorCode,
+            int contextLength);
 
     // load properties
 
@@ -117,20 +108,16 @@ public class MotifSearchPlugin extends AbstractPlugin {
 
         String dir = getProperty(FIELD_DATA_DIR);
         if (dir == null)
-            throw new WsfServiceException(
-                    "The required field in property file is missing: "
-                            + FIELD_DATA_DIR);
+            throw new WsfServiceException("The required field in property "
+                    + "file is missing: " + FIELD_DATA_DIR);
         dataDir = new File(dir);
-        logger.info("constructor(): dataDir: " + dataDir.getAbsolutePath()
-                + "\n");
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
         useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
 
-        sourceIdRegex = getProperty(FIELD_SOURCEID_REGEX);
-        organismRegex = getProperty(FIELD_ORGANISM_REGEX);
-
         projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
+        
+        logger.info("dataDir: " + dataDir.getAbsolutePath());
     }
 
     /*
@@ -139,7 +126,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
     public String[] getRequiredParameterNames() {
-        return new String[] { PARAM_EXPRESSION }; // , PARAM_DATASET };
+        return new String[] { PARAM_EXPRESSION, PARAM_DATASET };
     }
 
     /*
@@ -148,10 +135,10 @@ public class MotifSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
     public String[] getColumns() {
-        if (useProjectId) return new String[] { COLUMN_GENE_ID,
+        if (useProjectId) return new String[] { COLUMN_SOURCE_ID,
                 COLUMN_PROJECT_ID, COLUMN_LOCATIONS, COLUMN_MATCH_COUNT,
                 COLUMN_SEQUENCE };
-        else return new String[] { COLUMN_GENE_ID, COLUMN_LOCATIONS,
+        else return new String[] { COLUMN_SOURCE_ID, COLUMN_LOCATIONS,
                 COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
     }
 
@@ -162,22 +149,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
      */
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-        // do nothing in this plugin
-
-        boolean datasetPresent = false;
-        Map<String, String> params = request.getParams();
-        for (String param : params.keySet()) {
-            logger.debug("Param - name=" + param + ", value="
-                    + params.get(param));
-            if (param.contains(PARAM_DATASET)) {
-                datasetPresent = true;
-                break;
-            }
-        }
-        if (!datasetPresent)
-            throw new WsfServiceException(
-                    "The required dataset parameter is not presented.");
-
+    // do nothing in this plugin
     }
 
     /*
@@ -188,118 +160,58 @@ public class MotifSearchPlugin extends AbstractPlugin {
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
-        // get parameters -- find out if this is a dna motif or not
-        Boolean dnamotif = false;
-        // String datasetIDs = params.get(PARAM_DATASET);
-        String datasetIDs = null;
         Map<String, String> params = request.getParams();
-        for (String paramName : params.keySet()) {
-            if (paramName.contains(PARAM_DATASET)) {
-                datasetIDs = params.get(paramName);
-                if (paramName.contains("dna")) dnamotif = true;
-                break;
-            }
-        }
 
-        logger.info("execute(): datasetIDs: " + datasetIDs + "\n");
-        logger.info("execute(): dataDir: " + dataDir.getName() + "\n");
-
+        // get required parameters
+        String datasetIDs = params.get(PARAM_DATASET);
         String expression = params.get(PARAM_EXPRESSION);
 
+        logger.debug("dataDir: " + dataDir.getName());
+        logger.debug("datasetIDs: " + datasetIDs);
+        logger.debug("expression: " + expression);
+
         // get optional parameters
-        String colorCode = "Red";
+        String colorCode = DEFAULT_COLOR_CODE;
         if (params.containsKey("ColorCode"))
             colorCode = params.get("ColorCode");
-        int contextLength = 0;
+        int contextLength = DEFAULT_CONTEXT_LENGTH;
         if (params.containsKey("ContextLength"))
             contextLength = Integer.parseInt(params.get("ContextLength"));
-        if (contextLength <= 0) contextLength = 20;
+        if (contextLength <= 0) contextLength = DEFAULT_CONTEXT_LENGTH;
 
         // translate the expression
-        String regex = translateExpression(expression);
+        Pattern searchPattern = translateExpression(expression);
 
         // open the flatfile database assigned by the user
         try {
-            Set<Match> matches = new HashSet<Match>();
+            Set<Match> allMatches = new HashSet<Match>();
             String[] dsIds = datasetIDs.split(",");
 
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
-                logger.debug("execute(): dsId: " + dsId
-                        + " , input expression: " + expression
-                        + " , expr translated to regex: " + regex + "\n");
-                matches.addAll(findMatches(dsId.trim(), regex, colorCode,
-                        contextLength));
+                logger.debug("execute(): dsId: " + dsId);
+
+                Set<Match> matches = findMatches(dsId.trim(), searchPattern,
+                        colorCode, contextLength);
+                allMatches.addAll(matches);
             }
 
             // locations contains (xxx-yyy), (xxx-yyyy), ...
             // sequence contains sequences from matches, separated by a space
             // (so it wraps in summary page)
 
-            String[][] result;
-            // construct results
+            String[][] result = prepareResult(allMatches,
+                    request.getOrderedColumns());
 
-            if (dnamotif) {
-                result = dnaPrepareResult(matches, request.getOrderedColumns(),
-                        expression);
-            } else {
-                result = prepareResult(matches, request.getOrderedColumns());
-            }
-
-            WsfResponse wsfResult = new WsfResponse();
-
-            wsfResult.setResult(result);
-            return wsfResult;
+            WsfResponse wsfResponse = new WsfResponse();
+            wsfResponse.setResult(result);
+            return wsfResponse;
         } catch (IOException ex) {
             throw new WsfServiceException(ex);
         }
     }
 
     /**
-     * Available flatfile databases are listed here:
-     * 
-     * <"gus_pf_annotpep"> P. falciparum annotated proteins
-     * 
-     * <"gus_pf_predictpep"> P. falciparum predicted proteins
-     * 
-     * <"gus_pv_predictpep"> P. vivax predicted proteins
-     * 
-     * <"gus_py_annotpep"> P. yoelii annotated proteins
-     * 
-     * <"pf_orfsgt100"> P. falciparum ORFs > 100 AA
-     * 
-     * <"pf_orfsgt50"> P. falciparum ORFs > 50 AA
-     * 
-     * <"orfsgt100"> Plasmodium ORFs > 100 AA
-     * 
-     * <"orfsgt50"> Plasmodium ORFs > 50 AA
-     * 
-     * <"pb_orfsgt100"> P. berghei ORFs > 100 AA
-     * 
-     * <"pb_orfsgt50"> P. berghei ORFs > 50 AA
-     * 
-     * <"pc_orfsgt100"> P. chabaudi ORFs > 100 AA
-     * 
-     * <"pc_orfsgt50"> P. chabaudi ORFs > 50 AA
-     * 
-     * <"pg_orfsgt100"> P. gallinaceum ORFs > 100 AA
-     * 
-     * <"pk_orfsgt100"> P. knowlesi ORFs > 100 AA
-     * 
-     * <"pk_orfsgt50"> P. knowlesi ORFs > 50 AA
-     * 
-     * <"pr_orfsgt100"> P. reichenowi ORFs > 100 AA
-     * 
-     * <"pr_orfsgt50"> P. reichenowi ORFs > 50 AA
-     * 
-     * <"pv_orfsgt100"> P. vivax ORFs > 100 AA
-     * 
-     * <"pv_orfsgt50"> P. vivax ORFs > 50 AA
-     * 
-     * <"py_orfsgt100"> P. yoelii ORFs > 100 AA
-     * 
-     * <"py_orfsgt50"> P. yoelii ORFs > 50 AA
-     * 
      * @param fileID
      * @return
      * @throws IOException
@@ -314,194 +226,63 @@ public class MotifSearchPlugin extends AbstractPlugin {
         else return dataFile;
     }
 
-    private String translateExpression(String expression) {
-        // remove spaces
-        String regex = expression.replaceAll("\\s", "");
+    private Pattern translateExpression(String expression) {
+        Map<Character, String> codes = getSymbols();
 
-        // replace '(' to '{', ')' to '}', 'x' to '.', '<' to '(', '>' to ')'
-        regex = regex.replace('(', '{');
-        regex = regex.replace(')', '}');
-        regex = regex.replace('x', '.');
-        regex = regex.replace('<', '(');
-        regex = regex.replace('>', ')');
-
-        // remove '-'
-        regex = regex.replaceAll("[\\-]", "");
-
-        // replace numbers/number pairs by surrounding them with "{}"
-        Pattern pattern = Pattern.compile("\\(\\d+(,\\d+)?\\)");
-        Matcher matcher = pattern.matcher(regex);
-        int prev = 0;
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            // get previous part
-            sb.append(regex.substring(prev, matcher.start()));
-            // replace '(' to '{'
-            sb.append('{');
-            sb.append(regex.subSequence(matcher.start() + 1, matcher.end() - 1));
-            sb.append('}');
-            prev = matcher.end();
-        }
-        // add last part into the buffer
-        sb.append(regex.substring(prev));
-        regex = sb.toString();
-
-        // replace {string} into ignoring characters
-        pattern = Pattern.compile("\\{(\\D+?)\\}");
-        matcher = pattern.matcher(regex);
-        prev = 0;
-        sb.delete(0, sb.length());
-        while (matcher.find()) {
-            // get the previous part
-            sb.append(regex.substring(prev, matcher.start()));
-            // replace '{' with "[^"
-            sb.append("[^");
-            sb.append(regex.substring(matcher.start() + 1, matcher.end() - 1));
-            sb.append(']');
-            prev = matcher.end();
-        }
-        // add the last part
-        sb.append(regex.substring(prev));
-        regex = sb.toString();
-
-        // Split the string by '{.*}'
-        String splitStub = "SplitStub";
-        regex = regex.replaceAll("\\{", splitStub + "{");
-        regex = regex.replaceAll("\\}", "}" + splitStub);
-        String[] parts = regex.split(splitStub);
-        sb.delete(0, sb.length());
-        for (String part : parts) {
-            // check if it contains '{'
-            if (part.indexOf('{') < 0) { // not containing '{.*}'
-                // replace amino acids shortcuts
-                part = part.replaceAll("0", CLASS_ACIDIC);
-                part = part.replaceAll("1", CLASS_ALCOHOL);
-                part = part.replaceAll("2", CLASS_ALIPHATIC);
-                part = part.replaceAll("3", CLASS_AROMATIC);
-                part = part.replaceAll("4", CLASS_BASIC);
-                part = part.replaceAll("5", CLASS_CHARGED);
-                part = part.replaceAll("6", CLASS_HYDROPHOBIC);
-                part = part.replaceAll("7", CLASS_HYDROPHILIC);
-                part = part.replaceAll("8", CLASS_POLAR);
-                part = part.replaceAll("9", CLASS_SMALL);
-                part = part.replaceAll("B", CLASS_TINY);
-                part = part.replaceAll("Z", CLASS_TURNLIKE);
+        boolean inSquareBraces = false, inCurlyBraces = false;
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < expression.length(); i++) {
+            char ch = expression.charAt(i);
+            boolean skipChar = false;
+            if (ch == '{') inCurlyBraces = true;
+            else if (ch == '}') inCurlyBraces = false;
+            else if (ch == '[') inSquareBraces = true;
+            else if (ch == ']') inSquareBraces = false;
+            else if (!inCurlyBraces && codes.containsKey(ch)) {
+                // the char is not in any curly braces, and is a known code;
+                // replace the char with the actual string.
+                String replace = codes.get(ch);
+                if (!inSquareBraces) replace = "[" + replace + "]";
+                builder.append(replace);
+                skipChar = true;
             }
-            sb.append(part);
+            if (!skipChar) builder.append(ch);
         }
-        return sb.toString();
+        logger.debug("translated expression: " + builder);
+
+        int option = Pattern.CASE_INSENSITIVE;
+        return Pattern.compile(builder.toString(), option);
     }
 
-    private Set<Match> findMatches(String datasetID, String regex,
+    private Set<Match> findMatches(String datasetID, Pattern searchPattern,
             String colorCode, int contextLength) throws IOException,
             WsfServiceException {
         File datasetFile = openDataFile(datasetID);
         BufferedReader in = new BufferedReader(new FileReader(datasetFile));
-
-        // check if the user use c-terminus
-        if (regex.endsWith("$") && !regex.endsWith("\\**$"))
-            regex = regex.substring(0, regex.length() - 1) + "\\**$";
-
         Set<Match> matches = new HashSet<Match>();
-        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 
         // read header of the first sequence
-        String line;
-        line = in.readLine();
-        while (true) {
-            // get first gene id
-            line = line.trim().replaceAll("\\s", " ");
-            String geneID = extractField(line, sourceIdRegex);
+        String headline = null, line;
+        StringBuilder sequence = new StringBuilder();
+        while ((line = in.readLine()) != null) {
+            line = line.trim();
+            if (line.length() == 0) continue;
 
-            // TEST
-            // logger.info("geneID = " + geneID);
-
-            // get project id, if required
-            String projectId = null;
-            if (useProjectId) {
-                String organism = extractField(line, organismRegex);
-
-                // TEST
-                // logger.debug("Organism from defline = " + organism);
-
-                projectId = getProjectId(organism);
-
-                // TEST
-                // logger.debug("ProjectId = " + projectId);
-            }
-
-            StringBuffer seq = new StringBuffer();
-            while ((line = in.readLine()) != null) {
-                line = line.trim();
-                if (line.length() == 0) continue;
-                // check if we reach the header of the next sequence
-                // if so, we just finishe reading the sequence, exit inner loop
-                if (line.charAt(0) == '>') break;
-                seq.append(line);
-            }
-            // check if we reach the end of the file
-            if (line == null) break;
-
-            // scan the sequence to find all matched locations
-            Match match = findLocations(geneID, projectId, pattern,
-                    seq.toString(), colorCode, contextLength);
-            if (match != null && !matches.contains(match)) {
-                if (useProjectId) match.projectId = projectId;
-                matches.add(match);
+            if (line.charAt(0) == '>') {
+                // starting of a new sequence, process the previous sequence if
+                // have any;
+                if (sequence.length() > 0) {
+                    findMatches(matches, headline, searchPattern,
+                            sequence.toString(), colorCode, contextLength);
+                    // clear the sequence buffer to be ready for the next one
+                    sequence = new StringBuilder();
+                }
+                headline = line;
+            } else {
+                sequence.append(line);
             }
         }
         return matches;
-    }
-
-    private Match findLocations(String geneID, String projectId,
-            Pattern pattern, String sequence, String colorCode,
-            int contextLength) throws WsfServiceException {
-        Match match = new Match();
-        match.geneID = geneID;
-        match.projectId = projectId;
-        StringBuffer sbLoc = new StringBuffer();
-        StringBuffer sbSeq = new StringBuffer();
-        int prev = 0;
-
-        Matcher matcher = pattern.matcher(sequence);
-        while (matcher.find()) {
-            // add locations
-            if (sbLoc.length() != 0) sbLoc.append(", ");
-            sbLoc.append('(');
-            sbLoc.append(matcher.start());
-            sbLoc.append("-");
-            sbLoc.append(matcher.end() - 1);
-            sbLoc.append(')');
-
-            // obtain the context sequence
-            if ((matcher.start() - prev) <= (contextLength * 2)) {
-                // no need to trim
-                sbSeq.append(sequence.substring(prev, matcher.start()));
-            } else { // need to trim some
-                if (prev != 0)
-                    sbSeq.append(sequence.substring(prev, prev + contextLength));
-                sbSeq.append("... ");
-                sbSeq.append(sequence.substring(
-                        matcher.start() - contextLength, matcher.start()));
-            }
-            sbSeq.append("<font color=\"" + colorCode + "\">");
-            sbSeq.append(sequence.substring(matcher.start(), matcher.end()));
-            sbSeq.append("</font>");
-            prev = matcher.end();
-            match.matchCount++;
-        }
-        if (match.matchCount == 0) return null;
-
-        // grab the last context
-        if ((prev + contextLength) < sequence.length()) {
-            sbSeq.append(sequence.substring(prev, prev + contextLength));
-            sbSeq.append("... ");
-        } else {
-            sbSeq.append(sequence.substring(prev));
-        }
-        match.locations = sbLoc.toString();
-        match.sequence = sbSeq.toString();
-        return match;
     }
 
     private String[][] prepareResult(Set<Match> matches, String[] cols) {
@@ -513,7 +294,7 @@ public class MotifSearchPlugin extends AbstractPlugin {
 
         int i = 0;
         for (Match match : matches) {
-            result[i][orders.get(COLUMN_GENE_ID)] = match.geneID;
+            result[i][orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
             result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
             result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
@@ -526,93 +307,6 @@ public class MotifSearchPlugin extends AbstractPlugin {
         logger.info("hits found: " + result.length + "\n");
         // logger.debug("result " + resultToString(result) + "\n");
         return result;
-    }
-
-    private String[][] dnaPrepareResult(Set<Match> matches, String[] cols,
-            String sequence) {
-        logger.debug("dnaPrepareResult() ***************\n");
-
-        // create a column order map
-        Map<String, Integer> orders = new HashMap<String, Integer>();
-        for (int i = 0; i < cols.length; i++)
-            orders.put(cols[i], i);
-
-        int i = 0;
-        int j = 0;
-        int count = 0;
-        int resultsize = 0;
-        String ID = "";
-        String[] locations, sequences, dynSpanIDs = null;
-
-        for (Match match : matches) {
-            // check for each match how many matches in a genomic sequence
-            resultsize += match.matchCount;
-            logger.debug("\nMatch: " + i + ", count: " + match.matchCount
-                    + ", total result size is: " + resultsize + "\n");
-            i++;
-        }
-
-        String[][] result = new String[resultsize][cols.length];
-        logger.debug("\nThere are "
-                + i
-                + " genomic sequences matched\nAnd we will generate a result with "
-                + resultsize + " dynamic spans\n");
-
-        i = 0;
-        for (Match match : matches) {
-            // store match info (geneID contains a genomic sequence ID)
-            ID = match.geneID;
-            count = match.matchCount;
-            match.locations = match.locations.replace("(", "");
-            match.locations = match.locations.replace(")", "");
-            locations = match.locations.split(", ");
-            dynSpanIDs = prepareIDs(ID, locations, count);
-
-            logger.debug("\n\n\nsequences before split: " + match.sequence
-                    + "\n\n\n");
-            sequences = match.sequence.split(". ");
-
-            for (j = 0; j < count; j++) {
-                logger.debug("\n\n preparing result[" + i + "+" + j
-                        + "]\nCOLUMN_GENE_ID: " + dynSpanIDs[j]
-                        + "\nCOLUMN_MATCH_COUNT: " + count
-                        + "\nCOLUMN_LOCATIONS: " + locations[j]
-                        + "\nCOLUMN_SEQUENCE: " + sequences[j + 1]);
-
-                result[i + j][orders.get(COLUMN_GENE_ID)] = dynSpanIDs[j];
-                result[i + j][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(count);
-                result[i + j][orders.get(COLUMN_LOCATIONS)] = locations[j];
-                result[i + j][orders.get(COLUMN_SEQUENCE)] = sequence;
-                if (useProjectId)
-                    result[i + j][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
-            }
-            i = i+j;
-        }
-        logger.info("hits found: " + result.length + "\n");
-        // logger.debug("result " + resultToString(result) + "\n");
-        return result;
-    }
-
-    private String[] prepareIDs(String ID, String[] locations, int count) {
-        logger.debug("\n\nNext match: prepareIDs() *************** \nID: " + ID
-                + "\nlocations[0]: " + locations[0] + "\ncount: " + count
-                + "\n");
-
-        String[] result = new String[count];
-
-        for (int j = 0; j < count; j++) {
-            result[j] = ID + ":" + locations[j] + ":0";
-        }
-        return result;
-    }
-
-    private String extractField(String defline, String regex) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(defline);
-        if (matcher.find()) {
-            // the match is located at group 1
-            return matcher.group(1);
-        } else return null;
     }
 
     protected String getProjectId(String organism) {

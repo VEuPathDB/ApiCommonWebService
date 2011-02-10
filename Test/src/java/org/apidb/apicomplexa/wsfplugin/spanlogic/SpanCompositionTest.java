@@ -3,15 +3,15 @@ package org.apidb.apicomplexa.wsfplugin.spanlogic;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_PROJECT_ID;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_SOURCE_ID;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_WDK_WEIGHT;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_DIRECTION_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_OFFSET_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_DIRECTION_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_OFFSET_PREFIX;
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_PREFIX;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OPERATION;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OUTPUT;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_DIRECTION_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_OFFSET_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_DIRECTION_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_OFFSET_PREFIX;
 import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_STRAND;
 
 import java.io.BufferedReader;
@@ -33,11 +33,11 @@ import org.apache.log4j.Logger;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Question;
 import org.gusdb.wdk.model.UnitTestHelper;
+import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wdk.model.query.ProcessQueryInstance;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.WsfRequest;
@@ -148,7 +148,7 @@ public class SpanCompositionTest {
 
         // prepare the request context
         Map<String, String> context = new HashMap<String, String>();
-        context.put(ProcessQueryInstance.CTX_USER, user.getSignature());
+        context.put(Utilities.QUERY_CTX_USER, user.getSignature());
 
         WsfRequest request = new WsfRequest();
         request.setParams(params);
