@@ -80,7 +80,8 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
         String projectId = getProjectId(organism);
 
         int length = sequence.length();
-        boolean reversed = (strand.equals("-"));
+        strand = strand.equals("-") ? "1" : "0";
+        boolean reversed = (strand.equals("1"));
 
         Matcher matcher = searchPattern.matcher(sequence);
         while (matcher.find()) {
@@ -90,8 +91,7 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
             match.projectId = projectId;
             match.matchCount = 1;
             match.locations = getLocation(length, reversed, start, stop);
-            match.sourceId = sequenceId + ":" + match.locations + "(" + strand
-                    + ")";
+            match.sourceId = sequenceId + ":" + match.locations + ":" + strand;
 
             // create matching context
             StringBuilder context = new StringBuilder();
