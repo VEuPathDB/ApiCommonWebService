@@ -27,7 +27,7 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
 
     private Pattern headlinePattern;
 
-    protected DnaMotifPlugin() throws WsfServiceException {
+    public DnaMotifPlugin() throws WsfServiceException {
         super();
     }
 
