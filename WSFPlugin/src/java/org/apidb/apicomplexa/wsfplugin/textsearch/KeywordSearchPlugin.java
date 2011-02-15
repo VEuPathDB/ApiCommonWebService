@@ -246,8 +246,10 @@ public class KeywordSearchPlugin extends AbstractPlugin {
     }
 
     private PreparedStatement getCommentQuery(String projectId,
-            String recordType, String oracleTextExpression,
-            boolean commentRecords, boolean communityAnnotationRecords) throws WsfServiceException {
+            String recordTypePredicate, String oracleTextExpression,
+            boolean commentRecords, boolean communityAnnotationRecords)
+            throws WsfServiceException, SQLException {
+        Connection dbConnection = getCommentDbConnection(projectId);
 
         if (commentRecords && !communityAnnotationRecords) {
             recordTypePredicate = new String(
@@ -287,7 +289,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             ps.setString(1, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
-	    throw new WsfServiceException(e);
+            throw new WsfServiceException(e);
         }
 
         return ps;
@@ -295,7 +297,9 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
     private PreparedStatement getComponentQuery(String projectId,
             String recordType, String organisms, String oracleTextExpression,
-            String fields, String maxPvalue) throws WsfServiceException {
+            String fields, String maxPvalue) throws WsfServiceException,
+            SQLException {
+        Connection dbConnection = getComponentDbConnection();
 
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
@@ -375,7 +379,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             ps.setString(4, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
-	    throw new WsfServiceException(e);
+            throw new WsfServiceException(e);
         }
 
         return ps;
@@ -396,7 +400,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         try {
             return SqlUtils.getPreparedStatement(dataSource, sql);
         } catch (SQLException ex) {
-	    throw new WsfServiceException(ex);
+            throw new WsfServiceException(ex);
         }
     }
 
@@ -427,7 +431,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         } catch (Exception ex) {
             logger.info("caught Exception " + ex.getMessage());
             ex.printStackTrace();
-	    throw new WsfServiceException(ex);
+            throw new WsfServiceException(ex);
         } finally {
             if (rs != null) rs.close();
         }
@@ -436,7 +440,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
     }
 
     private Map<String, SearchResult> validateRecords(String projectId,
-            Map<String, SearchResult> commentMatches, String organisms) throws WsfServiceException {
+            Map<String, SearchResult> commentMatches, String organisms)
+            throws WsfServiceException {
 
         Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
         newCommentMatches.putAll(commentMatches);
@@ -479,13 +484,13 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
                 } catch (SQLException ex) {
                     logger.info("caught SQLException " + ex.getMessage());
-		    throw new WsfServiceException(ex);
+                    throw new WsfServiceException(ex);
                 } finally {
                     try {
                         rs.close();
                     } catch (SQLException ex) {
                         logger.info("caught SQLException " + ex.getMessage());
-			throw new WsfServiceException(ex);
+                        throw new WsfServiceException(ex);
                     }
                 }
             }
