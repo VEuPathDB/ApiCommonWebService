@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="/WDK Model/lib/java/WSF-Client.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WDK Controller"/>
 	<classpathentry kind="lib" path="/WSF Service/lib/java/axis-1.4.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web"/>
 	<classpathentry kind="lib" path="C:/Develop/Java/Oracle/jdbc/ojdbc14.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web Model"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
