@@ -285,6 +285,9 @@ public class KeywordSearchPlugin extends WsfPlugin {
                         + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
                         + "              AND tsc.comment_id = c.comment_id\n"
                         + "              AND c.is_visible = 1\n"
+                        + "              AND c.review_status_id != 'task'\n"
+                        + "              AND c.review_status_id != 'rejected'\n"
+                        + "              AND c.review_status_id != 'community'\n"
                         + recordTypePredicate
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
