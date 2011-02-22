@@ -6,5 +6,8 @@
 	<classpathentry kind="lib" path="/WSF Test/lib/java/junit-4.4.jar"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/log4j-1.2.15.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WSF Plugin"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/WDK Model"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/WDK Test"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/WDK Controller"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
