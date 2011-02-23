@@ -4,10 +4,28 @@
 <comment>The configuration file for MotifSearch WSF Plugin.</comment>
 
 <entry key="UseProjectId">yes</entry>
-<entry key="DataDir">/var/www/Common/devSiteFilesMirror/webServices/TriTrypDB/release-1.1/motif</entry>
+<entry key="DataDir">path_to_fasta_files</entry>
 
-<entry key="SourceIdRegex"><![CDATA[^>(?:\w*\|)*(\S+)]]></entry>
-<entry key="OrganismRegex"><![CDATA[\|\s*organism=([^_ ]+)]]></entry>
+<!-- 
+    the regex for genomic fasta file has to have 3 groups, 
+    group(1) = genomic sequence source id;
+    group(2) = strand, either '+' or '-'
+    group(3) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
+    
+    An example of the headline will be like this:
+    >gb|scf_1107000998814 | strand=(+) | organism=Toxoplasma_gondii_GT1 | version=2008-07-23 | length=1231
+-->
+<entry key="DnaHeadlineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|\s*strand=\(([+\-])\)\s*\|\s*organism=([^|_\s]+)]]></entry>
+
+<!-- 
+    the regex for protein fasta file has to have 2 groups, 
+    group(1) = gene source id;
+    group(2) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
+    
+    An example of the headline will be like this:
+    >psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307
+-->
+<entry key="ProteinHeadlineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|\s*organism=([^|_\s]+)]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>

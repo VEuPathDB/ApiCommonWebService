@@ -7,8 +7,9 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.ncbiblast.NcbiBlastPlugin;
-import org.gusdb.wsf.plugin.IWsfPlugin;
-import org.gusdb.wsf.plugin.WsfResult;
+import org.gusdb.wsf.plugin.Plugin;
+import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Test;
@@ -49,9 +50,14 @@ public class WuBlastPluginTest extends TestCase {
             map.put(columns[i], i);
         }
 
+        WsfRequest request = new WsfRequest();
+        request.setParams(params);
+        request.setOrderedColumns(columns);
+        request.setContext(new HashMap<String, String>());
+
         // invoke the blast process
-        IWsfPlugin processor = new WuBlastPlugin();
-        WsfResult wsfResult = processor.invoke("", params, columns);
+        Plugin processor = new WuBlastPlugin();
+        WsfResponse wsfResult = processor.execute(request);
 
         logger.info("Result Message: " + wsfResult.getMessage());
         logger.info("Result Signal: " + wsfResult.getSignal());
