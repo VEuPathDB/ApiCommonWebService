@@ -276,7 +276,6 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "              AND c.is_visible = 1\n"
                         + "              AND c.review_status_id != 'task'\n"
                         + "              AND c.review_status_id != 'rejected'\n"
-                        + "              AND c.review_status_id != 'community'\n"
                         + recordTypePredicate
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
