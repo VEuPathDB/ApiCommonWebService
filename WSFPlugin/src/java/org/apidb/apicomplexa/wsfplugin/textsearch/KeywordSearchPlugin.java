@@ -412,7 +412,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         ResultSet rs = null;
         try {
             logger.info("about to execute (one or the other) text-search query");
-            query.setFetchSize(5000);
+            query.setFetchSize(100);
             rs = query.executeQuery();
             logger.info("finshed execute");
             while (rs.next()) {
