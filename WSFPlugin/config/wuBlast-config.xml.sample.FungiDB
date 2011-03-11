@@ -218,6 +218,11 @@ Saccharomyces_cerevisiae_S288c_Mito (grnomics too)
 </entry>
 
 
+
+
+
+
+
 <!-- plugin currently does not make use of  this.. -->
 <entry key="UrlMap_Apidots">
         <![CDATA[http://www.cbil.upenn.edu/apidots/servlet/servlet?page=rna&id=DT.$$source_id$$]]>
@@ -233,7 +238,16 @@ Saccharomyces_cerevisiae_S288c_Mito (grnomics too)
 </entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
-<entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
+<entry key="ProjectMap_Aspergillus">FungiDB</entry>
+<entry key="ProjectMap_Candida">FungiDB</entry>
+<entry key="ProjectMap_Coccidioides">FungiDB</entry>
+<entry key="ProjectMap_Cryptococcus">FungiDB</entry>
+<entry key="ProjectMap_Fusarium">FungiDB</entry>
+<entry key="ProjectMap_Magnaporthe">FungiDB</entry>
+<entry key="ProjectMap_Neurospora">FungiDB</entry>
+<entry key="ProjectMap_Puccini">FungiDB</entry>
+<entry key="ProjectMap_Rhizopus">FungiDB</entry>
+<entry key="ProjectMap_Saccharomyces">FungiDB</entry>
 
 
 
