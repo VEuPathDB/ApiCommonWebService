@@ -389,9 +389,10 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
     private PreparedStatement getValidationQuery() throws WsfServiceException {
         String sql = new String("select attrs.source_id, attrs.project_id \n"
-                + "from apidb.GeneAlias alias, apidb.GeneAttributes attrs \n"
-                + "where alias.alias = ? \n"
+                + "from apidb.GeneId alias, apidb.GeneAttributes attrs \n"
+                + "where alias.Id = ? \n"
                 + "  and alias.gene = attrs.source_id \n"
+                + "  and alias.unique_mapping = 1 \n"
                 + "  and attrs.project_id = ? \n"
                 + "  and ? like '%' || attrs.species || '%'");
 
