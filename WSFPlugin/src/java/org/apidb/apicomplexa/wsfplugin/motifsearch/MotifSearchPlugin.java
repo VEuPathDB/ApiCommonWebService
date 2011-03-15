@@ -232,7 +232,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         boolean inSquareBraces = false, inCurlyBraces = false;
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < expression.length(); i++) {
-            char ch = expression.charAt(i);
+            char ch = Character.toUpperCase(expression.charAt(i));
             boolean skipChar = false;
             if (ch == '{') inCurlyBraces = true;
             else if (ch == '}') inCurlyBraces = false;
