@@ -39,7 +39,7 @@ public class MotifSearchTest {
 
     @Test
     public void testDnaHeadlineRegex() {
-        String regex = properties.getProperty(DnaMotifPlugin.FIELD_DNA_HEADLINE_REGEX);
+        String regex = properties.getProperty(DnaMotifPlugin.FIELD_DNA_DEFLINE_REGEX);
         String content = ">gb|scf_1107000998814 | strand=(+) | organism=Toxoplasma_gondii_GT1 | version=2008-07-23 | length=1231";
 
         Pattern pattern = Pattern.compile(regex);
@@ -53,7 +53,7 @@ public class MotifSearchTest {
 
     @Test
     public void testProteinHeadlineRegex() {
-        String regex = properties.getProperty(ProteinMotifPlugin.FIELD_PROTEIN_HEADLINE_REGEX);
+        String regex = properties.getProperty(ProteinMotifPlugin.FIELD_PROTEIN_DEFLINE_REGEX);
         String content = ">psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307";
 
         Pattern pattern = Pattern.compile(regex);

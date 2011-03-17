@@ -21,11 +21,10 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 public class ProteinMotifPlugin extends MotifSearchPlugin {
 
     // let's store files in same directory
-    public static final String FIELD_PROTEIN_HEADLINE_REGEX = "ProteinHeadlineRegex";
+    public static final String FIELD_PROTEIN_DEFLINE_REGEX = "ProteinDeflineRegex";
 
-    private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
-
-    private Pattern headlinePattern;
+    private static final Logger logger = Logger
+            .getLogger(ProteinMotifPlugin.class);
 
     /**
      * @throws WsfServiceException
@@ -39,12 +38,11 @@ public class ProteinMotifPlugin extends MotifSearchPlugin {
     public void initialize(Map<String, Object> context)
             throws WsfServiceException {
         super.initialize(context);
+    }
 
-        String headlineRegex = getProperty(FIELD_PROTEIN_HEADLINE_REGEX);
-        if (headlineRegex == null)
-            throw new WsfServiceException(FIELD_PROTEIN_HEADLINE_REGEX
-                    + " is not defined in the config file.");
-        this.headlinePattern = Pattern.compile(headlineRegex);
+    @Override
+    protected String getDeflineField() {
+        return FIELD_PROTEIN_DEFLINE_REGEX;
     }
 
     @Override
@@ -72,15 +70,15 @@ public class ProteinMotifPlugin extends MotifSearchPlugin {
             String headline, Pattern searchPattern, String sequence,
             String colorCode, int contextLength) {
         // parse the headline
-        Matcher headlineMatcher = headlinePattern.matcher(headline);
-        if (!headlineMatcher.find()) {
-            logger.warn("Invalid headline: " + headline);
+        Matcher deflineMatcher = deflinePattern.matcher(headline);
+        if (!deflineMatcher.find()) {
+            logger.warn("Invalid defline: " + headline);
             return;
         }
         // the gene source id has to be in group(1),
         // organsim has to be in group(2),
-        String sourceId = headlineMatcher.group(1);
-        String organism = headlineMatcher.group(2);
+        String sourceId = deflineMatcher.group(1);
+        String organism = deflineMatcher.group(2);
         String projectId = getProjectId(organism);
 
         Match match = new Match();
@@ -93,7 +91,8 @@ public class ProteinMotifPlugin extends MotifSearchPlugin {
         Matcher matcher = searchPattern.matcher(sequence);
         while (matcher.find()) {
             // add locations
-            if (sbLoc.length() != 0) sbLoc.append(", ");
+            if (sbLoc.length() != 0)
+                sbLoc.append(", ");
             sbLoc.append('(');
             sbLoc.append(matcher.start());
             sbLoc.append("-");
@@ -117,7 +116,8 @@ public class ProteinMotifPlugin extends MotifSearchPlugin {
             prev = matcher.end();
             match.matchCount++;
         }
-        if (match.matchCount == 0) return;
+        if (match.matchCount == 0)
+            return;
 
         // grab the last context
         if ((prev + contextLength) < sequence.length()) {

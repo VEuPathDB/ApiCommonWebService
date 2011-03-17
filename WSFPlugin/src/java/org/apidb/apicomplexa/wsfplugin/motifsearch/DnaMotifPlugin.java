@@ -21,11 +21,11 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 public class DnaMotifPlugin extends MotifSearchPlugin {
 
     // The property file for dna motif search
-    public static final String FIELD_DNA_HEADLINE_REGEX = "DnaHeadlineRegex";
+    public static final String FIELD_DNA_DEFLINE_REGEX = "DnaDeflineRegex";
 
     private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
-    private Pattern headlinePattern;
+    private Pattern deflinePattern;
 
     public DnaMotifPlugin() throws WsfServiceException {
         super();
@@ -35,14 +35,12 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
     public void initialize(Map<String, Object> context)
             throws WsfServiceException {
         super.initialize(context);
-
-        String headlineRegex = getProperty(FIELD_DNA_HEADLINE_REGEX);
-        if (headlineRegex == null)
-            throw new WsfServiceException(FIELD_DNA_HEADLINE_REGEX
-                    + " is not defined in the config file.");
-        this.headlinePattern = Pattern.compile(headlineRegex);
     }
 
+    @Override
+    protected String getDeflineField() {
+        return FIELD_DNA_DEFLINE_REGEX;
+    }
     @Override
     protected Map<Character, String> getSymbols() {
         Map<Character, String> symbols = new HashMap<Character, String>();
@@ -66,17 +64,17 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
             Pattern searchPattern, String sequence, String colorCode,
             int contextLength) {
         // parse the headline
-        Matcher headlineMatcher = headlinePattern.matcher(headline);
-        if (!headlineMatcher.find()) {
-            logger.warn("Invalid headline: " + headline);
+        Matcher deflineMatcher = deflinePattern.matcher(headline);
+        if (!deflineMatcher.find()) {
+            logger.warn("Invalid defline: " + headline);
             return;
         }
         // the sequence id has to be in group(1),
         // strand info has to be in group(2)
         // organsim has to be in group(3),
-        String sequenceId = headlineMatcher.group(1);
-        String strand = headlineMatcher.group(2);
-        String organism = headlineMatcher.group(3);
+        String sequenceId = deflineMatcher.group(1);
+        String strand = deflineMatcher.group(2);
+        String organism = deflineMatcher.group(3);
         String projectId = getProjectId(organism);
 
         int length = sequence.length();
