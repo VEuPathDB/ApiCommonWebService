@@ -87,6 +87,8 @@ public class ApiFedPlugin extends AbstractPlugin {
         if (configDir == null) {
             URL url = this.getClass().getResource("/");
             configDir = url.toString() + "/../wsf-config/";
+        } else if (!configDir.endsWith("/")) {
+            configDir += "/";
         }
         logger.debug("Mapping File Path == " + configDir);
         return configDir;
