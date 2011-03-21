@@ -263,7 +263,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
                 ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
-                        user, SOParams, true, 0);
+                        user, SOParams, true, 0, context);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
@@ -273,7 +273,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
                 SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
-                        user, SOParams, true, 0);
+                        user, SOParams, true, 0, context);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");

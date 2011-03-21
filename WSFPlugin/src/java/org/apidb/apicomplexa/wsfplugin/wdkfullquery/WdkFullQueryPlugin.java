@@ -235,7 +235,7 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
                 logger.info("Processing WSQuery ...");
                 ProcessQuery wsquery = (ProcessQuery) q;
                 ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
-                        user, SOParams, true, 0);
+                        user, SOParams, true, 0, context);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
@@ -243,7 +243,7 @@ public class WdkFullQueryPlugin extends AbstractPlugin {
                 logger.info("Process SqlQuery ...");
                 SqlQuery sqlquery = (SqlQuery) q;
                 SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
-                        user, SOParams, true, 0);
+                        user, SOParams, true, 0, context);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");

@@ -324,7 +324,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         Status[] compStatus = new Status[sites.length];
 
         // Object to hold the Threads
-        Thread[] compThreads = new Thread[sites.length];
+        WdkQuery[] compThreads = new WdkQuery[sites.length];
 
         // Preparing and executing the propriate component sites for this Query
         logger.info("invoking the web services");
@@ -368,6 +368,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 logger.debug("siteName = projectId Done");
 
                 WsfRequest compRequest = new WsfRequest();
+                compRequest.setProjectId(request.getProjectId());
                 compRequest.setParams(arrayParams);
                 compRequest.setOrderedColumns(componentColumns);
 
