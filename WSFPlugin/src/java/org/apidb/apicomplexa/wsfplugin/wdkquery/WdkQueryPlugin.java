@@ -132,7 +132,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      */
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-    // do nothing in this plugin
+        // do nothing in this plugin
     }
 
     // private void validateQueryParams(Map<String, String> params, Query q)
@@ -193,7 +193,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
         String paramName = context.get(Utilities.QUERY_CTX_PARAM);
         String queryName = context.get(Utilities.QUERY_CTX_QUERY);
 
-        if (params.containsKey("Query")) params.remove("Query");
+        if (params.containsKey("Query"))
+            params.remove("Query");
         String siteModel = params.remove(SITE_MODEL);
         wdkModel = modelName2Model.get(siteModel).getModel();
         // logger.info("QueryName = "+ invokeKey);
@@ -201,14 +202,32 @@ public class WdkQueryPlugin extends AbstractPlugin {
         // Map<String,Object>SOParams = convertParams(params);
         // logger.info("Parameters were processed");
 
+        logger.debug("context question: '" + questionName + "', param: '"
+                + paramName + "', query: '" + queryName + "'");
+
         // Variable to maintain the order of columns in the result... maintains
         // order given by Federation Plugin
         String[] orderedColumns = request.getOrderedColumns();
         Integer[] colindicies = new Integer[orderedColumns.length];
         try {
             if (paramName != null) {
-                // the call is to get param values
-                Param param = (Param) this.wdkModel.resolveReference(paramName);
+                // get param
+                Param param;
+                if (questionName != null) {
+                    // context question is defined, should get the param from
+                    // question
+                    Question question = wdkModel.getQuestion(questionName);
+                    param = question.getParamMap().get(paramName);
+
+                    // param doesn't exist in the context question, try to get
+                    // it from model.
+                    if (param == null)
+                        param = (Param) wdkModel.resolveReference(paramName);
+                } else {
+                    // context question is not defined, get original param from
+                    // model.
+                    param = (Param) wdkModel.resolveReference(paramName);
+                }
                 logger.info("Parameter found : " + param.getFullName());
 
                 String[][] paramValues;
@@ -262,8 +281,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 ProcessQuery wsquery = (ProcessQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
-                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
-                        user, SOParams, true, 0, context);
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery
+                        .makeInstance(user, SOParams, true, 0, context);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
@@ -272,8 +291,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 SqlQuery sqlquery = (SqlQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
-                        user, SOParams, true, 0, context);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery
+                        .makeInstance(user, SOParams, true, 0, context);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -299,7 +318,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 resultSize = -2; // query set or query doesn't exist
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2; // query set or query doesn't exist
-            } else if (msg.contains("datasets value '' has an error: Missing the value")) {
+            } else if (msg
+                    .contains("datasets value '' has an error: Missing the value")) {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
@@ -326,7 +346,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // logger.info("Component Results = null!!!");
             responseT = new String[1][1];
             responseT[0][0] = "ERROR";
-            if (resultSize > 0) resultSize = 0;
+            if (resultSize > 0)
+                resultSize = 0;
         } else {
             logger.info("Comp-Result not null... getting proper columns");
 
@@ -339,8 +360,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
             for (int i = 0; i < componentResults.length; i++) {
                 for (int j = 0; j < colindicies.length; j++) {
                     int index = colindicies[j].intValue();
-                    if (index >= 0) responseT[i][j] = componentResults[i][index];
-                    else responseT[i][j] = "N/A";
+                    if (index >= 0)
+                        responseT[i][j] = componentResults[i][index];
+                    else
+                        responseT[i][j] = "N/A";
                 }
             }
             // logger.info("FINAL RESULT CALCULATED");
@@ -348,7 +371,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
         // Empty Result
 
-        if (resultSize > 0) resultSize = componentResults.length;
+        if (resultSize > 0)
+            resultSize = componentResults.length;
 
         WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(responseT);
@@ -362,8 +386,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Column[] cols = q.getColumns();
         int index = 0;
         for (Column col : cols) {
-            if (col.getName().equalsIgnoreCase(colName)) return index;
-            else index++;
+            if (col.getName().equalsIgnoreCase(colName))
+                return index;
+            else
+                index++;
         }
         return -1;
     }
@@ -440,8 +466,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     if (param instanceof AbstractEnumParam) {
                         String valList = (String) o;
                         AbstractEnumParam abparam = (AbstractEnumParam) param;
-                        if ((param instanceof FlatVocabParam || param.isAllowEmpty())
-                                && valList.length() == 0) {
+                        if ((param instanceof FlatVocabParam || param
+                                .isAllowEmpty()) && valList.length() == 0) {
                             try {
                                 valList = param.getDefault();
                             } catch (Exception e) {
@@ -449,18 +475,22 @@ public class WdkQueryPlugin extends AbstractPlugin {
                             }
                         }
                         if (abparam.getDependedParam() != null) {
-                            abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
+                            abparam.setDependedValue(p.get(abparam
+                                    .getDependedParam().getName()));
                         }
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_indent_map")) valList = "ARCH";
+                                "phyletic_indent_map"))
+                            valList = "ARCH";
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_term_map")) valList = "rnor";
+                                "phyletic_term_map"))
+                            valList = "rnor";
                         // end workaround
 
                         String[] vals;
-                        Boolean multipick = ((AbstractEnumParam) param).getMultiPick();
+                        Boolean multipick = ((AbstractEnumParam) param)
+                                .getMultiPick();
                         if (multipick) {
                             vals = valList.split(",");
                         } else {
@@ -486,8 +516,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
                             }
                         }
 
-                        if (newVals.length() != 0) newVals = newVals.substring(1);
-                        else newVals = "\u0000";
+                        if (newVals.length() != 0)
+                            newVals = newVals.substring(1);
+                        else
+                            newVals = "\u0000";
                         logger.info("validated values string -------------"
                                 + newVals);
                         ret.put(param.getName(), newVals);
@@ -517,11 +549,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
             for (int z = 0; z < cols.length; z++) {
                 Object obj = result.get(cols[z].getName());
                 String val = null;
-                if (obj == null) val = "N/A";
-                else if (obj instanceof String) val = (String) obj;
-                else if (obj instanceof char[]) val = new String((char[]) obj);
-                else if (obj instanceof byte[]) val = new String((byte[]) obj);
-                else val = obj.toString();
+                if (obj == null)
+                    val = "N/A";
+                else if (obj instanceof String)
+                    val = (String) obj;
+                else if (obj instanceof char[])
+                    val = new String((char[]) obj);
+                else if (obj instanceof byte[])
+                    val = new String((byte[]) obj);
+                else
+                    val = obj.toString();
                 values[z] = val;
             }
             rows.add(values);
@@ -660,11 +697,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         logger.info("conVocab.length = " + conVocab.length);
-        if (p.isSkipValidation()) return true;
+        if (p.isSkipValidation())
+            return true;
         // initVocabMap();
         for (String v : conVocab) {
             logger.info("value: " + value + " | vocabTerm: " + v);
-            if (value.equalsIgnoreCase(v)) return true;
+            if (value.equalsIgnoreCase(v))
+                return true;
         }
         return false;
     }
