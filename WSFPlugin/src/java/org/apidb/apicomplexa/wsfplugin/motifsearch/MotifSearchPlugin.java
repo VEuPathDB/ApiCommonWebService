@@ -347,4 +347,16 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     protected String[] defineContextKeys() {
         return null;
     }
+
+    protected String getLocation(int length, int start, int stop, boolean reversed) {
+        if (reversed) {
+            int newStart = length - stop;
+            stop = length - start;
+            start = newStart;
+        }
+        String location = Integer.toString(start);
+        if (start != stop) location += "-" + stop;
+        return location;
+    }
+
 }

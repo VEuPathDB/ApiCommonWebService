@@ -88,7 +88,7 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
             Match match = new Match();
             match.projectId = projectId;
             match.matchCount = 1;
-            match.locations = getLocation(length, reversed, start, stop);
+            match.locations = getLocation(length, start, stop, reversed);
             match.sourceId = sequenceId + ":" + match.locations + ":" + strand;
 
             // create matching context
@@ -107,14 +107,5 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
             match.sequence = context.toString();
             matches.add(match);
         }
-    }
-
-    private String getLocation(int length, boolean reversed, int start, int stop) {
-        if (reversed) {
-            int newStart = length - stop;
-            stop = length - start;
-            start = newStart;
-        }
-        return start + "-" + stop;
     }
 }

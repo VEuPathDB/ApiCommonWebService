@@ -90,14 +90,13 @@ public class ProteinMotifPlugin extends MotifSearchPlugin {
 
         Matcher matcher = searchPattern.matcher(sequence);
         while (matcher.find()) {
+            String location = getLocation(0, matcher.start(),
+                    matcher.end() - 1, false);
+
             // add locations
             if (sbLoc.length() != 0)
                 sbLoc.append(", ");
-            sbLoc.append('(');
-            sbLoc.append(matcher.start());
-            sbLoc.append("-");
-            sbLoc.append(matcher.end() - 1);
-            sbLoc.append(')');
+            sbLoc.append('(' + location + ')');
 
             // obtain the context sequence
             if ((matcher.start() - prev) <= (contextLength * 2)) {
