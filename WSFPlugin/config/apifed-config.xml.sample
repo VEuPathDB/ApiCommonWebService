@@ -21,6 +21,10 @@
            projectId="MicrosporidiaDB"
            url="(URL FOR WSF WEB SERVICE)" 
            marker="^E$|^Encephalitozoon\s*.*|^Enterocytozoon\s*.*|^Anncaliia\s*.*|^Edhazardia\s*.*|^Nosema\s*.*|^Vittaforma\s*.*" />
+    <model name="PiroplasmaDB"
+           projectId="PiroplasmaDB"
+           url="(URL FOR WSF WEB SERVICE)" 
+           marker="^T$|^Theileria\s*.*|^Babesia\s*.*" />
     <model name="PlasmoDB"
            projectId="PlasmoDB"
            url="(URL FOR WSF WEB SERVICE)" 
