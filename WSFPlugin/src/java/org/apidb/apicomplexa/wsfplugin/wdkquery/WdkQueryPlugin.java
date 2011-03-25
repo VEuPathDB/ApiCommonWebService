@@ -217,18 +217,25 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // context question is defined, should get the param from
                     // question
                     Question question = wdkModel.getQuestion(questionName);
-                    param = question.getParamMap().get(paramName);
+                    String partName = paramName.substring(paramName.indexOf(".") + 1);
+                    param = question.getParamMap().get(partName);
+
+                    logger.debug("got param from question: " + (param != null));
 
                     // param doesn't exist in the context question, try to get
                     // it from model.
                     if (param == null)
                         param = (Param) wdkModel.resolveReference(paramName);
                 } else {
+                    logger.debug("got param from model.");
+
                     // context question is not defined, get original param from
                     // model.
                     param = (Param) wdkModel.resolveReference(paramName);
                 }
-                logger.info("Parameter found : " + param.getFullName());
+                logger.debug("Parameter found : " + param.getFullName());
+                if (param instanceof FlatVocabParam)
+                    logger.debug("param query: " + ((FlatVocabParam)param).getQuery().getFullName());
 
                 String[][] paramValues;
                 if (param instanceof AbstractEnumParam) {
@@ -746,7 +753,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             String disp = termDisp.get(term);
             ePValues[index][termColumnIndex] = disp;
             ePValues[index][displayColumnIndex] = term;
-            logger.debug("Term = " + term + ",     Display = " + disp);
+            logger.trace("Term = " + term + ",     Display = " + disp);
             index++;
         }
         return ePValues;
