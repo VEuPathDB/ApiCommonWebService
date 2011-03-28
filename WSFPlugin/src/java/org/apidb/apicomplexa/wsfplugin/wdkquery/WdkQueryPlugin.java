@@ -709,7 +709,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
             } else if (column.equals(FlatVocabParam.COLUMN_PARENT_TERM)) {
                 parentColumnIndex = i;
             }
-            i++;
         }
 
         logger.debug("OrderedColumns.length = " + ordCols.length + ", term = "
