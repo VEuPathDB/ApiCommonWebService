@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.gusdb.wdk.model.ModelXmlParser;
 import org.gusdb.wdk.model.Question;
@@ -135,45 +134,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
         // do nothing in this plugin
     }
 
-    // private void validateQueryParams(Map<String, String> params, Query q)
-    // throws WsfServiceException {
-    // logger.info("--------Validating Parameters---------------");
-    // String[] reqParams = getParamsFromQuery(q);
-    // for (String param : reqParams) {
-    // if (!params.containsKey(param)) {
-    // throw new WsfServiceException(
-    // "The required parameter is missing: " + param);
-    // }
-    // }
-    // }
-
-    // private void validateQueryColumns(String[] orderedColumns, Query query)
-    // throws WsfServiceException {
-    // logger.info("------------Validating Columns---------------");
-    // String[] reqColumns = getColumnsFromQuery(query);
-    // // Set<String> colSet = new HashSet<String>(orderedColumns.length);
-    // // for (String col : orderedColumns) {
-    // // colSet.add(col);
-    // // }
-    // // for (String col : reqColumns) {
-    // // if (!colSet.contains(col)) {
-    // // throw new WsfServiceException(
-    // // "The required column is missing: " + col);
-    // // }
-    // // }
-    // // cross check
-    // // colSet.clear();
-    // Set<String> colSet = new HashSet<String>(reqColumns.length);
-    // for (String col : reqColumns) {
-    // colSet.add(col);
-    // }
-    // for (String col : orderedColumns) {
-    // if (!colSet.contains(col)) {
-    // throw new WsfServiceException("Unknown column: " + col);
-    // }
-    // }
-    // }
-
     /*
      * (non-Javadoc)
      * 
@@ -217,7 +177,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // context question is defined, should get the param from
                     // question
                     Question question = wdkModel.getQuestion(questionName);
-                    String partName = paramName.substring(paramName.indexOf(".") + 1);
+                    String partName = paramName.substring(paramName
+                            .indexOf(".") + 1);
                     param = question.getParamMap().get(partName);
 
                     logger.debug("got param from question: " + (param != null));
@@ -235,13 +196,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 }
                 logger.debug("Parameter found : " + param.getFullName());
                 if (param instanceof FlatVocabParam)
-                    logger.debug("param query: " + ((FlatVocabParam)param).getQuery().getFullName());
+                    logger.debug("param query: "
+                            + ((FlatVocabParam) param).getQuery().getFullName());
 
                 String[][] paramValues;
                 if (param instanceof AbstractEnumParam) {
                     paramValues = handleVocabParams((AbstractEnumParam) param,
                             params, orderedColumns);
-                } else {
+                } else { // for other record types, return empty array
                     paramValues = new String[0][0];
                 }
                 WsfResponse wsfResponse = new WsfResponse();
@@ -729,34 +691,57 @@ public class WdkQueryPlugin extends AbstractPlugin {
             vocabParam.setDependedValue(dependedValue);
             logger.debug(dependedParam.getName() + " ==== " + dependedValue);
         }
-        Map<String, String> termDisp = vocabParam.getDisplayMap();
-        Set<String> terms = termDisp.keySet();
-        int termColumnIndex = 0;
-        int displayColumnIndex = 0;
-        int i = 0;
-        for (String c : ordCols) {
-            logger.debug("current Column = " + c + " ,,,, i = " + i);
-            if (c.equals("term")) {
+        Map<String, String> displayMap = vocabParam.getDisplayMap();
+        Map<String, String> parentMap = vocabParam.getParentMap();
+        int termColumnIndex = -1;
+        int displayColumnIndex = -1;
+        int internalColumnIndex = -1;
+        int parentColumnIndex = -1;
+        for (int i = 0; i < ordCols.length; i++) {
+            String column = ordCols[i];
+            logger.debug("current Column = " + column + " ,,,, i = " + i);
+            if (column.equals(FlatVocabParam.COLUMN_TERM)) {
                 termColumnIndex = i;
-            } else if (c.equals("display")) {
+            } else if (column.equals(FlatVocabParam.COLUMN_DISPLAY)) {
                 displayColumnIndex = i;
+            } else if (column.equals(FlatVocabParam.COLUMN_INTERNAL)) {
+                internalColumnIndex = i;
+            } else if (column.equals(FlatVocabParam.COLUMN_PARENT_TERM)) {
+                parentColumnIndex = i;
             }
             i++;
         }
+
         logger.debug("OrderedColumns.length = " + ordCols.length + ", term = "
-                + termColumnIndex + ", display = " + displayColumnIndex);
-        String[][] ePValues = new String[terms.size()][ordCols.length];
+                + termColumnIndex + ", display = " + displayColumnIndex
+                + ", internal = " + internalColumnIndex + ", parent = "
+                + parentColumnIndex);
+
+        // term & internal has to exist
+        if (termColumnIndex < 0 || internalColumnIndex < 0)
+            throw new WdkModelException("The wsf call for param "
+                    + vocabParam.getFullName()
+                    + " doesn't specify term & internal columns.");
+        String[][] result = new String[displayMap.size()][ordCols.length];
         int index = 0;
-        for (String term : terms) {
-            for (int j = 0; j < ePValues[index].length; j++)
-                ePValues[index][j] = "N/A";
-            String disp = termDisp.get(term);
-            ePValues[index][termColumnIndex] = disp;
-            ePValues[index][displayColumnIndex] = term;
-            logger.trace("Term = " + term + ",     Display = " + disp);
+        for (String term : displayMap.keySet()) {
+            for (int j = 0; j < result[index].length; j++) {
+                if (j == termColumnIndex) {
+                    result[index][j] = term;
+                } else if (j == internalColumnIndex) {
+                    // always return term as internal
+                    result[index][j] = term;
+                } else if (j == displayColumnIndex) {
+                    result[index][j] = displayMap.get(term);
+                } else if (j == parentColumnIndex) {
+                    result[index][j] = parentMap.get(term);
+                } else {
+                    result[index][j] = "N/A";
+                }
+            }
             index++;
         }
-        return ePValues;
+        return result;
     }
 
     @Override
