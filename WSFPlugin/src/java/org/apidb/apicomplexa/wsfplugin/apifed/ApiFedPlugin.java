@@ -268,15 +268,14 @@ public class ApiFedPlugin extends AbstractPlugin {
                 + "values used to select site; or maybe the value stored in "
                 + "the organism parameter cannot be read as a string\n");
         int thread_counter = 0;
-        logger.debug("***sites organisms are: \n\n" + sites[0].getName() + ":"
-                + sites[0].getOrganism() + "\n" + sites[1].getName() + ":"
-                + sites[1].getOrganism() + "\n" + sites[2].getName() + ":"
-                + sites[2].getOrganism() + "\n" + sites[3].getName() + ":"
-                + sites[3].getOrganism() + "\n" + sites[4].getName() + ":"
-                + sites[4].getOrganism() + "\n" + sites[5].getName() + ":"
-                + sites[5].getOrganism() + "\n" + sites[6].getName() + ":"
-                + sites[6].getOrganism() + "\n" + sites[7].getName() + ":"
-                + sites[7].getOrganism() + "\n\n");
+        
+        {
+            StringBuilder log = new StringBuilder();
+            for (Site site : sites) {
+                log.append(site.getName() + ":" + site.getOrganism() + "\n");
+            }
+            logger.debug("***sites organisms are: \n\n" + log + "\n");
+        }
 
         for (Site site : sites) {
             if (site.hasOrganism()) {
