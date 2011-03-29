@@ -117,8 +117,8 @@ public class ApiFedPlugin extends AbstractPlugin {
             }
             String mapfile = getMapFilePath().concat(
                     config_e.getChild("MappingFile").getAttributeValue("name"));
-            timeOutInMinutes = new Integer(
-                    config_e.getChild("Timeout").getAttributeValue("minutes")).intValue();
+            timeOutInMinutes = new Integer(config_e.getChild("Timeout")
+                    .getAttributeValue("minutes")).intValue();
             logger.debug("Mapping File ========== " + mapfile);
             logger.debug("Timeout Value ========== " + timeOutInMinutes);
             // mapDoc = createMap(mapfile);
@@ -126,72 +126,6 @@ public class ApiFedPlugin extends AbstractPlugin {
             logger.debug(e);
         }
     }
-
-    //
-    // private Document createMap(String mapFile) {
-    //
-    // Document doc = null;
-    // try {
-    // doc = new SAXBuilder().build(new File(mapFile));
-    // } catch (JDOMException e) {
-    // logger.debug(e.toString());
-    // e.printStackTrace();
-    // } catch (IOException e) {
-    // logger.debug(e.toString());
-    // e.printStackTrace();
-    // }
-    //
-    // return doc;
-    // }
-    //
-    // private String mapQuerySet(String querySet, String project) {
-    // Element querySetMapping = null;
-    // try {
-    // if (mapDoc == null)
-    // logger.debug("Error:::::::MapDocument is empty");
-    // querySetMapping = mapDoc.getRootElement().getChild("QuerySets").getChild(
-    // querySet);
-    // String componentQuerySet = querySetMapping.getAttributeValue(project);
-    // return componentQuerySet;
-    // } catch (NullPointerException e) {
-    // String ret = "";
-    // return ret;
-    // }
-    // }
-    //
-    // private String mapQuery(String querySet, String queryName, String
-    // project) {
-    // String xPath = "/FederationMapping/QuerySets/" + querySet
-    // + "/wsQueries/" + queryName;
-    // try {
-    // Element queryMapping =
-    // mapDoc.getRootElement().getChild("QuerySets").getChild(
-    // querySet).getChild("wsQueries").getChild(queryName);
-    // String componentQuery = queryMapping.getAttributeValue(project);
-    //
-    // return componentQuery;
-    // } catch (NullPointerException e) {
-    // String ret = "";
-    // return ret;
-    // }
-    // }
-    //
-    // private String mapParam(String querySet, String queryName,
-    // String paramName, String project) {
-    // String xPath = "/FederationMapping/QuerySets/" + querySet
-    // + "/wsQueries/" + queryName + "/Params/params." + paramName;
-    // try {
-    // Element paramMapping =
-    // mapDoc.getRootElement().getChild("QuerySets").getChild(
-    // querySet).getChild("wsQueries").getChild(queryName).getChild(
-    // "Params").getChild("params." + paramName);
-    // String componentParam = paramMapping.getAttributeValue(project);
-    // return componentParam;
-    // } catch (NullPointerException e) {
-    // String ret = "";
-    // return ret;
-    // }
-    // }
 
     /*
      * (non-Javadoc)
@@ -220,7 +154,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      */
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-    // Do Nothing in this plugin
+        // Do Nothing in this plugin
     }
 
     /*
@@ -245,15 +179,14 @@ public class ApiFedPlugin extends AbstractPlugin {
         logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
         boolean isParam = false;
         logger.debug("Sites Array being Initialized ... ");
-        logger.debug("***sites organisms are: \n\n" + sites[0].getName() + ":"
-                + sites[0].getOrganism() + "\n" + sites[1].getName() + ":"
-                + sites[1].getOrganism() + "\n" + sites[2].getName() + ":"
-                + sites[2].getOrganism() + "\n" + sites[3].getName() + ":"
-                + sites[3].getOrganism() + "\n" + sites[4].getName() + ":"
-                + sites[4].getOrganism() + "\n" + sites[5].getName() + ":"
-                + sites[5].getOrganism() + "\n" + sites[6].getName() + ":"
-                + sites[6].getOrganism() + "\n" + sites[7].getName() + ":"
-                + sites[7].getOrganism() + "\n\n");
+
+        {
+            StringBuilder log = new StringBuilder();
+            for (Site site : sites) {
+                log.append(site.getName() + ":" + site.getOrganism() + "\n");
+            }
+            logger.debug("***sites organisms are: \n\n" + log + "\n");
+        }
 
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
@@ -264,7 +197,8 @@ public class ApiFedPlugin extends AbstractPlugin {
         logger.debug("question: " + questionName + ", param: " + paramName);
 
         // Determine if the Query is a Parameter Query
-        if (paramName != null) isParam = true;
+        if (paramName != null)
+            isParam = true;
 
         Map<String, String> params = request.getParams();
         String orgName = null;
@@ -426,7 +360,8 @@ public class ApiFedPlugin extends AbstractPlugin {
     private boolean allDone(Status[] S) {
         for (Status s : S) {
             if (s != null) {
-                if (!s.getDone()) return false;
+                if (!s.getDone())
+                    return false;
             }
         }
         return true;
@@ -533,7 +468,8 @@ public class ApiFedPlugin extends AbstractPlugin {
                 String[][] answer = compResult.getAnswer();
                 if (answer != null) {
                     if (answer.length >= 0)
-                        if (message.length() > 0) message.append(",");
+                        if (message.length() > 0)
+                            message.append(",");
                     // the message was parsed in JSP, here just combine the
                     // result message from all component into one big message.
                     message.append(compResult.getSiteName() + ":"
@@ -547,12 +483,14 @@ public class ApiFedPlugin extends AbstractPlugin {
                                         && primaryKey == null)
                                     rec = insertProjectId(rec, projectIndex,
                                             compResult.getSiteName());
-                                if (isParamResult) keyVal = Arrays.deepToString(
-                                        rec).hashCode(); // Use a HashCode to
+                                if (isParamResult)
+                                    keyVal = Arrays.deepToString(rec)
+                                            .hashCode(); // Use a HashCode to
                                 // prevent duplicate
                                 // values from
                                 // parameters
-                                else keyVal = i; // Use incremented integer for
+                                else
+                                    keyVal = i; // Use incremented integer for
                                 // results to ensure that a
                                 // hash function does not
                                 // inadvertently ommit results
@@ -736,7 +674,8 @@ public class ApiFedPlugin extends AbstractPlugin {
                         String more = service.requestResult(requestId, i);
                         buffer.append(more);
                     }
-                    String[][] content = Utilities.convertContent(buffer.toString());
+                    String[][] content = Utilities.convertContent(buffer
+                            .toString());
                     wsfResult.setResult(content);
                 }
                 long end = System.currentTimeMillis();
@@ -809,13 +748,17 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         public void appendOrganism(String organism) {
             organism = organism.trim();
-            if (this.organism.length() == 0) setOrganism(organism);
-            else setOrganism(this.organism + "," + organism);
+            if (this.organism.length() == 0)
+                setOrganism(organism);
+            else
+                setOrganism(this.organism + "," + organism);
         }
 
         public boolean hasOrganism() {
-            if (this.organism.length() == 0) return false;
-            else return true;
+            if (this.organism.length() == 0)
+                return false;
+            else
+                return true;
         }
 
         public Object clone() {
