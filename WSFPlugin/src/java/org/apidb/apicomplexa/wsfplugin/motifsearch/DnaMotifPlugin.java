@@ -25,8 +25,6 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
 
     private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
-    private Pattern deflinePattern;
-
     public DnaMotifPlugin() throws WsfServiceException {
         super();
     }
