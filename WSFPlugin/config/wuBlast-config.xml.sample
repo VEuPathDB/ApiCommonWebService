@@ -93,6 +93,52 @@
 <entry key="UrlMap_Enterocytozoon_Assemblies">
         <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
+
+
+<entry key="UrlMap_Nematocida_Transcripts">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_Proteins">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_ORF">
+        <![CDATA[/micro/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_Genomics">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_EST">
+        <![CDATA[/micro/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_Assemblies">
+        <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Nematocida_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Octosporea_Transcripts">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_Proteins">
+        <![CDATA[/micro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_ORF">
+        <![CDATA[/micro/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_Genomics">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_EST">
+        <![CDATA[/micro/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_Assemblies">
+        <![CDATA[/micro/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Octosporea_GSS">
+        <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
 <entry key="UrlMap_Anncaliia_GSS">
         <![CDATA[/micro/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -366,6 +412,8 @@
 <entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
 <entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Nematocida">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Octosporea">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Anncaliia">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Edhazardia">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Nosema">MicrosporidiaDB</entry>

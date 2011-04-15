@@ -50,6 +50,8 @@
 <entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
 <entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Nematocida">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Octosporea">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
 <entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
 
