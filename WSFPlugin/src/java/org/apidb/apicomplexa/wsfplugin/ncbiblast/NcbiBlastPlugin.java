@@ -135,7 +135,8 @@ public class NcbiBlastPlugin extends BlastPlugin {
             logger.debug("Organism extracted from defline is: " + organism);
             // insert the url linking to
             line = insertIdUrl(line, dbType);
-            rows.put(sourceId, new String[] { organism, line });
+            if (line != null)
+                rows.put(sourceId, new String[] { organism, line });
         }
 
         // extract alignment blocks
@@ -177,7 +178,8 @@ public class NcbiBlastPlugin extends BlastPlugin {
 
                 // insert the organism url
                 line = insertIdUrl(line, dbType);
-                alignment[columns.get(COLUMN_ID)] = sourceId;
+                if (line != null)
+                    alignment[columns.get(COLUMN_ID)] = sourceId;
             } else {
                 // add this line to the block
                 block.append(line + newline);

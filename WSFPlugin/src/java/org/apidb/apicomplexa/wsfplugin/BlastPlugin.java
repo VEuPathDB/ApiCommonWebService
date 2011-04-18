@@ -378,8 +378,10 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
 
     protected String insertIdUrl(String defline, String dbType) {
         // extract organism from the defline
-        logger.debug("\ninsertIdUrl() line is: " + defline
+        logger.trace("\ninsertIdUrl() line is: " + defline
                 + "   --- dbType is " + dbType + "\n");
+
+        if (defline == null) return null;
 
         int[] orgPos = findField(defline, organismRegex);
         String organism = defline.substring(orgPos[0], orgPos[1]);
@@ -417,9 +419,11 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
 
     protected String insertIdUrl(String defline, String dbType, String organism) {
         // extract organism from the defline
-        // logger.debug("\ninsertIdUrl() line is: " + defline +
-        // "   --- dbType is " + dbType + "   --- organism is " + organism +
-        // "\n");
+        logger.trace("\ninsertIdUrl() line is: " + defline +
+         "   --- dbType is " + dbType + "   --- organism is " + organism +
+         "\n");
+
+        if (defline == null) return null;
 
         int[] srcPos = findField(defline, sourceIdRegex);
         String sourceId = defline.substring(srcPos[0], srcPos[1]);

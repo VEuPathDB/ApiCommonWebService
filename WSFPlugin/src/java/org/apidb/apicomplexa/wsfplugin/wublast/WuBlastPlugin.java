@@ -429,7 +429,7 @@ public class WuBlastPlugin extends BlastPlugin {
 		//logger.info("\nWB prepareResult(): alignments: to insert URL in TABROW: "  + rowline + "\n");
 		if ( ! (dbType.contains("ORF") && hit_organism.contains("Crypto")) ) 
 		    rowline = insertIdUrl(rowline, dbType, hit_organism);
-		rows.put(counterstring, rowline);
+                if (rowline != null) rows.put(counterstring, rowline);
 		counter++;
 		//--------------
 
@@ -437,7 +437,7 @@ public class WuBlastPlugin extends BlastPlugin {
 
             }
             // add the line to the block
-            block.append(line + newline);
+            if (line != null) block.append(line + newline);
 
         }// end while
 
