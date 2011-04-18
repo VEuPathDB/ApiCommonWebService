@@ -76,8 +76,8 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
         String projectId = getProjectId(organism);
 
         int length = sequence.length();
-        strand = strand.equals("-") ? "1" : "0";
-        boolean reversed = (strand.equals("1"));
+        strand = strand.equals("-") ? "r" : "f";
+        boolean reversed = (strand.equals("r"));
 
         Matcher matcher = searchPattern.matcher(sequence);
         while (matcher.find()) {
