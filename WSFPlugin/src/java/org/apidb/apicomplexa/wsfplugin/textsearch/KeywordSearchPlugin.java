@@ -262,7 +262,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             // Added by Jerric - the code is unclear, why a value is passed in
             // while it will be over-written within the method?
             // handle the default case
-            recordTypePredicate += " AND comment_target_id = '"
+            recordTypePredicate = " AND comment_target_id = '"
                     + recordTypePredicate + "'\n";
         }
 
