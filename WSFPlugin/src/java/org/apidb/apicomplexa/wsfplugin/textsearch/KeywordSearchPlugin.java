@@ -79,7 +79,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
      */
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-    // do nothing in this plugin
+        // do nothing in this plugin
     }
 
     /*
@@ -97,14 +97,14 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         if (params.get(PARAM_WDK_RECORD_TYPE) == null) {
             recordType = "gene";
         } else {
-            recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll(
-                    "'", "");
+            recordType = params.get(PARAM_WDK_RECORD_TYPE).trim()
+                    .replaceAll("'", "");
         }
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
         logger.debug("fields = \"" + fields + "\"");
-        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replaceAll(
-                "'", "").replaceAll("[-&|~,=;%_]", "\\\\$0").replaceAll("\\*",
-                "%");
+        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim()
+                .replaceAll("'", "").replaceAll("[-&|~,=;%_]", "\\\\$0")
+                .replaceAll("\\*", "%");
 
         String organisms = params.get(PARAM_ORGANISMS);
         logger.debug("organisms = \"" + organisms + "\"");
@@ -122,7 +122,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         boolean notFirst = false;
         String[] ds = fields.split(",\\s*");
         for (String field : ds) {
-            if (notFirst) quotedFields.append(",");
+            if (notFirst)
+                quotedFields.append(",");
             quotedFields.append("'" + field + "'");
             notFirst = true;
 
@@ -257,6 +258,12 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         } else if (!commentRecords && communityAnnotationRecords) {
             recordTypePredicate = new String(
                     " and review_status_id = 'community' ");
+        } else {
+            // Added by Jerric - the code is unclear, why a value is passed in
+            // while it will be over-written within the method?
+            // handle the default case
+            recordTypePredicate += " AND comment_target_id = '"
+                    + recordTypePredicate + "'\n";
         }
 
         String sql = new String(
@@ -396,7 +403,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 + "  and attrs.project_id = ? \n"
                 + "  and ? like '%' || attrs.species || '%'");
 
-        WdkModelBean wdkModel = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
+        WdkModelBean wdkModel = (WdkModelBean) this.context
+                .get(CConstants.WDK_MODEL_KEY);
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
         DataSource dataSource = platform.getDataSource();
 
@@ -436,7 +444,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             ex.printStackTrace();
             throw new WsfServiceException(ex);
         } finally {
-            if (rs != null) rs.close();
+            if (rs != null)
+                rs.close();
         }
 
         return matches;
@@ -478,7 +487,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                                     + "\" for ID \""
                                     + sourceId
                                     + "\" returned from comment-search result set.");
-                            SearchResult result = newCommentMatches.get(sourceId);
+                            SearchResult result = newCommentMatches
+                                    .get(sourceId);
                             result.setSourceId(returnedSourceId);
                             newCommentMatches.remove(sourceId);
                             newCommentMatches.put(returnedSourceId, result);
@@ -523,7 +533,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         // componentMatches now has all results combined; get it into a sorted
         // array
         Collection<SearchResult> matchCollection = componentMatches.values();
-        SearchResult[] matchArray = matchCollection.toArray(new SearchResult[0]);
+        SearchResult[] matchArray = matchCollection
+                .toArray(new SearchResult[0]);
         Arrays.sort(matchArray);
 
         return matchArray;
@@ -562,7 +573,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
     private Connection getCommentDbConnection(String projectId)
             throws SQLException {
-        CommentFactory factory = (CommentFactory) context.get(CommentActionUtility.COMMENT_FACTORY_KEY);
+        CommentFactory factory = (CommentFactory) context
+                .get(CommentActionUtility.COMMENT_FACTORY_KEY);
         if (factory == null) {
             String gusHome = (String) context.get(CConstants.GUS_HOME_KEY);
             factory = CommentFactory.getInstance(gusHome, projectId);
@@ -572,7 +584,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
     }
 
     private Connection getComponentDbConnection() throws SQLException {
-        WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
+        WdkModelBean wdkModel = (WdkModelBean) context
+                .get(CConstants.WDK_MODEL_KEY);
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();
         return platform.getDataSource().getConnection();
     }
