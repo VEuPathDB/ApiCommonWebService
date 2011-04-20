@@ -278,10 +278,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         // and user's choice of begin and end, we get the proper begin of the
         // region.
         StringBuilder sql = new StringBuilder("(CASE ");
-        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 0 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 'f') = 'f' THEN (");
         sql.append(begin.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + beginOff + ")) ");
-        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 1 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 'f') = 'r' THEN (");
         sql.append(end.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + endOff + ")) ");
         sql.append("END)");
@@ -289,10 +289,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         // we get the proper end of the region.
         sql = new StringBuilder("(CASE ");
-        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 0 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 'f') = 'f' THEN (");
         sql.append(end.equals(PARAM_VALUE_START) ? "start_min" : "end_max");
         sql.append(" + 1*(" + endOff + ")) ");
-        sql.append(" WHEN NVL(" + table + "is_reversed, 0) = 1 THEN (");
+        sql.append(" WHEN NVL(" + table + "is_reversed, 'f') = 'r' THEN (");
         sql.append(begin.equals(PARAM_VALUE_START) ? "end_max" : "start_min");
         sql.append(" - 1*(" + beginOff + ")) ");
         sql.append("END)");
@@ -382,7 +382,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         builder.append("CREATE TABLE " + table + " NOLOGGING PARALLEL AS ");
         builder.append("(SELECT DISTINCT fl.feature_source_id AS source_id, ");
         builder.append("   fl.sequence_source_id, ca.project_id, ca.wdk_weight, ");
-        builder.append("   NVL(fl.is_reversed, 0) AS is_reversed, ");
+        builder.append("   NVL(fl.is_reversed, 'f') AS is_reversed, ");
         builder.append(region[0] + " AS begin, " + region[1] + " AS end");
         builder.append(" FROM " + locTable + " fl, " + cacheSql + " ca ");
         builder.append(" WHERE fl.feature_source_id = ca.source_id ");
