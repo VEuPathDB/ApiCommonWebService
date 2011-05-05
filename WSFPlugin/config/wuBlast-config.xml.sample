@@ -288,7 +288,6 @@
         <![CDATA[/trichdb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
-
 <entry key="UrlMap_Crithidia_Transcripts">
         <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -381,6 +380,137 @@
         <![CDATA[/piro/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
+<!-- start FungiDB -->
+<entry key="UrlMap_Aspergillus_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Aspergillus_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Aspergillus_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Aspergillus_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Candida_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Candida_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Candida_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Candida_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Coccidioides_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Coccidioides_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Coccidioides_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Coccidioides_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Cryptococcus_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Cryptococcus_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Cryptococcus_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Cryptococcus_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Fusarium_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Fusarium_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Fusarium_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Fusarium_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Magnaporthe_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Magnaporthe_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Magnaporthe_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Magnaporthe_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Neurospora_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Neurospora_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Neurospora_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Neurospora_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Puccini_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Puccini_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Puccini_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Puccini_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Rhizopus_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Rhizopus_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Rhizopus_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Rhizopus_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Saccharomyces_Transcripts">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Saccharomyces_Proteins">
+        <![CDATA[/fungidb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Saccharomyces_ORF">
+        <![CDATA[/fungidb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Saccharomyces_Genomics">
+        <![CDATA[/fungidb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<!-- end FungiDB -->
 
 
 <!-- used by apidots eimeria .. -->
@@ -429,6 +559,18 @@
 <entry key="ProjectMap_Crithidia">TriTrypDB</entry>
 <entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
 <entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
+
+<entry key="ProjectMap_Aspergillus">FungiDB</entry>
+<entry key="ProjectMap_Candida">FungiDB</entry>
+<entry key="ProjectMap_Coccidioides">FungiDB</entry>
+<entry key="ProjectMap_Cryptococcus">FungiDB</entry>
+<entry key="ProjectMap_Fusarium">FungiDB</entry>
+<entry key="ProjectMap_Magnaporthe">FungiDB</entry>
+<entry key="ProjectMap_Neurospora">FungiDB</entry>
+<entry key="ProjectMap_Puccini">FungiDB</entry>
+<entry key="ProjectMap_Rhizopus">FungiDB</entry>
+<entry key="ProjectMap_Saccharomyces">FungiDB</entry>
+
 
 <!-- ApiDB 3.2 Assemblies...+ crypto amd toxo from their sites  -->
 <entry key="ProjectMap_Eimeria">Apidots</entry>
