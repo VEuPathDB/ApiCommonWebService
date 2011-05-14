@@ -81,6 +81,9 @@ public class WuBlastPlugin extends BlastPlugin {
         cmds.add(blastDbs);
         cmds.add(seqFile.getAbsolutePath());
         cmds.add("O=" + outFile.getAbsolutePath());
+        
+        if (blastDbEnv != null && blastDbEnv.length() > 0)
+            params.put("-putenv", "BLASTDB=" + blastDbEnv);
 
         for (String param : params.keySet()) {
             if (!(param.contains("filter") && params.get(param).equals("no"))) {

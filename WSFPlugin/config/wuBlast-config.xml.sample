@@ -4,6 +4,8 @@
 <comment>The configuration file for WU-BLAST Processor.</comment>
 
 <entry key="AppPath">/opt/WU_BLAST</entry>
+<!-- optionally set BLASTDB environment variable  -->
+<entry key="BlastDbEnv"></entry>
 <entry key="DataPath">/var/www/Common/devSiteFilesMirror/webServices/TriTrypDB/release-1.1/blast</entry>
 <entry key="Timeout">120</entry>
 <entry key="TempPath">/var/www/Common/tmp/blast</entry>

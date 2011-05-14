@@ -44,6 +44,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
     // field definitions in the config file
     private static final String FIELD_PROJECT = "Project";
     private static final String FIELD_APP_PATH = "AppPath";
+    private static final String FIELD_BLASTDB_ENV = "BlastDbEnv";
     private static final String FIELD_DATA_PATH = "DataPath";
     private static final String FIELD_TEMP_PATH = "TempPath";
     private static final String FIELD_TIMEOUT = "Timeout";
@@ -62,6 +63,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
 
     protected String project;
     protected String appPath;
+    protected String blastDbEnv;
     protected String dataPath;
     protected String filePathPattern;
 
@@ -99,6 +101,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
         // load properties
         project = getProperty(FIELD_PROJECT);
         appPath = getProperty(FIELD_APP_PATH);
+        blastDbEnv = getProperty(FIELD_BLASTDB_ENV);
         dataPath = getProperty(FIELD_DATA_PATH);
         tempPath = getProperty(FIELD_TEMP_PATH);
         filePathPattern = getProperty(FIELD_FILE_PATH_PATTERN);
@@ -357,7 +360,9 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
             String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
                     Matcher.quoteReplacement(organisms[i]).trim());
             path = path.replaceAll("\\$\\$DbType\\$\\$", dbType);
-            sb.append(dataPath + "/" + path + " ");
+            if (dataPath != null && dataPath.length() > 0) // may be empty when using BlastDbEnv
+                sb.append(dataPath + "/");
+            sb.append(path + " ");
         }
         // sb.append("\"");
         return sb.toString().trim();
