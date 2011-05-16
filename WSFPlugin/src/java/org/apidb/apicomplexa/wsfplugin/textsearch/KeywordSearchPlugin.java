@@ -465,7 +465,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                     if (!rs.next()) {
                         // no match; drop result
                         logger.info("dropping unrecognized ID \"" + sourceId
-                                + "\" from comment-search result set.");
+                                + "\" (project \"" + projectId + "\", organisms \""
+                                + organisms + "\") from comment-search result set.");
                         newCommentMatches.remove(sourceId);
                     } else {
                         String returnedSourceId = rs.getString("source_id");
