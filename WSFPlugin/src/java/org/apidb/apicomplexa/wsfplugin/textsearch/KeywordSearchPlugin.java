@@ -469,11 +469,11 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 try {
                     validationQuery.setString(1, sourceId);
                     validationQuery.setString(2, projectId);
-                    validationQuery.setString(3, organisms);
+                    // validationQuery.setString(3, organisms); -- commented out of query
                     rs = validationQuery.executeQuery();
                     if (!rs.next()) {
                         // no match; drop result
-                        logger.info("dropping unrecognized ID \"" + sourceId
+                        logger.info("Dropping unrecognized ID \"" + sourceId
                                 + "\" (project \"" + projectId + "\", organisms \""
                                 + organisms + "\") from comment-search result set.");
                         newCommentMatches.remove(sourceId);
