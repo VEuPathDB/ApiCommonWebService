@@ -401,7 +401,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 + "  and alias.gene = attrs.source_id \n"
                 + "  and alias.unique_mapping = 1 \n"
                 + "  and attrs.project_id = ? \n"
-                + "  and ? like '%' || attrs.species || '%'");
+                + " --   and ? like '%' || attrs.species || '%'");
 
         WdkModelBean wdkModel = (WdkModelBean) this.context
                 .get(CConstants.WDK_MODEL_KEY);
@@ -469,7 +469,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 try {
                     validationQuery.setString(1, sourceId);
                     validationQuery.setString(2, projectId);
-                    validationQuery.setString(3, organisms);
+                    // validationQuery.setString(3, organisms);
                     rs = validationQuery.executeQuery();
                     if (!rs.next()) {
                         // no match; drop result
