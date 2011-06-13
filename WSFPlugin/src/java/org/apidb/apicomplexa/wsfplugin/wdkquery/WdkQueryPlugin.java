@@ -177,8 +177,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // context question is defined, should get the param from
                     // question
                     Question question = wdkModel.getQuestion(questionName);
-                    String partName = paramName.substring(paramName
-                            .indexOf(".") + 1);
+                    String partName = paramName.substring(paramName.indexOf(".") + 1);
                     param = question.getParamMap().get(partName);
 
                     logger.debug("got param from question: " + (param != null));
@@ -250,8 +249,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 ProcessQuery wsquery = (ProcessQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
-                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery
-                        .makeInstance(user, SOParams, true, 0, context);
+                ProcessQueryInstance wsqi = (ProcessQueryInstance) wsquery.makeInstance(
+                        user, SOParams, true, 0, context);
                 results = wsqi.getResults();
             }
             // SQL Query Processing
@@ -260,8 +259,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 SqlQuery sqlquery = (SqlQuery) query;
                 // assign the weight to 0 here, since the assigned weight will
                 // be applied on the portal when it's being cached.
-                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery
-                        .makeInstance(user, SOParams, true, 0, context);
+                SqlQueryInstance sqlqi = (SqlQueryInstance) sqlquery.makeInstance(
+                        user, SOParams, true, 0, context);
                 results = sqlqi.getResults();
             }
             logger.info("Results set was filled");
@@ -287,8 +286,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 resultSize = -2; // query set or query doesn't exist
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2; // query set or query doesn't exist
-            } else if (msg
-                    .contains("datasets value '' has an error: Missing the value")) {
+            } else if (msg.contains("datasets value '' has an error: Missing the value")) {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
@@ -413,7 +411,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             Param[] q) {
         Map<String, String> ret = new HashMap<String, String>();
         for (String key : p.keySet()) {
-            String o = p.get(key);
+            String value = p.get(key);
             for (Param param : q) {
                 if (key.equals(param.getName())
                         || key.indexOf(param.getName()) != -1) {
@@ -433,10 +431,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // }
                     // } else
                     if (param instanceof AbstractEnumParam) {
-                        String valList = (String) o;
+                        String valList = (String) value;
                         AbstractEnumParam abparam = (AbstractEnumParam) param;
-                        if ((param instanceof FlatVocabParam || param
-                                .isAllowEmpty()) && valList.length() == 0) {
+                        if ((param instanceof FlatVocabParam || param.isAllowEmpty())
+                                && valList.length() == 0) {
                             try {
                                 valList = param.getDefault();
                             } catch (Exception e) {
@@ -444,8 +442,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                             }
                         }
                         if (abparam.getDependedParam() != null) {
-                            abparam.setDependedValue(p.get(abparam
-                                    .getDependedParam().getName()));
+                            abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
                         }
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
@@ -458,8 +455,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         // end workaround
 
                         String[] vals;
-                        Boolean multipick = ((AbstractEnumParam) param)
-                                .getMultiPick();
+                        Boolean multipick = ((AbstractEnumParam) param).getMultiPick();
                         if (multipick) {
                             vals = valList.split(",");
                         } else {
@@ -468,6 +464,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         }
                         String newVals = "";
                         for (String mystring : vals) {
+                            // unescape each individual term.
+                            mystring = unescapeValue(mystring);
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
@@ -479,6 +477,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
                                     logger.info("validated-------------\n ParamName = "
                                             + param.getName()
                                             + " ------ Value = " + mystring);
+                                } else {
+                                    logger.warn("param validation failed: "
+                                            + "param=" + param.getName()
+                                            + ", value='" + mystring + "'");
                                 }
                             } catch (Exception e) {
                                 logger.info(e);
@@ -491,10 +493,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
                             newVals = "\u0000";
                         logger.info("validated values string -------------"
                                 + newVals);
-                        ret.put(param.getName(), newVals);
-                    } else {
-                        ret.put(param.getName(), o.toString());
+                        value = newVals;
+                    } else { // other types, unescape the whole thing
+                        value = unescapeValue(value);
                     }
+                    ret.put(param.getName(), value);
                 }
             }
         }
@@ -746,5 +749,18 @@ public class WdkQueryPlugin extends AbstractPlugin {
     @Override
     protected String[] defineContextKeys() {
         return null;
+    }
+
+    private String unescapeValue(String value) {
+        // will first remove the wrapping quote
+        if (value.charAt(0) == '\'')
+            value = value.substring(1);
+        if (value.charAt(value.length() - 1) == '\'')
+            value = value.substring(0, value.length() - 1);
+
+        // then replace double single-quotes to a single quote
+        value = value.replace("''", "'");
+
+        return value;
     }
 }
