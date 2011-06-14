@@ -31,6 +31,7 @@ import org.gusdb.wdk.model.query.SqlQueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
+import org.gusdb.wdk.model.query.param.StringParam;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
@@ -455,7 +456,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         // end workaround
 
                         String[] vals;
-                        Boolean multipick = ((AbstractEnumParam) param).getMultiPick();
+                        Boolean multipick = abparam.getMultiPick();
                         if (multipick) {
                             vals = valList.split(",");
                         } else {
@@ -465,12 +466,12 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         String newVals = "";
                         for (String mystring : vals) {
                             // unescape each individual term.
-                            mystring = unescapeValue(mystring);
+                            mystring = unescapeValue(mystring,
+                                    abparam.getQuote());
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
-                                if (validateSingleValues(
-                                        (AbstractEnumParam) abparam,
+                                if (validateSingleValues(abparam,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
                                     newVals = newVals + "," + mystring.trim();
@@ -495,7 +496,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
                                 + newVals);
                         value = newVals;
                     } else { // other types, unescape the whole thing
-                        value = unescapeValue(value);
+                        boolean quoted = true;
+                        if (param instanceof StringParam)
+                            quoted = !((StringParam) param).isNumber();
+                        value = unescapeValue(value, quoted);
                     }
                     ret.put(param.getName(), value);
                 }
@@ -751,12 +755,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
         return null;
     }
 
-    private String unescapeValue(String value) {
+    private String unescapeValue(String value, boolean quoted) {
         // will first remove the wrapping quote
-        if (value.charAt(0) == '\'')
-            value = value.substring(1);
-        if (value.charAt(value.length() - 1) == '\'')
-            value = value.substring(0, value.length() - 1);
+        if (quoted) {
+            if (value.charAt(0) == '\'')
+                value = value.substring(1);
+            if (value.charAt(value.length() - 1) == '\'')
+                value = value.substring(0, value.length() - 1);
+        }
 
         // then replace double single-quotes to a single quote
         value = value.replace("''", "'");
