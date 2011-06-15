@@ -71,7 +71,7 @@ public class MotifSearchTest {
 
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
-        params.put(MotifSearchPlugin.PARAM_EXPRESSION, "A[S]{5,10}T");
+        params.put(MotifSearchPlugin.PARAM_EXPRESSION, "GGATCC");
         params.put(MotifSearchPlugin.PARAM_DATASET,
                 "sample-dna.fasta");
         
@@ -82,7 +82,7 @@ public class MotifSearchTest {
         // print results
         System.out.println(Formatter.printArray(wsfResult.getResult()));
 
-        Assert.assertEquals(11, wsfResult.getResult().length);
+        Assert.assertEquals(2, wsfResult.getResult().length);
     }
 
     @Test

@@ -307,6 +307,11 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 sequence.append(line);
             }
         }
+        // process the last sequence, if it hasn't been processed
+        if (headline!= null && sequence.length() > 0) {
+            findMatches(matches, headline, searchPattern,
+                    sequence.toString(), colorCode, contextLength);
+        }
         return matches;
     }
 
