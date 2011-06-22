@@ -273,6 +273,28 @@
 </entry>
 
 
+<entry key="UrlMap_Eimeria_Transcripts">
+        <![CDATA[/toxo/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Eimeria_Proteins">
+        <![CDATA[/toxo/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Eimeria_ORF">
+        <![CDATA[/toxo/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Eimeria_Genomics">
+           <![CDATA[/toxo/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Eimeria_EST">
+        <![CDATA[/toxo/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+<entry key="UrlMap_Eimeria_Assemblies">
+        <![CDATA[/toxo/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
+
 <entry key="UrlMap_Trichomonas_Transcripts">
         <![CDATA[/trichdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -515,10 +537,6 @@
 <!-- end FungiDB -->
 
 
-<!-- used by apidots eimeria .. -->
-<entry key="UrlMap_Eimeria_Assemblies">
-        <![CDATA[http://www.cbil.upenn.edu/apidots/servlet/servlet?page=rna&id=DT.$$source_id$$]]>
-</entry>
 <entry key="UrlMap_Gregarina_Assemblies">
         <![CDATA[http://www.cbil.upenn.edu/apidots/servlet/servlet?page=rna&id=DT.$$source_id$$]]>
 </entry>
@@ -554,6 +572,7 @@
 <entry key="ProjectMap_Giardia">GiardiaDB</entry>
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
 <entry key="ProjectMap_Neospora">ToxoDB</entry>
+<entry key="ProjectMap_Eimeria">ToxoDB</entry>
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
 <entry key="ProjectMap_Trichomonas">TrichDB</entry>
@@ -575,7 +594,6 @@
 
 
 <!-- ApiDB 3.2 Assemblies...+ crypto amd toxo from their sites  -->
-<entry key="ProjectMap_Eimeria">Apidots</entry>
 <entry key="ProjectMap_Gregarina">Apidots</entry>
 <entry key="ProjectMap_Sarcocystis">Apidots</entry>
 
