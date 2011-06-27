@@ -43,6 +43,7 @@
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
 <entry key="ProjectMap_Neospora">ToxoDB</entry>
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
+<entry key="ProjectMap_Eimeria">ToxoDB</entry>
 <entry key="ProjectMap_Trichomonas">TrichDB</entry>
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
 <entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
