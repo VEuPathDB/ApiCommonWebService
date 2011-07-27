@@ -322,11 +322,11 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n"
                         + "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n"
                         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n"
-                        + "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from apidb.TableWeight where table_name = 'Blastp') \n"
+                        + "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from ApidbTuning.TableWeight where table_name = 'Blastp') \n"
                         + "                       as scoring, \n"
-                        + "                    'apidb.blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n"
+                        + "                    'ApidbTuning.Blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n"
                         + "                    external_database_name as table_name \n"
-                        + "              FROM apidb.Blastp b \n"
+                        + "              FROM ApidbTuning.Blastp b \n"
                         + "              WHERE CONTAINS(b.description, ?, 1) > 0 \n"
                         + "                AND 'Blastp' in ("
                         + fields
@@ -342,7 +342,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "              SELECT SCORE(1)* nvl(tw.weight, 1) \n"
                         + "                       as scoring, \n"
                         + "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n"
-                        + "              FROM apidb.GeneDetail gt, apidb.TableWeight tw, apidb.GeneAttributes ga \n"
+                        + "              FROM apidb.GeneDetail gt, ApidbTuning.TableWeight tw, ApidbTuning.GeneAttributes ga \n"
                         + "              WHERE CONTAINS(content, ?, 1) > 0\n"
                         + "                AND gt.field_name in ("
                         + fields
@@ -359,7 +359,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n"
                         + "                       as scoring, \n"
                         + "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
-                        + "              FROM apidb.IsolateDetail wit, apidb.TableWeight tw \n"
+                        + "              FROM apidb.IsolateDetail wit, ApidbTuning.TableWeight tw \n"
                         + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
                         + "                AND wit.field_name in ("
                         + fields
@@ -396,7 +396,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
     private PreparedStatement getValidationQuery() throws WsfServiceException {
         String sql = new String("select attrs.source_id, attrs.project_id \n"
-                + "from apidb.GeneId alias, apidb.GeneAttributes attrs \n"
+                + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
                 + "where alias.Id = ? \n"
                 + "  and alias.gene = attrs.source_id \n"
                 + "  and alias.unique_mapping = 1 \n"

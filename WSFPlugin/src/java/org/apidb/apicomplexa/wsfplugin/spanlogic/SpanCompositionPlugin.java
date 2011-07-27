@@ -374,7 +374,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
                     + "  FROM (" + cacheSql + "))";
         } else {
-            locTable = "apidb.FEATURELOCATION";
+            locTable = "ApidbTuning.FeatureLocation";
         }
 
         String table = "WdkSpan" + random.nextInt(Integer.MAX_VALUE);
