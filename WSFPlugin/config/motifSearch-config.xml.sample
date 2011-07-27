@@ -38,22 +38,31 @@
 <entry key="OrfDeflineRegex"><![CDATA[^>([^|\s]+)\s*\|\s*organism=([^|_\s]+)]]></entry>
 
 <!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
+<entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
+
 <entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
+
 <entry key="ProjectMap_Giardia">GiardiaDB</entry>
+
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
+
 <entry key="ProjectMap_Neospora">ToxoDB</entry>
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
 <entry key="ProjectMap_Eimeria">ToxoDB</entry>
+
 <entry key="ProjectMap_Trichomonas">TrichDB</entry>
+
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
 <entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
 <entry key="ProjectMap_Crithidia">TriTrypDB</entry>
-<entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
+
 <entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Nosema">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Nematocida">MicrosporidiaDB</entry>
 <entry key="ProjectMap_Octosporea">MicrosporidiaDB</entry>
+<entry key="ProjectMap_Vavraia">MicrosporidiaDB</entry>
+
 <entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
 <entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
 
