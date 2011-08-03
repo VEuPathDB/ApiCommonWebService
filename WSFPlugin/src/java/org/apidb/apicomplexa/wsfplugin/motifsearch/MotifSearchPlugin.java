@@ -48,7 +48,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             if (obj != null && obj instanceof Match) {
                 Match match = (Match) obj;
                 return getKey().equals(match.getKey());
-            } else return false;
+            } else
+                return false;
         }
     }
 
@@ -75,6 +76,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     private static final String DEFAULT_COLOR_CODE = "red";
     private static final int DEFAULT_CONTEXT_LENGTH = 20;
 
+    protected Pattern deflinePattern;
+
     private File dataDir;
     private boolean useProjectId;
 
@@ -87,6 +90,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     protected MotifSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
     }
+
+    protected abstract String getDeflineField();
 
     protected abstract Map<Character, String> getSymbols();
 
@@ -113,10 +118,19 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         dataDir = new File(dir);
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
-        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
+        useProjectId = (useProject != null && useProject
+                .equalsIgnoreCase("yes"));
 
         projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
-        
+
+        // get defline
+        String deflineKey = getDeflineField();
+        String deflineRegex = getProperty(deflineKey);
+        if (deflineRegex == null)
+            throw new WsfServiceException(deflineKey
+                    + " is not defined in the config file.");
+        this.deflinePattern = Pattern.compile(deflineRegex);
+
         logger.info("dataDir: " + dataDir.getAbsolutePath());
     }
 
@@ -135,11 +149,12 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
     public String[] getColumns() {
-        if (useProjectId) return new String[] { COLUMN_SOURCE_ID,
-                COLUMN_PROJECT_ID, COLUMN_LOCATIONS, COLUMN_MATCH_COUNT,
-                COLUMN_SEQUENCE };
-        else return new String[] { COLUMN_SOURCE_ID, COLUMN_LOCATIONS,
-                COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        if (useProjectId)
+            return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
+                    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        else
+            return new String[] { COLUMN_SOURCE_ID, COLUMN_LOCATIONS,
+                    COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
     }
 
     /*
@@ -149,7 +164,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
      */
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
-    // do nothing in this plugin
+        // do nothing in this plugin
     }
 
     /*
@@ -177,7 +192,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         int contextLength = DEFAULT_CONTEXT_LENGTH;
         if (params.containsKey("ContextLength"))
             contextLength = Integer.parseInt(params.get("ContextLength"));
-        if (contextLength <= 0) contextLength = DEFAULT_CONTEXT_LENGTH;
+        if (contextLength <= 0)
+            contextLength = DEFAULT_CONTEXT_LENGTH;
 
         // translate the expression
         Pattern searchPattern = translateExpression(expression);
@@ -221,9 +237,11 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 + ", datasetID: " + datasetID + "\n");
 
         File dataFile = new File(dataDir, datasetID);
-        if (!dataFile.exists()) throw new IOException("The dataset \""
-                + dataFile.toString() + "\" cannot be found.");
-        else return dataFile;
+        if (!dataFile.exists())
+            throw new IOException("The dataset \"" + dataFile.toString()
+                    + "\" cannot be found.");
+        else
+            return dataFile;
     }
 
     private Pattern translateExpression(String expression) {
@@ -232,21 +250,27 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         boolean inSquareBraces = false, inCurlyBraces = false;
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < expression.length(); i++) {
-            char ch = expression.charAt(i);
+            char ch = Character.toUpperCase(expression.charAt(i));
             boolean skipChar = false;
-            if (ch == '{') inCurlyBraces = true;
-            else if (ch == '}') inCurlyBraces = false;
-            else if (ch == '[') inSquareBraces = true;
-            else if (ch == ']') inSquareBraces = false;
+            if (ch == '{')
+                inCurlyBraces = true;
+            else if (ch == '}')
+                inCurlyBraces = false;
+            else if (ch == '[')
+                inSquareBraces = true;
+            else if (ch == ']')
+                inSquareBraces = false;
             else if (!inCurlyBraces && codes.containsKey(ch)) {
                 // the char is not in any curly braces, and is a known code;
                 // replace the char with the actual string.
                 String replace = codes.get(ch);
-                if (!inSquareBraces) replace = "[" + replace + "]";
+                if (!inSquareBraces)
+                    replace = "[" + replace + "]";
                 builder.append(replace);
                 skipChar = true;
             }
-            if (!skipChar) builder.append(ch);
+            if (!skipChar)
+                builder.append(ch);
         }
         logger.debug("translated expression: " + builder);
 
@@ -266,7 +290,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         StringBuilder sequence = new StringBuilder();
         while ((line = in.readLine()) != null) {
             line = line.trim();
-            if (line.length() == 0) continue;
+            if (line.length() == 0)
+                continue;
 
             if (line.charAt(0) == '>') {
                 // starting of a new sequence, process the previous sequence if
@@ -282,6 +307,11 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 sequence.append(line);
             }
         }
+        // process the last sequence, if it hasn't been processed
+        if (headline!= null && sequence.length() > 0) {
+            findMatches(matches, headline, searchPattern,
+                    sequence.toString(), colorCode, contextLength);
+        }
         return matches;
     }
 
@@ -296,7 +326,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         for (Match match : matches) {
             result[i][orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
-            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
+            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer
+                    .toString(match.matchCount);
             result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
 
             // put project id into result, if required
@@ -312,7 +343,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     protected String getProjectId(String organism) {
         String mapKey = FIELD_PROJECT_MAP_PREFIX + organism;
         String projectId = getProperty(mapKey);
-        if (projectId == null) projectId = projectMapOthers;
+        if (projectId == null)
+            projectId = projectMapOthers;
         return projectId;
     }
 
@@ -320,4 +352,16 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     protected String[] defineContextKeys() {
         return null;
     }
+
+    protected String getLocation(int length, int start, int stop, boolean reversed) {
+        if (reversed) {
+            int newStart = length - stop;
+            stop = length - start;
+            start = newStart;
+        }
+        String location = Integer.toString(start);
+        if (start != stop) location += "-" + stop;
+        return location;
+    }
+
 }

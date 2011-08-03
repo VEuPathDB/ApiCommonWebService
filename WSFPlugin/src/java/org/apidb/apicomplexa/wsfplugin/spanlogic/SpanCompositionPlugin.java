@@ -369,7 +369,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
                     + "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, "
                     + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, "
                     + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, "
-                    + "        regexp_substr(source_id, '[^:]+', 1, 3) AS is_reversed, "
+                    + "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, "
                     + "        1 AS is_top_level                  "
 
                     + "  FROM (" + cacheSql + "))";
