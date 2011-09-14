@@ -70,10 +70,10 @@ public class DnaMotifPlugin extends MotifSearchPlugin {
         // the sequence id has to be in group(1),
         // strand info has to be in group(2)
         // organsim has to be in group(3),
-        String sequenceId = deflineMatcher.group(1);
-        String strand = deflineMatcher.group(2);
-        String organism = deflineMatcher.group(3);
-        String projectId = getProjectId(organism);
+        String sequenceId = deflineMatcher.group(1).intern();
+        String strand = deflineMatcher.group(2).intern();
+        String organism = deflineMatcher.group(3).intern();
+        String projectId = getProjectId(organism).intern();
 
         int length = sequence.length();
         strand = strand.equals("-") ? "r" : "f";

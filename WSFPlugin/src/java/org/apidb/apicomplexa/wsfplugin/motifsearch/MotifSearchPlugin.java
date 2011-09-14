@@ -75,6 +75,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
 
     private static final String DEFAULT_COLOR_CODE = "red";
     private static final int DEFAULT_CONTEXT_LENGTH = 20;
+    private static final int MAX_MATCH = 50000;
 
     protected Pattern deflinePattern;
 
@@ -210,6 +211,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 Set<Match> matches = findMatches(dsId.trim(), searchPattern,
                         colorCode, contextLength);
                 allMatches.addAll(matches);
+                matches = null;
+                System.gc();
             }
 
             // locations contains (xxx-yyy), (xxx-yyyy), ...
@@ -299,6 +302,12 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 if (sequence.length() > 0) {
                     findMatches(matches, headline, searchPattern,
                             sequence.toString(), colorCode, contextLength);
+                    // stop the process if too many hits are found, to avoid 
+                    // out-of-memory error.
+                    if (matches.size() > MAX_MATCH)
+                        throw new WsfServiceException("The number of matches "
+                           + "exceeds the system limit, please refine your "
+                           + "search pattern to make it more specific."); 
                     // clear the sequence buffer to be ready for the next one
                     sequence = new StringBuilder();
                 }
