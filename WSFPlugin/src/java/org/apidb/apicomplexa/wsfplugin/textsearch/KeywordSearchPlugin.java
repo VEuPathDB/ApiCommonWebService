@@ -401,7 +401,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 + "  and alias.gene = attrs.source_id \n"
                 + "  and alias.unique_mapping = 1 \n"
                 + "  and attrs.project_id = ? \n"
-                + "  and ? like '%' || attrs.species || '%'");
+                + "  and ? like '%' || attrs.organism || '%'");
 
         WdkModelBean wdkModel = (WdkModelBean) this.context
                 .get(CConstants.WDK_MODEL_KEY);
