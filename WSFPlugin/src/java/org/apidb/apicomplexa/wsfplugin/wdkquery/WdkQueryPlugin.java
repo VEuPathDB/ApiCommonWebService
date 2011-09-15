@@ -170,8 +170,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
         // order given by Federation Plugin
         String[] orderedColumns = request.getOrderedColumns();
         Integer[] colindicies = new Integer[orderedColumns.length];
+
+	Query query; //primary key or flatvocab, we dont know
         try {
-            if (paramName != null) {
+            if (paramName != null) { //enum or flatvocab
                 // get param
                 Param param;
                 if (questionName != null) {
@@ -195,9 +197,61 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     param = (Param) wdkModel.resolveReference(paramName);
                 }
                 logger.debug("Parameter found : " + param.getFullName());
-                if (param instanceof FlatVocabParam)
-                    logger.debug("param query: "
-                            + ((FlatVocabParam) param).getQuery().getFullName());
+
+		//-----------------------------
+
+		if (param instanceof FlatVocabParam) {
+
+		    //  if (queryName != null) {
+			logger.debug("param flatvocab , query: " + queryName);
+			query = (Query) wdkModel.resolveReference(queryName);
+			// }
+		}
+		
+		else {
+		    logger.debug("param not flatvocab\n");
+		    String[][] paramValues;
+		    if (param instanceof AbstractEnumParam) {
+			paramValues = handleVocabParams((AbstractEnumParam) param,
+							params, orderedColumns);
+		    } else { // for other record types, return empty array
+			paramValues = new String[0][0];
+		    }
+
+		    logger.debug("\nparam values are: " + paramValues[0][0] + "," + paramValues[0][1] + ",....\n" +
+				 paramValues[1][0] + "," + paramValues[1][1] + ",....\n" +
+				 "..."
+				 );
+
+		    WsfResponse wsfResponse = new WsfResponse();
+		    wsfResponse.setResult(paramValues);
+		    return wsfResponse;
+		}
+		
+	    }
+
+	else { //PRIMARY KEY QUERY
+            // check if question is set
+            if (questionName != null) {
+                Question question = wdkModel.getQuestion(questionName);
+                query = question.getQuery();
+            } else {
+                query = (Query) wdkModel.resolveReference(queryName);
+            }
+
+	}
+
+	//continues below flatvicabquery or primary key queyr
+
+		//-----------------------------------
+		/*                if (param instanceof FlatVocabParam) {
+
+		    if (queryName != null)
+			logger.debug("param query: " + queryName);
+		    else
+			logger.debug("param query: "
+				     + ((FlatVocabParam) param).getQuery().getFullName());
+		}
 
                 String[][] paramValues;
                 if (param instanceof AbstractEnumParam) {
@@ -206,6 +260,12 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 } else { // for other record types, return empty array
                     paramValues = new String[0][0];
                 }
+
+		logger.debug("\nparam values are: " + paramValues[0][0] + "," + paramValues[0][1] + ",....\n" +
+			     paramValues[1][0] + "," + paramValues[1][1] + ",....\n" +
+			     "..."
+			     );
+
                 WsfResponse wsfResponse = new WsfResponse();
                 wsfResponse.setResult(paramValues);
                 return wsfResponse;
@@ -220,14 +280,15 @@ public class WdkQueryPlugin extends AbstractPlugin {
             } else {
                 query = (Query) wdkModel.resolveReference(queryName);
             }
+		*/	    //--------------------------------------
+
 
             // get the user
             String userSignature = context.get(Utilities.QUERY_CTX_USER);
             User user = wdkModel.getUserFactory().getUser(userSignature);
 
             // converting from internal values to dependent values
-            Map<String, String> SOParams = convertParams(user, params,
-                    query.getParams());// getParamsFromQuery(q));
+            Map<String, String> SOParams = convertParams(user, params,query.getParams());// getParamsFromQuery(q));
 
             // validateQueryParams(params,q);
             // logger.info("Parameters Validated...");
