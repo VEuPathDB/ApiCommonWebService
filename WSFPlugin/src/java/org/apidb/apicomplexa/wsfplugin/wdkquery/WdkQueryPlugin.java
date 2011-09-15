@@ -186,7 +186,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // param doesn't exist in the context question, try to get
                     // it from model.
                     if (param == null)
-                        param = (Param) wdkModel.resolveReference(paramName);
+			// param = (Param) wdkModel.resolveReference(paramName);
+			throw new WdkModelException("parameter " + paramName + " does not exist in question " + questionName);
                 } else {
                     logger.debug("got param from model.");
 
