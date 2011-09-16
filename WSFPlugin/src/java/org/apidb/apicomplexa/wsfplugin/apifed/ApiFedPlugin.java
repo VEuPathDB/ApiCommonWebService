@@ -263,10 +263,10 @@ public class ApiFedPlugin extends AbstractPlugin {
         // Preparing and executing the propriate component sites for this Query
         logger.info("invoking the web services");
         logger.info("******if the next message you see says: *Entering Combine "
-                + "Results* we are not accessing any component site: probably "
-                + "your apifed-config does not have all necessary organism "
-                + "values used to select site; or maybe the value stored in "
-                + "the organism parameter cannot be read as a string\n");
+                + "Results* we are not accessing any component site. Possible causes are:\n"
+                + "- your apifed-config does not have all existing organism values used to select site\n"
+                + "- the value stored in the organism parameter cannot be read as a string\n"
+		+ "- the regular expression in apifed-config is not matching your organism value\n");
         int thread_counter = 0;
         
         {
@@ -420,16 +420,25 @@ public class ApiFedPlugin extends AbstractPlugin {
     }
 
     private void getRemoteCalls(String orgs, Site[] sites) {
-        logger.debug("Organism = " + orgs);
+        logger.debug("Organism = " + orgs + " ---will remove quotes if any, to choose site");
         String[] orgArray = orgs.split(",");
         for (String organism : orgArray) {
             for (int i = 0; i < sites.length; i++) {
-                if (organism.trim().matches(sites[i].getMarker())) {
+                if ( stripLeadingAndTrailingQuotes(organism.trim()).matches(sites[i].getMarker())) {
                     sites[i].appendOrganism(organism);
                 }
             }
         }
         logger.debug("GetRemoteCalls() Done");
+    }
+
+    static String stripLeadingAndTrailingQuotes(String str)
+    {
+	if (str.startsWith("'")) {
+	    str = str.substring(1, str.length());}
+	if (str.endsWith("'")){
+	    str = str.substring(0, str.length() - 1);}
+	return str;
     }
 
     private String[][] combineResults(CompResult[] compResults, String[] cols,
@@ -743,6 +752,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         public void setOrganism(String organism) {
             this.organism = organism;
+	    logger.debug("in Site:" + name + ", organism:" + organism + "\n");
         }
 
         public void appendOrganism(String organism) {
