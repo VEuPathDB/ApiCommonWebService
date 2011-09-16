@@ -352,7 +352,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "' = 'gene' \n"
                         + "                AND gt.field_name = tw.table_name(+) \n"
                         + "                AND gt.source_id = ga.source_id \n"
-                        + "                AND ga.species in ("
+                        + "                AND ga.organism in ("
                         + organisms
                         + ") \n"
                         + "            UNION ALL \n"
