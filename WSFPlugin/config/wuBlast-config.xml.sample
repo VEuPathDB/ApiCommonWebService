@@ -323,6 +323,13 @@
         <![CDATA[/toxo/showRecord.do?name=AssemblyRecordClasses.AssemblyRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
+<entry key="UrlMap_Gregarina_ORF">
+        <![CDATA[/toxo/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Gregarina_Genomics">
+           <![CDATA[/toxo/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
 
 <entry key="UrlMap_Trichomonas_Transcripts">
         <![CDATA[/trichdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
@@ -566,12 +573,6 @@
 <!-- end FungiDB -->
 
 
-<entry key="UrlMap_Gregarina_Assemblies">
-        <![CDATA[http://www.cbil.upenn.edu/apidots/servlet/servlet?page=rna&id=DT.$$source_id$$]]>
-</entry>
-<entry key="UrlMap_Sarcocystis_Assemblies">
-        <![CDATA[http://www.cbil.upenn.edu/apidots/servlet/servlet?page=rna&id=DT.$$source_id$$]]>
-</entry>
 
 <!-- plugin currently does not make use of  this.. -->
 <entry key="UrlMap_Apidots">
@@ -609,6 +610,7 @@
 <entry key="ProjectMap_Neospora">ToxoDB</entry>
 <entry key="ProjectMap_Eimeria">ToxoDB</entry>
 <entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
+<entry key="ProjectMap_Gregarina">ToxoDB</entry>
 
 <entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
 
