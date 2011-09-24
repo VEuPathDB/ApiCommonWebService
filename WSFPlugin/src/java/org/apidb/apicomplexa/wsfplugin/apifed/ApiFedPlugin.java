@@ -298,7 +298,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 compResults[thread_counter] = new CompResult();
                 logger.debug("compResults initialized");
                 compResults[thread_counter].setSiteName(site.getProjectId());
-                logger.debug("siteName = projectId Done");
+                logger.debug("siteName = " + site.getProjectId() + " Done");
 
                 WsfRequest compRequest = new WsfRequest();
                 compRequest.setProjectId(request.getProjectId());
@@ -313,6 +313,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                         processName, compRequest, compResults[thread_counter],
                         compStatus[thread_counter]);
                 compThreads[thread_counter].start();
+		logger.debug("Site: " + site.getName() + ", thread# " + thread_counter + "\n");
             }
             thread_counter++;
         } // end for
@@ -444,15 +445,16 @@ public class ApiFedPlugin extends AbstractPlugin {
     private String[][] combineResults(CompResult[] compResults, String[] cols,
             boolean isParamResult, StringBuffer message) {
         int numrows = 0;
-        int index = 0;
+        //unused   int index = 0;
         for (CompResult cR : compResults) {
+
             if (cR != null) {
-                String[][] anser = cR.getAnswer();
-                if (anser != null && anser.length > 0
-                        && !anser[0][0].equals("ERROR")) {
-                    numrows = numrows + anser.length;
-                    logger.info("\n*********\n**************Answer " + index
-                            + " total added .... " + anser.length);
+                String[][] answer = cR.getAnswer();
+                if (answer != null && answer.length > 0
+                        && !answer[0][0].equals("ERROR")) {
+		    logger.debug("*******" + cR.getSiteName() + "********");
+                    numrows = numrows + answer.length;
+                    logger.info("\n*********\n**************Answer: total added .... " + answer.length);
                 }
             }
         }
