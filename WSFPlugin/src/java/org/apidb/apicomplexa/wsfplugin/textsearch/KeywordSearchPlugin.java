@@ -335,7 +335,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + recordType
                         + "' = 'gene' \n"
                         + "                AND b.pvalue_exp < ? \n"
-                        + "                AND b.query_organism in ("
+                        + "                AND b.query_taxon_id in ("
                         + organisms
                         + ") \n"
                         + "            UNION ALL \n"
@@ -352,7 +352,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + "' = 'gene' \n"
                         + "                AND gt.field_name = tw.table_name(+) \n"
                         + "                AND gt.source_id = ga.source_id \n"
-                        + "                AND ga.organism in ("
+                        + "                AND ga.taxon_id in ("
                         + organisms
                         + ") \n"
                         + "            UNION ALL \n"
@@ -394,26 +394,26 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         return ps;
     }
 
-    private PreparedStatement getValidationQuery() throws WsfServiceException {
-        String sql = new String("select attrs.source_id, attrs.project_id \n"
-                + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
-                + "where alias.Id = ? \n"
-                + "  and alias.gene = attrs.source_id \n"
-                + "  and alias.unique_mapping = 1 \n"
-                + "  and attrs.project_id = ? \n"
-                + "  and ? like '%' || attrs.organism || '%'");
-
-        WdkModelBean wdkModel = (WdkModelBean) this.context
-                .get(CConstants.WDK_MODEL_KEY);
-        DBPlatform platform = wdkModel.getModel().getQueryPlatform();
-        DataSource dataSource = platform.getDataSource();
-
-        try {
-            return SqlUtils.getPreparedStatement(dataSource, sql);
-        } catch (SQLException ex) {
-            throw new WsfServiceException(ex);
-        }
-    }
+    //    private PreparedStatement getValidationQuery() throws WsfServiceException {
+    //        String sql = new String("select attrs.source_id, attrs.project_id \n"
+    //                + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
+    //                + "where alias.Id = ? \n"
+    //                + "  and alias.gene = attrs.source_id \n"
+    //                + "  and alias.unique_mapping = 1 \n"
+    //                + "  and attrs.project_id = ? \n"
+    //                + "  and ? like '%' || attrs.organism || '%'");
+    //
+    //        WdkModelBean wdkModel = (WdkModelBean) this.context
+    //                .get(CConstants.WDK_MODEL_KEY);
+    //        DBPlatform platform = wdkModel.getModel().getQueryPlatform();
+    //        DataSource dataSource = platform.getDataSource();
+    //
+    //        try {
+    //            return SqlUtils.getPreparedStatement(dataSource, sql);
+    //        } catch (SQLException ex) {
+    //            throw new WsfServiceException(ex);
+    //        }
+    //    }
 
     private Map<String, SearchResult> textSearch(PreparedStatement query)
             throws WsfServiceException, SQLException {
@@ -462,51 +462,67 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
         PreparedStatement validationQuery = null;
         try {
-            validationQuery = getValidationQuery();
-            for (String sourceId : commentMatches.keySet()) {
-                logger.debug("validating sourceId \"" + sourceId + "\"");
-                ResultSet rs = null;
-                try {
-                    validationQuery.setString(1, sourceId);
-                    validationQuery.setString(2, projectId);
-                    validationQuery.setString(3, organisms);
-                    rs = validationQuery.executeQuery();
-                    if (!rs.next()) {
+	    String sql = new String("select attrs.source_id, attrs.project_id \n"
+				    + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
+				    + "where alias.Id = ? \n"
+				    + "  and alias.gene = attrs.source_id \n"
+				    + "  and alias.unique_mapping = 1 \n"
+				    + "  and attrs.project_id = ? \n"
+				    + "  and attrs.taxon_id in (" + organisms + ")");
+	    
+	    WdkModelBean wdkModel = (WdkModelBean) this.context
+                .get(CConstants.WDK_MODEL_KEY);
+	    DBPlatform platform = wdkModel.getModel().getQueryPlatform();
+	    DataSource dataSource = platform.getDataSource();
+
+	    ResultSet rs = null;
+
+	    try {
+		validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
+
+		for (String sourceId : commentMatches.keySet()) {
+		    logger.debug("validating sourceId \"" + sourceId + "\"");
+		    rs = null;
+		    validationQuery.setString(1, sourceId);
+		    validationQuery.setString(2, projectId);
+		    validationQuery.setString(3, organisms);
+		    rs = validationQuery.executeQuery();
+		    if (!rs.next()) {
                         // no match; drop result
                         logger.info("dropping unrecognized ID \"" + sourceId
-                                + "\" (project \"" + projectId + "\", organisms \""
-                                + organisms + "\") from comment-search result set.");
+				    + "\" (project \"" + projectId + "\", organisms \""
+				    + organisms + "\") from comment-search result set.");
                         newCommentMatches.remove(sourceId);
                     } else {
                         String returnedSourceId = rs.getString("source_id");
                         logger.debug("validation query returned \""
-                                + returnedSourceId + "\"");
+				     + returnedSourceId + "\"");
                         if (!returnedSourceId.equals(sourceId)) {
                             // ID changed; substitute returned value
                             logger.info("Substituting valid ID \""
-                                    + returnedSourceId
-                                    + "\" for ID \""
-                                    + sourceId
-                                    + "\" returned from comment-search result set.");
+					+ returnedSourceId
+					+ "\" for ID \""
+					+ sourceId
+					+ "\" returned from comment-search result set.");
                             SearchResult result = newCommentMatches
-                                    .get(sourceId);
+				.get(sourceId);
                             result.setSourceId(returnedSourceId);
                             newCommentMatches.remove(sourceId);
                             newCommentMatches.put(returnedSourceId, result);
                         }
                     }
-
-                } catch (SQLException ex) {
-                    logger.info("caught SQLException " + ex.getMessage());
-                    throw new WsfServiceException(ex);
-                } finally {
-                    try {
-                        rs.close();
-                    } catch (SQLException ex) {
-                        logger.info("caught SQLException " + ex.getMessage());
-                        throw new WsfServiceException(ex);
-                    }
+		    
                 }
+	    } catch (SQLException ex) {
+		logger.info("caught SQLException " + ex.getMessage());
+		throw new WsfServiceException(ex);
+	    } finally {
+		try {
+		    rs.close();
+		} catch (SQLException ex) {
+		    logger.info("caught SQLException " + ex.getMessage());
+		    throw new WsfServiceException(ex);
+		}
             }
         } finally {
             SqlUtils.closeStatement(validationQuery);
