@@ -150,12 +150,18 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Map<String, String> params = request.getParams();
         Map<String, String> context = request.getContext();
 
+        // when running a param search, the question should hold the question
+        // that has the query to which the param belongs; the param should hold
+        // the flatVocab param name; the query is the name of the vocab query.
+
+        // when running a id search, the question holds the name of the search,
+        // the param should be empty, and the query holds the name of the id
+        // query.
         String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
         String paramName = context.get(Utilities.QUERY_CTX_PARAM);
         String queryName = context.get(Utilities.QUERY_CTX_QUERY);
 
-        if (params.containsKey("Query"))
-            params.remove("Query");
+        if (params.containsKey("Query")) params.remove("Query");
         String siteModel = params.remove(SITE_MODEL);
         wdkModel = modelName2Model.get(siteModel).getModel();
         // logger.info("QueryName = "+ invokeKey);
@@ -186,8 +192,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // param doesn't exist in the context question, try to get
                     // it from model.
                     if (param == null)
-			// param = (Param) wdkModel.resolveReference(paramName);
-			throw new WdkModelException("parameter " + paramName + " does not exist in question " + questionName);
+                    // param = (Param) wdkModel.resolveReference(paramName);
+                        throw new WdkModelException("parameter " + paramName
+                                + " does not exist in question " + questionName);
                 } else {
                     logger.debug("got param from model.");
 
@@ -270,7 +277,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
             logger.info("Results have been processed.... "
                     + componentResults.length);
 
-        } catch (WdkModelException ex) {
+        }
+        catch (WdkModelException ex) {
             logger.info("WdkMODELexception in execute()" + ex.toString());
             // String msg = ex.toString();
             String msg = ex.formatErrors();
@@ -300,7 +308,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // logger.info("WdkUSERexception IN execute()" + ex.toString());
             // ex.printStackTrace();
             // resultSize = -2;
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.info("OTHERexception IN execute()" + ex.toString());
 
             ex.printStackTrace();
@@ -315,8 +324,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // logger.info("Component Results = null!!!");
             responseT = new String[1][1];
             responseT[0][0] = "ERROR";
-            if (resultSize > 0)
-                resultSize = 0;
+            if (resultSize > 0) resultSize = 0;
         } else {
             logger.info("Comp-Result not null... getting proper columns");
 
@@ -329,10 +337,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
             for (int i = 0; i < componentResults.length; i++) {
                 for (int j = 0; j < colindicies.length; j++) {
                     int index = colindicies[j].intValue();
-                    if (index >= 0)
-                        responseT[i][j] = componentResults[i][index];
-                    else
-                        responseT[i][j] = "N/A";
+                    if (index >= 0) responseT[i][j] = componentResults[i][index];
+                    else responseT[i][j] = "N/A";
                 }
             }
             // logger.info("FINAL RESULT CALCULATED");
@@ -340,8 +346,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
         // Empty Result
 
-        if (resultSize > 0)
-            resultSize = componentResults.length;
+        if (resultSize > 0) resultSize = componentResults.length;
 
         WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(responseT);
@@ -355,10 +360,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Column[] cols = q.getColumns();
         int index = 0;
         for (Column col : cols) {
-            if (col.getName().equalsIgnoreCase(colName))
-                return index;
-            else
-                index++;
+            if (col.getName().equalsIgnoreCase(colName)) return index;
+            else index++;
         }
         return -1;
     }
@@ -387,6 +390,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
      * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } }
      * } return ret; }
+     * @throws WdkModelException 
      */
 
     // private String convertDatasetId2DatasetChecksum(String sig_id)
@@ -410,7 +414,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // }
 
     private Map<String, String> convertParams(User user, Map<String, String> p,
-            Param[] q) {
+            Param[] q) throws WdkModelException {
         Map<String, String> ret = new HashMap<String, String>();
         for (String key : p.keySet()) {
             String value = p.get(key);
@@ -439,21 +443,21 @@ public class WdkQueryPlugin extends AbstractPlugin {
                                 && valList.length() == 0) {
                             try {
                                 valList = param.getDefault();
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e) {
                                 logger.info("error using default value.");
                             }
                         }
-                        if (abparam.getDependedParam() != null) {
-                            abparam.setDependedValue(p.get(abparam.getDependedParam().getName()));
+                        Param dependedParam = abparam.getDependedParam();
+                        if (dependedParam != null) {
+                            abparam.setDependedValue(p.get(dependedParam.getName()));
                         }
                         // Code to specificly work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_indent_map"))
-                            valList = "ARCH";
+                                "phyletic_indent_map")) valList = "ARCH";
                         if (param.getName().equalsIgnoreCase(
-                                "phyletic_term_map"))
-                            valList = "rnor";
+                                "phyletic_term_map")) valList = "rnor";
                         // end workaround
 
                         String[] vals;
@@ -484,15 +488,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
                                             + "param=" + param.getName()
                                             + ", value='" + mystring + "'");
                                 }
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e) {
                                 logger.info(e);
                             }
                         }
 
-                        if (newVals.length() != 0)
-                            newVals = newVals.substring(1);
-                        else
-                            newVals = "\u0000";
+                        if (newVals.length() != 0) newVals = newVals.substring(1);
+                        else newVals = "\u0000";
                         logger.info("validated values string -------------"
                                 + newVals);
                         value = newVals;
@@ -526,16 +529,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
             for (int z = 0; z < cols.length; z++) {
                 Object obj = result.get(cols[z].getName());
                 String val = null;
-                if (obj == null)
-                    val = "N/A";
-                else if (obj instanceof String)
-                    val = (String) obj;
-                else if (obj instanceof char[])
-                    val = new String((char[]) obj);
-                else if (obj instanceof byte[])
-                    val = new String((byte[]) obj);
-                else
-                    val = obj.toString();
+                if (obj == null) val = "N/A";
+                else if (obj instanceof String) val = (String) obj;
+                else if (obj instanceof char[]) val = new String((char[]) obj);
+                else if (obj instanceof byte[]) val = new String((byte[]) obj);
+                else val = obj.toString();
                 values[z] = val;
             }
             rows.add(values);
@@ -638,7 +636,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         modelName2Model.put(siteNames[i], mb);
                         // logger.info("------------Model
                         // Loaded----------------");
-                    } catch (Exception ex) {
+                    }
+                    catch (Exception ex) {
                         logger.info("ERROR : " + ex.toString());
                     }
                     i++;
@@ -674,13 +673,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
         logger.info("conVocab.length = " + conVocab.length);
-        if (p.isSkipValidation())
-            return true;
+        if (p.isSkipValidation()) return true;
         // initVocabMap();
         for (String v : conVocab) {
             logger.info("value: " + value + " | vocabTerm: " + v);
-            if (value.equalsIgnoreCase(v))
-                return true;
+            if (value.equalsIgnoreCase(v)) return true;
         }
         return false;
     }
@@ -759,8 +756,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     private String unescapeValue(String value, boolean quoted) {
         // will first remove the wrapping quote
         if (quoted) {
-            if (value.charAt(0) == '\'')
-                value = value.substring(1);
+            if (value.charAt(0) == '\'') value = value.substring(1);
             if (value.charAt(value.length() - 1) == '\'')
                 value = value.substring(0, value.length() - 1);
         }
