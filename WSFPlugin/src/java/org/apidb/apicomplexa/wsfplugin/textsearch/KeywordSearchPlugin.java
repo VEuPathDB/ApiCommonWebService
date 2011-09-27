@@ -517,12 +517,12 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 		logger.info("caught SQLException " + ex.getMessage());
 		throw new WsfServiceException(ex);
 	    } finally {
-		try {
-		    rs.close();
-		} catch (SQLException ex) {
-		    logger.info("caught SQLException " + ex.getMessage());
-		    throw new WsfServiceException(ex);
-		}
+		//		try {
+		//		    rs.close();
+		//		} catch (SQLException ex) {
+		//		    logger.info("caught SQLException " + ex.getMessage());
+		//		    throw new WsfServiceException(ex);
+		//		}
             }
         } finally {
             SqlUtils.closeStatement(validationQuery);
