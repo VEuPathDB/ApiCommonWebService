@@ -485,7 +485,6 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 		    rs = null;
 		    validationQuery.setString(1, sourceId);
 		    validationQuery.setString(2, projectId);
-		    validationQuery.setString(3, organisms);
 		    rs = validationQuery.executeQuery();
 		    if (!rs.next()) {
                         // no match; drop result
