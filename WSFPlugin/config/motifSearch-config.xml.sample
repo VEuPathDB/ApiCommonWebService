@@ -55,6 +55,19 @@
 <entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
 <entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
 
+<entry key="ProjectMap_Aspergillus">FungiDB</entry>
+<entry key="ProjectMap_Candida">FungiDB</entry>
+<entry key="ProjectMap_Coccidioides">FungiDB</entry>
+<entry key="ProjectMap_Cryptococcus">FungiDB</entry>
+<entry key="ProjectMap_Fusarium">FungiDB</entry>
+<entry key="ProjectMap_Gibberella">FungiDB</entry>
+<entry key="ProjectMap_Magnaporthe">FungiDB</entry>
+<entry key="ProjectMap_Neurospora">FungiDB</entry>
+<entry key="ProjectMap_Puccini">FungiDB</entry>
+<entry key="ProjectMap_Rhizopus">FungiDB</entry>
+<entry key="ProjectMap_Saccharomyces">FungiDB</entry>
+
+
 <entry key="ProjectMap_Others">Others</entry>
 
 </properties>
