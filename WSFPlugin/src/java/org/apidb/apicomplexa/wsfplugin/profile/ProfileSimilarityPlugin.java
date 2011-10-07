@@ -35,6 +35,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
     public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
     //    public static final String PARAM_SHIFT_PLUS_MINUS = "ProfileShiftPlusMinus";
+    public static final String PARAM_WEIGHTS_STRING = "ProfileWeightsString";
+    public static final String PARAM_SCALE_FACTOR = "ProfileScaleFactor";
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
@@ -127,7 +129,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
 			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
 			      //PARAM_SCALE_DATA, PARAM_SHIFT_PLUS_MINUS, 
-			      PARAM_TIME_SHIFT };
+			      PARAM_TIME_SHIFT, PARAM_WEIGHTS_STRING, PARAM_SCALE_FACTOR };
     }
 
     /*
@@ -267,11 +269,19 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         //cmds.add(params.get(PARAM_SCALE_DATA));
         cmds.add(params.get(PARAM_TIME_SHIFT));
 	//    cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
-        cmds.add(numTimePoints);
+
+
+        cmds.add(params.get(PARAM_SCALE_FACTOR));
         cmds.add(skipTimes);
+
         cmds.add(dbConnection);
         cmds.add(dbLogin);
         cmds.add(dbPassword);
+
+        cmds.add(numTimePoints);
+        cmds.add(params.get(PARAM_WEIGHTS_STRING));
+
+
 
         String[] array = new String[cmds.size()];
         cmds.toArray(array);

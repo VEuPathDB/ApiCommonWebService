@@ -92,20 +92,10 @@ $timeShift =~ s/[^-0-9]//g;
 #$shiftPlusMinus =~ s/[^0-9]//g;
 my $shiftPlusMinus = 0;
 
-# Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[6];
 
-# comma-delimited list of weights; these can't be negative
-my $weights;
-if ($NUM_TIME_POINTS == 12) {  ## for Toxo M.White Cell Cycle data
-  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
-} else {  ## for Plasmo DeRisi data
-  $weights = '1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1';
-}
-$weights =~ s/[^,0-9\.-]//g;
-my @weightArray = split(/,/, $weights);
-my $numWeights = @weightArray;
-
+# In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
+# i.e. there are 12 hours * 5 = 60 data points. So, need scaleFactor param
+my $scaleFactor = $ARGV[6];
 
 # Hack - time points that are allowed to be skipped in the input
 my $skipTimeStr =  $ARGV[7];
@@ -118,6 +108,20 @@ my $SKIP_TIMES = [];
 my $dbConnection = $ARGV[8];
 my $dbLogin = $ARGV[9];
 my $dbPassword = $ARGV[10];
+
+
+## NOTE: these last 2 params will eventually not be needed to be passed inxs
+# Number of time points in the data files
+my $NUM_TIME_POINTS = $ARGV[11];
+
+# comma-delimited list of weights; these can't be negative
+my $weights;
+$weights = $ARGV[12];
+$weights =~ s/[^,0-9\.-]//g;
+my @weightArray = split(/,/, $weights);
+my $numWeights = @weightArray;
+
+
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
@@ -252,12 +256,7 @@ if ($inputValid) {
       $maxShift = $timeShift + $shiftPlusMinus;
     }
 
-    # In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
-    # i.e. there are 12 hours * 5 = 60 data points.
-    # fix minShift and maxShift:
-    my $scaleFactor = 1;
-    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12); 
-    if ($NUM_TIME_POINTS == 12) {
+    if ($scaleFactor > 1) {
       $minShift *= $scaleFactor;
       $maxShift *= $scaleFactor;
     }
@@ -393,8 +392,6 @@ EOSQL
 	    # Range of time shifts to apply to the data
 	    my $startShift = 0;
 	    my $endShift = 0;
-	    my $scaleFactor = 1;  ## Needed for Toxo M.White Cell Cycle data
-	    $scaleFactor = 5 if ($NUM_TIME_POINTS == 12);
 
             if (($min_shift =~ /\d/) && ($min_shift >= 0) && ($min_shift < ($NUM_TIME_POINTS * $scaleFactor))) {
                 $startShift = $min_shift;
