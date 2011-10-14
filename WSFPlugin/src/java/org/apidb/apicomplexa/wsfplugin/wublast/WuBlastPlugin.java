@@ -282,8 +282,8 @@ public class WuBlastPlugin extends BlastPlugin {
 
 			Pattern pattern;
 			Matcher matcher;
-
-			String[] x = Pattern.compile("Strand =").split(subline);
+			// instead of positioning the Gbrowse link before "Strand=....." we set it before "Positives = ....", so it works for tblastn and tblastx
+			String[] x = Pattern.compile("Positives =").split(subline);
 			for (int i=1; i<x.length; i++) {
 			    String hspStart="";
 			    String hspEnd="";
@@ -313,7 +313,7 @@ public class WuBlastPlugin extends BlastPlugin {
 			    if (hspStart.length() > 0 || hspEnd.length() > 0){ 
 				myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd, hit_projectId);
 				indx1 = block.indexOf(x[i]);
-				block.insert(indx1 - 8, myLink);
+				block.insert(indx1 - 11, myLink);  //11 is the length of "Positives =" pattern
 				alignment[columns.get(COLUMN_BLOCK)] = block.toString();
 			    } else {
 				logger.info("prepareResult() hspStart/hspEnd not found in " + x[i] + "\n");
@@ -346,7 +346,7 @@ public class WuBlastPlugin extends BlastPlugin {
 			Pattern pattern;
 			Matcher matcher;
 
-			String[] x = Pattern.compile("Strand =").split(subline);
+			String[] x = Pattern.compile("Positives =").split(subline);
 			for (int i=1; i<x.length; i++) {
 			    String hspStart="";
 			    String hspEnd="";
@@ -376,7 +376,7 @@ public class WuBlastPlugin extends BlastPlugin {
 			    if (hspStart.length() > 0 && hspEnd.length() > 0){ 
 				myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd, hit_projectId);
 				indx1 = block.indexOf(x[i]);
-				block.insert(indx1 - 8, myLink); // 8 is length of "Strand =" pattern
+				block.insert(indx1 - 11, myLink); // 11 is length of "Positives =" pattern
 				alignment[columns.get(COLUMN_BLOCK)] = block.toString();
 			    } else {
 				logger.info("prepareResult() hspStart/hspEnd not found in " + x[i] + "\n");
