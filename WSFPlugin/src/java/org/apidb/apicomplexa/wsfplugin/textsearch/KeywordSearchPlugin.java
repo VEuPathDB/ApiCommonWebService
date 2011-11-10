@@ -184,11 +184,14 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 
     private String transformQueryString(String queryExpression) {
 
-        // get the query, which is a sequence of words. we must transform this
-        // into an Oracle Text expression suitable for passing to CONTAINS() or
-        // SNIPPET()
+        // transform the user's search string onto an expression suitable for
+	// passing to the Oracle Text CONTAINS() function: drop occurrences of AND and
+	// OR, escape anything else with curly braces (to avert errors from the
+	// database if any is on the long list of Oracle Text keywords), and (if it's
+	// a multi-word phrase) use NEAR and ACCUM to give a higher score when all
+	// terms are near each other
         // e.g. "calcium binding" becomes
-        // "(calcium NEAR binding) * 1 OR (calcium ACCUM binding) * .1"
+	// "({calcium} NEAR {binding}) * 1.0 OR ({calcium} ACCUM {binding}) * 0.1"
 
         double nearWeight = 1;
         double accumWeight = .1;
@@ -200,8 +203,10 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             transformed = "(" + join(tokenized, " NEAR ") + ") * " + nearWeight
                     + " OR (" + join(tokenized, " ACCUM ") + ") * "
                     + accumWeight;
-        } else {
-            transformed = trimmed;
+        } else if (tokenized.size() == 1) {
+            transformed = tokenized.get(0);
+	} else {
+            transformed = "{" + trimmed + "}";
         }
 
         return transformed;
@@ -214,11 +219,11 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         boolean insideQuotes = false;
         for (String quoteChunk : input.split("\"")) {
             if (insideQuotes && quoteChunk.length() > 0) {
-                tokenized.add(quoteChunk);
+                tokenized.add("{" + quoteChunk + "}");
             } else {
                 for (String spaceChunk : quoteChunk.split(" ")) {
-                    if (spaceChunk.length() > 0) {
-                        tokenized.add(spaceChunk);
+                    if (spaceChunk.length() > 0 && !spaceChunk.toLowerCase().equals("and") && !spaceChunk.toLowerCase().equals("or")) {
+                        tokenized.add("{" + spaceChunk + "}");
                     }
                 }
             }
