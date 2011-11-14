@@ -87,39 +87,20 @@ my $tShift = 1;
 my $timeShift = $ARGV[5];
 $timeShift =~ s/[^-0-9]//g;
 
-# not using for now
-#my $shiftPlusMinus = $ARGV[6];
-#$shiftPlusMinus =~ s/[^0-9]//g;
-my $shiftPlusMinus = 0;
-
 
 # In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
 # i.e. there are 12 hours * 5 = 60 data points. So, need scaleFactor param
 my $scaleFactor = $ARGV[6];
 
-# Hack - time points that are allowed to be skipped in the input
-my $skipTimeStr =  $ARGV[7];
-$skipTimeStr =~s/\s//g;
+
+##TO DO: REMOVE ALL REFS to $SKIP_TIMES;
 my $SKIP_TIMES = [];
-@$SKIP_TIMES = split(/,/, $skipTimeStr);
 
 
 # read the db connection information
-my $dbConnection = $ARGV[8];
-my $dbLogin = $ARGV[9];
-my $dbPassword = $ARGV[10];
-
-
-## NOTE: these last 2 params will eventually not be needed to be passed inxs
-# Number of time points in the data files
-my $NUM_TIME_POINTS = $ARGV[11];
-
-# comma-delimited list of weights; these can't be negative
-my $weights;
-$weights = $ARGV[12];
-$weights =~ s/[^,0-9\.-]//g;
-my @weightArray = split(/,/, $weights);
-my $numWeights = @weightArray;
+my $dbConnection = $ARGV[7];
+my $dbLogin = $ARGV[8];
+my $dbPassword = $ARGV[9];
 
 
 
@@ -148,9 +129,29 @@ $query_vector =~ s/[^,0-9\.-]//g;
 my @queryArray = split(/,/, $query_vector);
 my $numValues = @queryArray;
 
-my $n=scalar @queryArray;
-#TEST
-#print "QueryArray Size: $n\n";
+my $NUM_TIME_POINTS = scalar @queryArray;
+
+
+my @weightArray;
+my $ctValidPts = $NUM_TIME_POINTS; # $ctValidPts should be at least 10
+foreach my $wt (@queryArray) {
+  if ($wt ne 'NA') {
+    push(@weightArray, 1);
+  } else {
+    push(@weightArray, 0);
+    $ctValidPts--;
+  }
+}
+my $numWeights = @weightArray;
+
+my $inputValid = 1;
+my $errorMsg;
+
+if ( $ctValidPts < 10 ) {
+    $errorMsg = ("ERROR: Input Gene ID does not have enough data points for this query \n" .
+		 "Please try with another Gene ID.\n");
+    $inputValid = 0;
+}
 
 
 # Modify parameters to look for dissimilar profiles 
@@ -165,6 +166,7 @@ $| = 1;
 # Allow user to omit supplying values for the time points for
 # which no data is available.
 #
+##TO DO:  REMOVE ALL REFS to $SKIP_TIMES;
 my $numSkipTimes = scalar(@$SKIP_TIMES);
 if (($numValues == $numWeights) && ($numValues == ($NUM_TIME_POINTS - $numSkipTimes))) {
     foreach my $st (@$SKIP_TIMES) {
@@ -205,8 +207,6 @@ for(my $i = 0;$i < $numValues; ++$i) {
 # constant then display an error message; correlation is undefined in 
 # this case.
 #
-my $inputValid = 1;
-my $errorMsg;
 
 if (($dist_method->{name} =~ /pearson correlation/i) && $queryVectorConstant) {
     $errorMsg = ("ERROR: Pearson correlation cannot be used if the query vector is constant, since the \n" .
@@ -248,12 +248,12 @@ if ($inputValid) {
     my $boolNegShift = 0; # to be set when shift is negative
 
     if ($timeShift < 0) {
-      $minShift = $NUM_TIME_POINTS + $timeShift - $shiftPlusMinus;
-      $maxShift = $NUM_TIME_POINTS + $timeShift + $shiftPlusMinus;
+      $minShift = $NUM_TIME_POINTS + $timeShift;
+      $maxShift = $NUM_TIME_POINTS + $timeShift;
       $boolNegShift = 1;
     } else {
-      $minShift = $timeShift - $shiftPlusMinus;
-      $maxShift = $timeShift + $shiftPlusMinus;
+      $minShift = $timeShift;
+      $maxShift = $timeShift;
     }
 
     if ($scaleFactor > 1) {
