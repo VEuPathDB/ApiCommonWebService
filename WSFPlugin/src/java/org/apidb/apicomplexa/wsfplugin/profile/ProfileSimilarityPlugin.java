@@ -30,7 +30,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     public static final String PARAM_GENE_ID = "ProfileGeneId";
     public static final String PARAM_DISTANCE_METHOD = "ProfileDistanceMethod";
     public static final String PARAM_NUM_RETURN = "ProfileNumToReturn";
-    public static final String PARAM_PROFILE_SET = "ProfileProfileSet";
+    public static final String PARAM_PROFILE_SET = "profile_profile_set";
     public static final String PARAM_SEARCH_GOAL = "ProfileSearchGoal";
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
     public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
