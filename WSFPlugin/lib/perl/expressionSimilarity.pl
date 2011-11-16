@@ -16,11 +16,6 @@ use DBD::Oracle;
 #
 my $MAX_TOTAL_MISSING_DATAPOINTS = 4;
 
-# Maximum fraction of the datapoints included in the query that can
-# can be missing for a profile to be included in the result set.
-#
-my $MAX_QUERIED_MISSING_DATAPOINTS_FRAC = 0.10;
-
 # NOTE:
 # The above thresholds are a way of addressing the problem of comparing
 # profiles that may have different numbers of non-null values.  It's a
@@ -96,14 +91,19 @@ my $scaleFactor = $ARGV[6];
 # but there may be exceptions (for e.g. Crypto RT PCR dataset)
 my $minPoints = $ARGV[7];
 
+# Maximum fraction of the datapoints included in the query that can
+# can be missing for a profile to be included in the result set.
+#
+my $MAX_QUERIED_MISSING_DATAPOINTS_FRAC = ($ARGV[8]/100);
+
 ##TO DO: REMOVE ALL REFS to $SKIP_TIMES;
 my $SKIP_TIMES = [];
 
 
 # read the db connection information
-my $dbConnection = $ARGV[8];
-my $dbLogin = $ARGV[9];
-my $dbPassword = $ARGV[10];
+my $dbConnection = $ARGV[9];
+my $dbLogin = $ARGV[10];
+my $dbPassword = $ARGV[11];
 
 
 
@@ -138,11 +138,11 @@ my $NUM_TIME_POINTS = scalar @queryArray;
 my @weightArray;
 my $ctValidPts = $NUM_TIME_POINTS; # $ctValidPts should be at least $minPoints
 foreach my $wt (@queryArray) {
-  if ($wt ne 'NA') {
-    push(@weightArray, 1);
-  } else {
+  if ($wt =~ /na/i) {
     push(@weightArray, 0);
     $ctValidPts--;
+  } else {
+    push(@weightArray, 1);
   }
 }
 my $numWeights = @weightArray;
@@ -385,7 +385,7 @@ EOSQL
         ++$linenum;
 
 	    # Skip this profile if it is missing more than a specified number of datapoints
-	    next if ($numMissing > $MAX_TOTAL_MISSING_DATAPOINTS);
+	    next if ($numMissing > ($NUM_TIME_POINTS - $minPoints + 1));
 
 	    # Skip this profile if more than a specified fraction of the datapoints being queried
 	    # for (i.e., those with nonzero weights) are missing
