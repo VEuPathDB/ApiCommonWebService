@@ -35,6 +35,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
     public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
     public static final String PARAM_SCALE_FACTOR = "ProfileScaleFactor";
+    public static final String PARAM_MIN_POINTS = "ProfileMinPoints";
 
     // required result column definition
     public static final String COLUMN_GENE_ID = "GeneID";
@@ -115,7 +116,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
 			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
 			      //PARAM_SCALE_DATA, PARAM_SHIFT_PLUS_MINUS, PARAM_WEIGHTS_STRING, 
-			      PARAM_TIME_SHIFT, PARAM_SCALE_FACTOR };
+			      PARAM_TIME_SHIFT, PARAM_SCALE_FACTOR, PARAM_MIN_POINTS };
     }
 
     /*
@@ -244,6 +245,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 	//    cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
 
         cmds.add(params.get(PARAM_SCALE_FACTOR));
+        cmds.add(params.get(PARAM_MIN_POINTS));
 
         cmds.add(dbConnection);
         cmds.add(dbLogin);

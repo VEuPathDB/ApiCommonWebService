@@ -92,15 +92,18 @@ $timeShift =~ s/[^-0-9]//g;
 # i.e. there are 12 hours * 5 = 60 data points. So, need scaleFactor param
 my $scaleFactor = $ARGV[6];
 
+# We would like profile to have at least 10 data points
+# but there may be exceptions (for e.g. Crypto RT PCR dataset)
+my $minPoints = $ARGV[7];
 
 ##TO DO: REMOVE ALL REFS to $SKIP_TIMES;
 my $SKIP_TIMES = [];
 
 
 # read the db connection information
-my $dbConnection = $ARGV[7];
-my $dbLogin = $ARGV[8];
-my $dbPassword = $ARGV[9];
+my $dbConnection = $ARGV[8];
+my $dbLogin = $ARGV[9];
+my $dbPassword = $ARGV[10];
 
 
 
@@ -133,7 +136,7 @@ my $NUM_TIME_POINTS = scalar @queryArray;
 
 
 my @weightArray;
-my $ctValidPts = $NUM_TIME_POINTS; # $ctValidPts should be at least 10
+my $ctValidPts = $NUM_TIME_POINTS; # $ctValidPts should be at least $minPoints
 foreach my $wt (@queryArray) {
   if ($wt ne 'NA') {
     push(@weightArray, 1);
@@ -147,7 +150,7 @@ my $numWeights = @weightArray;
 my $inputValid = 1;
 my $errorMsg;
 
-if ( $ctValidPts < 10 ) {
+if ( $ctValidPts < $minPoints){
     $errorMsg = ("ERROR: Input Gene ID does not have enough data points for this query \n" .
 		 "Please try with another Gene ID.\n");
     $inputValid = 0;
