@@ -83,7 +83,7 @@ my $timeShift = $ARGV[5];
 $timeShift =~ s/[^-0-9]//g;
 
 
-# In Toxo Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
+# In Toxo M.White Cell Cycle data, each hour is broken into 5 parts;
 # i.e. there are 12 hours * 5 = 60 data points. So, need scaleFactor param
 my $scaleFactor = $ARGV[6];
 
@@ -424,9 +424,9 @@ EOSQL
 
         # It belongs among the top hits found so far
         if ($arrayInd < $number_to_return) {
-	    # adjust shift for Toxo
-	    if ($NUM_TIME_POINTS == 12) {
-	      $bestShift = int($bestShift / 5);
+	  # adjust shift for $scaleFactor (needed for: Toxo's Cell Cycle)
+	  if ($scaleFactor > 1) {
+	    $bestShift = int($bestShift / $scaleFactor);
 	    }
 
 	    $bestShift = $bestShift - $NUM_TIME_POINTS if ($boolNegShift == 1);
