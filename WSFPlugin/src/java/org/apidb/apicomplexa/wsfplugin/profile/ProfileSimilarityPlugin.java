@@ -33,7 +33,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     public static final String PARAM_PROFILE_SET = "profile_profile_set";
     public static final String PARAM_SEARCH_GOAL = "ProfileSearchGoal";
     //    public static final String PARAM_SCALE_DATA = "ProfileScaleData";
-    public static final String PARAM_TIME_SHIFT = "ProfileTimeShift";
+    public static final String PARAM_TIME_SHIFT = "profile_time_shift";
     public static final String PARAM_SCALE_FACTOR = "ProfileScaleFactor";
     public static final String PARAM_MIN_POINTS = "ProfileMinPoints";
     public static final String PARAM_MISSING_PTS_PERCENT = "ProfileMissingPtsPercent";
