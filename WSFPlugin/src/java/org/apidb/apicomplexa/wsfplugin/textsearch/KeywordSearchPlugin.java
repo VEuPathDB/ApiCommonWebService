@@ -107,6 +107,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 .replaceAll("\\*", "%");
 
         String organisms = params.get(PARAM_ORGANISMS);
+	organisms = cleanOrgs(organisms);
+
         logger.debug("organisms = \"" + organisms + "\"");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
@@ -180,6 +182,23 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         wsfResult.setResult(result);
         wsfResult.setSignal(signal);
         return wsfResult;
+    }
+
+    private String cleanOrgs(String orgs) {
+	String[] temp;
+	StringBuffer sb = new StringBuffer();
+ 	String delimiter = ",";
+	temp = orgs.split(delimiter);
+	for(int i =0; i < temp.length ; i++) {
+	    if (!temp[i].contains("-1"))
+		sb.append(temp[i].trim() + ",");
+	    else  logger.debug("organism value: (" + temp[i] + ") not included, we only care for leave nodes\n");
+	}
+	int strLen = sb.toString().trim().length();
+	if (strLen < 2) {
+	    return "";
+	}
+	return sb.toString().trim().substring(0, strLen - 1);
     }
 
     private String transformQueryString(String queryExpression) {

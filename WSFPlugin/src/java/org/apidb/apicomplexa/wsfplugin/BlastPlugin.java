@@ -356,6 +356,11 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
         String[] organisms = dbOrgs.split(",");
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < organisms.length; i++) {
+	    //parent organisms in a treeParam, we only need the leave nodes
+	    if (organisms[i].contains("-1")) {
+		logger.debug("organism value: (" + organisms[i] + ") not included, we only care for leave nodes\n");
+		continue;
+	    }
             // construct file path pattern
             String path = filePathPattern.replaceAll("\\$\\$Organism\\$\\$",
                     Matcher.quoteReplacement(organisms[i]).trim());

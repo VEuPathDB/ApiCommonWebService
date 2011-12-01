@@ -207,6 +207,11 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
                 logger.debug("execute(): dsId: " + dsId);
+		//parent organisms in a treeParam, we only need the leave nodes
+		if (dsId.contains("-1")) {
+		    logger.debug("organism value: (" + dsId + ") not included, we only care for leave nodes\n");
+		    continue;
+		}
 
                 Set<Match> matches = findMatches(dsId.trim(), searchPattern,
                         colorCode, contextLength);
