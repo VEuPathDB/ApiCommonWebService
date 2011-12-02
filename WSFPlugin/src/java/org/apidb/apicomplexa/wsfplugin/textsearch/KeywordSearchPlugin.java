@@ -102,9 +102,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         }
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
         logger.debug("fields = \"" + fields + "\"");
-        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim()
-                .replaceAll("'", "").replaceAll("[-&|~,=;%_]", "\\\\$0")
-                .replaceAll("\\*", "%");
+        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
 
         String organisms = params.get(PARAM_ORGANISMS);
 	organisms = cleanOrgs(organisms);
@@ -216,7 +214,8 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         double accumWeight = .1;
         String transformed;
 
-        String trimmed = queryExpression.trim();
+        String trimmed = queryExpression.trim().replaceAll("'", "").replaceAll("[-&|~,=;%_]", "\\\\$0");
+
         ArrayList<String> tokenized = tokenizer(trimmed);
         if (tokenized.size() > 1) {
             transformed = "(" + join(tokenized, " NEAR ") + ") * " + nearWeight
@@ -225,10 +224,22 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         } else if (tokenized.size() == 1) {
             transformed = tokenized.get(0);
 	} else {
-            transformed = "{" + trimmed + "}";
+            transformed = wildcarded(trimmed);
         }
 
         return transformed;
+    }
+
+    private static String wildcarded(String queryExpression) {
+
+	String wildcarded = queryExpression.replaceAll("\\*", "%");
+	if (wildcarded.equals(queryExpression)) {
+		// no wildcard
+		return( "{" + queryExpression + "}" );
+	    } else {
+		return( wildcarded );
+	    }
+
     }
 
     private static ArrayList<String> tokenizer(String input) {
@@ -238,11 +249,11 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         boolean insideQuotes = false;
         for (String quoteChunk : input.split("\"")) {
             if (insideQuotes && quoteChunk.length() > 0) {
-                tokenized.add("{" + quoteChunk + "}");
+                tokenized.add(wildcarded(quoteChunk));
             } else {
                 for (String spaceChunk : quoteChunk.split(" ")) {
                     if (spaceChunk.length() > 0 && !spaceChunk.toLowerCase().equals("and") && !spaceChunk.toLowerCase().equals("or")) {
-                        tokenized.add("{" + spaceChunk + "}");
+                        tokenized.add(wildcarded(spaceChunk));
                     }
                 }
             }
@@ -463,6 +474,17 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                 }
             }
             logger.info("finished fetching rows");
+        } catch (SQLException ex) {
+            logger.info("caught Exception " + ex.getMessage());
+            ex.printStackTrace();
+	    String message;
+	    if (ex.getMessage().indexOf("DRG-51030") > 0) {
+		// DRG-51030: wildcard query expansion resulted in too many terms
+		message = new String("Search term with wildcard (asterisk) characters matches too many keywords. Please include more non-wildcard characters.");
+	    } else {
+		message = ex.getMessage();
+	    }
+	    throw new WsfServiceException(message, ex);
         } catch (Exception ex) {
             logger.info("caught Exception " + ex.getMessage());
             ex.printStackTrace();
