@@ -105,9 +105,11 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
 
         String organisms = params.get(PARAM_ORGANISMS);
-	organisms = cleanOrgs(organisms);
+        logger.debug("organisms before cleaning = \"" + organisms + "\"");
+	// isolate stext search does not use this parameter
+	if (organisms != null) organisms = cleanOrgs(organisms);
+        logger.debug("organisms after cleaning= \"" + organisms + "\"");
 
-        logger.debug("organisms = \"" + organisms + "\"");
         String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
         Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
