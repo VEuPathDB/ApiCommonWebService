@@ -40,7 +40,7 @@
     <model name="TriTrypDB"
            projectId="TriTrypDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="^Trypanosoma\s*.*|^Leishmania\s*.*|^Crithidia\s*.*" />
+           marker="^Trypanosoma\s*.*|^Leishmania\s*.*|^Crithidia\s*.*|^Endotrypanum\s*.*" />
 
 
   </Sites>
