@@ -402,6 +402,22 @@
         <![CDATA[/tritrypdb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
 
+<entry key="UrlMap_Endotrypanum_Transcripts">
+        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Endotrypanum_Proteins">
+        <![CDATA[/tritrypdb/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Endotrypanum_Genomics">
+    <![CDATA[/tritrypdb/showRecord.do?name=SequenceRecordClasses.SequenceRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Endotrypanum_EST">
+        <![CDATA[/tritrypdb/showRecord.do?name=EstRecordClasses.EstRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+<entry key="UrlMap_Endotrypanum_ORF">
+        <![CDATA[/tritrypdb/showRecord.do?name=OrfRecordClasses.OrfRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
+</entry>
+
 <entry key="UrlMap_Babesia_Transcripts">
         <![CDATA[/piro/showRecord.do?name=GeneRecordClasses.GeneRecordClass&project_id=$$project_id$$&primary_key=$$source_id$$]]>
 </entry>
@@ -617,6 +633,7 @@
 <entry key="ProjectMap_Leishmania">TriTrypDB</entry>
 <entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
 <entry key="ProjectMap_Crithidia">TriTrypDB</entry>
+<entry key="ProjectMap_Endotrypanum">TriTrypDB</entry>
 
 <entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
 <entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
