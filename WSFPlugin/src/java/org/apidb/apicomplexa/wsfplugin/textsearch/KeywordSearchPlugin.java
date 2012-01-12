@@ -457,7 +457,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
         ResultSet rs = null;
         try {
-            logger.info("about to execute (one or the other) text-search query");
+            logger.info("about to execute one or the other text-search query");
             query.setFetchSize(100);
             rs = query.executeQuery();
             logger.info("finshed execute");
@@ -480,9 +480,13 @@ public class KeywordSearchPlugin extends AbstractPlugin {
             logger.info("caught Exception " + ex.getMessage());
             ex.printStackTrace();
 	    String message;
-	    if (ex.getMessage().indexOf("DRG-51030") > 0) {
+	    if (ex.getMessage().indexOf("DRG-51030") >= 0) {
 		// DRG-51030: wildcard query expansion resulted in too many terms
 		message = new String("Search term with wildcard (asterisk) characters matches too many keywords. Please include more non-wildcard characters.");
+	    } else if (ex.getMessage().indexOf("ORA-01460") >= 0) {
+		// ORA-01460: unimplemented or unreasonable conversion requested
+                // it's unimplemented; it's unreasonable; it's outrageous, egregious, preposterous!
+		message = new String("Search term is too long. Please try again with a shorter text term.");
 	    } else {
 		message = ex.getMessage();
 	    }
