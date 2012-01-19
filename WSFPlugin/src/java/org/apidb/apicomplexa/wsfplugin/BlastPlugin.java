@@ -357,7 +357,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < organisms.length; i++) {
 	    //parent organisms in a treeParam, we only need the leave nodes
-	    if (organisms[i].contains("-1")) {
+	    if (organisms[i].equals("-1")) {
 		logger.debug("organism value: (" + organisms[i] + ") not included, we only care for leave nodes\n");
 		continue;
 	    }
