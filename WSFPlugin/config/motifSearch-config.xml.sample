@@ -25,7 +25,7 @@
     An example of the headline will be like this:
     >psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307
 -->
-<entry key="ProteinDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|\s*organism=([^|_\s]+)]]></entry>
+<entry key="ProteinDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|.*?\s*organism=([^|_\s]+)]]></entry>
 
 <!-- 
     the regex for protein fasta file has to have 2 groups, 

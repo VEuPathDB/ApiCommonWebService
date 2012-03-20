@@ -355,6 +355,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     }
 
     protected String getProjectId(String organism) {
+        // just use the first part of the organism
+        organism = organism.split("\\s\\_")[0];
         String mapKey = FIELD_PROJECT_MAP_PREFIX + organism;
         String projectId = getProperty(mapKey);
         if (projectId == null)
