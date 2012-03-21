@@ -48,8 +48,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             if (obj != null && obj instanceof Match) {
                 Match match = (Match) obj;
                 return getKey().equals(match.getKey());
-            } else
-                return false;
+            } else return false;
         }
     }
 
@@ -75,7 +74,9 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
 
     private static final String DEFAULT_COLOR_CODE = "red";
     private static final int DEFAULT_CONTEXT_LENGTH = 20;
+
     private static final int MAX_MATCH = 50000;
+    private static final long MAX_MILLISECONDS = 5 * 60 * 1000;
 
     protected Pattern deflinePattern;
 
@@ -119,8 +120,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         dataDir = new File(dir);
 
         String useProject = getProperty(FIELD_USE_PROJECT_ID);
-        useProjectId = (useProject != null && useProject
-                .equalsIgnoreCase("yes"));
+        useProjectId = (useProject != null && useProject.equalsIgnoreCase("yes"));
 
         projectMapOthers = getProperty(FIELD_PROJECT_MAP_OTHER);
 
@@ -150,12 +150,11 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
     public String[] getColumns() {
-        if (useProjectId)
-            return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-                    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
-        else
-            return new String[] { COLUMN_SOURCE_ID, COLUMN_LOCATIONS,
-                    COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        if (useProjectId) return new String[] { COLUMN_SOURCE_ID,
+                COLUMN_PROJECT_ID, COLUMN_LOCATIONS, COLUMN_MATCH_COUNT,
+                COLUMN_SEQUENCE };
+        else return new String[] { COLUMN_SOURCE_ID, COLUMN_LOCATIONS,
+                COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
     }
 
     /*
@@ -176,6 +175,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking MotifSearchPlugin...");
 
+        long start = System.currentTimeMillis();
         Map<String, String> params = request.getParams();
 
         // get required parameters
@@ -193,8 +193,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         int contextLength = DEFAULT_CONTEXT_LENGTH;
         if (params.containsKey("ContextLength"))
             contextLength = Integer.parseInt(params.get("ContextLength"));
-        if (contextLength <= 0)
-            contextLength = DEFAULT_CONTEXT_LENGTH;
+        if (contextLength <= 0) contextLength = DEFAULT_CONTEXT_LENGTH;
 
         // translate the expression
         Pattern searchPattern = translateExpression(expression);
@@ -207,14 +206,15 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             // scan on each dataset, and add matched motifs in the result
             for (String dsId : dsIds) {
                 logger.debug("execute(): dsId: " + dsId);
-		//parent organisms in a treeParam, we only need the leave nodes
-		if (dsId.contains("-1")) {
-		    logger.debug("organism value: (" + dsId + ") not included, we only care for leave nodes\n");
-		    continue;
-		}
+                // parent organisms in a treeParam, we only need the leave nodes
+                if (dsId.contains("-1")) {
+                    logger.debug("organism value: (" + dsId
+                            + ") not included, we only care for leave nodes\n");
+                    continue;
+                }
 
                 Set<Match> matches = findMatches(dsId.trim(), searchPattern,
-                        colorCode, contextLength);
+                        colorCode, contextLength, allMatches.size(), start);
                 allMatches.addAll(matches);
                 matches = null;
                 System.gc();
@@ -230,7 +230,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             WsfResponse wsfResponse = new WsfResponse();
             wsfResponse.setResult(result);
             return wsfResponse;
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new WsfServiceException(ex);
         }
     }
@@ -245,11 +246,9 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 + ", datasetID: " + datasetID + "\n");
 
         File dataFile = new File(dataDir, datasetID);
-        if (!dataFile.exists())
-            throw new IOException("The dataset \"" + dataFile.toString()
-                    + "\" cannot be found.");
-        else
-            return dataFile;
+        if (!dataFile.exists()) throw new IOException("The dataset \""
+                + dataFile.toString() + "\" cannot be found.");
+        else return dataFile;
     }
 
     private Pattern translateExpression(String expression) {
@@ -260,25 +259,19 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         for (int i = 0; i < expression.length(); i++) {
             char ch = Character.toUpperCase(expression.charAt(i));
             boolean skipChar = false;
-            if (ch == '{')
-                inCurlyBraces = true;
-            else if (ch == '}')
-                inCurlyBraces = false;
-            else if (ch == '[')
-                inSquareBraces = true;
-            else if (ch == ']')
-                inSquareBraces = false;
+            if (ch == '{') inCurlyBraces = true;
+            else if (ch == '}') inCurlyBraces = false;
+            else if (ch == '[') inSquareBraces = true;
+            else if (ch == ']') inSquareBraces = false;
             else if (!inCurlyBraces && codes.containsKey(ch)) {
                 // the char is not in any curly braces, and is a known code;
                 // replace the char with the actual string.
                 String replace = codes.get(ch);
-                if (!inSquareBraces)
-                    replace = "[" + replace + "]";
+                if (!inSquareBraces) replace = "[" + replace + "]";
                 builder.append(replace);
                 skipChar = true;
             }
-            if (!skipChar)
-                builder.append(ch);
+            if (!skipChar) builder.append(ch);
         }
         logger.debug("translated expression: " + builder);
 
@@ -287,8 +280,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
     }
 
     private Set<Match> findMatches(String datasetID, Pattern searchPattern,
-            String colorCode, int contextLength) throws IOException,
-            WsfServiceException {
+            String colorCode, int contextLength, int allSize, long start)
+            throws IOException, WsfServiceException {
         File datasetFile = openDataFile(datasetID);
         BufferedReader in = new BufferedReader(new FileReader(datasetFile));
         Set<Match> matches = new HashSet<Match>();
@@ -298,8 +291,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         StringBuilder sequence = new StringBuilder();
         while ((line = in.readLine()) != null) {
             line = line.trim();
-            if (line.length() == 0)
-                continue;
+            if (line.length() == 0) continue;
 
             if (line.charAt(0) == '>') {
                 // starting of a new sequence, process the previous sequence if
@@ -307,12 +299,23 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
                 if (sequence.length() > 0) {
                     findMatches(matches, headline, searchPattern,
                             sequence.toString(), colorCode, contextLength);
-                    // stop the process if too many hits are found, to avoid 
+                    // stop the process if too many hits are found, to avoid
                     // out-of-memory error.
-                    if (matches.size() > MAX_MATCH)
+                    int size = allSize + matches.size();
+                    if (size > MAX_MATCH)
                         throw new WsfServiceException("The number of matches "
-                           + "exceeds the system limit, please refine your "
-                           + "search pattern to make it more specific."); 
+                                + "exceeds the system limit, please refine "
+                                + "your search pattern to make it more "
+                                + "specific.");
+
+                    // stop the process if maximum time is reached, to avoid
+                    // slow/generic patterns
+                    long spent = System.currentTimeMillis() - start;
+                    if (spent > MAX_MILLISECONDS)
+                        throw new WsfServiceException("Your search pattern is "
+                                + "too generic, please refine your search "
+                                + "pattern to make it more specific.");
+
                     // clear the sequence buffer to be ready for the next one
                     sequence = new StringBuilder();
                 }
@@ -322,9 +325,9 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
             }
         }
         // process the last sequence, if it hasn't been processed
-        if (headline!= null && sequence.length() > 0) {
-            findMatches(matches, headline, searchPattern,
-                    sequence.toString(), colorCode, contextLength);
+        if (headline != null && sequence.length() > 0) {
+            findMatches(matches, headline, searchPattern, sequence.toString(),
+                    colorCode, contextLength);
         }
         return matches;
     }
@@ -340,8 +343,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         for (Match match : matches) {
             result[i][orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
             result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
-            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer
-                    .toString(match.matchCount);
+            result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
             result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
 
             // put project id into result, if required
@@ -359,8 +361,7 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         organism = organism.split("\\s\\_")[0];
         String mapKey = FIELD_PROJECT_MAP_PREFIX + organism;
         String projectId = getProperty(mapKey);
-        if (projectId == null)
-            projectId = projectMapOthers;
+        if (projectId == null) projectId = projectMapOthers;
         return projectId;
     }
 
@@ -369,7 +370,8 @@ public abstract class MotifSearchPlugin extends AbstractPlugin {
         return null;
     }
 
-    protected String getLocation(int length, int start, int stop, boolean reversed) {
+    protected String getLocation(int length, int start, int stop,
+            boolean reversed) {
         if (reversed) {
             int newStart = length - stop;
             stop = length - start;
