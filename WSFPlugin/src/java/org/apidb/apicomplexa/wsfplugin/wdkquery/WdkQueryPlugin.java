@@ -21,6 +21,7 @@ import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
+import org.gusdb.wdk.model.jspwrap.EnumParamBean;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.query.Column;
 import org.gusdb.wdk.model.query.ProcessQuery;
@@ -438,21 +439,22 @@ public class WdkQueryPlugin extends AbstractPlugin {
                     // } else
                     if (param instanceof AbstractEnumParam) {
                         String valList = (String) value;
-                        AbstractEnumParam abparam = (AbstractEnumParam) param;
+                        AbstractEnumParam abParam = (AbstractEnumParam) param;
+                        Param dependedParam = abParam.getDependedParam();
+                        String dependedParamValue = (dependedParam == null ? null : p.get(dependedParam.getName()));
+                        EnumParamBean abParamBean = new EnumParamBean(abParam);
+                        abParamBean.setDependedValue(dependedParamValue);
                         if ((param instanceof FlatVocabParam || param.isAllowEmpty())
                                 && valList.length() == 0) {
                             try {
-                                valList = param.getDefault();
+                                valList = abParamBean.getDefault();
                             }
                             catch (Exception e) {
                                 logger.info("error using default value.");
                             }
                         }
-                        Param dependedParam = abparam.getDependedParam();
-                        if (dependedParam != null) {
-                            abparam.setDependedValue(p.get(dependedParam.getName()));
-                        }
-                        // Code to specificly work around a specific problem
+                        
+                        // Code to specifically work around a specific problem
                         // created by the OrthologPattern Question
                         if (param.getName().equalsIgnoreCase(
                                 "phyletic_indent_map")) valList = "ARCH";
@@ -461,7 +463,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         // end workaround
 
                         String[] vals;
-                        Boolean multipick = abparam.getMultiPick();
+                        Boolean multipick = abParamBean.getMultiPick();
                         if (multipick) {
                             vals = valList.split(",");
                         } else {
@@ -472,11 +474,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
                         for (String mystring : vals) {
                             // unescape each individual term.
                             mystring = unescapeValue(mystring,
-                                    abparam.getQuote());
+                                    abParamBean.getQuote());
                             try {
                                 logger.info("ParamName = " + param.getName()
                                         + " ------ Value = " + mystring);
-                                if (validateSingleValues(abparam,
+                                if (validateSingleValues(abParamBean,
                                         mystring.trim())) {
                                     // ret.put(param.getName(), o);
                                     newVals = newVals + "," + mystring.trim();
@@ -668,7 +670,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("------------DONE-------------");
     // }
 
-    private boolean validateSingleValues(AbstractEnumParam p, String value)
+    private boolean validateSingleValues(EnumParamBean p, String value)
             throws WdkModelException, NoSuchAlgorithmException, SQLException,
             JSONException, WdkUserException {
         String[] conVocab = p.getVocab();
@@ -688,16 +690,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
             WdkUserException {
         logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
                 + vocabParam.getFullName());
-
+        EnumParamBean paramBean = new EnumParamBean(vocabParam);
         // set depended value if needed
         Param dependedParam = vocabParam.getDependedParam();
         if (dependedParam != null) {
             String dependedValue = ps.get(dependedParam.getName());
-            vocabParam.setDependedValue(dependedValue);
+            paramBean.setDependedValue(dependedValue);
             logger.debug(dependedParam.getName() + " ==== " + dependedValue);
         }
-        Map<String, String> displayMap = vocabParam.getDisplayMap();
-        Map<String, String> parentMap = vocabParam.getParentMap();
+        Map<String, String> displayMap = paramBean.getDisplayMap();
+        Map<String, String> parentMap = paramBean.getParentMap();
         int termColumnIndex = -1;
         int displayColumnIndex = -1;
         int internalColumnIndex = -1;
@@ -724,7 +726,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         // term & internal has to exist
         if (termColumnIndex < 0 || internalColumnIndex < 0)
             throw new WdkModelException("The wsf call for param "
-                    + vocabParam.getFullName()
+                    + paramBean.getFullName()
                     + " doesn't specify term & internal columns.");
         String[][] result = new String[displayMap.size()][ordCols.length];
         int index = 0;
