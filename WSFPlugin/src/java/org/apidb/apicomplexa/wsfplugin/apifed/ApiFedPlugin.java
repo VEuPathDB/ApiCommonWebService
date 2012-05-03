@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.client.WsfService;
@@ -25,9 +26,9 @@ import org.jdom.input.SAXBuilder;
  * @created Dec 20, 2006
  * 
  *          2.0.0 -- currently deployed for ApiDB Live Site 2.1 -- updated to
- *          take advantage of the consistancy in the Unified Model -- Added
+ *          take advantage of the consistency in the Unified Model -- Added
  *          functionality to retrieve Parameters (Vocab and Enum) from the
- *          component Sites -- Removed all need fro DBLinks in the ApiDB Model
+ *          component Sites -- Removed all need for DBLinks in the ApiDB Model
  *          -- Changed the combineResults to use a LinkedHashMap to eliminate
  *          duplicates for the parameter queries
  */
@@ -327,7 +328,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                         * (60 * 1000)) {
                     for (int i = 0; i < sites.length; i++) {
                         if (!compStatus[i].getDone()) {
-                            compThreads[i].stop();
+                            compThreads[i].notifyStop();
                             compStatus[i].setDone(true);
                             compResults[i].setAnswer(new String[0][0]);
                             compResults[i].setMessage("-1");
@@ -650,7 +651,12 @@ public class ApiFedPlugin extends AbstractPlugin {
         private WsfRequest request;
         private CompResult result;
         private Status status;
-
+        
+        // indicates whether this thread should stop execution.
+        //   this thread should check the value periodically to see
+        //   whether it should exit execution
+        private AtomicBoolean stopFlag = new AtomicBoolean(false);
+        
         WdkQuery(String URL, String pluginname, WsfRequest request,
                 CompResult r, Status s) {
             url = URL;
@@ -659,6 +665,10 @@ public class ApiFedPlugin extends AbstractPlugin {
             result = r;
             status = s;
         }
+
+        public void notifyStop() {
+			stopFlag.set(true);
+		}
 
         public void run() {
             String errorMessage = "Thread ran and exited Correctly";
@@ -670,7 +680,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 long start = System.currentTimeMillis();
 
                 // HACK
-                // in the future, this inovcation should be replaced by the
+                // in the future, this invocation should be replaced by the
                 // newer version, invokeEx()
                 WsfResponse wsfResult = service.invoke(request.toString());
                 int packets = wsfResult.getTotalPackets();

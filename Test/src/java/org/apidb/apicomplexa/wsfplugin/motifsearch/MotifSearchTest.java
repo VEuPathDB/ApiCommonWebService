@@ -22,7 +22,8 @@ import org.junit.Test;
 
 public class MotifSearchTest {
     
-    private static final Logger logger = Logger.getLogger(MotifSearchTest.class);
+    @SuppressWarnings("unused")
+    private static final Logger logger = Logger.getLogger(MotifSearchTest.class.getName());
 
     private Properties properties;
 
