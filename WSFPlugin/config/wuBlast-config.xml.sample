@@ -739,7 +739,13 @@
 <entry key="ProjectMap_Puccini">FungiDB</entry>
 <entry key="ProjectMap_Rhizopus">FungiDB</entry>
 <entry key="ProjectMap_Saccharomyces">FungiDB</entry>
-
+<entry key="ProjectMap_Emericella">FungiDB</entry>
+<entry key="ProjectMap_Hyaloperonospora">FungiDB</entry>
+<entry key="ProjectMap_Phytophthora">FungiDB</entry>
+<entry key="ProjectMap_Pythium">FungiDB</entry>
+<entry key="ProjectMap_Schizosaccharomyces">FungiDB</entry>
+<entry key="ProjectMap_Sordaria">FungiDB</entry>
+<entry key="ProjectMap_Tremella">FungiDB</entry>
 
 <!-- ApiDB 3.2 Assemblies...+ crypto amd toxo from their sites  -->
 <entry key="ProjectMap_Gregarina">Apidots</entry>
