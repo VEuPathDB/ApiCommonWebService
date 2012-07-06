@@ -28,8 +28,8 @@ public class PlasmoAPPlugin extends AbstractPlugin {
     private static final String FIELD_PERL_EXE = "PerlExe";
     private static final String FIELD_SCRIPT = "PlasmoAPScript";
 
-    private static String perlExe;
-    private static String plasmoapScript;
+    private  String perlExe;
+    private  String plasmoapScript;
 
     /**
      * @throws WsfServiceException

@@ -165,12 +165,14 @@ public class NcbiBlastPlugin extends BlastPlugin {
                 alignment = new String[orderedColumns.length];
                 block = new StringBuffer();
 
+                block.append(line + newline);
+                
                 // to handle two-line definitions in ORFs
                 String secondLine = in.readLine();
-                block.append(line + newline);
+                if (secondLine != null) {
                 block.append(secondLine + newline);
-
                 line = line.trim() + secondLine.trim();
+                }
 
                 // extract source id
                 int[] sourceIdPos = findField(line, sourceIdRegex);

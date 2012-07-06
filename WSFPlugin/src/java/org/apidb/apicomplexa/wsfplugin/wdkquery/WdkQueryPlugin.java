@@ -72,9 +72,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // private static File m_schemaFile = null;
     // private static File m_configFile = null;
     // private static File m_xmlSchemaFile = null;
-    private static String[] modelNames;
-    private static String[] gus_homes;
-    private static String[] siteNames;
+    private  String[] modelNames;
+    private  String[] gus_homes;
+    private  String[] siteNames;
     private static Map<String, WdkModelBean> modelName2Model = null;
     private static Object lock = new Object();
 

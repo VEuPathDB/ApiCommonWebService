@@ -59,6 +59,10 @@ public class WuBlastPlugin extends BlastPlugin {
             }
         }
         params.remove(dbOrgName);
+        if (dbOrgs == null) 
+          throw new WsfServiceException("The required organism param is " +
+          		"missing.");
+        
 
         // String blastApp = getBlastProgram(qType, dbType);
 
@@ -147,7 +151,11 @@ public class WuBlastPlugin extends BlastPlugin {
                     + newline);
             else {
                 line = in.readLine();
-                line = in.readLine();
+                if (line != null) line = in.readLine();
+                if (line == null) {
+                  message.append(header.toString());
+                  return new String[0][columns.size()];
+                }
             }
 
             //logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
@@ -207,6 +215,8 @@ public class WuBlastPlugin extends BlastPlugin {
         // We need to deal with a possible WARNING between tabular rows and
         // alignments: move it to header
         line = in.readLine(); // skip an empty line
+        if (line != null) {
+        
         // logger.info("\nWB prepareResult() This line is supposed to be empty
         // or could have a WARNING or keyword NONE: " + line+"\n");
         header.append(newline + line + newline);
@@ -228,6 +238,7 @@ public class WuBlastPlugin extends BlastPlugin {
             line = in.readLine(); // get next line
             // logger.info("\nWB prepareResult() This line is supposed to be
             // empty: " + line+"\n");
+        }
         }
 
         // Extract alignment blocks
@@ -263,6 +274,8 @@ public class WuBlastPlugin extends BlastPlugin {
                 warnings.append(line + newline);
                 line = in.readLine(); // get next line
                 warnings.append(line + newline);
+                
+                if (line == null) break;
             }
 
             // reach the footer part
@@ -400,6 +413,7 @@ public class WuBlastPlugin extends BlastPlugin {
 		    //logger.debug("\nWB prepareResult() concatenating defline: " + line + "\n");
 		    miniblock.append(line.trim() + " ");
 		    line = in.readLine(); // get next line
+		    if (line == null) break;
 		}
 		miniblock.append("\n" + line);
 		line=miniblock.toString();
