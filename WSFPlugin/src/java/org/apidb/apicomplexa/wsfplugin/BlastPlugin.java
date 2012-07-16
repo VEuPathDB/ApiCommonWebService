@@ -12,12 +12,19 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apidb.apicommon.model.ProjectMapper;
+import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
+import org.xml.sax.SAXException;
 
 /**
  * @author xingao
@@ -77,6 +84,8 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
     private String urlMapOthers;
 
     protected String projectMapOthers;
+    
+    protected ProjectMapper projectMapper;
 
     /**
      * @param propertyFile
@@ -97,6 +106,15 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
     public void initialize(Map<String, Object> context)
             throws WsfServiceException {
         super.initialize(context);
+        
+        // create project mapper
+        WdkModelBean wdkModel = (WdkModelBean)context.get(CConstants.WDK_MODEL_KEY);
+        try {
+          projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
+        } catch (WdkModelException | SAXException | IOException
+            | ParserConfigurationException ex) {
+          throw new WsfServiceException(ex);
+        }
 
         // load properties
         project = getProperty(FIELD_PROJECT);
@@ -295,7 +313,7 @@ public abstract class BlastPlugin extends AbstractPlugin implements Plugin {
      */
     @Override
     protected String[] defineContextKeys() {
-        return null;
+        return new String[]{CConstants.WDK_MODEL_KEY};
     }
 
     protected void cleanup() {
