@@ -1,0 +1,72 @@
+BLASTN 2.0MP-WashU [04-May-2006] [linux26-i786-ILP32F64 2006-05-09T12:19:58]
+
+Copyright (C) 1996-2006 Washington University, Saint Louis, Missouri USA.
+All Rights Reserved.
+
+Reference:  Gish, W. (1996-2006) http://blast.wustl.edu
+
+Notice:  this program and its default parameter settings are optimized to find
+nearly identical sequences rapidly.  To identify weak protein similarities
+encoded in nucleic acid, use BLASTX, TBLASTN or TBLASTX.
+
+Query=  MySeq1
+        (43 letters)
+
+Database:  /eupath/scratch/weili1/apiSiteFiles/downloadSite/PlasmoDB/release-9.
+           0//PbergheiANKA/fasta/data/PlasmoDB-9.0_PbergheiANKA_AnnotatedTransc
+           ripts.fasta
+           5127 sequences; 10,268,827 total letters.
+Searching....10....20....30....40....50....60....70....80....90....100% done
+
+                                                                     Smallest
+                                                                       Sum
+                                                              High  Probability
+Sequences producing High-scoring Segment Pairs:              Score  P(N)      N
+
+
+      *** NONE ***
+
+
+
+Parameters:
+  -o /var/www/Common/tmp/blast/WuBlastPlugin_5445787573733283431.out
+  B=5
+  filter=seg
+  V=5
+  E=10
+  putenv="BLASTDB=/var/www/Common/devSiteFilesMirror/webServices"
+
+  ctxfactor=2.00
+
+  Query                        -----  As Used  -----    -----  Computed  ----
+  Strand MatID Matrix name     Lambda    K       H      Lambda    K       H
+   +1      0   +5,-4           0.192   0.182   0.357    same    same    same
+               Q=10,R=10       0.104   0.0151  0.0600    n/a     n/a     n/a
+   -1      0   +5,-4           0.192   0.182   0.357    same    same    same
+               Q=10,R=10       0.104   0.0151  0.0600    n/a     n/a     n/a
+
+  Query
+  Strand MatID  Length  Eff.Length     E     S  W   T   X   E2     S2
+   +1      0       43        43       9.6  120 11 n/a  73  0.049   59
+                                                      134  0.046   81
+   -1      0       43        43       9.6  120 11 n/a  73  0.049   59
+                                                      134  0.046   81
+
+
+Statistics:
+
+  Database:  /var/www/Common/devSiteFilesMirror/webServices/PlasmoDB/release-9.0/blast//PbergheiANKATranscripts
+   Title:  /eupath/scratch/weili1/apiSiteFiles/downloadSite/PlasmoDB/release-9.0//PbergheiANKA/fasta/data/PlasmoDB-9.0_PbergheiANKA_AnnotatedTranscripts.fasta
+   Posted:  11:43:31 AM EDT Apr 30, 2012
+   Created:  5:09:20 PM EDT Apr 11, 2012
+   Format:  XDF-1
+   # of letters in database:  10,268,827
+   # of sequences in database:  5127
+   # of database sequences satisfying E:  0
+  No. of states in DFA:  53 (53 KB)
+  Total size of DFA:  55 KB (2050 KB)
+  Time to generate neighborhood:  0.00u 0.00s 0.00t   Elapsed:  00:00:00
+  No. of threads or processors used:  4
+  Search cpu time:  0.02u 0.02s 0.04t   Elapsed:  00:00:00
+  Total cpu time:  0.02u 0.02s 0.04t   Elapsed:  00:00:00
+  Start:  Thu Jul 19 16:21:32 2012   End:  Thu Jul 19 16:21:32 2012

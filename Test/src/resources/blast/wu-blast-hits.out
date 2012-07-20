@@ -1,0 +1,643 @@
+BLASTN 2.0MP-WashU [04-May-2006] [linux26-i786-ILP32F64 2006-05-09T12:19:58]
+
+Copyright (C) 1996-2006 Washington University, Saint Louis, Missouri USA.
+All Rights Reserved.
+
+Reference:  Gish, W. (1996-2006) http://blast.wustl.edu
+
+Notice:  this program and its default parameter settings are optimized to find
+nearly identical sequences rapidly.  To identify weak protein similarities
+encoded in nucleic acid, use BLASTX, TBLASTN or TBLASTX.
+
+Query=  MySeq1
+        (25 letters)
+
+Database:  /eupath/scratch/weili1/apiSiteFiles/downloadSite/PlasmoDB/release-9.
+           0//PbergheiANKA/fasta/data/PlasmoDB-9.0_PbergheiANKA_AnnotatedTransc
+           ripts.fasta
+           5127 sequences; 10,268,827 total letters.
+Searching....10....20....30....40....50....60....70....80....90....100% done
+
+                                                                     Smallest
+                                                                       Sum
+                                                              High  Probability
+Sequences producing High-scoring Segment Pairs:              Score  P(N)      N
+
+GeneDB|PBANKA_071900 | organism=Plasmodium_berghei_ANKA |...   125  0.49      1
+GeneDB|PBANKA_114590 | organism=Plasmodium_berghei_ANKA |...   125  0.65      1
+GeneDB|PBANKA_051020 | organism=Plasmodium_berghei_ANKA |...   125  0.66      1
+GeneDB|PBANKA_103760 | organism=Plasmodium_berghei_ANKA |...   125  0.69      1
+GeneDB|PBANKA_123470 | organism=Plasmodium_berghei_ANKA |...   125  0.69      1
+
+WARNING:  Descriptions of 1473 database sequences were not reported due to the
+          limiting value of parameter V = 5.
+
+
+>GeneDB|PBANKA_071900 | organism=Plasmodium_berghei_ANKA | product=conserved
+            Plasmodium protein, unknown function, fragment |
+            location=berg07:643431-643850(-) | length=420 |
+            sequence_SO=chromosome | SO=protein_coding
+        Length = 420
+
+  Plus Strand HSPs:
+
+ Score = 125 (24.8 bits), Expect = 0.68, P = 0.49
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   396 AAAAAAAAAAAAAAAAAAAAAAAAA 420
+
+ Score = 125 (24.8 bits), Expect = 0.68, P = 0.49
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   395 AAAAAAAAAAAAAAAAAAAAAAAAA 419
+
+ Score = 125 (24.8 bits), Expect = 0.68, P = 0.49
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   394 AAAAAAAAAAAAAAAAAAAAAAAAA 418
+
+ Score = 125 (24.8 bits), Expect = 0.68, P = 0.49
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   393 AAAAAAAAAAAAAAAAAAAAAAAAA 417
+
+ Score = 116 (23.5 bits), Expect = 1.9, P = 0.84
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||||||||||||||||||||||
+Sbjct:   391 AGAAAAAAAAAAAAAAAAAAAAAAA 415
+
+ Score = 116 (23.5 bits), Expect = 1.9, P = 0.84
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || ||||||||||||||||||||||
+Sbjct:   390 AAGAAAAAAAAAAAAAAAAAAAAAA 414
+
+ Score = 98 (20.8 bits), Expect = 14., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||  || ||||||||||||||||||
+Sbjct:   386 AAGGAAGAAAAAAAAAAAAAAAAAA 410
+
+ Score = 98 (20.8 bits), Expect = 14., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||  || |||||||||||||||||
+Sbjct:   385 AAAGGAAGAAAAAAAAAAAAAAAAA 409
+
+ Score = 89 (19.4 bits), Expect = 37., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||  || |||||||||||||||
+Sbjct:   383 AGAAAGGAAGAAAAAAAAAAAAAAA 407
+
+ Score = 89 (19.4 bits), Expect = 37., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || |||  || ||||||||||||||
+Sbjct:   382 AAGAAAGGAAGAAAAAAAAAAAAAA 406
+
+ Score = 89 (19.4 bits), Expect = 37., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||| |||  || |||||||||||||
+Sbjct:   381 AAAGAAAGGAAGAAAAAAAAAAAAA 405
+
+ Score = 89 (19.4 bits), Expect = 37., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||| |||  || ||||||||||||
+Sbjct:   380 AAAAGAAAGGAAGAAAAAAAAAAAA 404
+
+
+>GeneDB|PBANKA_114590 | organism=Plasmodium_berghei_ANKA | product=conserved
+            rodent malaria protein, unknown function |
+            location=berg11:1697529-1698624(+) | length=837 |
+            sequence_SO=chromosome | SO=protein_coding
+        Length = 837
+
+  Plus Strand HSPs:
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   313 AAAAAAAAAAAAAAAAAAAAAAAAA 337
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   312 AAAAAAAAAAAAAAAAAAAAAAAAA 336
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   311 AAAAAAAAAAAAAAAAAAAAAAAAA 335
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   310 AAAAAAAAAAAAAAAAAAAAAAAAA 334
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   309 AAAAAAAAAAAAAAAAAAAAAAAAA 333
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   308 AAAAAAAAAAAAAAAAAAAAAAAAA 332
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   307 AAAAAAAAAAAAAAAAAAAAAAAAA 331
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   306 AAAAAAAAAAAAAAAAAAAAAAAAA 330
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   305 AAAAAAAAAAAAAAAAAAAAAAAAA 329
+
+ Score = 125 (24.8 bits), Expect = 1.0, P = 0.65
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   304 AAAAAAAAAAAAAAAAAAAAAAAAA 328
+
+ Score = 116 (23.5 bits), Expect = 2.7, P = 0.93
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||||||||||| |
+Sbjct:   315 AAAAAAAAAAAAAAAAAAAAAAAGA 339
+
+ Score = 116 (23.5 bits), Expect = 2.7, P = 0.93
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||||||||||||||||||||||
+Sbjct:   302 ACAAAAAAAAAAAAAAAAAAAAAAA 326
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||| |  |||
+Sbjct:   320 AAAAAAAAAAAAAAAAAAGATCAAA 344
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||||||| |  ||
+Sbjct:   319 AAAAAAAAAAAAAAAAAAAGATCAA 343
+
+
+>GeneDB|PBANKA_051020 | organism=Plasmodium_berghei_ANKA | product=conserved
+            Plasmodium protein, unknown function |
+            location=berg05:425306-426547(-) | length=933 |
+            sequence_SO=chromosome | SO=protein_coding
+        Length = 933
+
+  Plus Strand HSPs:
+
+ Score = 125 (24.8 bits), Expect = 1.1, P = 0.66
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   258 AAAAAAAAAAAAAAAAAAAAAAAAA 282
+
+ Score = 125 (24.8 bits), Expect = 1.1, P = 0.66
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   257 AAAAAAAAAAAAAAAAAAAAAAAAA 281
+
+ Score = 125 (24.8 bits), Expect = 1.1, P = 0.66
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   256 AAAAAAAAAAAAAAAAAAAAAAAAA 280
+
+ Score = 125 (24.8 bits), Expect = 1.1, P = 0.66
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   255 AAAAAAAAAAAAAAAAAAAAAAAAA 279
+
+ Score = 125 (24.8 bits), Expect = 1.1, P = 0.66
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   254 AAAAAAAAAAAAAAAAAAAAAAAAA 278
+
+ Score = 116 (23.5 bits), Expect = 2.8, P = 0.94
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||||||| |||||
+Sbjct:   644 AAAAAAAAAAAAAAAAAAATAAAAA 668
+
+ Score = 116 (23.5 bits), Expect = 2.8, P = 0.94
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||| ||||
+Sbjct:   643 AAAAAAAAAAAAAAAAAAAATAAAA 667
+
+ Score = 116 (23.5 bits), Expect = 2.8, P = 0.94
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||||||||| |||
+Sbjct:   642 AAAAAAAAAAAAAAAAAAAAATAAA 666
+
+ Score = 107 (22.1 bits), Expect = 7.3, P = 0.9993
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||||| ||||| |
+Sbjct:   646 AAAAAAAAAAAAAAAAATAAAAAGA 670
+
+ Score = 107 (22.1 bits), Expect = 7.3, P = 0.9993
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||  |||||||||||||||||||||
+Sbjct:   638 AATTAAAAAAAAAAAAAAAAAAAAA 662
+
+ Score = 107 (22.1 bits), Expect = 7.3, P = 0.9993
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||  ||||||||||||||||||||
+Sbjct:   637 AAATTAAAAAAAAAAAAAAAAAAAA 661
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||| ||||| | |||
+Sbjct:   650 AAAAAAAAAAAAATAAAAAGATAAA 674
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||| ||||| | ||
+Sbjct:   649 AAAAAAAAAAAAAATAAAAAGATAA 673
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||||| ||||| | |
+Sbjct:   648 AAAAAAAAAAAAAAATAAAAAGATA 672
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||  ||||||||||||||||||
+Sbjct:   635 ATAAATTAAAAAAAAAAAAAAAAAA 659
+
+ Score = 98 (20.8 bits), Expect = 19., P = 1.00000
+ Identities = 22/25 (88%), Positives = 22/25 (88%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || |||  |||||||||||||||||
+Sbjct:   634 AATAAATTAAAAAAAAAAAAAAAAA 658
+
+ Score = 89 (19.4 bits), Expect = 49., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||| ||||| | ||| |
+Sbjct:   652 AAAAAAAAAAATAAAAAGATAAAGA 676
+
+ Score = 89 (19.4 bits), Expect = 49., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||  |  |||||||||||||||||
+Sbjct:   246 AAATCAGGAAAAAAAAAAAAAAAAA 270
+
+ Score = 89 (19.4 bits), Expect = 49., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||  |  ||||||||||||||||
+Sbjct:   245 AAAATCAGGAAAAAAAAAAAAAAAA 269
+
+ Score = 89 (19.4 bits), Expect = 49., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||  |  |||||||||||||||
+Sbjct:   244 AAAAATCAGGAAAAAAAAAAAAAAA 268
+
+ Score = 89 (19.4 bits), Expect = 49., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||| |||||||||||  ||| |||
+Sbjct:    46 AAAATAAAAAAAAAAAGCAAACAAA 70
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||||  |  |||||||||||||
+Sbjct:   242 ATAAAAATCAGGAAAAAAAAAAAAA 266
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || |||||  |  ||||||||||||
+Sbjct:   241 AATAAAAATCAGGAAAAAAAAAAAA 265
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||| |||||  |  |||||||||||
+Sbjct:   240 AAATAAAAATCAGGAAAAAAAAAAA 264
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||  ||| |||  |||
+Sbjct:    51 AAAAAAAAAAAGCAAACAAATTAAA 75
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||| |||||||||||  ||| |
+Sbjct:    44 ATAAAATAAAAAAAAAAAGCAAACA 68
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||| |  | |||| |||||||||||
+Sbjct:    37 AAAGAGGATAAAATAAAAAAAAAAA 61
+
+
+>GeneDB|PBANKA_103760 | organism=Plasmodium_berghei_ANKA | product=U3 small
+            nucleolar ribonucleoprotein, putative |
+            location=berg10:1482605-1483903(-) | length=1299 |
+            sequence_SO=chromosome | SO=protein_coding
+        Length = 1299
+
+  Plus Strand HSPs:
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   210 AAAAAAAAAAAAAAAAAAAAAAAAA 234
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   209 AAAAAAAAAAAAAAAAAAAAAAAAA 233
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   208 AAAAAAAAAAAAAAAAAAAAAAAAA 232
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   207 AAAAAAAAAAAAAAAAAAAAAAAAA 231
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   206 AAAAAAAAAAAAAAAAAAAAAAAAA 230
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||||||||||||||||||||||||
+Sbjct:   205 AAAAAAAAAAAAAAAAAAAAAAAAA 229
+
+ Score = 116 (23.5 bits), Expect = 3.0, P = 0.95
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | |||||||||||||||||||||||
+Sbjct:   203 AGAAAAAAAAAAAAAAAAAAAAAAA 227
+
+ Score = 116 (23.5 bits), Expect = 3.0, P = 0.95
+ Identities = 24/25 (96%), Positives = 24/25 (96%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || ||||||||||||||||||||||
+Sbjct:   202 AAGAAAAAAAAAAAAAAAAAAAAAA 226
+
+ Score = 107 (22.1 bits), Expect = 7.8, P = 0.9996
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             | || ||||||||||||||||||||
+Sbjct:   200 ATAAGAAAAAAAAAAAAAAAAAAAA 224
+
+ Score = 107 (22.1 bits), Expect = 7.8, P = 0.9996
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             || || |||||||||||||||||||
+Sbjct:   199 AATAAGAAAAAAAAAAAAAAAAAAA 223
+
+ Score = 107 (22.1 bits), Expect = 7.8, P = 0.9996
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||| || ||||||||||||||||||
+Sbjct:   198 AAATAAGAAAAAAAAAAAAAAAAAA 222
+
+ Score = 107 (22.1 bits), Expect = 7.8, P = 0.9996
+ Identities = 23/25 (92%), Positives = 23/25 (92%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||| || |||||||||||||||||
+Sbjct:   197 AAAATAAGAAAAAAAAAAAAAAAAA 221
+
+ Score = 89 (19.4 bits), Expect = 52., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||  ||||||||||||  ||||||
+Sbjct:  1080 AAATCAAAAAAAAAAAATTAAAAAA 1104
+
+ Score = 89 (19.4 bits), Expect = 52., P = 1.00000
+ Identities = 21/25 (84%), Positives = 21/25 (84%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||  ||||||||||||  |||||
+Sbjct:  1079 AAAATCAAAAAAAAAAAATTAAAAA 1103
+
+ Score = 84 (18.7 bits), Expect = 88., P = 1.00000
+ Identities = 20/24 (83%), Positives = 20/24 (83%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAA 24
+             ||||||||||||  ||||||  ||
+Sbjct:  1085 AAAAAAAAAAAATTAAAAAATTAA 1108
+
+ Score = 84 (18.7 bits), Expect = 88., P = 1.00000
+ Identities = 20/24 (83%), Positives = 20/24 (83%), Strand = Plus / Plus
+
+Query:     2 AAAAAAAAAAAAAAAAAAAAAAAA 25
+             ||||||||||||  ||||||  ||
+Sbjct:  1085 AAAAAAAAAAAATTAAAAAATTAA 1108
+
+ Score = 80 (18.1 bits), Expect = 1.3e+02, P = 1.00000
+ Identities = 20/25 (80%), Positives = 20/25 (80%), Strand = Plus / Plus
+
+Query:     1 AAAAAAAAAAAAAAAAAAAAAAAAA 25
+             |||   |||| || |||||||||||
+Sbjct:   191 AAATCCAAAATAAGAAAAAAAAAAA 215
+
+
+>GeneDB|PBANKA_123470 | organism=Plasmodium_berghei_ANKA | product=conserved
+            Plasmodium protein, unknown function |
+            location=berg12:1308578-1309918(-) | length=1341 |
+            sequence_SO=chromosome | SO=protein_coding
+        Length = 1341
+
+  Minus Strand HSPs:
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Minus / Plus
+
+Query:    25 TTTTTTTTTTTTTTTTTTTTTTTTT 1
+             |||||||||||||||||||||||||
+Sbjct:    27 TTTTTTTTTTTTTTTTTTTTTTTTT 51
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Minus / Plus
+
+Query:    25 TTTTTTTTTTTTTTTTTTTTTTTTT 1
+             |||||||||||||||||||||||||
+Sbjct:    26 TTTTTTTTTTTTTTTTTTTTTTTTT 50
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Minus / Plus
+
+Query:    25 TTTTTTTTTTTTTTTTTTTTTTTTT 1
+             |||||||||||||||||||||||||
+Sbjct:    25 TTTTTTTTTTTTTTTTTTTTTTTTT 49
+
+ Score = 125 (24.8 bits), Expect = 1.2, P = 0.69
+ Identities = 25/25 (100%), Positives = 25/25 (100%), Strand = Minus / Plus
+
+Query:    25 TTTTTTTTTTTTTTTTTTTTTTTTT 1
+             |||||||||||||||||||||||||
+Sbjct:    24 TTTTTTTTTTTTTTTTTTTTTTTTT 48
+
+WARNING:  HSPs involving 1473 database sequences were not reported due to the
+          limiting value of parameter B = 5.
+
+
+Parameters:
+  -o /var/www/Common/tmp/blast/WuBlastPlugin_1224240568003516484.out
+  B=5
+  V=5
+  E=1000
+  putenv="BLASTDB=/var/www/Common/devSiteFilesMirror/webServices"
+
+  ctxfactor=2.00
+
+  Query                        -----  As Used  -----    -----  Computed  ----
+  Strand MatID Matrix name     Lambda    K       H      Lambda    K       H
+   +1      0   +5,-4           0.192   0.182   0.357    same    same    same
+               Q=10,R=10       0.104   0.0151  0.0600    n/a     n/a     n/a
+   -1      0   +5,-4           0.192   0.182   0.357    same    same    same
+               Q=10,R=10       0.104   0.0151  0.0600    n/a     n/a     n/a
+
+  Query
+  Strand MatID  Length  Eff.Length     E    S  W   T   X   E2     S2
+   +1      0       25        25   9.3e+02  76 11 n/a  73  0.048   51
+                                                     134  0.079   76
+   -1      0       25        25   9.3e+02  76 11 n/a  73  0.048   51
+                                                     134  0.079   76
+
+
+Statistics:
+
+  Database:  /var/www/Common/devSiteFilesMirror/webServices/PlasmoDB/release-9.0/blast//PbergheiANKATranscripts
+   Title:  /eupath/scratch/weili1/apiSiteFiles/downloadSite/PlasmoDB/release-9.0//PbergheiANKA/fasta/data/PlasmoDB-9.0_PbergheiANKA_AnnotatedTranscripts.fasta
+   Posted:  11:43:31 AM EDT Apr 30, 2012
+   Created:  5:09:20 PM EDT Apr 11, 2012
+   Format:  XDF-1
+   # of letters in database:  10,268,827
+   # of sequences in database:  5127
+   # of database sequences satisfying E:  1478
+  No. of states in DFA:  3 (3 KB)
+  Total size of DFA:  4 KB (2050 KB)
+  Time to generate neighborhood:  0.00u 0.00s 0.00t   Elapsed:  00:00:00
+  No. of threads or processors used:  4
+  Search cpu time:  0.27u 0.02s 0.29t   Elapsed:  00:00:01
+  Total cpu time:  0.27u 0.02s 0.29t   Elapsed:  00:00:01
+  Start:  Thu Jul 19 16:19:11 2012   End:  Thu Jul 19 16:19:12 2012
+WARNINGS ISSUED:  2

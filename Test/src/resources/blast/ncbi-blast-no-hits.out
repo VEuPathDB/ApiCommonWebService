@@ -1,0 +1,55 @@
+BLASTP 2.2.26+
+
+
+Reference: Stephen F. Altschul, Thomas L. Madden, Alejandro A.
+Schaffer, Jinghui Zhang, Zheng Zhang, Webb Miller, and David J.
+Lipman (1997), "Gapped BLAST and PSI-BLAST: a new generation of
+protein database search programs", Nucleic Acids Res. 25:3389-3402.
+
+
+
+Reference for composition-based statistics: Alejandro A. Schaffer,
+L. Aravind, Thomas L. Madden, Sergei Shavirin, John L. Spouge, Yuri
+I. Wolf, Eugene V. Koonin, and Stephen F. Altschul (2001),
+"Improving the accuracy of PSI-BLAST protein database searches with
+composition-based statistics and other refinements", Nucleic Acids
+Res. 29:2994-3005.
+
+
+
+Database: ..\..\fasta\proteins.fasta
+           9 sequences; 5,298 total letters
+
+
+
+Query= TGGT1_000110 | organism=Toxoplasma_gondii_GT1 | product=hypothetical
+protein | location=TGGT1_chrIII:21758-22360(-) | length=163
+
+Length=163
+
+
+***** No hits found *****
+
+
+
+Lambda     K      H
+   0.322    0.135    0.466 
+
+Gapped
+Lambda     K      H
+   0.267   0.0410    0.140 
+
+Effective search space used: 601338
+
+
+  Database: ..\..\fasta\proteins.fasta
+    Posted date:  Jul 19, 2012  2:54 PM
+  Number of letters in database: 5,298
+  Number of sequences in database:  9
+
+
+
+Matrix: BLOSUM62
+Gap Penalties: Existence: 11, Extension: 1
+Neighboring words threshold: 11
+Window for multiple hits: 40

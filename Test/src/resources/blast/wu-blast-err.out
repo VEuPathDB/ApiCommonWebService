@@ -1,0 +1,50 @@
+BLASTN 2.0MP-WashU [04-May-2006] [linux26-i786-ILP32F64 2006-05-09T12:19:58]
+
+Copyright (C) 1996-2006 Washington University, Saint Louis, Missouri USA.
+All Rights Reserved.
+
+Reference:  Gish, W. (1996-2006) http://blast.wustl.edu
+
+Notice:  this program and its default parameter settings are optimized to find
+nearly identical sequences rapidly.  To identify weak protein similarities
+encoded in nucleic acid, use BLASTX, TBLASTN or TBLASTX.
+
+WARNING:  One or more instances of an invalid nucleotide code "l" have been
+          encountered in the query sequence and are being skipped.
+
+WARNING:  One or more instances of an invalid nucleotide code "f" have been
+          encountered in the query sequence and are being skipped.
+
+WARNING:  One or more instances of an invalid nucleotide code "j" have been
+          encountered in the query sequence and are being skipped.
+
+WARNING:  One or more instances of an invalid nucleotide code "i" have been
+          encountered in the query sequence and are being skipped.
+
+WARNING:  One or more instances of an invalid nucleotide code "e" have been
+          encountered in the query sequence and are being skipped.
+
+Query=  MySeq1
+        (16 letters)
+
+WARNING:  THE QUERY SEQUENCE APPEARS TO BE PROTEIN WHEN A NUCLEIC ACID
+          SEQUENCE IS EXPECTED BY THIS PROGRAM (BLASTN).
+
+WARNING:  the maximum achievable score of 5 in context 0 (frame +1) is less
+          than the ungapped cutoff score S2 (=18).
+
+WARNING:  the maximum achievable score of 5 in context 1 (frame -1) is less
+          than the ungapped cutoff score S2 (=18).
+
+
+Parameters:
+  -o /var/www/Common/tmp/blast/WuBlastPlugin_2625595425033467709.out
+  B=5
+  V=5
+  E=100
+  putenv="BLASTDB=/var/www/Common/devSiteFilesMirror/webServices"
+
+
+FATAL:  There are no valid contexts in the requested search.
+
+EXIT CODE 23

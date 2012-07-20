@@ -1,0 +1,200 @@
+BLASTP 2.2.26+
+
+
+Reference: Stephen F. Altschul, Thomas L. Madden, Alejandro A.
+Schaffer, Jinghui Zhang, Zheng Zhang, Webb Miller, and David J.
+Lipman (1997), "Gapped BLAST and PSI-BLAST: a new generation of
+protein database search programs", Nucleic Acids Res. 25:3389-3402.
+
+
+
+Reference for composition-based statistics: Alejandro A. Schaffer,
+L. Aravind, Thomas L. Madden, Sergei Shavirin, John L. Spouge, Yuri
+I. Wolf, Eugene V. Koonin, and Stephen F. Altschul (2001),
+"Improving the accuracy of PSI-BLAST protein database searches with
+composition-based statistics and other refinements", Nucleic Acids
+Res. 29:2994-3005.
+
+
+
+Database: ..\..\fasta\proteins.fasta
+           9 sequences; 5,298 total letters
+
+
+
+Query= TGGT1_000110 | organism=Toxoplasma_gondii_GT1 | product=hypothetical
+protein | location=TGGT1_chrIII:21758-22360(-) | length=163
+
+Length=163
+                                                                      Score     E
+Sequences producing significant alignments:                          (Bits)  Value
+
+gb|TGME49_108580|  | organism=Toxoplasma_gondii_ME49 | product=lo...  18.9    1.2  
+gb|TGME49_108600|  | organism=Toxoplasma_gondii_ME49 | product=hy...  16.2    8.3  
+gb|TGME49_108850|  | organism=Toxoplasma_gondii_ME49 | product=hy...  15.8       13
+gb|TGME49_108710|  | organism=Toxoplasma_gondii_ME49 | product=hy...  15.4       16
+gb|TGME49_108840|  | organism=Toxoplasma_gondii_ME49 | product=SR...  13.5       64
+
+
+>gb|TGME49_108580| | organism=Toxoplasma_gondii_ME49 | product=lon protease, putative 
+| location=TGME49_chrXI:244452-257010(+) | length=1498
+Length=1498
+
+ Score = 18.9 bits (37),  Expect = 1.2, Method: Composition-based stats.
+ Identities = 11/22 (50%), Positives = 12/22 (55%), Gaps = 3/22 (14%)
+
+Query  79   PVAKRRTG---VVDVSSSHTGG  97
+            P AK R     VVD+S  HT G
+Sbjct  582  PGAKLRKDAGRVVDISELHTTG  603
+
+
+ Score = 16.9 bits (32),  Expect = 4.8, Method: Composition-based stats.
+ Identities = 7/14 (50%), Positives = 8/14 (57%), Gaps = 0/14 (0%)
+
+Query  66   LPRECKRPCLSDSP  79
+            L  E +RP   DSP
+Sbjct  334  LSGEAERPGHRDSP  347
+
+
+ Score = 15.4 bits (28),  Expect =    18, Method: Composition-based stats.
+ Identities = 4/5 (80%), Positives = 5/5 (100%), Gaps = 0/5 (0%)
+
+Query  119  DYLGP  123
+            D+LGP
+Sbjct  373  DFLGP  377
+
+
+ Score = 14.2 bits (25),  Expect =    39, Method: Composition-based stats.
+ Identities = 8/21 (38%), Positives = 12/21 (57%), Gaps = 1/21 (5%)
+
+Query  31    LWEKAEALSAARHRRVEGRVH  51
+             ++ KA ALS  R  + +  VH
+Sbjct  1230  IYRKA-ALSLVRKEQEKVEVH  1249
+
+
+ Score = 13.9 bits (24),  Expect =    51, Method: Composition-based stats.
+ Identities = 3/9 (33%), Positives = 6/9 (67%), Gaps = 0/9 (0%)
+
+Query  141  HRLGSVIVG  149
+            H+L  ++ G
+Sbjct  838  HKLADLVAG  846
+
+
+ Score = 13.1 bits (22),  Expect =    79, Method: Composition-based stats.
+ Identities = 7/13 (54%), Positives = 8/13 (62%), Gaps = 1/13 (8%)
+
+Query  98    GGGMDVAPQTVGH  110
+             GG  DVA +  GH
+Sbjct  1061  GGMCDVA-ELRGH  1072
+
+
+>gb|TGME49_108600| | organism=Toxoplasma_gondii_ME49 | product=hypothetical protein 
+| location=TGME49_chrXI:266006-268219(+) | length=737
+Length=737
+
+ Score = 16.2 bits (30),  Expect = 8.3, Method: Composition-based stats.
+ Identities = 7/19 (37%), Positives = 8/19 (42%), Gaps = 0/19 (0%)
+
+Query  94   HTGGGGGMDVAPQTVGHMQ  112
+            HT   G    + Q  GH Q
+Sbjct  352  HTDAHGQTQASDQAQGHDQ  370
+
+
+ Score = 14.2 bits (25),  Expect =    34, Method: Composition-based stats.
+ Identities = 4/6 (67%), Positives = 4/6 (67%), Gaps = 0/6 (0%)
+
+Query  70   CKRPCL  75
+            C R CL
+Sbjct  247  CPRACL  252
+
+
+ Score = 14.2 bits (25),  Expect =    35, Method: Composition-based stats.
+ Identities = 10/31 (32%), Positives = 13/31 (42%), Gaps = 6/31 (19%)
+
+Query  92   SSHTGGGGGMDVAPQTVGHMQRVGRRGDYLG  122
+            +S +GG  G D      GH +    R D  G
+Sbjct  254  ASKSGGKTGTD------GHEKTNEVRADQKG  278
+
+
+>gb|TGME49_108850| | organism=Toxoplasma_gondii_ME49 | product=hypothetical protein 
+| location=TGME49_chrXI:291487-294388(+) | length=652
+Length=652
+
+ Score = 15.8 bits (29),  Expect =    13, Method: Compositional matrix adjust.
+ Identities = 4/11 (36%), Positives = 6/11 (55%), Gaps = 0/11 (0%)
+
+Query  58   WQETTPVRLPR  68
+            WQ    +R P+
+Sbjct  396  WQNVKFLRFPK  406
+
+
+ Score = 15.8 bits (29),  Expect =    13, Method: Compositional matrix adjust.
+ Identities = 9/38 (24%), Positives = 19/38 (50%), Gaps = 4/38 (11%)
+
+Query  46   VEGRVHGCHNLNWQETTPVRLPRECKRPCLSDSPVAKR  83
+            +EG+  G  +++     P+ +PR   +    + P A+R
+Sbjct  263  IEGKNKGEDSVSL----PLSVPRFAAKQEPLERPTAQR  296
+
+
+>gb|TGME49_108710| | organism=Toxoplasma_gondii_ME49 | product=hypothetical protein, 
+conserved | location=TGME49_chrXI:268348-277143(+) | length=1108
+Length=1108
+
+ Score = 15.4 bits (28),  Expect =    16, Method: Composition-based stats.
+ Identities = 7/19 (37%), Positives = 10/19 (53%), Gaps = 0/19 (0%)
+
+Query  142  RLGSVIVGCWCVLAGEVQS  160
+            R  SV  GC+     EV++
+Sbjct  666  RADSVSDGCYVTRRQEVEA  684
+
+
+ Score = 13.5 bits (23),  Expect =    70, Method: Composition-based stats.
+ Identities = 6/26 (23%), Positives = 11/26 (42%), Gaps = 0/26 (0%)
+
+Query  81   AKRRTGVVDVSSSHTGGGGGMDVAPQ  106
+            A+ + G    + +  G G   +  PQ
+Sbjct  537  AETQEGSDAEADAEGGSGANGEAQPQ  562
+
+
+ Score = 13.1 bits (22),  Expect =    95, Method: Composition-based stats.
+ Identities = 6/19 (32%), Positives = 9/19 (47%), Gaps = 0/19 (0%)
+
+Query  79   PVAKRRTGVVDVSSSHTGG  97
+            PVA+   G   +  +  GG
+Sbjct  976  PVARDAHGNTPLMDAVLGG  994
+
+
+>gb|TGME49_108840| | organism=Toxoplasma_gondii_ME49 | product=SRS51 (= SRS3) | 
+location=TGME49_chrXI:286974-288056(+) | length=360
+Length=360
+
+ Score = 13.5 bits (23),  Expect =    64, Method: Compositional matrix adjust.
+ Identities = 4/10 (40%), Positives = 7/10 (70%), Gaps = 0/10 (0%)
+
+Query  21  AEHREACASE  30
+           A H+ +C S+
+Sbjct  60  AAHQGSCTSQ  69
+
+
+
+Lambda     K      H
+   0.322    0.135    0.466 
+
+Gapped
+Lambda     K      H
+   0.267   0.0410    0.140 
+
+Effective search space used: 601338
+
+
+  Database: ..\..\fasta\proteins.fasta
+    Posted date:  Jul 19, 2012  2:54 PM
+  Number of letters in database: 5,298
+  Number of sequences in database:  9
+
+
+
+Matrix: BLOSUM62
+Gap Penalties: Existence: 11, Extension: 1
+Neighboring words threshold: 11
+Window for multiple hits: 40
