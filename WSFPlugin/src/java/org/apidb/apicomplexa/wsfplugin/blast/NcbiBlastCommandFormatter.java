@@ -40,7 +40,9 @@ public class NcbiBlastCommandFormatter extends AbstractCommandFormatter {
     cmds.add(outFile.getAbsolutePath());
     
     // add extra options into the command
-    cmds.add(config.getExtraOptions());
+    String extraOptions = config.getExtraOptions();
+    if (extraOptions != null && extraOptions.trim().length() > 0)
+        cmds.add(extraOptions);
 
     for (String param : params.keySet()) {
 

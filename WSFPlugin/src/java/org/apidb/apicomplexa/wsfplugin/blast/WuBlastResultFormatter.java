@@ -370,7 +370,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           // + line + "\n");
           // Insert link to gene page, in source_id
           // ncbi plugin does not do this
-          line = insertIdUrl(line, hit_organism);
+          line = insertIdUrl(line, recordClass);
 
           // --------------
           // insert link in tabular row now that we know the organism
@@ -379,7 +379,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           // logger.info("\nWB prepareResult(): alignments: to insert URL in TABROW: "
           // + rowline + "\n");
           if (!(dbType.contains("ORF") && hit_organism.contains("Crypto")))
-            rowline = insertIdUrl(rowline, hit_organism);
+            rowline = insertIdUrl(rowline, recordClass);
           if (rowline != null)
             rows.put(counterstring, rowline);
           counter++;
