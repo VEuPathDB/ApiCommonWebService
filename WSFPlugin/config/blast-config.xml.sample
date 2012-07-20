@@ -13,7 +13,7 @@
   <!-- Optional, the temporary path for BLAST to make input files
     and save output files. This entry is optional, and "/tmp/blast" as
     default, if not specified. -->
-  <entry key="TempPath">/tmp/blast</entry>
+  <entry key="TempPath">/var/www/Common/tmp/blast</entry>
 
   <!-- Optional, the actual BLAST database name,
     $$BlastDatabaseOrganism$$$$BlastDatabaseType$$ will be used if not
