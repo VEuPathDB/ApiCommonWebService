@@ -13,19 +13,16 @@ import org.gusdb.wsf.plugin.WsfServiceException;
 // geneID could be an ORF or a genomic sequence deending on who uses the plugin
 public class OrfMotifPlugin extends ProteinMotifPlugin {
 
-    // let's store files in same directory
-    public static final String FIELD_ORF_DEFLINE_REGEX = "OrfDeflineRegex";
+  // let's store files in same directory
+  public static final String FIELD_REGEX = "OrfDeflineRegex";
 
-    /**
-     * @throws WsfServiceException
-     * 
-     */
-    public OrfMotifPlugin() throws WsfServiceException {
-        super();
-    }
+  private static final String DEFAULT_REGEX = "^>([^|\\s]+)\\s*\\|\\s*organism=([^|_\\s]+)";
 
-    @Override
-    protected String getDeflineField() {
-        return FIELD_ORF_DEFLINE_REGEX;
-    }
+  /**
+   * @throws WsfServiceException
+   * 
+   */
+  public OrfMotifPlugin() throws WsfServiceException {
+    super(FIELD_REGEX, DEFAULT_REGEX);
+  }
 }

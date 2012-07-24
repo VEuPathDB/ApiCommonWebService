@@ -24,7 +24,7 @@ public class BlastConfig {
 
   private String blastPath;
 
-  private String tempPath = "/tmp/blast";
+  private String tempPath = "/var/www/Common/tmp/blast";
   private String extraOptions = "";
 
   private long timeout = 300;
@@ -123,50 +123,6 @@ public class BlastConfig {
 
   public int getScoreRegexIndex() {
     return scoreRegexIndex;
-  }
-
-  public void setBlastPath(String blastPath) {
-    this.blastPath = blastPath;
-  }
-
-  public void setTempPath(String tempPath) {
-    this.tempPath = tempPath;
-  }
-
-  public void setExtraOptions(String extraOptions) {
-    this.extraOptions = extraOptions;
-  }
-
-  public void setTimeout(long timeout) {
-    this.timeout = timeout;
-  }
-
-  public void setBlastDbName(String blastDbName) {
-    this.blastDbName = blastDbName;
-  }
-
-  public void setSourceIdRegex(String sourceIdRegex) {
-    this.sourceIdRegex = sourceIdRegex;
-  }
-
-  public void setSourceIdRegexIndex(int sourceIdRegexIndex) {
-    this.sourceIdRegexIndex = sourceIdRegexIndex;
-  }
-
-  public void setOrganismRegex(String organismRegex) {
-    this.organismRegex = organismRegex;
-  }
-
-  public void setOrganismRegexIndex(int organismRegexIndex) {
-    this.organismRegexIndex = organismRegexIndex;
-  }
-
-  public void setScoreRegex(String scoreRegex) {
-    this.scoreRegex = scoreRegex;
-  }
-
-  public void setScoreRegexIndex(int scoreRegexIndex) {
-    this.scoreRegexIndex = scoreRegexIndex;
   }
 
 }

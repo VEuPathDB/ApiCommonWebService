@@ -1,4 +1,4 @@
-package org.apidb.apicomplexa.wsfplugin.blast;
+package org.apidb.apicomplexa.wsfplugin;
 
 import java.sql.SQLException;
 

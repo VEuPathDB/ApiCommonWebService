@@ -15,6 +15,7 @@ import java.util.Random;
 import junit.framework.Assert;
 
 import org.apidb.apicommon.model.ProjectMapper;
+import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wsf.plugin.WsfServiceException;
@@ -30,13 +31,11 @@ public class BlastTest {
 
   private static final String SYS_PROJECT_HOME = "project_home";
 
-  protected final String projectHome;
-  protected final Random random;
+  private final String projectHome;
 
-  protected Properties properties;
+  private Properties properties;
 
   public BlastTest() throws Exception {
-    random = new Random();
     projectHome = System.getProperty(SYS_PROJECT_HOME);
     if (projectHome == null)
       throw new Exception("Required system environment variable not set: "
@@ -52,7 +51,7 @@ public class BlastTest {
 
     // read the sample config file with default values
     String sampleFile = projectHome
-        + "/ApiCommonWebService/WSFPlugin/config/blast-config.sample.xml";
+        + "/ApiCommonWebService/WSFPlugin/config/blast-config.xml.sample";
     InputStream inStream = new FileInputStream(sampleFile);
     properties.loadFromXML(inStream);
     inStream.close();

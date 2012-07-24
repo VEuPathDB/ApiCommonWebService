@@ -3,89 +3,49 @@
 <properties>
 <comment>The configuration file for MotifSearch WSF Plugin.</comment>
 
-<entry key="UseProjectId">yes</entry>
-<entry key="DataDir">path_to_fasta_files</entry>
+<!-- the Regular Expressions defined in this config file use Java flavor. -->
 
 <!-- 
-    the regex for genomic fasta file has to have 3 groups, 
+    Optional, the regex for genomic fasta file has to have 3 groups.
     group(1) = genomic sequence source id;
     group(2) = strand, either '+' or '-'
     group(3) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
     
     An example of the headline will be like this:
     >gb|scf_1107000998814 | strand=(+) | organism=Toxoplasma_gondii_GT1 | version=2008-07-23 | length=1231
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
 -->
 <entry key="DnaDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|\s*strand=\(([+\-])\)\s*\|\s*organism=([^|_\s]+)]]></entry>
 
 <!-- 
-    the regex for protein fasta file has to have 2 groups, 
+    Optional, the regex for protein fasta file has to have 2 groups, 
     group(1) = gene source id;
     group(2) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
     
     An example of the headline will be like this:
     >psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
 -->
 <entry key="ProteinDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|.*?\s*organism=([^|_\s]+)]]></entry>
 
 <!-- 
-    the regex for protein fasta file has to have 2 groups, 
+    Optional, the regex for protein fasta file has to have 2 groups, 
     group(1) = gene source id;
     group(2) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
     
     An example of the headline will be like this:
     >scf_1107000999344-1-267055-267297 | organism=Toxoplasma_gondii_GT1 | location=TGGT1_chrV:2837876-2838118(-) | length=81
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
 -->
 <entry key="OrfDeflineRegex"><![CDATA[^>([^|\s]+)\s*\|\s*organism=([^|_\s]+)]]></entry>
 
-<!-- the organism name used in the following mapping section must be matched with the organism found by the above regex -->
-<entry key="ProjectMap_Entamoeba">AmoebaDB</entry>
-
-<entry key="ProjectMap_Cryptosporidium">CryptoDB</entry>
-
-<entry key="ProjectMap_Giardia">GiardiaDB</entry>
-
-<entry key="ProjectMap_Plasmodium">PlasmoDB</entry>
-
-<entry key="ProjectMap_Neospora">ToxoDB</entry>
-<entry key="ProjectMap_Toxoplasma">ToxoDB</entry>
-<entry key="ProjectMap_Eimeria">ToxoDB</entry>
-<entry key="ProjectMap_Gregarina">ToxoDB</entry>
-
-<entry key="ProjectMap_Trichomonas">TrichDB</entry>
-
-<entry key="ProjectMap_Leishmania">TriTrypDB</entry>
-<entry key="ProjectMap_Trypanosoma">TriTrypDB</entry>
-<entry key="ProjectMap_Crithidia">TriTrypDB</entry>
-<entry key="ProjectMap_Endotrypanum">TriTrypDB</entry>
-
-<entry key="ProjectMap_Encephalitozoon">MicrosporidiaDB</entry>
-<entry key="ProjectMap_Enterocytozoon">MicrosporidiaDB</entry>
-<entry key="ProjectMap_Nosema">MicrosporidiaDB</entry>
-<entry key="ProjectMap_Nematocida">MicrosporidiaDB</entry>
-<entry key="ProjectMap_Octosporea">MicrosporidiaDB</entry>
-<entry key="ProjectMap_Vavraia">MicrosporidiaDB</entry>
-
-<entry key="ProjectMap_Babesia">PiroplasmaDB</entry>
-<entry key="ProjectMap_Theileria">PiroplasmaDB</entry>
-
-<entry key="ProjectMap_Aspergillus">FungiDB</entry>
-<entry key="ProjectMap_Candida">FungiDB</entry>
-<entry key="ProjectMap_Coccidioides">FungiDB</entry>
-<entry key="ProjectMap_Cryptococcus">FungiDB</entry>
-<entry key="ProjectMap_Fusarium">FungiDB</entry>
-<entry key="ProjectMap_Magnaporthe">FungiDB</entry>
-<entry key="ProjectMap_Neurospora">FungiDB</entry>
-<entry key="ProjectMap_Puccini">FungiDB</entry>
-<entry key="ProjectMap_Rhizopus">FungiDB</entry>
-<entry key="ProjectMap_Saccharomyces">FungiDB</entry>
-<entry key="ProjectMap_Emericella">FungiDB</entry>
-<entry key="ProjectMap_Hyaloperonospora">FungiDB</entry>
-<entry key="ProjectMap_Phytophthora">FungiDB</entry>
-<entry key="ProjectMap_Pythium">FungiDB</entry>
-<entry key="ProjectMap_Schizosaccharomyces">FungiDB</entry>
-<entry key="ProjectMap_Sordaria">FungiDB</entry>
-<entry key="ProjectMap_Tremella">FungiDB</entry>
-
-<entry key="ProjectMap_Others">Others</entry>
+<!--
+    Optional, the length of the context to be displayed around the matched motifs. For example, if this
+    field is set to 20, then 20 bps before & after the motif will be displayed along with the motif.
+-->
+<entry key="ContextLength">20</entry>
 
 </properties>
