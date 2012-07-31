@@ -30,7 +30,7 @@ public class BlastConfig {
   private long timeout = 300;
   private String blastDbName = "$$BlastDatabaseOrganism$$$$BlastDatabaseType$$";
 
-  private String sourceIdRegex = "^>*(?:\\w*\\|)*(\\S+)";
+  private String sourceIdRegex = "^>*(?:[^\\|]*\\|)*(\\S+)";
   private int sourceIdRegexIndex = 1;
   private String organismRegex = "\\|\\s*organism=([^_|\\s]+)";
   private int organismRegexIndex = 1;

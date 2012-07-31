@@ -45,7 +45,7 @@
      group, and capture group index can be specified by SourceIdRegexIndex
      option. By default, the following regex will be used: ^>*(?:\w*\|)*(\S+)
      -->
-  <entry key="SourceIdRegex"><![CDATA[^>*(?:\w*\|)*(\S+)]]></entry>
+  <entry key="SourceIdRegex"><![CDATA[^>*(?:[^\|]*\|)*(\S+)]]></entry>
 
   <!-- Optional, the capture group index of the source_id in the above
     regular expression. It should be a positive integer or 0. If 0 is
