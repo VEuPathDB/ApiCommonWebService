@@ -29,7 +29,8 @@ import org.xml.sax.SAXException;
  * @author xingao
  * 
  */
-public abstract class AbstractBlastPlugin extends AbstractPlugin implements Plugin {
+public abstract class AbstractBlastPlugin extends AbstractPlugin implements
+    Plugin {
 
   // field definitions in the config file
   public static final String FILE_CONFIG = "blast-config.xml";
@@ -49,12 +50,17 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements Plug
   public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
   public static final String PARAM_SEQUENCE = "BlastQuerySequence";
   public static final String PARAM_RECORD_CLASS = "BlastRecordClass";
-  
+
   /**
-   * remove files older than a week (500000000)
+   * remove files older than a week (500000000), in milliseconds.
    */
   private static final long MAX_FILE_LIFE = 500000000;
-  
+
+  /**
+   * The maximum size of the blast output file that the plugin can handle.
+   */
+  private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
+
   private static Logger logger = Logger.getLogger(AbstractBlastPlugin.class);
 
   private final CommandFormatter commandFormatter;
@@ -67,7 +73,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements Plug
    * @throws WsfServiceException
    */
   public AbstractBlastPlugin(CommandFormatter commandFormatter,
-      ResultFormatter resultFormatter)  {
+      ResultFormatter resultFormatter) {
     super(FILE_CONFIG);
     this.commandFormatter = commandFormatter;
     this.resultFormatter = resultFormatter;
@@ -199,6 +205,13 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements Plug
       // WsfServiceException("The invocation is failed: " + output);
       logger.debug("BLAST output: \n------------------\n" + output.toString()
           + "\n-----------------\n");
+
+      // check the size of the blast output, and throws error if the result is
+      // too big.
+      if (outFile.length() > MAX_FILE_SIZE)
+        throw new WsfServiceException("The Blast result is too big to be "
+            + "handled by the system. Please limit the size of your input "
+            + "sequence, or increase the threshold.");
 
       // if the invocation succeeds, prepare the result; otherwise,
       // prepare results for failure scenario

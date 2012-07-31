@@ -303,7 +303,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                     + recordTypePredicate + "'\n";
         }
 
-        String sql = new String(
+        String sql = 
                 "SELECT source_id, project_id, \n"
                         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
                         + "       fields_matched \n"
@@ -323,7 +323,7 @@ public class KeywordSearchPlugin extends AbstractPlugin {
                         + recordTypePredicate
                         + "              AND project_id = '" + projectId
                         + "') \n" + "      GROUP BY source_id, project_id \n"
-                        + "      ORDER BY max_score desc \n" + "     )");
+                        + "      ORDER BY max_score desc \n" + "     )";
 
         logger.debug("comment SQL: " + sql);
         logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
