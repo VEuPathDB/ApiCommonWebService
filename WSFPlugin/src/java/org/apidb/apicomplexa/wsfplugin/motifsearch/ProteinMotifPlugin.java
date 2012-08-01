@@ -122,7 +122,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
         sbSeq.append(sequence.substring(matcher.start() - contextLength,
             matcher.start()));
       }
-      sbSeq.append("<span style=\"" + MOTIF_STYLE_CLASS + "\">");
+      sbSeq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
       sbSeq.append(sequence.substring(matcher.start(), matcher.end()));
       sbSeq.append("</span>");
       prev = matcher.end();
