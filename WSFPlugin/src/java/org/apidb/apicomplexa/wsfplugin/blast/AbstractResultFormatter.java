@@ -54,18 +54,24 @@ public abstract class AbstractResultFormatter implements ResultFormatter {
   protected String insertIdUrl(String defline, String recordClass)
       throws UnsupportedEncodingException, WdkModelException, WdkUserException,
       SQLException {
+    int[] orgPos = findOrganism(defline);
+    String organism = defline.substring(orgPos[0], orgPos[1]);
+    String projectId = projectMapper.getProjectByOrganism(organism);
+
+    logger.debug("\ninsertIdUrl() organism is: " + organism);
+
+    return insertIdUrl(defline, recordClass, projectId);
+  }
+
+  protected String insertIdUrl(String defline, String recordClass,
+      String projectId) throws UnsupportedEncodingException, WdkModelException,
+      WdkUserException, SQLException {
     // extract organism from the defline
     logger.trace("\ninsertIdUrl() line is: " + defline + "\n");
 
-    int[] orgPos = findOrganism(defline);
-    String organism = defline.substring(orgPos[0], orgPos[1]);
-
     int[] srcPos = findSourceId(defline);
     String sourceId = defline.substring(srcPos[0], srcPos[1]);
-    logger.debug("\ninsertIdUrl() organism is: " + organism
-        + "\nand sourceId is " + sourceId + "\n");
-
-    String projectId = projectMapper.getProjectByOrganism(organism);
+    logger.debug("\ninsertIdUrl() sourceId is " + sourceId + "\n");
     logger.debug("\ninsertIdUrl() project is: " + projectId + "\n");
 
     // since we don't know the webapp name, assumed the summary action is on
