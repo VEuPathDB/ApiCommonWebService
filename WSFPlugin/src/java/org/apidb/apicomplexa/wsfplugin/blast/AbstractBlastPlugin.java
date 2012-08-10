@@ -209,9 +209,10 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
       // check the size of the blast output, and throws error if the result is
       // too big.
       if (outFile.length() > MAX_FILE_SIZE)
-        throw new WsfServiceException("The Blast result is too big to be "
-            + "handled by the system. Please limit the size of your input "
-            + "sequence, or increase the threshold.");
+					throw new WsfServiceException("Sorry, your Blast result is too big ("
+																				+ outFile.length()/1048576 + "MB > " 
+																				+ MAX_FILE_SIZE / 1048576 + "MB)." 
+																				+ "Please try a smaller number on the V and B parameters.");
 
       // if the invocation succeeds, prepare the result; otherwise,
       // prepare results for failure scenario
