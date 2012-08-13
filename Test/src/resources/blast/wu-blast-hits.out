@@ -32,6 +32,10 @@ GeneDB|PBANKA_123470 | organism=Plasmodium_berghei_ANKA |...   125  0.69      1
 WARNING:  Descriptions of 1473 database sequences were not reported due to the
           limiting value of parameter V = 5.
 
+NOTE:  You might consider using a low-complexity sequence filter to reduce the
+       number of spurious matches that may be appearing in the output.  See
+       the filter and wordmask options at
+       http://blast.wustl.edu/blast/parameters.html#filter.
 
 >GeneDB|PBANKA_071900 | organism=Plasmodium_berghei_ANKA | product=conserved
             Plasmodium protein, unknown function, fragment |

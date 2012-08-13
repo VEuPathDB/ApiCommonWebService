@@ -38,6 +38,11 @@ public abstract class AbstractResultFormatter implements ResultFormatter {
         config.getOrganismRegexIndex());
   }
 
+  protected int[] findScore(String summaryLine) {
+    return findField(summaryLine, config.getScoreRegex(),
+        config.getScoreRegexIndex());
+  }
+
   private int[] findField(String defline, String regex, int regexIndex) {
     Pattern pattern = Pattern.compile(regex);
     Matcher matcher = pattern.matcher(defline);
@@ -64,8 +69,7 @@ public abstract class AbstractResultFormatter implements ResultFormatter {
   }
 
   protected String insertIdUrl(String defline, String recordClass,
-      String projectId) throws UnsupportedEncodingException, WdkModelException,
-      WdkUserException, SQLException {
+      String projectId) throws UnsupportedEncodingException  {
     // extract organism from the defline
     logger.trace("\ninsertIdUrl() line is: " + defline + "\n");
 

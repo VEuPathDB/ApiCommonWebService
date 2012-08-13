@@ -93,7 +93,7 @@ public class NcbiBlastResultFormatter extends AbstractResultFormatter {
         if (line.trim().startsWith("Database")) {
           // output the last block, if have
           if (alignment != null) {
-            alignment[columns.get(NcbiBlastPlugin.COLUMN_BLOCK)] = block.toString();
+            alignment[columns.get(NcbiBlastPlugin.COLUMN_ALIGNMENT)] = block.toString();
             blocks.add(alignment);
           }
           break;
@@ -103,7 +103,7 @@ public class NcbiBlastResultFormatter extends AbstractResultFormatter {
         if (line.length() > 0 && line.charAt(0) == '>') {
           // output the previous block, if have
           if (alignment != null) {
-            alignment[columns.get(NcbiBlastPlugin.COLUMN_BLOCK)] = block.toString();
+            alignment[columns.get(NcbiBlastPlugin.COLUMN_ALIGNMENT)] = block.toString();
             blocks.add(alignment);
           }
           // create a new alignment and block
@@ -151,10 +151,10 @@ public class NcbiBlastResultFormatter extends AbstractResultFormatter {
       int idIndex = columns.get(NcbiBlastPlugin.COLUMN_ID);
       results[i][idIndex] = alignment[idIndex];
       // copy block
-      int blockIndex = columns.get(NcbiBlastPlugin.COLUMN_BLOCK);
+      int blockIndex = columns.get(NcbiBlastPlugin.COLUMN_ALIGNMENT);
       results[i][blockIndex] = alignment[blockIndex];
       // copy tabular row
-      int rowIndex = columns.get(NcbiBlastPlugin.COLUMN_ROW);
+      int rowIndex = columns.get(NcbiBlastPlugin.COLUMN_SUMMARY);
       for (String id : rows.keySet()) {
         if (alignment[idIndex].startsWith(id)) {
           String[] parts = rows.get(id);

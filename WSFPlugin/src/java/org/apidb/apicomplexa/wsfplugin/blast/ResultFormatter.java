@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import org.apidb.apicommon.model.ProjectMapper;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
+import org.gusdb.wsf.plugin.WsfServiceException;
 
 public interface ResultFormatter {
 
@@ -16,5 +17,5 @@ public interface ResultFormatter {
 
   String[][] formatResult(String[] orderedColumns, File outFile, String dbType,
       String recordClass, StringBuffer message) throws IOException,
-      WdkModelException, WdkUserException, SQLException;
+      WdkModelException, WdkUserException, SQLException, WsfServiceException;
 }

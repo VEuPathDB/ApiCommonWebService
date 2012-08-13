@@ -4,19 +4,22 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
+import org.gusdb.wsf.plugin.WsfServiceException;
 
 public class WuBlastResultFormatter extends AbstractResultFormatter {
+
+  private static enum Section {
+    Header, Summary, Warning, Alignment, Footer
+  }
 
   public static final String newline = System.getProperty("line.separator");
 
@@ -25,15 +28,178 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
   @Override
   public String[][] formatResult(String[] orderedColumns, File outFile,
       String dbType, String recordClass, StringBuffer message)
-      throws IOException, WdkModelException, WdkUserException, SQLException {
-    // so database name is built correctly for the Translated cases
-    if (dbType.contains("Translated")) {
-      if (dbType.contains("Transcripts"))
-        dbType = "Transcripts";
-      else if (dbType.contains("Genomics"))
-        dbType = "Genomics";
-      else if (dbType.contains("EST"))
-        dbType = "EST";
+      throws IOException, WdkModelException, WdkUserException, SQLException,
+      WsfServiceException {
+    BufferedReader in = new BufferedReader(new FileReader(outFile));
+    Section section = Section.Header;
+    StringBuilder header = new StringBuilder(), footer = new StringBuilder(), warning = new StringBuilder();
+
+    // {sourceId, summaryLine}
+    Map<String, String> summaries = new LinkedHashMap<>();
+    // {sourceId, projectId}
+    Map<String, String> projects = new LinkedHashMap<>();
+    // {sourceId, score}
+    Map<String, String> scores = new LinkedHashMap<>();
+    // {sourceId, alignment}
+    Map<String, String> alignments = new LinkedHashMap<>();
+
+    try {
+      StringBuilder defline = new StringBuilder();
+      StringBuilder alignment = new StringBuilder();
+      boolean inDefline = false;
+      String line;
+      // read in blast output
+      while ((line = in.readLine()) != null) {
+        if (section == Section.Header) {
+          // 2 possible transitions: to summary or footer
+          if (line.startsWith("Parameters:")) {
+            section = Section.Footer;
+            footer.append(line + newline);
+          } else {
+            header.append(line + newline);
+            if (line.startsWith("Sequences producing High-scoring Segment Pairs")) {
+              header.append(in.readLine() + newline); // skip the empty line.
+              section = Section.Summary;
+            }
+          }
+        } else if (section == Section.Footer) { // no more transitions here
+          footer.append(line + newline);
+        } else if (section == Section.Summary) {
+          // 1 possible transition: to warning,
+          if (line.length() == 0 || line.trim().equals("*** NONE ***")) {
+            // reach the end of summary (empty line), or no hits, transit to
+            // footer, along with current line. The first empty line has been
+            // skipped while reading "Sequences..."
+            section = Section.Warning;
+            footer.append(line + newline);
+          } else { // find a summary line
+            parseSummaryLine(line, summaries, scores);
+          }
+        } else if (section == Section.Warning) {
+          // 2 possible transition to alignment, or to footer if no hits.
+          if (line.startsWith("Parameters:")) { // to footer
+            section = Section.Footer;
+            footer.append(line + newline);
+          } else if (line.startsWith(">")) { // transit to first alignment
+            section = Section.Alignment;
+            inDefline = true;
+            defline.append(line + newline);
+          } else {
+            warning.append(line + newline);
+          }
+        } else if (section == Section.Alignment) {
+          // 2 possible transitions, from current alignment to next alignment,
+          // or to footer;
+          if (line.startsWith("Parameters:")) { // to footer
+            // process the last alignment
+            parseAlignment(defline.toString(), alignment.toString(),
+                alignments, projects, recordClass);
+            
+            section = Section.Footer;
+            footer.append(line + newline);
+          } else if (line.startsWith(">")) { // to next alignment
+            // process the previous alignment
+            parseAlignment(defline.toString(), alignment.toString(),
+                alignments, projects, recordClass);
+            
+            inDefline = true;
+            defline = new StringBuilder();
+            alignment = new StringBuilder();
+            defline.append(line + newline);
+          } else {
+            // within an alignment, we can either be on defline or on body
+            if (inDefline) {
+              if (line.trim().startsWith("Length =")) { // end of defline
+                inDefline = false;
+                alignment.append(line + newline);
+              } else
+                defline.append(line + newline);
+            } else {
+              alignment.append(line + newline);
+            }
+          }
+        }
+      }
+    } finally {
+      in.close();
+    }
+
+    logger.debug("Total " + summaries.size() + " hits found.");
+
+    // post process on summary line
+    addLinks(summaries, projects, recordClass);
+    // prepare the results
+    return format(orderedColumns, header.toString(), footer.toString(),
+        warning.toString(), summaries, scores, alignments, projects, message);
+  }
+
+  private void parseSummaryLine(String line, Map<String, String> summaries,
+      Map<String, String> scores) throws WsfServiceException {
+    // parse out source id, need to add a '>' in front of summary line to form a
+    // proper defline.
+    String defline = ">" + line;
+    int[] sourceIdLoc = findSourceId(defline);
+    String sourceId = defline.substring(sourceIdLoc[0], sourceIdLoc[1]);
+    if (summaries.containsKey(sourceId))
+      throw new WsfServiceException("Duplicate source id in blast summary: "
+          + sourceId);
+
+    summaries.put(sourceId, line);
+
+    // parse out scores
+    int[] scoreLoc = findScore(line);
+    String score = line.substring(scoreLoc[0], scoreLoc[1]);
+    scores.put(sourceId, score);
+  }
+
+  private void parseAlignment(String defline, String alignment,
+      Map<String, String> aligments, Map<String, String> projects,
+      String recordClass) throws WdkModelException, WdkUserException,
+      SQLException, UnsupportedEncodingException, WsfServiceException {
+    // flaten the defline to a single line.
+    String line = defline.replaceAll("\\s+", " ");
+
+    // get sourceId & organism from flatened defline
+    int[] sourceIdLoc = findSourceId(line);
+    String sourceId = line.substring(sourceIdLoc[0], sourceIdLoc[1]);
+    int[] organismLoc = findOrganism(line);
+    String organism = line.substring(organismLoc[0], organismLoc[1]);
+
+    // get project from organism
+    String projectId = projectMapper.getProjectByOrganism(organism);
+    if (projects.containsKey(sourceId))
+      throw new WsfServiceException("Duplicate source id in blast alignment: "
+          + sourceId);
+    projects.put(sourceId, projectId);
+
+    // add link to defline
+    defline = insertIdUrl(defline, recordClass, projectId);
+
+    // construct alignment
+    aligments.put(sourceId, defline + alignment);
+  }
+
+  private void addLinks(Map<String, String> summaries,
+      Map<String, String> projects, String recordClass)
+      throws UnsupportedEncodingException {
+    String[] sourceIds = summaries.keySet().toArray(new String[0]);
+    for (String sourceId : sourceIds) {
+      String summary = summaries.get(sourceId);
+      String projectId = projects.get(sourceId);
+      summary = insertIdUrl(">" + summary, recordClass, projectId);
+      summary = summary.substring(1);// remove the leading ">"
+      summaries.put(sourceId, summary);
+    }
+  }
+
+  private String[][] format(String[] orderedColumns, String header,
+      String footer, String warning, Map<String, String> summaries,
+      Map<String, String> scores, Map<String, String> alignments,
+      Map<String, String> projects, StringBuffer message) {
+    // check if there is any hit, if not, format message & return empty array.
+    if (summaries.size() == 0) {
+      message.append(header).append(warning).append(footer);
+      return new String[0][orderedColumns.length];
     }
 
     // create a map of <column/position>
@@ -43,424 +209,44 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
       columns.put(orderedColumns[i], i);
     }
 
-    // Why is rows a Map instead of a simple String[]?
-    Map<String, String> rows = new HashMap<String, String>();
-    // blocks will contain the alignments
-    List<String[]> blocks = new ArrayList<String[]>();
-    StringBuffer header = new StringBuffer();
-    StringBuffer footer = new StringBuffer();
-    StringBuffer warnings = new StringBuffer();
-
-    // open output file, and read it
-    // Header; if there is a WARNING before the line "Sequences", it will be
-    // added to the header
-    String line;
-    BufferedReader in = new BufferedReader(new FileReader(outFile));
-    try {
-      do {
-        line = in.readLine();
-        logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
-        if (line == null) {
-          message.append(header.toString());
-          return new String[0][columns.size()];
-        }
-        // throw new IOException("Invalid BLAST output format");
-
-        // if this is a WARNING complaining about the numbers in some fasta
-        // files, do not append this line and the two following
-        if (!(line.contains("invalid") && line.contains("code")))
-          header.append(line + newline);
-        else {
-          line = in.readLine();
-          if (line != null)
-            line = in.readLine();
-          if (line == null) {
-            message.append(header.toString());
-            return new String[0][columns.size()];
-          }
-        }
-
-        // logger.debug("\nWB prepareResult(): HEADER: " + line + "\n");
-      } while ((!line.startsWith("Sequence")) && (!line.startsWith("FATAL")));
-
-      // show stderr
-      if (line.startsWith("FATAL")) {
-        // in BlastPlugin we append the output to the message, even when it is
-        // not empty.
-        // The output, when FATAL, contains the important info, so we do not
-        // need to keep adding lines to the message.
-        // line = in.readLine();
-        // header.append(line + newline);
-        message.append(header.toString());
-        // logger.debug("\nWB prepareResult(): message is: *******************\n"
-        // + message + "\n");
-        return new String[0][columns.size()];
-      }
-
-      // Tabular Rows; which starts after the ONE empty line
-      line = in.readLine(); // skip an empty line
-
-      // wublast truncates deflines in tabular lines, that is why in ORF fasta
-      // files the source ids are sometimes truncated -- now it is the
-      // organism...
-      // we introduce these variables to link score to correct alignment
-      // block, without id (with a counter instead)
-      Integer counter = 0;
-      String counterstring;
-      String rowline; // to rewrite the tabular row line with a link
-
-      // Loop on Tabular Rows
-      while ((line = in.readLine()) != null) {
-        logger.debug("\nWB prepareResult() Unless no hits, this should be a tabular row line: "
-            + line + "\n");
-
-        if (line.trim().length() == 0) {
-          logger.debug("\nWB prepareResult(): ***********Line length 0!!, END OF tabular rows\n");
-          logger.info("\n\n ********** NUMBER OF HITS: " + rows.size() + "\n\n");
-          break;
-        }
-
-        // insert bookmark: link score to alignment block name=#counter
-        // blastplugin does this at the end of execute() --insertBookmark()
-        // line = insertLinkToBlock(line,counter);
-
-        // insert link to record page, in source_id, when block is read,
-        // so we do not have the problem of truncated deflines
-        // line = insertIdUrl(line, dbType);
-
-        counterstring = counter.toString();
-        rows.put(counterstring, line);
-        counter++;
-
-      }// end while
-
-      // END OF READING TABULAR ROWS -- start reading alignments
-
-      // We need to deal with a possible WARNING between tabular rows and
-      // alignments: move it to header
-      line = in.readLine(); // skip an empty line
-      if (line != null) {
-
-        // logger.info("\nWB prepareResult() This line is supposed to be empty
-        // or could have a WARNING or keyword NONE: " + line+"\n");
-        header.append(newline + line + newline);
-
-        if (line.indexOf("NONE") >= 0) {
-          message.append(header.toString());
-          return new String[0][columns.size()];
-        }
-
-        if (line.trim().startsWith("WARNING")) {
-          line = in.readLine(); // get next line
-          // logger.info("\nWB prepareResult() This line is continuation of
-          // warning line: " + line+"\n");
-          header.append(line + newline);
-          line = in.readLine(); // get next line
-          // logger.info("\nWB prepareResult() This line is supposed to be
-          // empty: " + line+"\n");
-          header.append(line + newline);
-          line = in.readLine(); // get next line
-          // logger.info("\nWB prepareResult() This line is supposed to be
-          // empty: " + line+"\n");
-        }
-      }
-
-      // Extract alignment blocks
-      String hit_organism, hit_projectId = "", hit_sourceId = "";
-
-      // alignment will have the following []:
-      // COLUMN_ID,COLUMN_PROJECT_ID,COLUMN_ROW,COLUMN_BLOCK,COLUMN_HEADER,COLUMN_FOOTER
-      String[] alignment = null;
-      // block will be copied into alignment[COLUMN_BLOCK]
-      StringBuffer block = null;
-      // miniblock is used to concatenate the lines that make up the full
-      // defline in each hit
-      StringBuffer miniblock = null;
-
-      counter = 0;
-
-      String myLink; // for gbrowse link
-
-      while ((line = in.readLine()) != null) {
-        // found a warning before parameters
-        if (line.trim().startsWith("WARNING")) {
-
-          logger.debug("\nWB prepareResult() Found WARNING: " + line + "\n");
-          warnings.append(line + newline);
-          line = in.readLine(); // get next line
-          warnings.append(line + newline);
-          line = in.readLine(); // get next line
-          warnings.append(line + newline);
-          line = in.readLine(); // get next line
-          warnings.append(line + newline);
-
-          if (line == null)
-            break;
-        }
-
-        // reach the footer part
-        if (line.trim().startsWith("Parameters")) {
-          logger.info("\nWB prepareResult(): FOOTER (found line Parameters): "
-              + line + "\n");
-          // output the last block, if have
-          if (alignment != null) {
-            alignment[columns.get(WuBlastPlugin.COLUMN_BLOCK)] = block.toString();
-
-            // add gbrowse link here START
-            if (dbType.equals("Genomics")) {
-              String alignLine = block.toString();
-              Integer indx = alignLine.indexOf("Score");
-              String subline = alignLine.substring(indx);
-              Integer indx1;
-
-              Pattern pattern;
-              Matcher matcher;
-              // instead of positioning the Gbrowse link before "Strand=....."
-              // we set it before "Positives = ....", so it works for tblastn
-              // and tblastx
-              String[] x = Pattern.compile("Positives =").split(subline);
-              for (int i = 1; i < x.length; i++) {
-                String hspStart = "";
-                String hspEnd = "";
-
-                // discard lines between HSPs
-                x[i] = x[i].replaceAll("\\s*Minus Strand HSPs(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Plus Strand HSPs(.*)\\z", "");
-
-                // get start of HSP
-                pattern = Pattern.compile("Sbjct:\\s*\\d+");
-                matcher = pattern.matcher(x[i].trim());
-                if (matcher.find()) {
-                  hspStart = matcher.group();
-                  hspStart = hspStart.split("Sbjct:\\s*")[1];
-                }
-                // get end of HSP
-                x[i] = x[i].replaceAll("\\s*Identities(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Score(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Minus Strand HSPs:(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Plus Strand HSPs:(.*)\\z", "");
-                pattern = Pattern.compile("\\d+\\z");
-                matcher = pattern.matcher(x[i].trim());
-                if (matcher.find()) {
-                  hspEnd = matcher.group();
-                }
-                // add gbrowse link just before the 'Strand = Minus / Plus' in
-                // HSP hit
-                if (hspStart.length() > 0 || hspEnd.length() > 0) {
-                  myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd,
-                      hit_projectId);
-                  indx1 = block.indexOf(x[i]);
-                  block.insert(indx1 - 11, myLink); // 11 is the length of
-                                                    // "Positives =" pattern
-                  alignment[columns.get(WuBlastPlugin.COLUMN_BLOCK)] = block.toString();
-                } else {
-                  logger.info("prepareResult() hspStart/hspEnd not found in "
-                      + x[i] + "\n");
-                }
-              }
-            }
-            // add gbrowse link here END
-
-            blocks.add(alignment);
-          }
-          break;
-        }
-
-        // reach a new start of alignment block
-        if (line.length() > 0 && line.charAt(0) == '>') {
-          logger.debug("\n\n\n-----------------\nWB prepareResult() This should be a new block: "
-              + line + "\n");
-
-          // output the previous block, if have
-          if (alignment != null) {
-            alignment[columns.get(WuBlastPlugin.COLUMN_BLOCK)] = block.toString();
-
-            // add gbrowse link here START
-            if (dbType.equals("Genomics")) {
-              String alignLine = block.toString();
-              Integer indx = alignLine.indexOf("Score");
-              String subline = alignLine.substring(indx);
-              Integer indx1;
-
-              Pattern pattern;
-              Matcher matcher;
-
-              String[] x = Pattern.compile("Positives =").split(subline);
-              for (int i = 1; i < x.length; i++) {
-                String hspStart = "";
-                String hspEnd = "";
-
-                // discard lines between HSPs
-                x[i] = x[i].replaceAll("\\s*Minus Strand HSPs(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Plus Strand HSPs(.*)\\z", "");
-
-                // get start of HSP
-                pattern = Pattern.compile("Sbjct:\\s*\\d+");
-                matcher = pattern.matcher(x[i].trim());
-                if (matcher.find()) {
-                  hspStart = matcher.group();
-                  hspStart = hspStart.split("Sbjct:\\s*")[1];
-                }
-                // get end of HSP
-                x[i] = x[i].replaceAll("\\s*Identities(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Score(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Minus Strand HSPs:(.*)\\z", "");
-                x[i] = x[i].replaceAll("\\s*Plus Strand HSPs:(.*)\\z", "");
-                pattern = Pattern.compile("\\d+\\z");
-                matcher = pattern.matcher(x[i].trim());
-                if (matcher.find()) {
-                  hspEnd = matcher.group();
-                }
-                // add gbrowse link just before the 'Strand = Minus / Plus' in
-                // HSP hit
-                if (hspStart.length() > 0 && hspEnd.length() > 0) {
-                  myLink = insertGbrowseLink(hit_sourceId, hspStart, hspEnd,
-                      hit_projectId);
-                  indx1 = block.indexOf(x[i]);
-                  block.insert(indx1 - 11, myLink); // 11 is length of
-                                                    // "Positives =" pattern
-                  alignment[columns.get(WuBlastPlugin.COLUMN_BLOCK)] = block.toString();
-                } else {
-                  logger.info("prepareResult() hspStart/hspEnd not found in "
-                      + x[i] + "\n");
-                }
-              }
-            }
-            // add gbrowse link here END
-
-            blocks.add(alignment);
-          }
-          // create a new alignment and block
-          alignment = new String[orderedColumns.length];
-          block = new StringBuffer();
-
-          // for deflines where source id is TOO long so
-          // the keyword "organism" in blast report appears in the second line :
-          // concatenate lines of the defline so we can find "organism"
-          // with the regex provided in config file
-          miniblock = new StringBuffer();
-          while (!(line.trim().startsWith("Length ="))) {
-            // logger.debug("\nWB prepareResult() concatenating defline: " +
-            // line + "\n");
-            miniblock.append(line.trim() + " ");
-            line = in.readLine(); // get next line
-            if (line == null)
-              break;
-          }
-          miniblock.append("\n" + line);
-          line = miniblock.toString();
-
-          // --------------- Making the link to record page
-          // get source id
-          int[] sourceIdPos = findSourceId(line);
-          hit_sourceId = line.substring(sourceIdPos[0], sourceIdPos[1]);
-
-          // get organism
-          int[] organismPos = findOrganism(line);
-          hit_organism = line.substring(organismPos[0], organismPos[1]);
-          // logger.debug("\nWB prepareResult() Organism extracted from defline is: "
-          // + hit_organism);
-
-          hit_projectId = projectMapper.getProjectByOrganism(hit_organism);
-          // logger.debug("\nWB prepareResult() projectId : " +
-          // hit_projectId+"\n\n");
-          alignment[columns.get(WuBlastPlugin.COLUMN_PROJECT_ID)] = hit_projectId;
-
-          // logger.info("\n\n\n\n\nWB prepareResult(): to insert URL in alignments: line is: "
-          // + line + "\n");
-          // Insert link to gene page, in source_id
-          // ncbi plugin does not do this
-          line = insertIdUrl(line, recordClass, hit_projectId);
-
-          // --------------
-          // insert link in tabular row now that we know the organism
-          counterstring = counter.toString();
-          rowline = rows.get(counterstring);
-          // logger.info("\nWB prepareResult(): alignments: to insert URL in TABROW: "
-          // + rowline + "\n");
-          if (!(dbType.contains("ORF") && hit_organism.contains("Crypto")))
-            rowline = insertIdUrl(rowline, recordClass, hit_projectId);
-          if (rowline != null)
-            rows.put(counterstring, rowline);
-          counter++;
-          // --------------
-
-          alignment[columns.get(WuBlastPlugin.COLUMN_ID)] = hit_sourceId;
-
-        }
-        // add the line to the block
-        if (line != null)
-          block.append(line + newline);
-
-      }// end while
-
-      // get the rest as the footer part
-      if (warnings.length() != 0)
-        footer.append(warnings.toString());
-      footer.append(line + newline);
-      while ((line = in.readLine()) != null) {
-        if (line.contains("Database") || line.contains("Title")) {
-          String[] singleDbs = line.split(";");
-          for (int i = 0; i < singleDbs.length; i++) {
-            footer.append(singleDbs[i] + newline);
-          }
-        } else
-          footer.append(line + newline);
-      }
-    } finally {
-      in.close();
-    }
-
-    logger.debug("\n\n\n--------------------------------------------\n\nWB prepareResult(): Information stored in Stringbuffers and tables, now copy info into results[][]\n\n");
-
-    // now reconstruct the result
-    int size = Math.max(1, blocks.size());
-    // logger.info("\n---------WB prepareResult(): size is of Results is: "
-    // + size + "\n");
-
-    String[][] results = new String[size][orderedColumns.length];
-    for (int i = 0; i < blocks.size(); i++) {
-      int counter = i;
-      String counterstring = Integer.toString(counter);
-      String[] alignment = blocks.get(i);
-
+    String[][] results = new String[summaries.size()][orderedColumns.length];
+    int i = 0;
+    for (String sourceId : summaries.keySet()) {
       // copy ID
       int idIndex = columns.get(WuBlastPlugin.COLUMN_ID);
-      results[i][idIndex] = alignment[idIndex];
+      results[i][idIndex] = sourceId;
 
       // copy counter
       int counterIndex = columns.get(WuBlastPlugin.COLUMN_COUNTER);
-      results[i][counterIndex] = counterstring;
+      results[i][counterIndex] = Integer.toString(i + 1);
 
       // copy PROJECT_ID
       int projectIdIndex = columns.get(WuBlastPlugin.COLUMN_PROJECT_ID);
-      results[i][projectIdIndex] = alignment[projectIdIndex];
-      // logger.info("\n---------WB prepareResult(): copied
-      // Identifier\n");
+      results[i][projectIdIndex] = projects.get(sourceId);
 
-      // copy block
-      int blockIndex = columns.get(WuBlastPlugin.COLUMN_BLOCK);
-      results[i][blockIndex] = alignment[blockIndex];
+      // copy alignment
+      int alignmentIndex = columns.get(WuBlastPlugin.COLUMN_ALIGNMENT);
+      results[i][alignmentIndex] = alignments.get(sourceId);
       // logger.info("\nWB prepareResult(): copied block\n");
 
-      // copy tabular row
-      int rowIndex = columns.get(WuBlastPlugin.COLUMN_ROW);
-      for (String id : rows.keySet()) {
-        // if (alignment[idIndex].startsWith(id)) {
-        if (id.equalsIgnoreCase(counterstring)) {
-          results[i][rowIndex] = rows.get(id);
-          // logger.info("\nWB prepareResult(): copied tabular
-          // row\n");
-          break;
-        }
-      }
+      // copy summary row
+      int summaryIndex = columns.get(WuBlastPlugin.COLUMN_SUMMARY);
+      results[i][summaryIndex] = summaries.get(sourceId);
+      
+      i++;
     }
+
     // copy the header and footer
     results[0][columns.get(WuBlastPlugin.COLUMN_HEADER)] = header.toString();
-    results[size - 1][columns.get(WuBlastPlugin.COLUMN_FOOTER)] = footer.toString();
+    results[summaries.size() - 1][columns.get(WuBlastPlugin.COLUMN_FOOTER)] = footer.toString();
     // logger.info("\nWB prepareResult(): copied header and footer\n");
+
+    // copy warning to the first alignment, if there is any warning
+    if (warning.length() > 0) {
+      int alignmentIndex = columns.get(WuBlastPlugin.COLUMN_ALIGNMENT);
+      results[0][alignmentIndex] = warning + results[0][alignmentIndex];
+    }
 
     return results;
   }
-
 }

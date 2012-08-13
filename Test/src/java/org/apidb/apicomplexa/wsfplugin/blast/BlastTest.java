@@ -24,10 +24,10 @@ import org.junit.Test;
 
 public class BlastTest {
 
-  private final String[] columns = { AbstractBlastPlugin.COLUMN_BLOCK,
+  private final String[] columns = { AbstractBlastPlugin.COLUMN_ALIGNMENT,
       AbstractBlastPlugin.COLUMN_COUNTER, AbstractBlastPlugin.COLUMN_FOOTER,
       AbstractBlastPlugin.COLUMN_HEADER, AbstractBlastPlugin.COLUMN_ID,
-      AbstractBlastPlugin.COLUMN_PROJECT_ID, AbstractBlastPlugin.COLUMN_ROW };
+      AbstractBlastPlugin.COLUMN_PROJECT_ID, AbstractBlastPlugin.COLUMN_SUMMARY };
 
   private static final String SYS_PROJECT_HOME = "project_home";
 

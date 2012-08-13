@@ -39,8 +39,8 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   public static final String COLUMN_ID = "Identifier";
   public static final String COLUMN_HEADER = "Header";
   public static final String COLUMN_FOOTER = "Footer";
-  public static final String COLUMN_ROW = "TabularRow";
-  public static final String COLUMN_BLOCK = "Alignment";
+  public static final String COLUMN_SUMMARY = "TabularRow";
+  public static final String COLUMN_ALIGNMENT = "Alignment";
   public static final String COLUMN_PROJECT_ID = "ProjectId";
   public static final String COLUMN_COUNTER = "Counter";
 
@@ -126,7 +126,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    */
   public String[] getColumns() {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_ID, COLUMN_HEADER,
-        COLUMN_FOOTER, COLUMN_ROW, COLUMN_BLOCK, COLUMN_COUNTER };
+        COLUMN_FOOTER, COLUMN_SUMMARY, COLUMN_ALIGNMENT, COLUMN_COUNTER };
   }
 
   /*
