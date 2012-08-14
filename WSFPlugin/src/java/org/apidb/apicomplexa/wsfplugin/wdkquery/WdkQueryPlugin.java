@@ -295,6 +295,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 resultSize = 0;
             } else if (msg.indexOf("does not contain") != -1) {
                 resultSize = -2; // query set or query doesn't exist
+								//		} else if (msg.indexOf("encountered an invalid term") != -1) {
+								//    resultSize = 0; // parameter value relates to a different comp site
             } else if (msg.indexOf("does not include") != -1) {
                 resultSize = -2; // query set or query doesn't exist
             } else if (msg.contains("datasets value '' has an error: Missing the value")) {
@@ -305,12 +307,19 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 ex.printStackTrace();
                 resultSize = -1; // actual error, can't handle
             }
-            // } catch(WdkUserException ex){
-            // logger.info("WdkUSERexception IN execute()" + ex.toString());
-            // ex.printStackTrace();
-            // resultSize = -2;
-        }
-        catch (Exception ex) {
+				} catch(WdkUserException ex){
+						logger.info("WdkUSERexception IN execute()" + ex.toString());
+						String msg = ex.formatErrors();
+            logger.info("Message = " + msg);
+						if (msg.indexOf("encountered an invalid term") != -1) {
+								   resultSize = 0; // parameter value relates to a different comp site
+						}
+						else {
+                ex.printStackTrace();
+                resultSize = -1; // actual error, can't handle
+						}
+
+        } catch (Exception ex) {
             logger.info("OTHERexception IN execute()" + ex.toString());
 
             ex.printStackTrace();
