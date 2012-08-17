@@ -59,7 +59,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   /**
    * The maximum size of the blast output file that the plugin can handle.
    */
-  private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
+  private static final long MAX_FILE_SIZE = 40 * 1024 * 1024;
 
   private static Logger logger = Logger.getLogger(AbstractBlastPlugin.class);
 
@@ -212,7 +212,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
 					throw new WsfServiceException("Sorry, your Blast result is too big ("
 																				+ outFile.length()/1048576 + "MB > " 
 																				+ MAX_FILE_SIZE / 1048576 + "MB)." 
-																				+ "Please try a smaller number on the V and B parameters.");
+																				+ "Please try a smaller number for the maximum descriptions (V) and maximum alignments (B) parameters.");
 
       // if the invocation succeeds, prepare the result; otherwise,
       // prepare results for failure scenario
@@ -220,7 +220,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
       StringBuffer message = new StringBuffer();
       String[][] result = resultFormatter.formatResult(orderedColumns, outFile,
           dbType, recordClass, message);
-      logger.info("\nResult prepared");
+      logger.info("\n*****************Result prepared\n\n\n");
 
       // logger.info(Formatter.printArray(result));
 
