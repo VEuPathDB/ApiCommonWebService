@@ -365,10 +365,14 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   }
 
   protected String getLocation(int length, int start, int stop, boolean reversed) {
+    // show the location at base 1.
     if (reversed) {
-      int newStart = length - stop;
-      stop = length - start;
+      int newStart = length - stop + 1;
+      stop = length - start + 1;
       start = newStart;
+    } else {
+      start += 1;
+      stop += 1;
     }
     String location = Integer.toString(start);
     if (start != stop)
