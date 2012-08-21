@@ -20,7 +20,7 @@
     <model name="MicrosporidiaDB"
            projectId="MicrosporidiaDB"
            url="(URL FOR WSF WEB SERVICE)" 
-           marker="^Encephalitozoon\s*.*|^Enterocytozoon\s*.*|^Anncaliia\s*.*|^Edhazardia\s*.*|^Nematocida\s*.*|^Nosema\s*.*|^Octosporea\s*.*|^Vavraia\s*.*|^Vittaforma\s*.*" />
+           marker="^Encephalitozoon\s*.*|^Enterocytozoon\s*.*|^Anncaliia\s*.*|^Edhazardia\s*.*|^Hamiltosporidium\s*.*|^Nematocida\s*.*|^Nosema\s*.*|^Octosporea\s*.*|^Vavraia\s*.*|^Vittaforma\s*.*" />
     <model name="PiroplasmaDB"
            projectId="PiroplasmaDB"
            url="(URL FOR WSF WEB SERVICE)" 
