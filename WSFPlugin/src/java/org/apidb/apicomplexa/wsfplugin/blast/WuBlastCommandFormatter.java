@@ -57,7 +57,7 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
     // add extra options into the command
     String extraOptions = config.getExtraOptions();
     if (extraOptions != null && extraOptions.trim().length() > 0)
-        cmds.add(extraOptions);
+      cmds.add(extraOptions);
 
     for (String param : params.keySet()) {
       if (!(param.contains("filter") && params.get(param).equals("no"))) {
@@ -66,8 +66,17 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
         cmds.add(param);
         cmds.add(params.get(param));
       }
-
     }
+
+    // make sure the -v & -b are the same
+    if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS)) {
+      String alignments = params.get(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS);
+      params.put(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION, alignments);
+    } else if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION)) {
+      String descs = params.get(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION);
+      params.put(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS, descs);
+    }
+
     // logger.info("\n\nWB prepareParameters(): " + blastDbs + " INFERRED
     // from (" + dbType + ", '" + dbOrgs + "')");
     // logger.info("\n\nWB prepareParameters(): " + blastApp + " inferred

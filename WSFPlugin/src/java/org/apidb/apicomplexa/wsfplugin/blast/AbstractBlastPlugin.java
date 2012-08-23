@@ -50,6 +50,10 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
   public static final String PARAM_SEQUENCE = "BlastQuerySequence";
   public static final String PARAM_RECORD_CLASS = "BlastRecordClass";
+  
+  // optional parameters
+  public static final String PARAM_MAX_ALIGNMENTS = "-b";
+  public static final String PARAM_MAX_DESCRIPTION = "-v";
 
   /**
    * remove files older than a week (500000000), in milliseconds.
@@ -59,7 +63,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   /**
    * The maximum size of the blast output file that the plugin can handle.
    */
-  private static final long MAX_FILE_SIZE = 40 * 1024 * 1024;
+  public static final long MAX_FILE_SIZE = 30 * 1024 * 1024;
 
   private static Logger logger = Logger.getLogger(AbstractBlastPlugin.class);
 
@@ -208,11 +212,11 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
 
       // check the size of the blast output, and throws error if the result is
       // too big.
-      if (outFile.length() > MAX_FILE_SIZE)
-					throw new WsfServiceException("Sorry, your Blast result is too big ("
-																				+ outFile.length()/1048576 + "MB > " 
-																				+ MAX_FILE_SIZE / 1048576 + "MB)." 
-																				+ "Please try a smaller number for the maximum descriptions (V) and maximum alignments (B) parameters.");
+//      if (outFile.length() > MAX_FILE_SIZE)
+//					throw new WsfServiceException("Sorry, your Blast result is too big ("
+//																				+ outFile.length()/1048576 + "MB > " 
+//																				+ MAX_FILE_SIZE / 1048576 + "MB)." 
+//																				+ "Please try a smaller number for the maximum descriptions (V) and maximum alignments (B) parameters.");
 
       // if the invocation succeeds, prepare the result; otherwise,
       // prepare results for failure scenario

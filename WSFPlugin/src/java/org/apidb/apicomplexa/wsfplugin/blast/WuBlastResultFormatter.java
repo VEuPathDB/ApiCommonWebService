@@ -43,6 +43,9 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     // {sourceId, alignment}
     Map<String, String> alignments = new LinkedHashMap<>();
 
+    // if the data exceeds the limit, we will skip remaining alignments
+    boolean skipAlignment = (outFile.length() > AbstractBlastPlugin.MAX_FILE_SIZE);
+
     try {
       StringBuilder defline = new StringBuilder();
       StringBuilder alignment = new StringBuilder();
@@ -93,15 +96,15 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           if (line.startsWith("Parameters:")) { // to footer
             // process the last alignment
             parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass);
-            
+                alignments, projects, recordClass, skipAlignment);
+
             section = Section.Footer;
             footer.append(line + newline);
           } else if (line.startsWith(">")) { // to next alignment
             // process the previous alignment
             parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass);
-            
+                alignments, projects, recordClass, skipAlignment);
+
             inDefline = true;
             defline = new StringBuilder();
             alignment = new StringBuilder();
@@ -125,6 +128,14 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     }
 
     logger.debug("Total " + summaries.size() + " hits found.");
+
+    // if alignment has been omitted, need a warning message
+    if (skipAlignment) {
+      warning.append(newline + "WARNING: Your BLAST result is too big, and "
+          + "the alignments have been" + newline + "         truncated "
+          + "automatically. Please choose more specific sequence " + newline
+          + "         or parameters" + newline + newline);
+    }
 
     // post process on summary line
     addLinks(summaries, projects, recordClass);
@@ -154,8 +165,9 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
 
   private void parseAlignment(String defline, String alignment,
       Map<String, String> aligments, Map<String, String> projects,
-      String recordClass) throws WdkModelException, WdkUserException,
-      SQLException, UnsupportedEncodingException, WsfServiceException {
+      String recordClass, boolean skipAlignment) throws WdkModelException,
+      WdkUserException, SQLException, UnsupportedEncodingException,
+      WsfServiceException {
     // flaten the defline to a single line.
     String line = defline.replaceAll("\\s+", " ");
 
@@ -172,11 +184,13 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           + sourceId);
     projects.put(sourceId, projectId);
 
-    // add link to defline
-    defline = insertIdUrl(defline, recordClass, projectId);
+    if (!skipAlignment) {
+      // add link to defline
+      defline = insertIdUrl(defline, recordClass, projectId);
 
-    // construct alignment
-    aligments.put(sourceId, defline + alignment);
+      // construct alignment
+      aligments.put(sourceId, defline + alignment);
+    }
   }
 
   private void addLinks(Map<String, String> summaries,
@@ -232,7 +246,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
       // copy summary row
       int summaryIndex = columns.get(WuBlastPlugin.COLUMN_SUMMARY);
       results[i][summaryIndex] = summaries.get(sourceId);
-      
+
       i++;
     }
 
