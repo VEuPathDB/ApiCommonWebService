@@ -191,7 +191,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
         String processName = "org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin";
 
-        // Spliting the QueryName up for Mapping
+        // Splitting the QueryName up for Mapping
         Map<String, String> context = request.getContext();
         String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
         String paramName = context.get(Utilities.QUERY_CTX_PARAM);
@@ -232,7 +232,6 @@ public class ApiFedPlugin extends AbstractPlugin {
                         getRemoteCalls(doAll, sites);
                     }
                 } else {
-
                     String orgsString = params.get(orgName);
                     logger.debug("orgsString is:---|" + orgsString + "|----\n");
                     getRemoteCalls(orgsString, sites);
@@ -261,7 +260,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         // Object to hold the Threads
         WdkQuery[] compThreads = new WdkQuery[sites.length];
 
-        // Preparing and executing the propriate component sites for this Query
+        // Preparing and executing the appropriate component sites for this Query
         logger.info("invoking the web services");
         logger.info("******if the next message you see says: *Entering Combine "
                 + "Results* we are not accessing any component site. Possible causes are:\n"
@@ -490,25 +489,25 @@ public class ApiFedPlugin extends AbstractPlugin {
 
                             for (String[] rec : answer) {
                                 int keyVal = 0;
-                                if (!isParamResult && hasProjectId
-                                        && primaryKey == null)
-                                    rec = insertProjectId(rec, projectIndex,
-                                            compResult.getSiteName());
-                                if (isParamResult)
-                                    keyVal = Arrays.deepToString(rec)
-                                            .hashCode(); // Use a HashCode to
-                                // prevent duplicate
-                                // values from
-                                // parameters
-                                else
-                                    keyVal = i; // Use incremented integer for
-                                // results to ensure that a
-                                // hash function does not
-                                // inadvertently ommit results
+                                if (!isParamResult && hasProjectId && primaryKey == null) {
+                                    rec = insertProjectId(rec, projectIndex, compResult.getSiteName());
+                                }
+                                if (isParamResult) {
+                                	// Use a HashCode to prevent duplicate
+                                    // values from parameters
+                                    keyVal = Arrays.deepToString(rec).hashCode();
+                                }
+                                else {
+                                	// Use incremented integer for results to ensure that a
+                                    // hash function does not inadvertently omit results
+                                    keyVal = i;
+                                }
                                 // logger.debug("\n\n*********\n***rec[0] and
                                 // rec[1] are: " + rec[0] + " and " + rec[1]);
                                 // combined.put(Arrays.deepHashCode(rec), rec);
-                                combined.put(keyVal, rec);
+                                if (!combined.containsKey(keyVal)) {
+                                	combined.put(keyVal, rec);
+                                }
                                 // combined.put(i, rec);
                                 // logger.debug("\n*******\n**********Total
                                 // Number of Rows in Combined Result is
@@ -520,7 +519,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                             }// Loop for records
 
                         }// if answer[0][0] = ERROR
-                    }// if answer is 0 lentgh
+                    }// if answer is 0 length
                 }// if answer == null
             }// if result = null
         }// Loop for all Results
@@ -566,7 +565,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         return newRec;
     }
 
-    // // Method to remove the projectId column from the colums sent to the
+    // // Method to remove the projectId column from the columns sent to the
     // // component sites
     // private String[] removeProjectId(String[] cols) {
     // hasProjectId = false;
@@ -593,7 +592,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     // return newCols;
     // }
 
-    // Inner Class to do invokations
+    // Inner Class to do invocations
     class CompResult {
         private String siteName;
         private String[][] answer;
