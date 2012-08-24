@@ -1,5 +1,6 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -7,7 +8,11 @@ import java.util.Vector;
 
 import org.gusdb.wsf.plugin.WsfServiceException;
 
+import org.apache.log4j.Logger;
+
 public class WuBlastCommandFormatter extends AbstractCommandFormatter {
+
+  private static final Logger logger = Logger.getLogger(WuBlastCommandFormatter.class);
 
   @Override
   public String[] formatCommand(Map<String, String> params, File seqFile,
@@ -43,6 +48,19 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
         dbType = "EST";
     }
 
+    // make sure the -v & -b are the same
+    if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS)) {
+      String alignments = params.get(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS);
+      logger.debug(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS + " = " + alignments);
+
+      params.put(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION, alignments);
+    } else if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION)) {
+      String descs = params.get(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION);
+      logger.debug(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION + " = " + descs);
+
+      params.put(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS, descs);
+    }
+
     // now prepare the commandline
     cmds.add(config.getBlastPath() + "/" + blastApp);
 
@@ -66,15 +84,6 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
         cmds.add(param);
         cmds.add(params.get(param));
       }
-    }
-
-    // make sure the -v & -b are the same
-    if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS)) {
-      String alignments = params.get(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS);
-      params.put(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION, alignments);
-    } else if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION)) {
-      String descs = params.get(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION);
-      params.put(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS, descs);
     }
 
     // logger.info("\n\nWB prepareParameters(): " + blastDbs + " INFERRED
