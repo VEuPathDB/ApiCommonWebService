@@ -207,7 +207,6 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     StringBuilder buffer = new StringBuilder();
     String[] pieces = alignment.split("Positives =");
     for (String piece : pieces) {
-      if (buffer.length() > 0) buffer.append("Positives = "); 
       
       Matcher matcher = SUBJECT_PATTERN.matcher(piece);
       int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
@@ -225,8 +224,8 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
         gb_url += "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name="
             + sourceId + ":" + min + "-" + max;
         buffer.append("\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">"
-            + "Link to Genome Browser</font></B></a>,   ");
-      }
+            + "Link to Genome Browser</font></B></a>,   Positives = ");
+      } else if (buffer.length() > 0) buffer.append("Positives = ");
       buffer.append(piece);
     }
     return buffer.toString();
