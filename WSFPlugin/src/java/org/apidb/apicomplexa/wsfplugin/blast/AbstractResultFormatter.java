@@ -92,15 +92,4 @@ public abstract class AbstractResultFormatter implements ResultFormatter {
     return sb.toString();
 
   }
-
-  protected String insertGbrowseLink(String hit_sourceId, String hspStart,
-      String hspEnd, String projectId) {
-    String gb_url = projectMapper.getBaseUrl(projectId);
-
-    gb_url += "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name="
-        + hit_sourceId + ":" + hspStart + "-" + hspEnd;
-    String gb_link = "\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">"
-        + "Link to Genome Browser</font></B></a>,   ";
-    return gb_link;
-  }
 }

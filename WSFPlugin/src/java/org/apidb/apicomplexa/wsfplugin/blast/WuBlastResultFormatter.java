@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wdk.model.WdkModelException;
@@ -24,6 +26,8 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
   public static final String newline = System.getProperty("line.separator");
 
   private static final Logger logger = Logger.getLogger(NcbiBlastResultFormatter.class);
+  
+  private static final Pattern SUBJECT_PATTERN = Pattern.compile("Sbjct\\:\\s+(\\d+)\\s+\\S+\\s+(\\d+)");
 
   @Override
   public String[][] formatResult(String[] orderedColumns, File outFile,
@@ -96,14 +100,14 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           if (line.startsWith("Parameters:")) { // to footer
             // process the last alignment
             parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass, skipAlignment);
+                alignments, projects, recordClass, dbType, skipAlignment);
 
             section = Section.Footer;
             footer.append(line + newline);
           } else if (line.startsWith(">")) { // to next alignment
             // process the previous alignment
             parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass, skipAlignment);
+                alignments, projects, recordClass, dbType, skipAlignment);
 
             inDefline = true;
             defline = new StringBuilder();
@@ -165,9 +169,9 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
 
   private void parseAlignment(String defline, String alignment,
       Map<String, String> aligments, Map<String, String> projects,
-      String recordClass, boolean skipAlignment) throws WdkModelException,
-      WdkUserException, SQLException, UnsupportedEncodingException,
-      WsfServiceException {
+      String recordClass, String dbType, boolean skipAlignment)
+      throws WdkModelException, WdkUserException, SQLException,
+      UnsupportedEncodingException, WsfServiceException {
     // flaten the defline to a single line.
     String line = defline.replaceAll("\\s+", " ");
 
@@ -185,12 +189,47 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     projects.put(sourceId, projectId);
 
     if (!skipAlignment) {
+      // add gbrowse link here START
+      if (dbType.equals("Genomics")) {
+        alignment = insertGbrowseLink(sourceId, projectId, alignment);
+      }
+      // add gbrowse link here END
+
       // add link to defline
       defline = insertIdUrl(defline, recordClass, projectId);
 
       // construct alignment
       aligments.put(sourceId, defline + alignment);
     }
+  }
+  
+  private String insertGbrowseLink(String sourceId, String projectId, String alignment) {
+    StringBuilder buffer = new StringBuilder();
+    String[] pieces = alignment.split("Positives =");
+    for (String piece : pieces) {
+      if (buffer.length() > 0) buffer.append("Positives = "); 
+      
+      Matcher matcher = SUBJECT_PATTERN.matcher(piece);
+      int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+      while (matcher.find()) {
+        int start = Integer.valueOf(matcher.group(1));
+        int end = Integer.valueOf(matcher.group(2));
+        if (min > start) min = start;
+        if (min > end) min = end;
+        if (max < start) max = start;
+        if (max < end) max = end;
+      }
+      // check if any subject has been found
+      if (min <= max) {
+        String gb_url = projectMapper.getBaseUrl(projectId);
+        gb_url += "/cgi-bin/gbrowse/" + projectId.toLowerCase() + "/?name="
+            + sourceId + ":" + min + "-" + max;
+        buffer.append("\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">"
+            + "Link to Genome Browser</font></B></a>,   ");
+      }
+      buffer.append(piece);
+    }
+    return buffer.toString();
   }
 
   private void addLinks(Map<String, String> summaries,
