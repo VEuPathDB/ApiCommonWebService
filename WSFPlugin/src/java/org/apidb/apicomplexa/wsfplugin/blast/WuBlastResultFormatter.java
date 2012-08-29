@@ -26,7 +26,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
   public static final String newline = System.getProperty("line.separator");
 
   private static final Logger logger = Logger.getLogger(NcbiBlastResultFormatter.class);
-  
+
   private static final Pattern SUBJECT_PATTERN = Pattern.compile("Sbjct\\:\\s+(\\d+)\\s+\\S+\\s+(\\d+)");
 
   @Override
@@ -48,8 +48,8 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     Map<String, String> alignments = new LinkedHashMap<>();
 
     // if the data exceeds the limit, we will skip remaining alignments
-    boolean skipAlignment = (outFile.length() > AbstractBlastPlugin.MAX_FILE_SIZE);
-
+    boolean skipAlignment = false;
+    long alignmentSize = 0;
     try {
       StringBuilder defline = new StringBuilder();
       StringBuilder alignment = new StringBuilder();
@@ -99,15 +99,17 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
           // or to footer;
           if (line.startsWith("Parameters:")) { // to footer
             // process the last alignment
-            parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass, dbType, skipAlignment);
+            alignmentSize += parseAlignment(defline.toString(),
+                alignment.toString(), alignments, projects, recordClass,
+                dbType, skipAlignment);
 
             section = Section.Footer;
             footer.append(line + newline);
           } else if (line.startsWith(">")) { // to next alignment
             // process the previous alignment
-            parseAlignment(defline.toString(), alignment.toString(),
-                alignments, projects, recordClass, dbType, skipAlignment);
+            alignmentSize += parseAlignment(defline.toString(),
+                alignment.toString(), alignments, projects, recordClass,
+                dbType, skipAlignment);
 
             inDefline = true;
             defline = new StringBuilder();
@@ -125,6 +127,11 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
               alignment.append(line + newline);
             }
           }
+
+          // check if the alignment section exceeds the limit
+          if (!skipAlignment
+              && alignmentSize >= AbstractBlastPlugin.MAX_DATA_SIZE)
+            skipAlignment = true;
         }
       }
     } finally {
@@ -135,10 +142,11 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
 
     // if alignment has been omitted, need a warning message
     if (skipAlignment) {
-      warning.append(newline + "WARNING: Your BLAST result is too big, and "
-          + "the alignments have been" + newline + "         truncated "
-          + "automatically. Please choose more specific sequence " + newline
-          + "         or parameters" + newline + newline);
+      warning.append(newline + "<b><font style='color:red'>"
+          + "WARNING: Your BLAST result is too big to be "
+          + "loaded completely, and only " + alignments.size() + " alignments "
+          + "are displayed. " + newline + "         Please choose more "
+          + "specific sequence or parameters.</font></b>" + newline + newline);
     }
 
     // post process on summary line
@@ -167,7 +175,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
     scores.put(sourceId, score);
   }
 
-  private void parseAlignment(String defline, String alignment,
+  private int parseAlignment(String defline, String alignment,
       Map<String, String> aligments, Map<String, String> projects,
       String recordClass, String dbType, boolean skipAlignment)
       throws WdkModelException, WdkUserException, SQLException,
@@ -199,24 +207,33 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
       defline = insertIdUrl(defline, recordClass, projectId);
 
       // construct alignment
-      aligments.put(sourceId, defline + alignment);
-    }
+      String content = defline + alignment;
+      aligments.put(sourceId, content);
+      return content.length();
+    } else
+      return 0;
   }
-  
-  private String insertGbrowseLink(String sourceId, String projectId, String alignment) {
+
+  private String insertGbrowseLink(String sourceId, String projectId,
+      String alignment) {
     StringBuilder buffer = new StringBuilder();
     String[] pieces = alignment.split("Positives =");
     for (String piece : pieces) {
-      
+      if (buffer.length() > 0)
+        buffer.append("Positives = ");
       Matcher matcher = SUBJECT_PATTERN.matcher(piece);
       int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
       while (matcher.find()) {
         int start = Integer.valueOf(matcher.group(1));
         int end = Integer.valueOf(matcher.group(2));
-        if (min > start) min = start;
-        if (min > end) min = end;
-        if (max < start) max = start;
-        if (max < end) max = end;
+        if (min > start)
+          min = start;
+        if (min > end)
+          min = end;
+        if (max < start)
+          max = start;
+        if (max < end)
+          max = end;
       }
       // check if any subject has been found
       if (min <= max) {
@@ -225,7 +242,8 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
             + sourceId + ":" + min + "-" + max;
         buffer.append("\n<a href=\"" + gb_url + "\"> <B><font color=\"red\">"
             + "Link to Genome Browser</font></B></a>,   Positives = ");
-      } else if (buffer.length() > 0) buffer.append("Positives = ");
+      } else if (buffer.length() > 0)
+        buffer.append("Positives = ");
       buffer.append(piece);
     }
     return buffer.toString();

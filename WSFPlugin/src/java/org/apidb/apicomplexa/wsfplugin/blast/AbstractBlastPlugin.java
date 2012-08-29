@@ -63,7 +63,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   /**
    * The maximum size of the blast output file that the plugin can handle.
    */
-  public static final long MAX_FILE_SIZE = 30 * 1024 * 1024;
+  public static final long MAX_DATA_SIZE = 20 * 1024 * 1024;
 
   private static Logger logger = Logger.getLogger(AbstractBlastPlugin.class);
 
