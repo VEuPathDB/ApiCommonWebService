@@ -16,7 +16,7 @@ public class OrfMotifPlugin extends ProteinMotifPlugin {
   // let's store files in same directory
   public static final String FIELD_REGEX = "OrfDeflineRegex";
 
-  private static final String DEFAULT_REGEX = "^>([^|\\s]+)\\s*\\|\\s*organism=([^|_\\s]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s_]+)";
 
   /**
    * @throws WsfServiceException
