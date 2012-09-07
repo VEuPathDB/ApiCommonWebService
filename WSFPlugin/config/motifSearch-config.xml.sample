@@ -15,8 +15,10 @@
     >gb|scf_1107000998814 | strand=(+) | organism=Toxoplasma_gondii_GT1 | version=2008-07-23 | length=1231
     
     the regex given below is the default regex, and will be used if the field doesn't exist.
+
+    <entry key="DnaDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*strand=\(([+\-])\)\s*\|\s*organism=([^|_\s]+)]]></entry>
 -->
-<entry key="DnaDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|\s*strand=\(([+\-])\)\s*\|\s*organism=([^|_\s]+)]]></entry>
+
 
 <!-- 
     Optional, the regex for protein fasta file has to have 2 groups, 
@@ -27,20 +29,24 @@
     >psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307
     
     the regex given below is the default regex, and will be used if the field doesn't exist.
+
+<entry key="ProteinDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*organism=([^|\s_]+)]]></entry>
 -->
-<entry key="ProteinDeflineRegex"><![CDATA[^>[^|]+\|\s*([^|\s]+)\s*\|.*?\s*organism=([^|_\s]+)]]></entry>
+
 
 <!-- 
     Optional, the regex for protein fasta file has to have 2 groups, 
     group(1) = gene source id;
-    group(2) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
-    
+    group(2) = genus, the genus is passed to a stored procedure to lookup the Project
+
     An example of the headline will be like this:
     >scf_1107000999344-1-267055-267297 | organism=Toxoplasma_gondii_GT1 | location=TGGT1_chrV:2837876-2838118(-) | length=81
     
     the regex given below is the default regex, and will be used if the field doesn't exist.
+
+    <entry key="OrfDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*organism=([^|\s_]+)]]></entry>
 -->
-<entry key="OrfDeflineRegex"><![CDATA[^>([^|\s]+)\s*\|\s*organism=([^|_\s]+)]]></entry>
+
 
 <!--
     Optional, the length of the context to be displayed around the matched motifs. For example, if this

@@ -25,7 +25,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   // let's store files in same directory
   public static final String FIELD_REGEX = "ProteinDeflineRegex";
-  private static final String DEFAULT_REGEX = "^>[^|]+\\|\\s*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|_\\s]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s_]+)";
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
 
@@ -84,7 +84,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     // parse the headline
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
     if (!deflineMatcher.find()) {
-      logger.warn("Invalid defline: " + headline);
+        logger.warn("Invalid defline: " + headline + " Against Pattern " + config.getDeflinePattern().pattern());
       return;
     }
     // the gene source id has to be in group(1),
