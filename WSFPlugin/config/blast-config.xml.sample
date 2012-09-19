@@ -22,58 +22,68 @@
     each of the internal values of BlastDatabaseOrganism param, and
     $$BlastDatabaseType$$ will be substituted by the internal value of
     BlastDatabaseType param. The file path to the blast database should
-    be specified as a part of the BlastDatabaseOrganism value. -->
+    be specified as a part of the BlastDatabaseOrganism value.
   <entry key="BlastDBName">$$BlastDatabaseOrganism$$$$BlastDatabaseType$$</entry>
+ -->
 
   <!-- Optional, additional blast options that is set system wide. These
     additional options will be applied to the blast search for all data
     types. By default, no extra options will be used. For example, you put
     "-best_hit_overhang=0.25" in this field to control the HSP matching
     length for the new ncbi-blast+, or put "-putenv BLASTDB=your_db_path" to
-    control the default blastdb location for wu-blast. -->
+    control the default blastdb location for wu-blast.
   <entry key="ExtraOptions"></entry>
+ -->
 
   <!-- Optional, maximum running time for blast, in seconds. If blast runs
     longer than the given timeout, an timeout exception will be thrown out,
     and blast run will be terminated. This entry is optional, and default is
-    300 (i.e. 5 minutes) if not specified -->
+    300 (i.e. 5 minutes) if not specified
   <entry key="Timeout">300</entry>
+ -->
 
   <!-- Optional, the regular expression used to match the source_id in the
      defline. This regex, as well as the other regex in this config file,
      supports only Java's flavor. The source_id can be included in a capture
      group, and capture group index can be specified by SourceIdRegexIndex
-     option. By default, the following regex will be used: ^>*(?:\w*\|)*(\S+)
-     -->
+     option. By default, the following regex will be used:
+    
   <entry key="SourceIdRegex"><![CDATA[^>*(?:[^\|]*\|)?(\S+)]]></entry>
+ -->
 
   <!-- Optional, the capture group index of the source_id in the above
     regular expression. It should be a positive integer or 0. If 0 is
     specified, the whole matched string will be considered as source_id.
-    Index 1 will be used if not specified. -->
+    Index 1 will be used if not specified.
   <entry key="SourceIdRegexIndex">1</entry>
+ -->
 
   <!-- Optional, the regular expression used to match the organism in the
     defline. The organism can be included in a group, and group index can be
     specified by OrganismRegexIndex option. By default, the following regex
-    will be used: \|\s*organism=([^_|\s]+) -->
+    will be used: \|\s*organism=([^_|\s]+)
   <entry key="OrganismRegex"><![CDATA[\|\s*organism=([^_|\s]+)]]></entry>
+ -->
 
   <!-- Optional, the capture group index of the organism in the above
     regular expression. It should be a positive integer or 0. If 0 is
     specified, the whole matched string will be considered as organism name.
-    Index 1 will be used if not specified. -->
+    Index 1 will be used if not specified.
   <entry key="OrganismRegexIndex">1</entry>
+ -->
 
   <!-- Optional, the regular expresion used to match the match the blast
     score in the result. The score can be included in a group, and group
     index can be specified by ScoreRegexIndex. By default, the following
-    regex will be used: ^.+?\s\s+(?:[+-]\d\s+)?(\d+) -->
+    regex will be used: ^.+?\s\s+(?:[+-]\d\s+)?(\d+)
   <entry key="ScoreRegex"><![CDATA[^.+?\s\s+(?:[+-]\d\s+)?(\d+)]]></entry>
+ -->
 
   <!-- Optional, the capture group index of the organism in the above
     regular expression. It should be a positive integer or 0. If 0 is
     specified, the whole matched string will be considered as the blast
-    score. Index 1 will be used if not specified. -->
+    score. Index 1 will be used if not specified.
   <entry key="ScoreRegexIndex">1</entry>
+ -->
+
 </properties>
