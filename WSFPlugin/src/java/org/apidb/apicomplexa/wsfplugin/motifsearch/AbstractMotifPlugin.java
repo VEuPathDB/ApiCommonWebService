@@ -195,11 +195,11 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       Set<Match> allMatches = new HashSet<Match>();
       String[] dsIds = datasetIDs.split(",");
 
-      // scan on each dataset, and add matched motifs in the result
+		  // scan on each dataset, and add matched motifs in the result
       for (String dsId : dsIds) {
         logger.debug("execute(): dsId: " + dsId);
         // parent organisms in a treeParam, we only need the leave nodes
-        if (dsId.contains("-1")) {
+        if (dsId.equals("-1") || dsId.length() <= 3) {
           logger.debug("organism value: (" + dsId
               + ") not included, we only care for leave nodes\n");
           continue;
