@@ -26,7 +26,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
   // The property file for dna motif search
   public static final String FIELD_REGEX = "DnaDeflineRegex";
 
-    private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|_\\s]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|_\\s]+)";
 
   private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
