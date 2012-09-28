@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- PLAN: this file will contain only URLs when  -->
+<!--       in the plugin we use  ProjectMapper.java to get the sites given the organism values  -->
+<!-- ================== -->
 <!-- projectId should be the same as in mat views -->
 <!-- marker should have all the possible values for organism (or the param used to select site) -->
 <!-- QueryMap needs to be in gus_home/config (not used currently) -->
