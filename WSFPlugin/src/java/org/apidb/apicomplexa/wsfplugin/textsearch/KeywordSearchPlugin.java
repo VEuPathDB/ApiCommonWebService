@@ -18,6 +18,7 @@ import javax.sql.DataSource;
 import org.apidb.apicommon.controller.CommentActionUtility;
 import org.apidb.apicommon.model.CommentFactory;
 import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.DBPlatform;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
@@ -567,7 +568,10 @@ public class KeywordSearchPlugin extends AbstractPlugin {
 	    } catch (SQLException ex) {
 		logger.info("caught SQLException " + ex.getMessage());
 		throw new WsfServiceException(ex);
-	    } finally {
+	    } catch (WdkModelException e) {
+			logger.info("caught SQLException " + e.getMessage());
+			throw new WsfServiceException(e);
+		} finally {
 		//		try {
 		//		    rs.close();
 		//		} catch (SQLException ex) {
