@@ -765,6 +765,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
 
     private String unescapeValue(String value, boolean quoted) {
+        if (value == null || value.length() == 0) return value;
+
         // will first remove the wrapping quote
         if (quoted) {
             if (value.charAt(0) == '\'') value = value.substring(1);
