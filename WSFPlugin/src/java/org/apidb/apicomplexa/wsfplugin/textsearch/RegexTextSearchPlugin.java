@@ -57,7 +57,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * @throws WsfServiceException
      * 
      */
-    public TextSearchPlugin() throws WsfServiceException {
+    public RegexTextSearchPlugin() throws WsfServiceException {
         super(PROPERTY_FILE);
     }
 
