@@ -24,7 +24,7 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  * @created Aug 23, 2006
  */
 @Deprecated
-public class TextSearchPlugin extends AbstractPlugin {
+public class RegexTextSearchPlugin extends AbstractPlugin {
 
     private String scriptDir;
 
