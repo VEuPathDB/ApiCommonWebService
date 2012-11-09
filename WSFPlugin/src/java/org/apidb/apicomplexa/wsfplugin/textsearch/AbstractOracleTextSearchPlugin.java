@@ -37,6 +37,21 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     public static final String PARAM_DATASETS = "text_fields";
 
+    public static final String COLUMN_RECORD_ID = "RecordID";
+    public static final String COLUMN_PROJECT_ID = "ProjectId";
+    public static final String COLUMN_DATASETS = "Datasets";
+    public static final String COLUMN_MAX_SCORE = "MaxScore";
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.gusdb.wsf.WsfPlugin#getColumns()
+     */
+    public String[] getColumns() {
+        return new String[] { COLUMN_RECORD_ID, COLUMN_PROJECT_ID,
+                COLUMN_DATASETS, COLUMN_MAX_SCORE };
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -216,8 +231,42 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
         return matches;
     }
 
-    abstract protected SearchResult getSearchResults(ResultSet rs, String sourceId) throws SQLException;
+    // requires two part key.  if only have one part, then query should return fake second part
+    protected String[][] flattenMatches(SearchResult[] matches,
+            String[] orderedColumns) throws WsfServiceException {
 
+        // validate that WDK expects the columns in the order we want
+        String[] expectedColumns = { "RecordID", "ProjectId", "MaxScore",
+                "Datasets" };
+
+        int i = 0;
+        for (String expected : expectedColumns) {
+            if (!expected.equals(orderedColumns[i])) {
+                throw new WsfServiceException(
+                        "misordered WSF column: expected \"" + expected
+                                + "\", got \"" + orderedColumns[i]);
+            }
+            i++;
+        }
+
+        String[][] flat = new String[matches.length][];
+
+        i = 0;
+        for (SearchResult match : matches) {
+            String[] a = { match.getSourceId(), match.getProjectId(),
+                    Float.toString(match.getMaxScore()),
+                    match.getFieldsMatched() };
+            flat[i++] = a;
+        }
+
+        return flat;
+    }
+
+    protected SearchResult getSearchResults(ResultSet rs, String sourceId) throws SQLException {
+	return new SearchResult(rs.getString("project_id"), sourceId,
+				rs.getFloat("max_score"),
+				rs.getString("fields_matched"));
+    }
 
     private Connection getDbConnection() throws SQLException {
         WdkModelBean wdkModel = (WdkModelBean) context

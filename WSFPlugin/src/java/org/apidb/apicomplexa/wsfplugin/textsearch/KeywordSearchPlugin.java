@@ -1,4 +1,4 @@
-/**
+**
  * KeywordSearchPlugin -- text search using Oracle Text
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
@@ -38,23 +38,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
-
-    public static final String COLUMN_GENE_ID = "RecordID";
-    public static final String COLUMN_PROJECT_ID = "ProjectId";
-    public static final String COLUMN_DATASETS = "Datasets";
-    public static final String COLUMN_MAX_SCORE = "MaxScore";
-
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.WsfPlugin#getColumns()
-     */
-    public String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
-                COLUMN_DATASETS, COLUMN_MAX_SCORE };
-    }
-
 
     /*
      * (non-Javadoc)
@@ -158,36 +141,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         return wsfResult;
     }
 
-    private String[][] flattenMatches(SearchResult[] matches,
-            String[] orderedColumns) throws WsfServiceException {
-
-        // validate that WDK expects the columns in the order we want
-        String[] expectedColumns = { "RecordID", "ProjectId", "MaxScore",
-                "Datasets" };
-
-        int i = 0;
-        for (String expected : expectedColumns) {
-            if (!expected.equals(orderedColumns[i])) {
-                throw new WsfServiceException(
-                        "misordered WSF column: expected \"" + expected
-                                + "\", got \"" + orderedColumns[i]);
-            }
-            i++;
-        }
-
-        String[][] flat = new String[matches.length][];
-
-        i = 0;
-        for (SearchResult match : matches) {
-            String[] a = { match.getSourceId(), match.getProjectId(),
-                    Float.toString(match.getMaxScore()),
-                    match.getFieldsMatched() };
-            flat[i++] = a;
-        }
-
-        return flat;
-    }
-
     private String cleanOrgs(String orgs) {
 	String[] temp;
 	StringBuffer sb = new StringBuffer();
@@ -268,7 +221,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             String recordType, String organisms, String oracleTextExpression,
             String fields, String maxPvalue) throws WsfServiceException,
             SQLException {
-        Connection dbConnection = getComponentDbConnection();
+        Connection dbConnection = getDbConnection();
 
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
@@ -374,12 +327,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     //            throw new WsfServiceException(ex);
     //        }
     //    }
-
-    protected SearchResult getSearchResults(ResultSet rs, String sourceId) throws SQLException {
-	return new SearchResult(rs.getString("project_id"), sourceId,
-				rs.getFloat("max_score"),
-				rs.getString("fields_matched"));
-    }
 
 
     private Map<String, SearchResult> validateRecords(String projectId,
@@ -503,12 +450,4 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         DBPlatform platform = factory.getCommentPlatform();
         return platform.getDataSource().getConnection();
     }
-
-    private Connection getComponentDbConnection() throws SQLException {
-        WdkModelBean wdkModel = (WdkModelBean) context
-                .get(CConstants.WDK_MODEL_KEY);
-        DBPlatform platform = wdkModel.getModel().getQueryPlatform();
-        return platform.getDataSource().getConnection();
-    }
-
 }
