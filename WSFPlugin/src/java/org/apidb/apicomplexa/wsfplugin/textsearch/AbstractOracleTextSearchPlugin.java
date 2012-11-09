@@ -36,6 +36,7 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     // required parameter definition
     public static final String PARAM_TEXT_EXPRESSION = "text_expression";
     public static final String PARAM_DATASETS = "text_fields";
+    public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
 
     public static final String COLUMN_RECORD_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
@@ -271,5 +272,12 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     @Override
     protected String[] defineContextKeys() {
         return new String[] { CConstants.WDK_MODEL_KEY, CConstants.GUS_HOME_KEY };
+    }
+
+    protected SearchResult[] getMatchesSortedArray(Map<String, SearchResult> matches) {
+        Collection<SearchResult> matchCollection = matches.values();
+        SearchResult[] matchArray = matchCollection.toArray(new SearchResult[0]);
+        Arrays.sort(matchArray);
+	return matchArray;
     }
 }

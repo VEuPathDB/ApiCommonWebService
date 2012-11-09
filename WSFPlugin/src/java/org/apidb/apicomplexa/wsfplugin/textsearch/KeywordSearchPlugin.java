@@ -429,12 +429,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
         // componentMatches now has all results combined; get it into a sorted
         // array
-        Collection<SearchResult> matchCollection = componentMatches.values();
-        SearchResult[] matchArray = matchCollection
-                .toArray(new SearchResult[0]);
-        Arrays.sort(matchArray);
-
-        return matchArray;
+        return getMatchesSortedArray(componentMatches);
 
     }
 

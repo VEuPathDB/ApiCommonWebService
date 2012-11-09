@@ -23,12 +23,6 @@ import org.gusdb.wsf.plugin.WsfServiceException;
  */
 public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
-    // required parameter definition
-    public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
-
-    public static final String COLUMN_RECORD_ID = "RecordID";
-    public static final String COLUMN_DATASETS = "Datasets";
-
     /*
      * (non-Javadoc)
      * 
@@ -68,8 +62,7 @@ public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin 
 	}
 
         // construct results
-	SearchResult[] TMP_MATCHES = new SearchResult[1];
-        String[][] result = flattenMatches(TMP_MATCHES, request.getOrderedColumns());
+        String[][] result = flattenMatches(getMatchesSortedArray(matches), request.getOrderedColumns());
         WsfResponse wsfResult = new WsfResponse();
         wsfResult.setResult(result);
         wsfResult.setSignal(0);
