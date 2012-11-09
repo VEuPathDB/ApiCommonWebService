@@ -64,13 +64,6 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     /*
      * (non-Javadoc)
      * 
-     * @see org.gusdb.wsf.WsfPlugin#getColumns()
-     */
-    public abstract String[] getColumns();
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
     public void validateParameters(WsfRequest request)
@@ -268,7 +261,7 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
 				rs.getString("fields_matched"));
     }
 
-    private Connection getDbConnection() throws SQLException {
+    protected Connection getDbConnection() throws SQLException {
         WdkModelBean wdkModel = (WdkModelBean) context
                 .get(CConstants.WDK_MODEL_KEY);
         DBPlatform platform = wdkModel.getModel().getQueryPlatform();

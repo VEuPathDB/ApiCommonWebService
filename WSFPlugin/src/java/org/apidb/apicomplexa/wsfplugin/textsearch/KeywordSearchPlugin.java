@@ -1,4 +1,4 @@
-**
+/**
  * KeywordSearchPlugin -- text search using Oracle Text
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
