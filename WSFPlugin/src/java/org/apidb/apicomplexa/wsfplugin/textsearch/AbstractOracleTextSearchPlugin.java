@@ -38,6 +38,10 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     public static final String PARAM_DATASETS = "text_fields";
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
 
+    public static final String PARAM_DETAIL_TABLE = "detail_table";
+    public static final String PARAM_PRIMARY_KEY_COLUMN = "primary_key_column";
+    public static final String PARAM_PROJECT_ID = "project_id";
+
     public static final String COLUMN_RECORD_ID = "RecordID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_DATASETS = "Datasets";
@@ -177,17 +181,17 @@ public abstract class AbstractOracleTextSearchPlugin extends AbstractPlugin {
     //        }
     //    }
 
-    protected Map<String, SearchResult> textSearch(PreparedStatement query)
+    protected Map<String, SearchResult> textSearch(PreparedStatement query, String primaryKeyColumn)
             throws WsfServiceException, SQLException {
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
         ResultSet rs = null;
         try {
-            logger.info("about to execute one or the other text-search query");
+            logger.info("about to execute text-search query (set org.gusdb logging to \"debug\" to see its text)");
             query.setFetchSize(100);
             rs = query.executeQuery();
             logger.info("finshed execute");
             while (rs.next()) {
-                String sourceId = rs.getString("source_id");
+                String sourceId = rs.getString(primaryKeyColumn);
 
                 if (matches.containsKey(sourceId)) {
                     throw new WsfServiceException("duplicate sourceId "

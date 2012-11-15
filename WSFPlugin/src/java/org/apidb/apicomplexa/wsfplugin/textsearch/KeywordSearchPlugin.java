@@ -105,7 +105,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                 ps = getCommentQuery(projectId, recordType,
                         oracleTextExpression, commentRecords,
                         communityAnnotationRecords);
-                commentMatches = textSearch(ps);
+                commentMatches = textSearch(ps, "project_id");
                 commentMatches = validateRecords(projectId, commentMatches,
                         organisms);
                 logger.debug("after validation commentMatches = "
@@ -123,7 +123,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                 ps = getComponentQuery(projectId, recordType, organisms,
                         oracleTextExpression, quotedFields.toString(),
                         maxPvalue);
-                componentMatches = textSearch(ps);
+                componentMatches = textSearch(ps, "project_id");
             } catch (SQLException ex) {
                 throw new WsfServiceException(ex);
             } finally {

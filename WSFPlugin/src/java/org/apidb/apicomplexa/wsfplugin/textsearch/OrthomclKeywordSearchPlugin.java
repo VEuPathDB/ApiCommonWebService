@@ -1,5 +1,5 @@
 /**
- * KeywordSearchPlugin -- text search using Oracle Text
+ * OrthomclKeywordSearchPlugin -- text search using Oracle Text
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
@@ -35,8 +35,11 @@ public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin 
         Map<String, String> params = request.getParams();
 	String recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("'", "");
         String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
-        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
         logger.debug("fields = \"" + fields + "\"");
+        String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
+	String detailTable = params.get(PARAM_DETAIL_TABLE).trim().replaceAll("'", "");
+	String primaryKeyColumn = params.get(PARAM_PRIMARY_KEY_COLUMN).trim().replaceAll("'", "");
+	String projectId = params.get(PARAM_PROJECT_ID).trim().replaceAll("'", "");
 
 	// get fields as quoted list
         StringBuffer quotedFields = new StringBuffer("");
@@ -52,9 +55,9 @@ public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin 
 	PreparedStatement ps = null;
         Map<String, SearchResult> matches = new HashMap<String, SearchResult>();
 	try {
-	    ps = getQuery("dontcare", recordType,
-				   oracleTextExpression, quotedFields.toString());
-	    matches = textSearch(ps);
+	    ps = getQuery(recordType, detailTable, primaryKeyColumn, projectId,
+			  oracleTextExpression, quotedFields.toString());
+	    matches = textSearch(ps, primaryKeyColumn);
 	} catch (SQLException ex) {
 	    throw new WsfServiceException(ex);
 	} finally {
@@ -70,74 +73,26 @@ public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin 
     }
 
 
-    private PreparedStatement getQuery(String projectId,
-            String recordType, String oracleTextExpression,
-            String fields) throws WsfServiceException,
+    private PreparedStatement getQuery(String recordType, String detailTable,
+				       String primaryKeyColumn, String projectId,
+				       String oracleTextExpression, String fields)
+	throws WsfServiceException,
             SQLException {
         Connection dbConnection = getDbConnection();
-	String organisms = "don't need this";
 
         String sql = new String(
-                "SELECT source_id, project_id, \n"
-                        + "       max_score, \n"
-                        + "       fields_matched \n"
-                        + "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n"
-                        + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ')  fields_matched, \n"
-                        + "             max(index_name) keep (dense_rank first order by scoring desc, source_id, table_name) as index_name, \n"
-                        + "             max(oracle_rowid) keep (dense_rank first order by scoring desc, source_id, table_name) as oracle_rowid \n"
-                        + "      FROM (  SELECT SCORE(1) * (select nvl(max(weight), 1) from ApidbTuning.TableWeight where table_name = 'Blastp') \n"
-                        + "                       as scoring, \n"
-                        + "                    'ApidbTuning.Blastp_text_ix' as index_name, b.rowid as oracle_rowid, b.source_id, b.project_id, \n"
-                        + "                    external_database_name as table_name \n"
-                        + "              FROM ApidbTuning.Blastp b \n"
-                        + "              WHERE CONTAINS(b.description, ?, 1) > 0 \n"
-                        + "                AND 'Blastp' in ("
-                        + fields
-                        + ") \n"
-                        + "                AND '"
-                        + recordType
-                        + "' = 'gene' \n"
-                        + "                AND b.pvalue_exp < ? \n"
-                        + "                AND b.query_taxon_id in ("
-                        + organisms
-                        + ") \n"
-                        + "            UNION ALL \n"
-                        + "              SELECT SCORE(1)* nvl(tw.weight, 1) \n"
-                        + "                       as scoring, \n"
-                        + "                     'apidb.gene_text_ix' as index_name, gt.rowid as oracle_rowid, gt.source_id, gt.project_id, gt.field_name as table_name\n"
-                        + "              FROM apidb.GeneDetail gt, ApidbTuning.TableWeight tw, ApidbTuning.GeneAttributes ga \n"
-                        + "              WHERE CONTAINS(content, ?, 1) > 0\n"
-                        + "                AND gt.field_name in ("
-                        + fields
-                        + ") \n"
-                        + "                AND '"
-                        + recordType
-                        + "' = 'gene' \n"
-                        + "                AND gt.field_name = tw.table_name(+) \n"
-                        + "                AND gt.source_id = ga.source_id \n"
-                        + "                AND ga.taxon_id in ("
-                        + organisms
-                        + ") \n"
-                        + "            UNION ALL \n"
-                        + "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n"
-                        + "                       as scoring, \n"
-                        + "                    'apidb.isolate_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
-                        + "              FROM apidb.IsolateDetail wit, ApidbTuning.TableWeight tw \n"
-                        + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
-                        + "                AND wit.field_name in ("
-                        + fields
-                        + ") \n"
-                        + "                AND '"
-                        + recordType
-                        + "' = 'isolate' \n"
-                        + "                AND wit.field_name = tw.table_name(+) \n"
-                        + "           ) \n"
-                        + "      GROUP BY source_id, project_id \n"
-                        + "      ORDER BY max_score desc, source_id \n"
-                        + "     )");
-        logger.debug("component SQL: " + sql);
-        logger.debug("organisms = \"" + organisms
-                + "\"; oracleTextExpression = \"" + oracleTextExpression + "\"");
+				"select " + primaryKeyColumn + ",\n"
+			        + "       '" + projectId + "' as project_id, max(scoring) as max_score,\n"
+			        + "       apidb.tab_to_string(set(CAST(COLLECT(field_name) as apidb.varchartab)), ', ')\n"
+			        + "        as fields_matched\n"
+			        + "from (select  " + primaryKeyColumn + ", field_name, score(1) as scoring\n"
+			        + "      from " + detailTable + "\n"
+			        + "      where field_name in (" + fields + ")\n"
+			        + "        and contains(content, ?, 1) > 0)\n"
+			        + "group by  " + primaryKeyColumn + "\n"
+			        + "order by max(scoring) desc");
+        logger.debug("SQL: " + sql);
+        logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
         logger.debug("fields = \"" + fields + "\"");
         logger.debug("recordType = \"" + recordType + "\"");
 
@@ -145,8 +100,6 @@ public class OrthomclKeywordSearchPlugin extends AbstractOracleTextSearchPlugin 
         try {
             ps = dbConnection.prepareStatement(sql);
             ps.setString(1, oracleTextExpression);
-            ps.setString(3, oracleTextExpression);
-            ps.setString(4, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
             throw new WsfServiceException(e);
