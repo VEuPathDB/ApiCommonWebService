@@ -33,6 +33,21 @@
     </ant>
   </target>
 
+  <target name="ApiCommonShared-Installation">
+    <ant antfile="../ApiCommonShared/build.xml" target="ApiCommonShared-Installation">
+      <property name="project" value="ApiCommonShared"/>
+      <property name="version" value="api-build-17"/>
+    </ant>
+  </target>  
+ 
+  <target name="ApiCommonShared-Checkout" unless="ApiCommonShared.present"> 
+    <ant target="defaultProjectCheckout" inheritAll="false">
+      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/apidb/ApiCommonShared"/>
+      <property name="project" value="ApiCommonShared"/>
+      <property name="version" value="api-build-17"/>
+    </ant>
+  </target>
+
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -56,6 +71,7 @@
 
   <target name="ApiCommonWebService-Installation" depends="WSF-Installation,
                                                            WDK-Installation,
+                                                           ApiCommonShared-Installation,
                                                            ApiCommonWebService/WSFPlugin-Installation">
 
     <ant target="defaultProjectInstall"/>
