@@ -54,6 +54,9 @@
   <target name="ApiCommonWebService-ChildCheckout">
     <available file="../WSF" type="dir"  property="WSF.present" />
     <antcall target="WSF-Checkout"/>
+
+    <available file="../ApiCommonShared" type="dir"  property="ApiCommonShared.present" />
+    <antcall target="ApiCommonShared-Checkout"/>
   </target>
   
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
