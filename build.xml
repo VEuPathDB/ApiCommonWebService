@@ -4,34 +4,19 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="WSF-Installation">
-    <ant antfile="../WSF/build.xml" target="WSF-Installation">
-      <property name="project" value="WSF"/>
-      <property name="version" value="WDK_version_1-18"/>
-    </ant>
-  </target>  
-
-  <target name="WSF-WebInstallation">
-    <ant antfile="../WSF/build.xml" target="WSF-WebInstallation">
-      <property name="project" value="WSF"/>
-      <property name="version" value="WDK_version_1-18"/>
-    </ant>
-  </target>  
-
-  <target name="WDK-Installation">
-    <ant antfile="../WDK/build.xml" target="WDK-Installation">
-      <property name="project" value="WDK"/>
+  <target name="EuPathWebSvcCommon-Installation">
+    <ant antfile="../EuPathWebSvcCommon/build.xml" target="EuPathWebSvcCommon-Installation">
+      <property name="project" value="EuPathWebSvcCommon"/>
       <property name="version" value="WDK_version_1-18"/>
     </ant>
   </target>  
     
-  <target name="WSF-Checkout" unless="WSF.present"> 
-    <ant target="defaultProjectCheckout" inheritAll="false">
-      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/WSF"/>
-      <property name="project" value="WSF"/>
-      <property name="version" value="WDK_version_1-28"/>
+ <target name="EuPathWebSvcCommon-WebInstallation">
+    <ant antfile="../EuPathWebSvcCommon/build.xml" target="EuPathWebSvcCommon-WebInstallation">
+      <property name="project" value="EuPathWebSvcCommon"/>
+      <property name="version" value="WDK_version_1-18"/>
     </ant>
-  </target>
+  </target>  
 
   <target name="ApiCommonShared-Installation">
     <ant antfile="../ApiCommonShared/build.xml" target="ApiCommonShared-Installation">
@@ -48,12 +33,20 @@
     </ant>
   </target>
 
+  <target name="EuPathWebSvcCommon-Checkout" unless="EuPathWebSvcCommon.present">
+    <ant target="defaultProjectCheckout" inheritAll="false">
+      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/apidb/EuPathWebSvcCommon"/>
+      <property name="project" value="EuPathWebSvcCommon"/>
+      <property name="version" value="api-build-17"/>
+    </ant>
+  </target>
+
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <target name="ApiCommonWebService-ChildCheckout">
-    <available file="../WSF" type="dir"  property="WSF.present" />
-    <antcall target="WSF-Checkout"/>
+    <available file="../EuPathWebSvcCommon" type="dir"  property="EuPathWebSvcCommon.present" />
+    <antcall target="EuPathWebSvcCommon-Checkout"/>
 
     <available file="../ApiCommonShared" type="dir"  property="ApiCommonShared.present" />
     <antcall target="ApiCommonShared-Checkout"/>
@@ -64,7 +57,10 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <target name="ApiCommonWebService-ChildUpdate">
     <ant target="defaultProjectUpdate">
-      <property name="project" value="WSF"/>
+      <property name="project" value="EuPathWebSvcCommon"/>
+    </ant>
+    <ant target="defaultProjectUpdate">
+      <property name="project" value="ApiCommonShared"/>
     </ant>
   </target>
 
@@ -72,8 +68,7 @@
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Installation" depends="WSF-Installation,
-                                                           WDK-Installation,
+  <target name="ApiCommonWebService-Installation" depends="EuPathWebSvcCommon-Installation,
                                                            ApiCommonShared-Installation,
                                                            ApiCommonWebService/WSFPlugin-Installation">
 
@@ -101,7 +96,7 @@
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation" depends="WSF-WebInstallation,
+  <target name="ApiCommonWebService-WebInstallation" depends="EuPathWebSvcCommon-WebInstallation,
                                                               ApiCommonWebService-Installation">
 
   </target>

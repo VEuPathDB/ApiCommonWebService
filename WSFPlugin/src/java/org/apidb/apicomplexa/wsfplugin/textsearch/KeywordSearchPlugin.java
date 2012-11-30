@@ -15,8 +15,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.apidb.apicommon.controller.CommentActionUtility;
-import org.apidb.apicommon.model.CommentFactory;
+//import org.apidb.apicommon.controller.CommentActionUtility;
+//import org.apidb.apicommon.model.CommentFactory;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.DBPlatform;
@@ -26,7 +26,8 @@ import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
-
+import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
+import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 /**
  * @author John I
  * @created Nov 16, 2008
@@ -436,6 +437,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
     private Connection getCommentDbConnection(String projectId)
             throws SQLException {
+	/*
         CommentFactory factory = (CommentFactory) context
                 .get(CommentActionUtility.COMMENT_FACTORY_KEY);
         if (factory == null) {
@@ -444,5 +446,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         }
         DBPlatform platform = factory.getCommentPlatform();
         return platform.getDataSource().getConnection();
+	*/
+	return null;
     }
 }
