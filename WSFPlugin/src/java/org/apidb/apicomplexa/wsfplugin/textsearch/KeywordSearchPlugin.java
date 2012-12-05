@@ -7,27 +7,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
-//import org.apidb.apicommon.controller.CommentActionUtility;
-//import org.apidb.apicommon.model.CommentFactory;
+import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
+import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
+import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.DBPlatform;
 import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
-import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
-import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
+
 /**
  * @author John I
  * @created Nov 16, 2008
@@ -40,6 +37,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
     public static final String PARAM_MAX_PVALUE = "max_pvalue";
 
+    private static final String CTX_CONTAINER_APP = "wdkModel";
+    private static final String CTX_CONTAINER_COMMENT = "comment-factory";
+    
+    private static final String CONNECTION_APP = WdkModel.CONNECTION_APP;
+    
     /*
      * (non-Javadoc)
      * 
@@ -111,7 +113,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                         organisms);
                 logger.debug("after validation commentMatches = "
                         + commentMatches.toString());
-            } catch (SQLException ex) {
+            } catch (SQLException | WdkModelException | EuPathServiceException ex) {
                 throw new WsfServiceException(ex);
             } finally {
                 SqlUtils.closeStatement(ps);
@@ -125,7 +127,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                         oracleTextExpression, quotedFields.toString(),
                         maxPvalue);
                 componentMatches = textSearch(ps, "source_id");
-            } catch (SQLException ex) {
+            } catch (SQLException | WdkModelException | EuPathServiceException ex) {
                 throw new WsfServiceException(ex);
             } finally {
                 SqlUtils.closeStatement(ps);
@@ -163,8 +165,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     private PreparedStatement getCommentQuery(String projectId,
             String recordTypePredicate, String oracleTextExpression,
             boolean commentRecords, boolean communityAnnotationRecords)
-            throws WsfServiceException, SQLException {
-        Connection dbConnection = getCommentDbConnection(projectId);
+            throws WsfServiceException, SQLException, WdkModelException, EuPathServiceException {
+        Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
 
         if (commentRecords && !communityAnnotationRecords) {
             recordTypePredicate = new String(
@@ -221,8 +223,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     private PreparedStatement getComponentQuery(String projectId,
             String recordType, String organisms, String oracleTextExpression,
             String fields, String maxPvalue) throws WsfServiceException,
-            SQLException {
-        Connection dbConnection = getDbConnection();
+            SQLException, WdkModelException, EuPathServiceException {
+        Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
 
         if (maxPvalue == null || maxPvalue.equals("")) {
             maxPvalue = "0";
@@ -434,19 +436,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
     }
 
-
-    private Connection getCommentDbConnection(String projectId)
-            throws SQLException {
-	/*
-        CommentFactory factory = (CommentFactory) context
-                .get(CommentActionUtility.COMMENT_FACTORY_KEY);
-        if (factory == null) {
-            String gusHome = (String) context.get(CConstants.GUS_HOME_KEY);
-            factory = CommentFactory.getInstance(gusHome, projectId);
-        }
-        DBPlatform platform = factory.getCommentPlatform();
-        return platform.getDataSource().getConnection();
-	*/
-	return null;
-    }
+    @Override
+  protected String[] defineContextKeys() {
+    return new String[] { CTX_CONTAINER_APP, CTX_CONTAINER_COMMENT };
+  }
 }
