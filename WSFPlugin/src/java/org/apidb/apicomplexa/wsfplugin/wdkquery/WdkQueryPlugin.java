@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.gusdb.wdk.model.ModelXmlParser;
-import org.gusdb.wdk.model.Question;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -33,6 +32,7 @@ import org.gusdb.wdk.model.query.param.AbstractEnumParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
+import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;

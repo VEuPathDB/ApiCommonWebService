@@ -31,13 +31,13 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wdk.controller.CConstants;
-import org.gusdb.wdk.model.Question;
 import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.WsfRequest;
