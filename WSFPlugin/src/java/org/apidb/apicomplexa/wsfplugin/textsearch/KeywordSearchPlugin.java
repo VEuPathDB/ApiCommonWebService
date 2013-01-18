@@ -66,7 +66,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
         String organisms = params.get(PARAM_ORGANISMS);
         logger.debug("organisms before cleaning = \"" + organisms + "\"");
-	// isolate stext search does not use this parameter
+	// isolate and compound text search do not use this parameter
 	if (organisms != null) organisms = cleanOrgs(organisms);
         logger.debug("organisms after cleaning= \"" + organisms + "\"");
 
@@ -284,6 +284,19 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                         + recordType
                         + "' = 'isolate' \n"
                         + "                AND wit.field_name = tw.table_name(+) \n"
+                        + "            UNION ALL \n"
+                        + "              SELECT SCORE(1) * nvl(tw.weight, 1)  \n"
+                        + "                       as scoring, \n"
+                        + "                    'apidb.compound_text_ix' as index_name, wit.rowid as oracle_rowid, wit.source_id, wit.project_id, wit.field_name as table_name \n"
+                        + "              FROM apidb.CompoundDetail wit, ApidbTuning.TableWeight tw \n"
+                        + "              WHERE CONTAINS(content, ?, 1) > 0 \n"
+                        + "                AND wit.field_name in ("
+                        + fields
+                        + ") \n"
+                        + "                AND '"
+                        + recordType
+                        + "' = 'compound' \n"
+                        + "                AND wit.field_name = tw.table_name(+) \n"
                         + "           ) \n"
                         + "      GROUP BY source_id, project_id \n"
                         + "      ORDER BY max_score desc, source_id \n"
@@ -302,6 +315,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             ps.setInt(2, Integer.parseInt(maxPvalue));
             ps.setString(3, oracleTextExpression);
             ps.setString(4, oracleTextExpression);
+            ps.setString(5, oracleTextExpression);
         } catch (SQLException e) {
             logger.info("caught SQLException " + e.getMessage());
             throw new WsfServiceException(e);
