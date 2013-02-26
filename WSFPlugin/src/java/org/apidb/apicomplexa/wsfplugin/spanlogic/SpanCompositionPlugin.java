@@ -519,7 +519,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
             }
             return records;
         } finally {
-            SqlUtils.closeResultSet(results);
+            SqlUtils.closeResultSetAndStatement(results);
         }
     }
 
