@@ -28,7 +28,7 @@ public class BlastConfig {
   private String extraOptions = "";
 
   private long timeout = 300;
-  private String blastDbName = "$$BlastDatabaseOrganism$$/$$BlastDatabaseType$$";
+  private String blastDbName = "$$BlastDatabaseOrganism$$$$BlastDatabaseType$$";
 
   private String sourceIdRegex = "^>*(?:[^\\|]*\\|)?(\\S+)";
   private int sourceIdRegexIndex = 1;
