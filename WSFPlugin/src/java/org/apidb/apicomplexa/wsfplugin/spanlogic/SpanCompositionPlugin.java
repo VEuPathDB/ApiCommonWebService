@@ -54,9 +54,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
   }
 
-  public static final String CLAUSE_TYPE_PREFIX = "feature_type_";
-  public static final String CLAUSE_LOCATION_PREFIX = "span_";
-
   public static final String COLUMN_SOURCE_ID = "source_id";
   public static final String COLUMN_PROJECT_ID = "project_id";
   public static final String COLUMN_WDK_WEIGHT = "wdk_weight";
@@ -304,9 +301,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       String tempTableA, String tempTableB, String strand) {
     StringBuilder builder = new StringBuilder();
 
-    // add with clauses
-    builder.append("WITH " + tempTableA + ", " + tempTableB + " ");
-
     // determine the output type
     builder.append("SELECT fa.source_id AS source_id_a, ");
     builder.append("       fa.project_id AS project_id_a, ");
@@ -318,8 +312,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("       fb.wdk_weight AS wdk_weight_b, ");
     builder.append("       fb.begin AS begin_b, fb.end AS end_b, ");
     builder.append("       fb.is_reversed AS is_reversed_b ");
-    builder.append("FROM " + CLAUSE_LOCATION_PREFIX + "a fa, ");
-    builder.append("     " + CLAUSE_LOCATION_PREFIX + "b fb ");
+    builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
     // make sure the regions come from sequence source.
     builder.append("WHERE fa.sequence_source_id = fb.sequence_source_id ");
@@ -374,24 +367,21 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
 
     StringBuilder builder = new StringBuilder();
-    builder.append(CLAUSE_TYPE_PREFIX + suffix + " AS (");
-    builder.append("  SELECT fl.feature_type ");
-    builder.append("  FROM " + locTable + " fl, " + cacheSql + " ca");
-    builder.append("  WHERE fl.feature_source_id = ca.source_id ");
-    builder.append("    AND rownum = 1), ");
-    builder.append(CLAUSE_LOCATION_PREFIX + suffix + " AS (");
-    builder.append("  SELECT DISTINCT fl.feature_source_id AS source_id, ");
-    builder.append("         fl.sequence_source_id, fl.feature_type, ");
-    builder.append("         ca.wdk_weight, ca.project_id, ");
-    builder.append("         NVL(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("    " + region[0] + " AS begin, " + region[1] + " AS end");
-    builder.append("  FROM " + locTable + " fl, " + cacheSql + " ca, ");
-    builder.append("       " + CLAUSE_TYPE_PREFIX + suffix + " ft ");
-    builder.append("  WHERE fl.feature_source_id = ca.source_id ");
-    builder.append("    AND fl.feature_type = ft.feature_type ");
-    builder.append("    AND fl.is_top_level = 1)");
-    String sql = builder.toString();
+    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, ");
+    builder.append("       fl.sequence_source_id, fl.feature_type, ");
+    builder.append("       ca.wdk_weight, ca.project_id, ");
+    builder.append("       NVL(fl.is_reversed, 0) AS is_reversed, ");
+    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
+    builder.append("WHERE fl.feature_source_id = ca.source_id ");
+    builder.append("  AND fl.is_top_level = 1");
+    builder.append("  AND fl.feature_type = (");
+    builder.append("    SELECT fl.feature_type ");
+    builder.append("    FROM " + locTable + " fl, " + cacheSql + " ca");
+    builder.append("    WHERE fl.feature_source_id = ca.source_id ");
+    builder.append("      AND rownum = 1) ");
 
+    String sql = builder.toString();
     logger.debug("SPAN SQL: " + sql);
     return sql;
   }
