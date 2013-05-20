@@ -379,7 +379,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
         String table = "WdkSpan" + random.nextInt(Integer.MAX_VALUE);
         StringBuilder builder = new StringBuilder();
-        builder.append("CREATE TABLE " + table + " NOLOGGING PARALLEL AS ");
+        // the PARALLEL doesn't seem to improve the performance as expected, 
+        // instead it caused issues such as excessive sessions used and out of
+        // memory issue in Oracle, will be commented out.
+        builder.append("CREATE TABLE " + table + " NOLOGGING /*PARALLEL*/ AS ");
         builder.append("(SELECT DISTINCT fl.feature_source_id AS source_id, ");
         builder.append("   fl.sequence_source_id, ca.project_id, ca.wdk_weight, ");
         builder.append("   NVL(fl.is_reversed, 0) AS is_reversed, ");
