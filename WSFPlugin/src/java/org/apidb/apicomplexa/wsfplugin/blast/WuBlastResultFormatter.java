@@ -198,7 +198,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
 
     if (!skipAlignment) {
       // add gbrowse link here START
-      if (dbType.equals("Genomics")) {
+      if (dbType.equals("Genome")) {
         alignment = insertGbrowseLink(sourceId, projectId, alignment);
       }
       // add gbrowse link here END
