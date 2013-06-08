@@ -360,7 +360,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, "
           + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, "
           + "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, "
-          + "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type, "
+          + "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type "
           + "  FROM " + cacheSql + ")";
     } else {
       locTable = "ApidbTuning.FeatureLocation";
