@@ -212,7 +212,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       ps = dbConnection.prepareStatement(sql);
       ps.setString(1, oracleTextExpression);
     } catch (SQLException e) {
-      logger.info("caught SQLException " + e.getMessage());
+      logger.error("caught SQLException " + e.getMessage());
       throw new WsfServiceException(e);
     }
 
@@ -315,7 +315,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       ps.setString(4, oracleTextExpression);
       ps.setString(5, oracleTextExpression);
     } catch (SQLException e) {
-      logger.info("caught SQLException " + e.getMessage());
+      logger.error("caught SQLException " + e.getMessage());
       throw new WsfServiceException(e);
     }
 
@@ -380,7 +380,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           rs = validationQuery.executeQuery();
           if (!rs.next()) {
             // no match; drop result
-            logger.info("dropping unrecognized ID \"" + sourceId
+            logger.debug("dropping unrecognized ID \"" + sourceId
                 + "\" (project \"" + projectId + "\", organisms \"" + organisms
                 + "\") from comment-search result set.");
             newCommentMatches.remove(sourceId);
@@ -390,7 +390,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                 + "\"");
             if (!returnedSourceId.equals(sourceId)) {
               // ID changed; substitute returned value
-              logger.info("Substituting valid ID \"" + returnedSourceId
+              logger.debug("Substituting valid ID \"" + returnedSourceId
                   + "\" for ID \"" + sourceId
                   + "\" returned from comment-search result set.");
               SearchResult result = newCommentMatches.get(sourceId);
@@ -402,10 +402,10 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
         }
       } catch (SQLException ex) {
-        logger.info("caught SQLException " + ex.getMessage());
+        logger.error("caught SQLException " + ex.getMessage());
         throw new WsfServiceException(ex);
       } catch (WdkModelException e) {
-        logger.info("caught SQLException " + e.getMessage());
+        logger.error("caught WdkModelException " + e.getMessage());
         throw new WsfServiceException(e);
       } finally {
         // try {
