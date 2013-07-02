@@ -13,13 +13,13 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
+import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
-import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -416,11 +416,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private List<Map<String, String>> prepareResults(WdkModel wdkModel,
       String sql, String output) throws SQLException, WdkUserException,
       WdkModelException {
-    DataSource dataSource = wdkModel.getQueryPlatform().getDataSource();
+    DataSource dataSource = wdkModel.getAppDb().getDataSource();
     ResultSet results = null;
 
     try {
-      results = SqlUtils.executeQuery(wdkModel, dataSource, sql,
+      results = SqlUtils.executeQuery(dataSource, sql,
           "span-logic-cached");
       Map<String, Feature> fas = new LinkedHashMap<String, Feature>();
       Map<String, Feature> fbs = new LinkedHashMap<String, Feature>();
