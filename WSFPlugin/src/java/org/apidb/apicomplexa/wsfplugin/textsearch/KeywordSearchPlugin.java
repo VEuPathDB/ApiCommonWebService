@@ -15,11 +15,11 @@ import javax.sql.DataSource;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
+import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.dbms.DBPlatform;
-import org.gusdb.wdk.model.dbms.SqlUtils;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
@@ -47,6 +47,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    * 
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
+  @Override
   public WsfResponse execute(WsfRequest request) throws WsfServiceException {
     logger.info("Invoking KeywordSearchPlugin...");
 
@@ -207,7 +208,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
 
     PreparedStatement ps = null;
-    ;
     try {
       ps = dbConnection.prepareStatement(sql);
       ps.setString(1, oracleTextExpression);
@@ -364,7 +364,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + organisms + ")");
 
       WdkModelBean wdkModel = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
-      DBPlatform platform = wdkModel.getModel().getQueryPlatform();
+	  DatabaseInstance platform = wdkModel.getModel().getAppDb();
       DataSource dataSource = platform.getDataSource();
 
       ResultSet rs = null;
@@ -404,9 +404,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
         throw new WsfServiceException(ex);
-      } catch (WdkModelException e) {
-        logger.error("caught WdkModelException " + e.getMessage());
-        throw new WsfServiceException(e);
       } finally {
         // try {
         // rs.close();
