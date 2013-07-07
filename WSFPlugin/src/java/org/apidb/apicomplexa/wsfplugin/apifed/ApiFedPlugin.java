@@ -60,7 +60,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     // private Document mapDoc = null;
     private String primaryKey = null;
 
-    public ApiFedPlugin() throws WsfServiceException {
+    public ApiFedPlugin() {
         super();
     }
 
@@ -133,6 +133,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
+    @Override
     public String[] getRequiredParameterNames() {
         return new String[] {};
     }
@@ -142,6 +143,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
+    @Override
     public String[] getColumns() {
 
         return new String[] {};
@@ -153,6 +155,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
+    @Override
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         // Do Nothing in this plugin
@@ -163,6 +166,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
+    @Override
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         Site[] sites = new Site[this.sites.length];
         for (int i = 0; i < sites.length; i++) {
@@ -669,6 +673,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 			stopFlag.set(true);
 		}
 
+        @Override
         public void run() {
             String errorMessage = "Thread ran and exited Correctly";
             logger.info("The Thread is running.................." + url);
@@ -781,6 +786,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 return true;
         }
 
+        @Override
         public Object clone() {
             Site s = new Site();
             s.name = name;

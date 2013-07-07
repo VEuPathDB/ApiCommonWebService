@@ -18,7 +18,6 @@ import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.user.User;
@@ -94,17 +93,20 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   public static final String PARAM_VALUE_SAME_STRAND = "same_strand";
   public static final String PARAM_VALUE_OPPOSITE_STRANDS = "opposite_strands";
 
+  @Override
   public String[] getColumns() {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
         COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION, COLUMN_MATCHED_COUNT,
         COLUMN_MATCHED_REGIONS };
   }
 
+  @Override
   public String[] getRequiredParameterNames() {
     return new String[] { PARAM_OPERATION, PARAM_SPAN_PREFIX + "a",
         PARAM_SPAN_PREFIX + "b" };
   }
 
+  @Override
   public void validateParameters(WsfRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     Set<String> operators = new HashSet<String>(Arrays.asList(
@@ -196,6 +198,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
   }
 
+  @Override
   public WsfResponse execute(WsfRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
@@ -387,8 +390,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private WsfResponse getResult(WdkModel wdkModel, String sql,
-      String[] orderedColumns, String output) throws WdkUserException,
-      WdkModelException, SQLException {
+      String[] orderedColumns, String output) throws SQLException {
     List<Map<String, String>> results = prepareResults(wdkModel, sql, output);
     List<String[]> records = new ArrayList<String[]>();
     for (Map<String, String> result : results) {
@@ -414,8 +416,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private List<Map<String, String>> prepareResults(WdkModel wdkModel,
-      String sql, String output) throws SQLException, WdkUserException,
-      WdkModelException {
+      String sql, String output) throws SQLException {
     DataSource dataSource = wdkModel.getAppDb().getDataSource();
     ResultSet results = null;
 

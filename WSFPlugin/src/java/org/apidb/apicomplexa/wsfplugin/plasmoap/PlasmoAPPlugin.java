@@ -31,11 +31,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
     private  String perlExe;
     private  String plasmoapScript;
 
-    /**
-     * @throws WsfServiceException
-     * 
-     */
-    public PlasmoAPPlugin() throws WsfServiceException {
+    public PlasmoAPPlugin() {
         super(PROPERTY_FILE);
     }
 
@@ -65,6 +61,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
+    @Override
     public String[] getRequiredParameterNames() {
         return new String[] { PARAM_SEQUENCE };
     }
@@ -74,6 +71,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
+    @Override
     public String[] getColumns() {
         return new String[] { COLUMN_REPORT, COLUMN_SIGNAL };
     }
@@ -83,6 +81,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
+    @Override
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
@@ -93,6 +92,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
+    @Override
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking PlasmoAPPlugin...");
 

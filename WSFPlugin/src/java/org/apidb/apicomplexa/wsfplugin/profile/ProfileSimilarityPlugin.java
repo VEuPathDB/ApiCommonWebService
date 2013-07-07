@@ -60,11 +60,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     private String dbPassword;
     private String projectId;
 
-    /**
-     * @throws WsfServiceException
-     * 
-     */
-    public ProfileSimilarityPlugin() throws WsfServiceException {
+    public ProfileSimilarityPlugin() {
         super(PROPERTY_FILE);
     }
 
@@ -113,6 +109,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
      */
+    @Override
     public String[] getRequiredParameterNames() {
         return new String[] { PARAM_GENE_ID, PARAM_DISTANCE_METHOD,
 			      PARAM_NUM_RETURN, PARAM_PROFILE_SET, PARAM_SEARCH_GOAL,
@@ -126,6 +123,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
      */
+    @Override
     public String[] getColumns() {
         return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
                 COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
@@ -136,6 +134,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
+    @Override
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         // validate distance method
@@ -191,6 +190,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
      * java.lang.String[])
      */
+    @Override
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
