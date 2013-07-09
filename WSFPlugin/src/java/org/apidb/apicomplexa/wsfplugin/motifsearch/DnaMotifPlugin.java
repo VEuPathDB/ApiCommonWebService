@@ -30,7 +30,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
-  public DnaMotifPlugin() throws WsfServiceException {
+  public DnaMotifPlugin() {
     super(FIELD_REGEX, DEFAULT_REGEX);
   }
 

@@ -20,8 +20,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +33,6 @@ import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
@@ -44,7 +41,6 @@ import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
-import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -66,8 +62,7 @@ public class SpanCompositionTest {
 
     @Test
     public void testSpanLogic() throws URISyntaxException, IOException,
-            WsfServiceException, WdkUserException, WdkModelException,
-            NoSuchAlgorithmException, SQLException, JSONException {
+            WsfServiceException, WdkModelException {
         List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
         for (SpanCompositionTestCase testCase : testCases) {
@@ -116,8 +111,7 @@ public class SpanCompositionTest {
     }
 
     private WsfRequest createRequest(SpanCompositionTestCase testCase)
-            throws WdkUserException, WdkModelException,
-            NoSuchAlgorithmException, SQLException, JSONException {
+            throws WdkModelException {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
 
@@ -158,9 +152,7 @@ public class SpanCompositionTest {
         return request;
     }
 
-    private String createGeneStep(String[] input) throws WdkUserException,
-            WdkModelException, NoSuchAlgorithmException, SQLException,
-            JSONException {
+    private String createGeneStep(String[] input) throws WdkModelException {
         String key = Formatter.printArray(input).intern();
         if (steps.containsKey(key)) return steps.get(key);
 
