@@ -7,8 +7,6 @@
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -19,7 +17,6 @@ import org.gusdb.wdk.model.ModelXmlParser;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
@@ -39,7 +36,6 @@ import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.WsfRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
-import org.json.JSONException;
 
 /**
  * @author Cary Pennington
@@ -79,7 +75,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     private static Map<String, WdkModelBean> modelName2Model = null;
     private static Object lock = new Object();
 
-    public WdkQueryPlugin() throws WsfServiceException {
+    public WdkQueryPlugin() {
         super(PROPERTY_FILE);
     }
 
@@ -114,6 +110,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
+    @Override
     public String[] getRequiredParameterNames() {
         return new String[] {};
     }
@@ -123,6 +120,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
+    @Override
     public String[] getColumns() {
         return new String[] {};
     }
@@ -132,6 +130,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
+    @Override
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
         // do nothing in this plugin
@@ -142,6 +141,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
+    @Override
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
 
         logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
@@ -308,19 +308,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 ex.printStackTrace();
                 resultSize = -1; // actual error, can't handle
             }
-				} catch(WdkUserException ex){
-						logger.info("WdkUSERexception IN execute()" + ex.toString());
-						String msg = ex.formatErrors();
-            logger.info("Message = " + msg);
-						if (msg.indexOf("encountered an invalid term") != -1) {
-								   resultSize = 0; // parameter value relates to a different comp site
-						}
-						else {
-                ex.printStackTrace();
-                resultSize = -1; // actual error, can't handle
-						}
-
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.info("OTHERexception IN execute()" + ex.toString());
 
             ex.printStackTrace();
@@ -401,7 +390,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
      * key:p.keySet()){ Object o = p.get(key); for (String param : q) { if
      * (key.equals(param) || key.indexOf(param) != -1) { ret.put(param, o); } }
      * } return ret; }
-     * @throws WdkModelException 
      */
 
     // private String convertDatasetId2DatasetChecksum(String sig_id)
@@ -432,7 +420,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             if (params.containsKey(key)) {
               Param param = params.get(key);
                      if (param instanceof AbstractEnumParam) {
-                        String valList = (String) value;
+                        String valList = value;
                         AbstractEnumParam abParam = (AbstractEnumParam) param;
                         EnumParamBean abParamBean = new EnumParamBean(abParam);
                         if (abParam.isDependentParam()) {
@@ -668,9 +656,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("------------DONE-------------");
     // }
 
-    private boolean validateSingleValues(EnumParamBean p, String value)
-            throws WdkModelException, NoSuchAlgorithmException, SQLException,
-            JSONException, WdkUserException {
+    private boolean validateSingleValues(EnumParamBean p, String value) {
         String[] conVocab = p.getVocab();
         logger.info("conVocab.length = " + conVocab.length);
         if (p.isSkipValidation()) return true;
@@ -683,9 +669,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
 
     private String[][] handleVocabParams(AbstractEnumParam vocabParam,
-            Map<String, String> ps, String[] ordCols) throws WdkModelException,
-            NoSuchAlgorithmException, SQLException, JSONException,
-            WdkUserException {
+            Map<String, String> ps, String[] ordCols) throws WdkModelException {
         logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
                 + vocabParam.getFullName());
         EnumParamBean paramBean = new EnumParamBean(vocabParam);

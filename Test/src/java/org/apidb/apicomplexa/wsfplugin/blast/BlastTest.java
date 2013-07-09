@@ -59,14 +59,9 @@ public class BlastTest {
 
   /**
    * test if the all the fields are populated correctly from the config file;
-   * 
-   * @throws WsfServiceException
-   * @throws FileNotFoundException
-   * @throws IOException
    */
   @Test
-  public void testLoadAllFields() throws WsfServiceException,
-      FileNotFoundException, IOException {
+  public void testLoadAllFields() throws WsfServiceException {
     // populate all fields with random values
     Random random = new Random();
 
@@ -122,8 +117,6 @@ public class BlastTest {
 
   /**
    * test if the defaults are used if an optional field is not specified.
-   * 
-   * @throws WsfServiceException
    */
   @Test
   public void testUseDefaultFields() throws WsfServiceException {

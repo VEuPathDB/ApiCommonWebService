@@ -178,7 +178,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
   private int parseAlignment(String defline, String alignment,
       Map<String, String> aligments, Map<String, String> projects,
       String recordClass, String dbType, boolean skipAlignment)
-      throws WdkModelException, WdkUserException, SQLException,
+      throws SQLException,
       UnsupportedEncodingException, WsfServiceException {
     // flaten the defline to a single line.
     String line = defline.replaceAll("\\s+", " ");

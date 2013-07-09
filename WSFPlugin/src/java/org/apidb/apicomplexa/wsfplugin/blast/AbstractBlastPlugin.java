@@ -74,7 +74,6 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
 
   /**
    * @param propertyFile
-   * @throws WsfServiceException
    */
   public AbstractBlastPlugin(CommandFormatter commandFormatter,
       ResultFormatter resultFormatter) {
@@ -118,6 +117,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * 
    * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
    */
+  @Override
   public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ALGORITHM, PARAM_DATABASE_ORGANISM,
         PARAM_DATABASE_TYPE, PARAM_SEQUENCE, PARAM_RECORD_CLASS };
@@ -128,6 +128,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * 
    * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
    */
+  @Override
   public String[] getColumns() {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_ID, COLUMN_HEADER,
         COLUMN_FOOTER, COLUMN_SUMMARY, COLUMN_ALIGNMENT, COLUMN_COUNTER };
@@ -138,6 +139,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * 
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
+  @Override
   public void validateParameters(WsfRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     for (String param : params.keySet()) {
@@ -151,6 +153,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
    * java.lang.String[])
    */
+  @Override
   public WsfResponse execute(WsfRequest request) throws WsfServiceException {
     // Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
     String[] orderedColumns = request.getOrderedColumns();

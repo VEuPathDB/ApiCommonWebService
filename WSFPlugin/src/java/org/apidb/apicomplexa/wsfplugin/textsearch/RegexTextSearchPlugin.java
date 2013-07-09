@@ -53,11 +53,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
     // private String sourceIdRegex;
     // private int maxLen;
 
-    /**
-     * @throws WsfServiceException
-     * 
-     */
-    public RegexTextSearchPlugin() throws WsfServiceException {
+    public RegexTextSearchPlugin() {
         super(PROPERTY_FILE);
     }
 
@@ -91,6 +87,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
      */
+    @Override
     public String[] getRequiredParameterNames() {
         return new String[] { PARAM_TEXT_EXPRESSION, PARAM_DATASETS };
     }
@@ -100,6 +97,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#getColumns()
      */
+    @Override
     public String[] getColumns() {
         return new String[] { COLUMN_GENE_ID, COLUMN_DATASETS,
                 COLUMN_PROJECT_ID };
@@ -110,6 +108,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
+    @Override
     public void validateParameters(WsfRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
@@ -121,6 +120,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * 
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
+    @Override
     public WsfResponse execute(WsfRequest request) throws WsfServiceException {
         logger.info("Invoking TextSearchPlugin...");
 
@@ -203,7 +203,6 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
 
     private String rewriteExpression(String expression, String whole_words) {
         String newExpression = expression;
-        ;
 
         String[][] replacement = { { "\\.", "\\\\." }, { "/", "\\\\/" },
                 { "\\|", "\\\\|" }, { "\\*", ".*" } };
