@@ -8,8 +8,6 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicommon.model.ProjectMapper;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 
 public abstract class AbstractResultFormatter implements ResultFormatter {
 
@@ -57,8 +55,7 @@ public abstract class AbstractResultFormatter implements ResultFormatter {
   }
 
   protected String insertIdUrl(String defline, String recordClass)
-      throws UnsupportedEncodingException, WdkModelException, WdkUserException,
-      SQLException {
+      throws UnsupportedEncodingException, SQLException {
     int[] orgPos = findOrganism(defline);
     String organism = defline.substring(orgPos[0], orgPos[1]);
     String projectId = projectMapper.getProjectByOrganism(organism);
