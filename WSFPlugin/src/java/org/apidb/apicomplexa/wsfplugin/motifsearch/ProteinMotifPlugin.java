@@ -29,11 +29,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
 
-  /**
-   * @throws WsfServiceException
-   * 
-   */
-  public ProteinMotifPlugin() throws WsfServiceException {
+  public ProteinMotifPlugin() {
     super(FIELD_REGEX, DEFAULT_REGEX);
   }
 
@@ -43,10 +39,8 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
    * 
    * @param regexField
    * @param defaultRegex
-   * @throws WsfServiceException
    */
-  public ProteinMotifPlugin(String regexField, String defaultRegex)
-      throws WsfServiceException {
+  public ProteinMotifPlugin(String regexField, String defaultRegex) {
     super(regexField, defaultRegex);
   }
 

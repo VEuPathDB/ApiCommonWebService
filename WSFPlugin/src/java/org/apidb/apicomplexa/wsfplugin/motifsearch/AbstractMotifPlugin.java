@@ -92,12 +92,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       Pattern searchPattern, String sequence) throws WdkModelException,
       WdkUserException, SQLException;
 
-  /**
-   * @throws WsfServiceException
-   * 
-   */
-  protected AbstractMotifPlugin(String regexField, String defaultRegex)
-      throws WsfServiceException {
+  protected AbstractMotifPlugin(String regexField, String defaultRegex) {
     super(PROPERTY_FILE);
     this.regexField = regexField;
     this.defaultRegex = defaultRegex;
@@ -146,6 +141,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * 
    * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
    */
+  @Override
   public String[] getRequiredParameterNames() {
     return new String[] { PARAM_EXPRESSION, PARAM_DATASET };
   }
@@ -155,6 +151,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * 
    * @see org.gusdb.wsf.WsfPlugin#getColumns()
    */
+  @Override
   public String[] getColumns() {
     return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
         COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
@@ -165,6 +162,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * 
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
+  @Override
   public void validateParameters(WsfRequest request) throws WsfServiceException {
     // do nothing in this plugin
   }
@@ -174,6 +172,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * 
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
+  @Override
   public WsfResponse execute(WsfRequest request) throws WsfServiceException {
     logger.info("Invoking MotifSearchPlugin...");
 
@@ -229,7 +228,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   /**
    * @param fileID
    * @return
-   * @throws IOException
    */
   private File openDataFile(String datasetID) throws IOException {
     logger.info("openDataFile() - datasetID: " + datasetID + "\n");
@@ -354,8 +352,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     return result;
   }
 
-  protected String getProjectId(String organism) throws WdkModelException,
-      WdkUserException, SQLException {
+  protected String getProjectId(String organism) throws SQLException {
     return projectMapper.getProjectByOrganism(organism);
   }
 
