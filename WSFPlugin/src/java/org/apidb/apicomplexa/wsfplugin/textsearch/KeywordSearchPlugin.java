@@ -110,8 +110,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             commentRecords, communityAnnotationRecords);
         commentMatches = textSearch(ps, "source_id");
         commentMatches = validateRecords(projectId, commentMatches, organisms);
-        logger.debug("after validation commentMatches = "
-            + commentMatches.toString());
+        // logger.debug("after validation commentMatches = "
+        //    + commentMatches.toString());
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
         throw new WsfServiceException(ex);
       } finally {
@@ -373,24 +373,24 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
         for (String sourceId : commentMatches.keySet()) {
-          logger.debug("validating sourceId \"" + sourceId + "\"");
+          // logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
           validationQuery.setString(2, projectId);
           rs = validationQuery.executeQuery();
           if (!rs.next()) {
             // no match; drop result
-            logger.debug("dropping unrecognized ID \"" + sourceId
+            logger.trace("dropping unrecognized ID \"" + sourceId
                 + "\" (project \"" + projectId + "\", organisms \"" + organisms
                 + "\") from comment-search result set.");
             newCommentMatches.remove(sourceId);
           } else {
             String returnedSourceId = rs.getString("source_id");
-            logger.debug("validation query returned \"" + returnedSourceId
-                + "\"");
+            //logger.debug("validation query returned \"" + returnedSourceId
+            //    + "\"");
             if (!returnedSourceId.equals(sourceId)) {
               // ID changed; substitute returned value
-              logger.debug("Substituting valid ID \"" + returnedSourceId
+              logger.trace("Substituting valid ID \"" + returnedSourceId
                   + "\" for ID \"" + sourceId
                   + "\" returned from comment-search result set.");
               SearchResult result = newCommentMatches.get(sourceId);
