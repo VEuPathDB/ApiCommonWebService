@@ -22,7 +22,7 @@ import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
@@ -107,7 +107,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   @Override
-  public void validateParameters(WsfRequest request) throws WsfServiceException {
+  public void validateParameters(PluginRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     Set<String> operators = new HashSet<String>(Arrays.asList(
         PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B, PARAM_VALUE_B_CONTAIN_A));
@@ -199,7 +199,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   @Override
-  public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+  public WsfResponse execute(PluginRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
 

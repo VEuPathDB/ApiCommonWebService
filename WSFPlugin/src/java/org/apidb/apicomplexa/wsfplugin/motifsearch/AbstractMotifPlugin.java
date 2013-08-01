@@ -9,9 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -22,8 +20,8 @@ import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.xml.sax.SAXException;
 
@@ -39,6 +37,12 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
     public String sourceId;
     public String projectId;
+
+    /**
+     * 
+     * locations contains (xxx-yyy), (xxx-yyyy), ... sequence contains sequences
+     * from matches, separated by a space (so it wraps in summary page)
+     */
     public String locations;
     public int matchCount = 0;
     public String sequence;
@@ -57,8 +61,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       if (obj != null && obj instanceof Match) {
         Match match = (Match) obj;
         return getKey().equals(match.getKey());
-      } else
-        return false;
+      } else return false;
     }
   }
 
@@ -77,7 +80,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   protected static final String MOTIF_STYLE_CLASS = "motif";
 
-  private static final int MAX_MATCH = 50000;
   private static final long MAX_MILLISECONDS = 5 * 60 * 1000;
 
   private String regexField;
@@ -88,9 +90,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   protected abstract Map<Character, String> getSymbols();
 
-  protected abstract void findMatches(Set<Match> matches, String headline,
-      Pattern searchPattern, String sequence) throws WdkModelException,
-      WdkUserException, SQLException;
+  protected abstract void findMatches(PluginResponse response,
+      Map<String, Integer> orders, String headline, Pattern searchPattern,
+      String sequence) throws WsfServiceException;
 
   protected AbstractMotifPlugin(String regexField, String defaultRegex) {
     super(PROPERTY_FILE);
@@ -163,7 +165,8 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
   @Override
-  public void validateParameters(WsfRequest request) throws WsfServiceException {
+  public void validateParameters(PluginRequest request)
+      throws WsfServiceException {
     // do nothing in this plugin
   }
 
@@ -173,28 +176,33 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+  public void execute(PluginRequest request, PluginResponse response)
+      throws WsfServiceException {
     logger.info("Invoking MotifSearchPlugin...");
 
     long start = System.currentTimeMillis();
     Map<String, String> params = request.getParams();
+    // create a column order map
+    String[] orderedColumns = request.getOrderedColumns();
+    Map<String, Integer> orders = new HashMap<String, Integer>();
+    for (int i = 0; i < orderedColumns.length; i++)
+      orders.put(orderedColumns[i], i);
 
     // get required parameters
     String datasetIDs = params.get(PARAM_DATASET);
+
+    // translate the expression
     String expression = params.get(PARAM_EXPRESSION);
+    Pattern searchPattern = translateExpression(expression);
 
     logger.debug("datasetIDs: " + datasetIDs);
     logger.debug("expression: " + expression);
 
-    // translate the expression
-    Pattern searchPattern = translateExpression(expression);
-
     // open the flatfile database assigned by the user
     try {
-      Set<Match> allMatches = new HashSet<Match>();
       String[] dsIds = datasetIDs.split(",");
 
-		  // scan on each dataset, and add matched motifs in the result
+      // scan on each dataset, and add matched motifs in the result
       for (String dsId : dsIds) {
         logger.debug("execute(): dsId: " + dsId);
         // parent organisms in a treeParam, we only need the leave nodes
@@ -204,22 +212,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
           continue;
         }
 
-        Set<Match> matches = findMatches(dsId.trim(), searchPattern,
-            config.getContextLength(), allMatches.size(), start);
-        allMatches.addAll(matches);
-        matches = null;
-        System.gc();
+        findMatches(response, dsId.trim(), searchPattern,
+            config.getContextLength(), start, orders);
       }
-
-      // locations contains (xxx-yyy), (xxx-yyyy), ...
-      // sequence contains sequences from matches, separated by a space
-      // (so it wraps in summary page)
-
-      String[][] result = prepareResult(allMatches, request.getOrderedColumns());
-
-      WsfResponse wsfResponse = new WsfResponse();
-      wsfResponse.setResult(result);
-      return wsfResponse;
     } catch (Exception ex) {
       throw new WsfServiceException(ex);
     }
@@ -233,11 +228,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     logger.info("openDataFile() - datasetID: " + datasetID + "\n");
 
     File dataFile = new File(datasetID);
-    if (!dataFile.exists())
-      throw new IOException("The dataset \"" + dataFile.toString()
-          + "\" cannot be found.");
-    else
-      return dataFile;
+    if (!dataFile.exists()) throw new IOException("The dataset \""
+        + dataFile.toString() + "\" cannot be found.");
+    else return dataFile;
   }
 
   private Pattern translateExpression(String expression) {
@@ -248,25 +241,19 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     for (int i = 0; i < expression.length(); i++) {
       char ch = Character.toUpperCase(expression.charAt(i));
       boolean skipChar = false;
-      if (ch == '{')
-        inCurlyBraces = true;
-      else if (ch == '}')
-        inCurlyBraces = false;
-      else if (ch == '[')
-        inSquareBraces = true;
-      else if (ch == ']')
-        inSquareBraces = false;
+      if (ch == '{') inCurlyBraces = true;
+      else if (ch == '}') inCurlyBraces = false;
+      else if (ch == '[') inSquareBraces = true;
+      else if (ch == ']') inSquareBraces = false;
       else if (!inCurlyBraces && codes.containsKey(ch)) {
         // the char is not in any curly braces, and is a known code;
         // replace the char with the actual string.
         String replace = codes.get(ch);
-        if (!inSquareBraces)
-          replace = "[" + replace + "]";
+        if (!inSquareBraces) replace = "[" + replace + "]";
         builder.append(replace);
         skipChar = true;
       }
-      if (!skipChar)
-        builder.append(ch);
+      if (!skipChar) builder.append(ch);
     }
     logger.debug("translated expression: " + builder);
 
@@ -274,12 +261,12 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     return Pattern.compile(builder.toString(), option);
   }
 
-  private Set<Match> findMatches(String datasetID, Pattern searchPattern,
-      int contextLength, int allSize, long start) throws IOException,
-      WsfServiceException, WdkModelException, WdkUserException, SQLException {
+  private void findMatches(PluginResponse response, String datasetID,
+      Pattern searchPattern, int contextLength, long start,
+      Map<String, Integer> orders) throws IOException, WsfServiceException,
+      WdkModelException, WdkUserException, SQLException {
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
-    Set<Match> matches = new HashSet<Match>();
 
     // read header of the first sequence
     String headline = null, line;
@@ -287,21 +274,14 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     try {
       while ((line = in.readLine()) != null) {
         line = line.trim();
-        if (line.length() == 0)
-          continue;
+        if (line.length() == 0) continue;
 
         if (line.charAt(0) == '>') {
           // starting of a new sequence, process the previous sequence if
           // have any;
           if (sequence.length() > 0) {
-            findMatches(matches, headline, searchPattern, sequence.toString());
-            // stop the process if too many hits are found, to avoid
-            // out-of-memory error.
-            int size = allSize + matches.size();
-            if (size > MAX_MATCH)
-              throw new WsfServiceException("The number of matches "
-                  + "exceeds the system limit, please refine "
-                  + "your search pattern to make it more " + "specific.");
+            findMatches(response, orders, headline, searchPattern,
+                sequence.toString());
 
             // stop the process if maximum time is reached, to avoid
             // slow/generic patterns
@@ -325,31 +305,21 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
     // process the last sequence, if it hasn't been processed
     if (headline != null && sequence.length() > 0) {
-      findMatches(matches, headline, searchPattern, sequence.toString());
+      findMatches(response, orders, headline, searchPattern,
+          sequence.toString());
     }
-    return matches;
   }
 
-  private String[][] prepareResult(Set<Match> matches, String[] cols) {
-    String[][] result = new String[matches.size()][cols.length];
-    // create a column order map
-    Map<String, Integer> orders = new HashMap<String, Integer>();
-    for (int i = 0; i < cols.length; i++)
-      orders.put(cols[i], i);
-
-    int i = 0;
-    for (Match match : matches) {
-      result[i][orders.get(COLUMN_PROJECT_ID)] = match.projectId;
-      result[i][orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
-      result[i][orders.get(COLUMN_LOCATIONS)] = match.locations;
-      result[i][orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
-      result[i][orders.get(COLUMN_SEQUENCE)] = match.sequence;
-
-      i++;
-    }
-    logger.info("hits found: " + result.length + "\n");
+  protected void addMatch(PluginResponse response, Match match,
+      Map<String, Integer> orders) throws WsfServiceException {
+    String[] result = new String[orders.size()];
+    result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
+    result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
+    result[orders.get(COLUMN_LOCATIONS)] = match.locations;
+    result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
+    result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
     // logger.debug("result " + resultToString(result) + "\n");
-    return result;
+    response.addRow(result);
   }
 
   protected String getProjectId(String organism) throws SQLException {
@@ -372,8 +342,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       stop += 1;
     }
     String location = Integer.toString(start);
-    if (start != stop)
-      location += "-" + stop;
+    if (start != stop) location += "-" + stop;
     return location;
   }
 

@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
@@ -109,7 +109,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
     @Override
-    public void validateParameters(WsfRequest request)
+    public void validateParameters(PluginRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
 
@@ -121,7 +121,7 @@ public class RegexTextSearchPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+    public WsfResponse execute(PluginRequest request) throws WsfServiceException {
         logger.info("Invoking TextSearchPlugin...");
 
         // get parameters

@@ -14,7 +14,8 @@ import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.client.WsfService;
 import org.gusdb.wsf.client.WsfServiceServiceLocator;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.jdom.Document;
@@ -156,7 +157,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
     @Override
-    public void validateParameters(WsfRequest request)
+    public void validateParameters(PluginRequest request)
             throws WsfServiceException {
         // Do Nothing in this plugin
     }
@@ -167,7 +168,7 @@ public class ApiFedPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+    public void execute(PluginRequest request, PluginResponse response) throws WsfServiceException {
         Site[] sites = new Site[this.sites.length];
         for (int i = 0; i < sites.length; i++) {
             sites[i] = (Site) this.sites[i].clone();
@@ -304,7 +305,7 @@ public class ApiFedPlugin extends AbstractPlugin {
                 compResults[thread_counter].setSiteName(site.getProjectId());
                 logger.debug("siteName = " + site.getProjectId() + " Done");
 
-                WsfRequest compRequest = new WsfRequest();
+                PluginRequest compRequest = new PluginRequest();
                 compRequest.setProjectId(request.getProjectId());
                 compRequest.setParams(arrayParams);
                 compRequest.setOrderedColumns(componentColumns);
@@ -651,7 +652,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     class WdkQuery extends Thread {
         private String url;
-        private WsfRequest request;
+        private PluginRequest request;
         private CompResult result;
         private Status status;
         
@@ -660,7 +661,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         //   whether it should exit execution
         private AtomicBoolean stopFlag = new AtomicBoolean(false);
         
-        WdkQuery(String URL, String pluginname, WsfRequest request,
+        WdkQuery(String URL, String pluginname, PluginRequest request,
                 CompResult r, Status s) {
             url = URL;
             this.request = request;

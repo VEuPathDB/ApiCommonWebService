@@ -19,7 +19,7 @@ import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
@@ -140,7 +140,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
   @Override
-  public void validateParameters(WsfRequest request) throws WsfServiceException {
+  public void validateParameters(PluginRequest request) throws WsfServiceException {
     Map<String, String> params = request.getParams();
     for (String param : params.keySet()) {
       logger.debug("Param - name=" + param + ", value=" + params.get(param));
@@ -154,7 +154,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    * java.lang.String[])
    */
   @Override
-  public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+  public WsfResponse execute(PluginRequest request) throws WsfServiceException {
     // Identifier--ProjectId--TabularRow--Alignment--Header--Footer--Counter
     String[] orderedColumns = request.getOrderedColumns();
     StringBuilder builder = new StringBuilder();

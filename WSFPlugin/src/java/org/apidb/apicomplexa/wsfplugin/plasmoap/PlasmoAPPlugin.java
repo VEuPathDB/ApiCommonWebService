@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -82,7 +82,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
     @Override
-    public void validateParameters(WsfRequest request)
+    public void validateParameters(PluginRequest request)
             throws WsfServiceException {
     // do nothing in this plugin
     }
@@ -93,7 +93,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+    public void execute(PluginRequest request, PluginResponse response) throws WsfServiceException {
         logger.info("Invoking PlasmoAPPlugin...");
 
         try {
@@ -113,19 +113,17 @@ public class PlasmoAPPlugin extends AbstractPlugin {
 
             // construct the result
             String[] orderedColumns = request.getOrderedColumns();
-            String[][] result = new String[1][orderedColumns.length];
+            String[] row = new String[orderedColumns.length];
             for (int i = 0; i < orderedColumns.length; i++) {
                 if (orderedColumns[i].equalsIgnoreCase(COLUMN_REPORT)) {
-                    result[0][i] = output;
+                    row[i] = output;
                 } else if (orderedColumns[i].equalsIgnoreCase(COLUMN_SIGNAL)) {
-                    result[0][i] = match;
+                    row[i] = match;
                 }
             }
-            WsfResponse wsfResult = new WsfResponse();
-            wsfResult.setResult(result);
-            wsfResult.setMessage(output);
-            wsfResult.setSignal(signal);
-            return wsfResult;
+            response.addRow(row);
+            response.setMessage(output);
+            response.setSignal(signal);
         } catch (IOException ex) {
             logger.error(ex);
             throw new WsfServiceException(ex);

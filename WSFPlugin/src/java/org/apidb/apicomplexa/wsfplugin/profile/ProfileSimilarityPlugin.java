@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -135,7 +135,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
      */
     @Override
-    public void validateParameters(WsfRequest request)
+    public void validateParameters(PluginRequest request)
             throws WsfServiceException {
         // validate distance method
         Map<String, String> params = request.getParams();
@@ -191,7 +191,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * java.lang.String[])
      */
     @Override
-    public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+    public void execute(PluginRequest request, PluginResponse response) throws WsfServiceException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
         // prepare the command
@@ -215,13 +215,10 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 
             // prepare the result
             String queryGeneId = params.get(PARAM_GENE_ID);
-            String[][] result = prepareResult(output.toString(),
+            prepareResult(response, output.toString(),
                     request.getOrderedColumns(), queryGeneId);
 
-            WsfResponse wsfResult = new WsfResponse();
-            wsfResult.setResult(result);
-            wsfResult.setSignal(signal);
-            return wsfResult;
+            response.setSignal(signal);
         } catch (IOException ex) {
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
@@ -262,7 +259,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         return array;
     }
 
-    private String[][] prepareResult(String content, String[] orderedColumns,
+    private void prepareResult(PluginResponse response, String content, String[] orderedColumns,
             String queryGeneId) throws WsfServiceException, IOException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
@@ -276,7 +273,6 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             throw new WsfServiceException(content);
 
         // read from the buffered stream
-        List<String[]> results = new ArrayList<String[]>();
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 new ByteArrayInputStream(content.getBytes())));
 
@@ -306,15 +302,9 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             row[columns.get(COLUMN_DISTANCE)] = format.format(distance);
             row[columns.get(COLUMN_SHIFT)] = parts[2];
             row[columns.get(COLUMN_QUERY_GENE_ID)] = queryGeneId;
-            results.add(row);
+            response.addRow(row);
         }
         in.close();
-
-        String[][] array = new String[results.size()][5];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = results.get(i);
-        }
-        return array;
     }
 
     @Override

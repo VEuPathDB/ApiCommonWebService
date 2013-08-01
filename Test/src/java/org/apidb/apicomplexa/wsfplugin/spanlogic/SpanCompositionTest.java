@@ -37,7 +37,7 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
@@ -67,7 +67,7 @@ public class SpanCompositionTest {
 
         for (SpanCompositionTestCase testCase : testCases) {
             logger.warn("++++++++++++++++++++ Test #" + testCase.id + ": " + testCase.description);
-            WsfRequest request = createRequest(testCase);
+            PluginRequest request = createRequest(testCase);
             WsfResponse response = plugin.execute(request);
             String[][] results = response.getResult();
             validateResults(testCase, results);
@@ -110,7 +110,7 @@ public class SpanCompositionTest {
         return testCases;
     }
 
-    private WsfRequest createRequest(SpanCompositionTestCase testCase)
+    private PluginRequest createRequest(SpanCompositionTestCase testCase)
             throws WdkModelException {
         // prepare parameters
         Map<String, String> params = new HashMap<String, String>();
@@ -144,7 +144,7 @@ public class SpanCompositionTest {
         Map<String, String> context = new HashMap<String, String>();
         context.put(Utilities.QUERY_CTX_USER, user.getSignature());
 
-        WsfRequest request = new WsfRequest();
+        PluginRequest request = new PluginRequest();
         request.setParams(params);
         request.setOrderedColumns(columns);
         request.setContext(context);

@@ -6,13 +6,11 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -70,26 +68,31 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   }
 
   @Override
-  protected void findMatches(Set<Match> matches, String headline,
-      Pattern searchPattern, String sequence) throws WdkModelException,
-      WdkUserException, SQLException {
+  protected void findMatches(PluginResponse response,
+      Map<String, Integer> orders, String headline, Pattern searchPattern,
+      String sequence) throws WsfServiceException {
     MotifConfig config = getConfig();
 
     // parse the headline
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
     if (!deflineMatcher.find()) {
-        logger.warn("Invalid defline: " + headline + " Against Pattern " + config.getDeflinePattern().pattern());
+      logger.warn("Invalid defline: " + headline + " Against Pattern "
+          + config.getDeflinePattern().pattern());
       return;
     }
     // the gene source id has to be in group(1),
     // organsim has to be in group(2),
     String sourceId = deflineMatcher.group(1);
     String organism = deflineMatcher.group(2);
-    String projectId = getProjectId(organism);
 
     Match match = new Match();
     match.sourceId = sourceId;
-    match.projectId = projectId;
+    try {
+      match.projectId = getProjectId(organism);
+    } catch (SQLException ex) {
+      throw new WsfServiceException(ex);
+    }
+
     StringBuffer sbLoc = new StringBuffer();
     StringBuffer sbSeq = new StringBuffer();
     int prev = 0;
@@ -101,8 +104,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
           false);
 
       // add locations
-      if (sbLoc.length() != 0)
-        sbLoc.append(", ");
+      if (sbLoc.length() != 0) sbLoc.append(", ");
       sbLoc.append('(' + location + ')');
 
       // obtain the context sequence
@@ -122,8 +124,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
       prev = matcher.end();
       match.matchCount++;
     }
-    if (match.matchCount == 0)
-      return;
+    if (match.matchCount == 0) return;
 
     // grab the last context
     if ((prev + contextLength) < sequence.length()) {
@@ -134,6 +135,6 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     }
     match.locations = sbLoc.toString();
     match.sequence = sbSeq.toString();
-    matches.add(match);
+    addMatch(response, match, orders);
   }
 }

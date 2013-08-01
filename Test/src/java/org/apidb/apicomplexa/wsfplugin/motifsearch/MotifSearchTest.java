@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
@@ -110,7 +110,7 @@ public class MotifSearchTest {
         getPath("/fasta/sample-dna.fasta"));
 
     // invoke the plugin and get result back
-    WsfRequest request = getRequest(params);
+    PluginRequest request = getRequest(params);
     WsfResponse wsfResult = search.execute(request);
 
     // print results
@@ -139,7 +139,7 @@ public class MotifSearchTest {
         getPath("/fasta/sample-protein.fasta"));
 
     // invoke the plugin and get result back
-    WsfRequest request = getRequest(params);
+    PluginRequest request = getRequest(params);
     WsfResponse wsfResult = search.execute(request);
 
     // print results
@@ -154,7 +154,7 @@ public class MotifSearchTest {
     return context;
   }
 
-  private WsfRequest getRequest(Map<String, String> params) {
+  private PluginRequest getRequest(Map<String, String> params) {
     // prepare columns
     String[] columns = new String[] { AbstractMotifPlugin.COLUMN_SOURCE_ID,
         AbstractMotifPlugin.COLUMN_PROJECT_ID,
@@ -162,7 +162,7 @@ public class MotifSearchTest {
         AbstractMotifPlugin.COLUMN_LOCATIONS,
         AbstractMotifPlugin.COLUMN_SEQUENCE };
 
-    WsfRequest request = new WsfRequest();
+    PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());

@@ -21,7 +21,7 @@ import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wsf.plugin.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
@@ -48,7 +48,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+  public WsfResponse execute(PluginRequest request) throws WsfServiceException {
     logger.info("Invoking KeywordSearchPlugin...");
 
     int signal = 0;
