@@ -248,7 +248,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       DataSource dataSource = wdkModel.getAppDb().getDataSource();
       String schema = wdkModel.getAppDb().getDefaultSchema();
       platform.dropTable(dataSource, schema, tempA, true);
-      platform.dropTable(dataSource, schema, tempA, true);
+      platform.dropTable(dataSource, schema, tempB, true);
       
       return response;
     } catch (Exception ex) {
