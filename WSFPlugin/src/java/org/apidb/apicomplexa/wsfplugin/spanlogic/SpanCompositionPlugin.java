@@ -9,11 +9,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
@@ -92,6 +94,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   public static final String PARAM_VALUE_BOTH_STRANDS = "both_strands";
   public static final String PARAM_VALUE_SAME_STRAND = "same_strand";
   public static final String PARAM_VALUE_OPPOSITE_STRANDS = "opposite_strands";
+
+  private static final String TEMP_TABLE_PREFIX = "spanlogic";
+
+  private final Random random = new Random();
 
   @Override
   public String[] getColumns() {
@@ -224,8 +230,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       User user = wdkModel.getUserFactory().getUser(signature);
 
       // create temp tables from caches
-      tempA = getSpanSql(user, params, startStopA, "a");
-      tempB = getSpanSql(user, params, startStopB, "b");
+      tempA = getSpanSql(wdkModel, user, params, startStopA, "a");
+      tempB = getSpanSql(wdkModel, user, params, startStopB, "b");
 
       // compose the final sql by comparing two regions with span
       // operation.
@@ -235,7 +241,16 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       logger.debug("SPAN LOGIC SQL:\n" + sql);
 
       // execute the final sql, and fetch the result for the output.
-      return getResult(wdkModel, sql, request.getOrderedColumns(), output);
+      WsfResponse response = getResult(wdkModel, sql, request.getOrderedColumns(), output);
+      
+      // drop the cache tables
+      DBPlatform platform = wdkModel.getAppDb().getPlatform();
+      DataSource dataSource = wdkModel.getAppDb().getDataSource();
+      String schema = wdkModel.getAppDb().getDefaultSchema();
+      platform.dropTable(dataSource, schema, tempA, true);
+      platform.dropTable(dataSource, schema, tempA, true);
+      
+      return response;
     } catch (Exception ex) {
       throw new WsfServiceException(ex);
     } finally {
@@ -346,8 +361,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return builder.toString();
   }
 
-  private String getSpanSql(User user, Map<String, String> params,
-      String[] region, String suffix) throws WdkModelException {
+  private String getSpanSql(WdkModel wdkModel, User user,
+      Map<String, String> params, String[] region, String suffix)
+      throws WdkModelException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
     AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
 
@@ -369,24 +385,44 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       locTable = "ApidbTuning.FeatureLocation";
     }
 
-    StringBuilder builder = new StringBuilder();
-    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, ");
-    builder.append("       fl.sequence_source_id, fl.feature_type, ");
-    builder.append("       ca.wdk_weight, ca.project_id, ");
-    builder.append("       NVL(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
-    builder.append("WHERE fl.feature_source_id = ca.source_id ");
-    builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = (");
-    builder.append("    SELECT fl.feature_type ");
-    builder.append("    FROM " + locTable + " fl, " + cacheSql + " ca");
-    builder.append("    WHERE fl.feature_source_id = ca.source_id ");
-    builder.append("      AND rownum = 1) ");
+    // get a temp table name
+    DBPlatform platform = wdkModel.getAppDb().getPlatform();
+    DataSource dataSource = wdkModel.getAppDb().getDataSource();
+    String schema = wdkModel.getAppDb().getDefaultSchema();
+    try {
+      String tableName = null;
+      while (true) {
+        tableName = TEMP_TABLE_PREFIX + random.nextInt(Integer.MAX_VALUE);
+        if (!platform.checkTableExists(dataSource, schema, tableName))
+          break;
+      }
 
-    String sql = builder.toString();
-    logger.debug("SPAN SQL: " + sql);
-    return sql;
+      StringBuilder builder = new StringBuilder();
+      builder.append("CREATE TABLE " + tableName + " AS ");
+      builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, ");
+      builder.append("       fl.sequence_source_id, fl.feature_type, ");
+      builder.append("       ca.wdk_weight, ca.project_id, ");
+      builder.append("       NVL(fl.is_reversed, 0) AS is_reversed, ");
+      builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+      builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
+      builder.append("WHERE fl.feature_source_id = ca.source_id ");
+      builder.append("  AND fl.is_top_level = 1");
+      builder.append("  AND fl.feature_type = (");
+      builder.append("    SELECT fl.feature_type ");
+      builder.append("    FROM " + locTable + " fl, " + cacheSql + " ca");
+      builder.append("    WHERE fl.feature_source_id = ca.source_id ");
+      builder.append("      AND rownum = 1) ");
+
+      String sql = builder.toString();
+      logger.debug("SPAN SQL: " + sql);
+
+      // cache the sql
+      SqlUtils.executeUpdate(dataSource, sql, "span-logic-child");
+
+      return tableName;
+    } catch (SQLException ex) {
+      throw new WdkModelException(ex);
+    }
   }
 
   private WsfResponse getResult(WdkModel wdkModel, String sql,
@@ -421,8 +457,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     ResultSet results = null;
 
     try {
-      results = SqlUtils.executeQuery(dataSource, sql,
-          "span-logic-cached");
+      results = SqlUtils.executeQuery(dataSource, sql, "span-logic-cached");
       Map<String, Feature> fas = new LinkedHashMap<String, Feature>();
       Map<String, Feature> fbs = new LinkedHashMap<String, Feature>();
       while (results.next()) {
