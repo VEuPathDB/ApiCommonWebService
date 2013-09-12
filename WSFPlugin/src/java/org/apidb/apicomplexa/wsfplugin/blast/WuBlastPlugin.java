@@ -10,7 +10,7 @@ package org.apidb.apicomplexa.wsfplugin.blast;
  * @created Nov 2, 2005
  */
 
-public class WuBlastPlugin extends AbstractBlastPlugin {
+public class WuBlastPlugin extends EuPathDBBlastPlugin {
 
     /**
      */

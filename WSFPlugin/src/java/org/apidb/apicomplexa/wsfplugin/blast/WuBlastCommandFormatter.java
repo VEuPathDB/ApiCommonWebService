@@ -23,7 +23,7 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
     String dbOrgs = null;
     String dbOrgName = null;
     for (String paramName : params.keySet()) {
-      if (paramName.startsWith(AbstractBlastPlugin.PARAM_DATABASE_ORGANISM)) {
+      if (paramName.startsWith(EuPathDBBlastPlugin.PARAM_DATABASE_ORGANISM)) {
         dbOrgName = paramName;
         dbOrgs = params.get(paramName);
         break;
@@ -36,8 +36,8 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
 
     // String blastApp = getBlastProgram(qType, dbType);
 
-    String blastApp = params.get(AbstractBlastPlugin.PARAM_ALGORITHM);
-    params.remove(AbstractBlastPlugin.PARAM_ALGORITHM);
+    String blastApp = params.get(EuPathDBBlastPlugin.PARAM_ALGORITHM);
+    params.remove(EuPathDBBlastPlugin.PARAM_ALGORITHM);
     // so database name is built correctly for the Translated cases
     if (dbType.contains("Translated")) {
       if (dbType.contains("Transcripts"))
@@ -49,16 +49,16 @@ public class WuBlastCommandFormatter extends AbstractCommandFormatter {
     }
 
     // make sure the -v & -b are the same
-    if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS)) {
-      String alignments = params.get(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS);
-      logger.debug(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS + " = " + alignments);
+    if (params.containsKey(EuPathDBBlastPlugin.PARAM_MAX_ALIGNMENTS)) {
+      String alignments = params.get(EuPathDBBlastPlugin.PARAM_MAX_ALIGNMENTS);
+      logger.debug(EuPathDBBlastPlugin.PARAM_MAX_ALIGNMENTS + " = " + alignments);
 
-      params.put(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION, alignments);
-    } else if (params.containsKey(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION)) {
-      String descs = params.get(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION);
-      logger.debug(AbstractBlastPlugin.PARAM_MAX_DESCRIPTION + " = " + descs);
+      params.put(EuPathDBBlastPlugin.PARAM_MAX_DESCRIPTION, alignments);
+    } else if (params.containsKey(EuPathDBBlastPlugin.PARAM_MAX_DESCRIPTION)) {
+      String descs = params.get(EuPathDBBlastPlugin.PARAM_MAX_DESCRIPTION);
+      logger.debug(EuPathDBBlastPlugin.PARAM_MAX_DESCRIPTION + " = " + descs);
 
-      params.put(AbstractBlastPlugin.PARAM_MAX_ALIGNMENTS, descs);
+      params.put(EuPathDBBlastPlugin.PARAM_MAX_ALIGNMENTS, descs);
     }
 
     // now prepare the commandline

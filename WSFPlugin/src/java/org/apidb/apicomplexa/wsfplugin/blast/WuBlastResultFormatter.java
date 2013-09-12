@@ -130,7 +130,7 @@ public class WuBlastResultFormatter extends AbstractResultFormatter {
 
           // check if the alignment section exceeds the limit
           if (!skipAlignment
-              && alignmentSize >= AbstractBlastPlugin.MAX_DATA_SIZE)
+              && alignmentSize >= EuPathDBBlastPlugin.MAX_DATA_SIZE)
             skipAlignment = true;
         }
       }

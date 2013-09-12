@@ -23,11 +23,11 @@ public class NcbiBlastCommandFormatter extends AbstractCommandFormatter {
     List<String> cmds = new ArrayList<String>();
     cmds.add(config.getBlastPath() + "blastall");
     
-    String dbOrgs = params.remove(AbstractBlastPlugin.PARAM_DATABASE_ORGANISM);
+    String dbOrgs = params.remove(EuPathDBBlastPlugin.PARAM_DATABASE_ORGANISM);
 
     // String blastApp = getBlastProgram(qType, dbType);
 
-    String blastApp = params.remove(AbstractBlastPlugin.PARAM_ALGORITHM);
+    String blastApp = params.remove(EuPathDBBlastPlugin.PARAM_ALGORITHM);
 
     String blastDbs = getBlastDatabase(dbType, dbOrgs);
     cmds.add("-p");

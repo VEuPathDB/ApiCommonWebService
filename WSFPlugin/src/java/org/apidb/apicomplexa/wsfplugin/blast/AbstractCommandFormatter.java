@@ -32,9 +32,9 @@ public abstract class AbstractCommandFormatter implements CommandFormatter {
       }
       // construct file path pattern
       String path = config.getBlastDbName().replaceAll(
-          "\\$\\$" + AbstractBlastPlugin.PARAM_DATABASE_ORGANISM + "\\$\\$",
+          "\\$\\$" + EuPathDBBlastPlugin.PARAM_DATABASE_ORGANISM + "\\$\\$",
           Matcher.quoteReplacement(organism));
-      path = path.replaceAll("\\$\\$" + AbstractBlastPlugin.PARAM_DATABASE_TYPE
+      path = path.replaceAll("\\$\\$" + EuPathDBBlastPlugin.PARAM_DATABASE_TYPE
           + "\\$\\$", dbType);
       sb.append(path + " ");
     }

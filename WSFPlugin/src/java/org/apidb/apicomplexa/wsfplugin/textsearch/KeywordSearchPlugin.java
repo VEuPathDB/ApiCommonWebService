@@ -8,12 +8,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
+import org.eupathdb.websvccommon.wsfplugin.textsearch.ResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
@@ -21,8 +23,9 @@ import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wsf.client.WsfResponse;
 import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 
 /**
@@ -48,10 +51,10 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public WsfResponse execute(PluginRequest request) throws WsfServiceException {
+  public void execute(PluginRequest request, PluginResponse response)
+      throws WsfServiceException {
     logger.info("Invoking KeywordSearchPlugin...");
 
-    int signal = 0;
     // get parameters
     String recordType;
     Map<String, String> params = request.getParams();
@@ -72,9 +75,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     logger.debug("organisms after cleaning= \"" + organisms + "\"");
 
     String maxPvalue = params.get(PARAM_MAX_PVALUE);
-
-    Map<String, SearchResult> commentMatches = new HashMap<String, SearchResult>();
-    Map<String, SearchResult> componentMatches = new HashMap<String, SearchResult>();
 
     boolean searchComments = false;
     boolean searchComponent = false;
@@ -101,6 +101,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       }
     }
 
+    // search comments
+    Map<String, SearchResult> commentResults = new LinkedHashMap<>();
     String oracleTextExpression = transformQueryString(textExpression);
     String projectId = request.getProjectId();
     if (searchComments) {
@@ -108,10 +110,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       try {
         ps = getCommentQuery(projectId, recordType, oracleTextExpression,
             commentRecords, communityAnnotationRecords);
-        commentMatches = textSearch(ps, "source_id");
-        commentMatches = validateRecords(projectId, commentMatches, organisms);
+        BufferedResultContainer commentContainer = new BufferedResultContainer();
+        textSearch(commentContainer, ps, "source_id");
+        commentResults = validateRecords(projectId,
+            commentContainer.getResults(), organisms);
         // logger.debug("after validation commentMatches = "
-        //    + commentMatches.toString());
+        // + commentMatches.toString());
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
         throw new WsfServiceException(ex);
       } finally {
@@ -119,31 +123,24 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       }
     }
 
+    // search component database
     if (searchComponent) {
       PreparedStatement ps = null;
       try {
         ps = getComponentQuery(projectId, recordType, organisms,
             oracleTextExpression, quotedFields.toString(), maxPvalue);
-        componentMatches = textSearch(ps, "source_id");
+        // merge the result from component with the ones from comments
+        MergeResultContainer componentContainer = new MergeResultContainer(
+            response, request.getOrderedColumns(), commentResults);
+        textSearch(componentContainer, ps, "source_id");
+        // process the remaining ones from comments, but not found in component
+        componentContainer.processRemainingResults();
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
         throw new WsfServiceException(ex);
       } finally {
         SqlUtils.closeStatement(ps);
       }
     }
-
-    StringBuilder message = new StringBuilder();
-    SearchResult[] matches = joinMatches(commentMatches, componentMatches,
-        message);
-
-    // construct results
-    String[][] result = flattenMatches(matches, request.getOrderedColumns());
-    WsfResponse wsfResult = new WsfResponse();
-    wsfResult.setResult(result);
-    wsfResult.setSignal(signal);
-    if (message.length() > 0)
-      wsfResult.setMessage(message.toString());
-    return wsfResult;
   }
 
   private String cleanOrgs(String orgs) {
@@ -344,11 +341,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // }
 
   private Map<String, SearchResult> validateRecords(String projectId,
-      Map<String, SearchResult> commentMatches, String organisms)
+      Map<String, SearchResult> commentResults, String organisms)
       throws WsfServiceException {
 
-    Map<String, SearchResult> newCommentMatches = new HashMap<String, SearchResult>();
-    newCommentMatches.putAll(commentMatches);
+    Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
+    newCommentResults.putAll(commentResults);
 
     logger.debug("organisms = \"" + organisms + "\"");
 
@@ -364,7 +361,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + organisms + ")");
 
       WdkModelBean wdkModel = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
-	  DatabaseInstance platform = wdkModel.getModel().getAppDb();
+      DatabaseInstance platform = wdkModel.getModel().getAppDb();
       DataSource dataSource = platform.getDataSource();
 
       ResultSet rs = null;
@@ -372,7 +369,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       try {
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
-        for (String sourceId : commentMatches.keySet()) {
+        for (String sourceId : commentResults.keySet()) {
           // logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
@@ -383,20 +380,20 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             logger.trace("dropping unrecognized ID \"" + sourceId
                 + "\" (project \"" + projectId + "\", organisms \"" + organisms
                 + "\") from comment-search result set.");
-            newCommentMatches.remove(sourceId);
+            newCommentResults.remove(sourceId);
           } else {
             String returnedSourceId = rs.getString("source_id");
-            //logger.debug("validation query returned \"" + returnedSourceId
-            //    + "\"");
+            // logger.debug("validation query returned \"" + returnedSourceId
+            // + "\"");
             if (!returnedSourceId.equals(sourceId)) {
               // ID changed; substitute returned value
               logger.trace("Substituting valid ID \"" + returnedSourceId
                   + "\" for ID \"" + sourceId
                   + "\" returned from comment-search result set.");
-              SearchResult result = newCommentMatches.get(sourceId);
+              SearchResult result = newCommentResults.get(sourceId);
               result.setSourceId(returnedSourceId);
-              newCommentMatches.remove(sourceId);
-              newCommentMatches.put(returnedSourceId, result);
+              newCommentResults.remove(sourceId);
+              newCommentResults.put(returnedSourceId, result);
             }
           }
 
@@ -417,27 +414,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     }
     // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
     // SearchResult>();
-    return newCommentMatches;
-  }
-
-  private SearchResult[] joinMatches(Map<String, SearchResult> commentMatches,
-      Map<String, SearchResult> componentMatches, StringBuilder message) {
-
-    for (String sourceId : commentMatches.keySet()) {
-      SearchResult commentMatch = commentMatches.get(sourceId);
-      SearchResult componentMatch = componentMatches.get(sourceId);
-
-      if (componentMatch == null) {
-        componentMatches.put(sourceId, commentMatch);
-      } else {
-        componentMatch.combine(commentMatch);
-      }
-    }
-
-    // componentMatches now has all results combined; get it into a sorted
-    // array
-    return getMatchesSortedArray(componentMatches, message);
-
+    return newCommentResults;
   }
 
   @Override

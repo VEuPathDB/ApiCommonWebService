@@ -17,10 +17,10 @@ import org.apidb.apicommon.model.ProjectMapper;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wsf.client.WsfResponse;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.xml.sax.SAXException;
@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
  * @author xingao
  * 
  */
-public abstract class AbstractBlastPlugin extends AbstractPlugin implements
+public abstract class EuPathDBBlastPlugin extends AbstractPlugin implements
     Plugin {
 
   // field definitions in the config file
@@ -65,7 +65,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
    */
   public static final long MAX_DATA_SIZE = 2 * 1024 * 1024;
 
-  private static Logger logger = Logger.getLogger(AbstractBlastPlugin.class);
+  private static Logger logger = Logger.getLogger(EuPathDBBlastPlugin.class);
 
   private final CommandFormatter commandFormatter;
   private final ResultFormatter resultFormatter;
@@ -75,7 +75,7 @@ public abstract class AbstractBlastPlugin extends AbstractPlugin implements
   /**
    * @param propertyFile
    */
-  public AbstractBlastPlugin(CommandFormatter commandFormatter,
+  public EuPathDBBlastPlugin(CommandFormatter commandFormatter,
       ResultFormatter resultFormatter) {
     super(FILE_CONFIG);
     this.commandFormatter = commandFormatter;
