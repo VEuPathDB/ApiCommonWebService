@@ -19,7 +19,7 @@ import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
+import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
@@ -94,7 +94,7 @@ public class MotifSearchTest {
 
   @Test
   public void testDnaMotifSearch() throws WsfServiceException,
-      URISyntaxException {
+      URISyntaxException, IOException {
     AbstractMotifPlugin search = new DnaMotifPlugin();
     try {
       search.initialize(getContext());
@@ -111,17 +111,19 @@ public class MotifSearchTest {
 
     // invoke the plugin and get result back
     PluginRequest request = getRequest(params);
-    WsfResponse wsfResult = search.execute(request);
+    PluginResponse response = getResponse();
+    search.execute(request, response);
 
     // print results
-    System.out.println(Formatter.printArray(wsfResult.getResult()));
+    String[][] results = response.getPage(0);
+    System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(2, wsfResult.getResult().length);
+    Assert.assertEquals(2, results.length);
   }
 
   @Test
   public void testProteinMotifSearch() throws WsfServiceException,
-      URISyntaxException {
+      URISyntaxException, IOException {
     AbstractMotifPlugin search = new ProteinMotifPlugin();
 
     // ignore the exceptions here, use a mock project mapper
@@ -140,12 +142,16 @@ public class MotifSearchTest {
 
     // invoke the plugin and get result back
     PluginRequest request = getRequest(params);
-    WsfResponse wsfResult = search.execute(request);
+    PluginResponse response = getResponse();
+    search.execute(request, response);
 
     // print results
-    System.out.println(Formatter.printArray(wsfResult.getResult()));
+    String[][] results = response.getPage(0);
 
-    Assert.assertEquals(3, wsfResult.getResult().length);
+    // print results
+    System.out.println(Formatter.printArray(results));
+
+    Assert.assertEquals(3, results.length);
   }
 
   private Map<String, Object> getContext() {
@@ -174,5 +180,12 @@ public class MotifSearchTest {
     URL url = getClass().getResource(resourceName);
     File file = new File(url.toURI());
     return file.getAbsolutePath();
+  }
+
+  private PluginResponse getResponse() throws IOException {
+    File storageDir = File.createTempFile("temp/wsf", null);
+    storageDir.mkdirs();
+    PluginResponse response = new PluginResponse(storageDir, 0);
+    return response;
   }
 }

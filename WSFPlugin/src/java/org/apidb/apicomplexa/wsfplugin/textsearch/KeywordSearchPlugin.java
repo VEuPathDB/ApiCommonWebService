@@ -15,7 +15,6 @@ import javax.sql.DataSource;
 
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
-import org.eupathdb.websvccommon.wsfplugin.textsearch.ResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
@@ -23,7 +22,6 @@ import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wsf.client.WsfResponse;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfServiceException;

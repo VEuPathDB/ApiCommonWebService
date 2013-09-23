@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/org.json-chargebee-1.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/EuPath Common WS"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

@@ -52,8 +52,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
   public static final String PARAM_COLUMNS = "Columns";
   public static final String SITE_MODEL = "SiteModel";
 
-  // Output Parameters
-  public static final String COLUMN_RETURN = "Response";
+  public static final int STATUS_ERROR_NO_QUERY = -2;
+  public static final int STATUS_ERROR_MODEL_EXCEPTION = -1;
+  public static final int STATUS_ERROR_SERVICE_UNAVAILABLE = -3;
 
   // Member Variables
   // private WdkModelBean[] models = null;
@@ -167,7 +168,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("Parameters were processed");
 
     logger.debug("context question: '" + questionName + "', param: '"
-        + paramName + "', query: '" + queryName + "'");
+        + paramName + "', query: '" + queryName + "', SiteModel=" + siteModel);
 
     // Variable to maintain the order of columns in the result... maintains
     // order given by Federation Plugin
