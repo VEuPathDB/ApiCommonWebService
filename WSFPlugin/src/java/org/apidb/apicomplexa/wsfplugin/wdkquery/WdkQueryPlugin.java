@@ -29,7 +29,7 @@ import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author Cary Pennington
@@ -83,7 +83,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
    */
   @Override
   public void initialize(Map<String, Object> context)
-      throws WsfServiceException {
+      throws WsfPluginException {
     super.initialize(context);
 
     String modelName = getProperty(MODEL_NAME);
@@ -127,7 +127,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
    */
   @Override
   public void validateParameters(PluginRequest request)
-      throws WsfServiceException {
+      throws WsfPluginException {
     // do nothing in this plugin
   }
 
@@ -138,7 +138,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
    */
   @Override
   public void execute(PluginRequest request, PluginResponse response)
-      throws WsfServiceException {
+      throws WsfPluginException {
 
     logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
     // logger.info("Invoking WdkQueryPlugin......");
@@ -260,7 +260,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
   private int writeParamResult(PluginResponse response,
       Map<String, String> paramValues, Map<String, Integer> columnOrders,
       String questionName, String paramName) throws WdkModelException,
-      WsfServiceException {
+      WsfPluginException {
     // get param
     Param param;
     if (questionName != null) {
@@ -300,7 +300,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
   private int writeQueryResults(PluginResponse response, ResultList results,
       Map<String, Integer> columnOrders) throws WdkModelException,
-      WsfServiceException {
+      WsfPluginException {
     int resultSize = 0;
     while (results.next()) {
       String[] row = new String[columnOrders.size()];
@@ -466,7 +466,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
   private int handleVocabParams(PluginResponse response,
       AbstractEnumParam vocabParam, Map<String, String> ps,
       Map<String, Integer> columnOrders) throws WdkModelException,
-      WsfServiceException {
+      WsfPluginException {
     logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
         + vocabParam.getFullName());
     EnumParamBean paramBean = new EnumParamBean(vocabParam);
@@ -501,7 +501,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         } else if (column.equals(FlatVocabParam.COLUMN_PARENT_TERM)) {
           row[index] = parentMap.get(term);
         } else {
-          throw new WsfServiceException("Unsupported column: " + column);
+          throw new WsfPluginException("Unsupported column: " + column);
         }
       }
       response.addRow(row);

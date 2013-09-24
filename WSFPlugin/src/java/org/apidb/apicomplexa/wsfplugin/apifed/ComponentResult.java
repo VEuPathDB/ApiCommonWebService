@@ -3,7 +3,7 @@ package org.apidb.apicomplexa.wsfplugin.apifed;
 import java.util.Map;
 
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class ComponentResult {
 
@@ -13,7 +13,7 @@ public class ComponentResult {
     this.response = response;
   }
 
-  public void addRow(String[] row) throws WsfServiceException {
+  public void addRow(String[] row) throws WsfPluginException {
     response.addRow(row);
   }
 

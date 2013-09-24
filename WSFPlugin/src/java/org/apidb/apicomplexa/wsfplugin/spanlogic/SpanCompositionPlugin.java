@@ -26,7 +26,7 @@ import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -127,7 +127,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public void validateParameters(PluginRequest request)
-      throws WsfServiceException {
+      throws WsfPluginException {
     Map<String, String> params = request.getParams();
     Set<String> operators = new HashSet<String>(Arrays.asList(
         PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B, PARAM_VALUE_B_CONTAIN_A));
@@ -145,21 +145,21 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     if (params.containsKey(PARAM_OPERATION)) {
       String op = params.get(PARAM_OPERATION);
       if (!operators.contains(op))
-        throw new WsfServiceException("Invalid " + PARAM_OPERATION + ": " + op);
+        throw new WsfPluginException("Invalid " + PARAM_OPERATION + ": " + op);
     }
 
     // validate output choice
     if (params.containsKey(PARAM_OUTPUT)) {
       String out = params.get(PARAM_OUTPUT);
       if (!outputs.contains(out))
-        throw new WsfServiceException("Invalid " + PARAM_OUTPUT + ": " + out);
+        throw new WsfPluginException("Invalid " + PARAM_OUTPUT + ": " + out);
     }
 
     // validate strand
     if (params.containsKey(PARAM_STRAND)) {
       String strand = params.get(PARAM_STRAND);
       if (!strands.contains(strand))
-        throw new WsfServiceException("Invalid " + PARAM_STRAND + ": " + strand);
+        throw new WsfPluginException("Invalid " + PARAM_STRAND + ": " + strand);
     }
 
     // validate begin a
@@ -188,31 +188,31 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private void validateAnchorParams(Map<String, String> params,
-      Set<String> anchors, String param) throws WsfServiceException {
+      Set<String> anchors, String param) throws WsfPluginException {
     if (params.containsKey(param)) {
       String anchor = params.get(param).intern();
       if (!anchors.contains(anchor))
-        throw new WsfServiceException("Invalid " + param + ": " + anchor);
+        throw new WsfPluginException("Invalid " + param + ": " + anchor);
     }
   }
 
   private void validateDirectionParams(Map<String, String> params,
-      Set<String> directions, String param) throws WsfServiceException {
+      Set<String> directions, String param) throws WsfPluginException {
     if (params.containsKey(param)) {
       String direction = params.get(param).intern();
       if (!directions.contains(direction))
-        throw new WsfServiceException("Invalid " + param + ": " + direction);
+        throw new WsfPluginException("Invalid " + param + ": " + direction);
     }
   }
 
   private void validateOffsetParams(Map<String, String> params, String param)
-      throws WsfServiceException {
+      throws WsfPluginException {
     if (params.containsKey(param)) {
       String offset = params.get(param);
       try {
         Integer.parseInt(offset);
       } catch (NumberFormatException ex) {
-        throw new WsfServiceException("Invalid " + param
+        throw new WsfPluginException("Invalid " + param
             + " (expected number): " + offset);
       }
     }
@@ -220,7 +220,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public void execute(PluginRequest request, PluginResponse response)
-      throws WsfServiceException {
+      throws WsfPluginException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
 
@@ -266,7 +266,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       platform.dropTable(dataSource, schema, tempA, true);
       platform.dropTable(dataSource, schema, tempB, true);
     } catch (Exception ex) {
-      throw new WsfServiceException(ex);
+      throw new WsfPluginException(ex);
     } finally {
       // dropTempTables(wdkModel, tempA, tempB);
     }
@@ -445,7 +445,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   private void prepareResult(WdkModel wdkModel, PluginResponse response,
       String sql, String[] orderedColumns, String output) throws SQLException,
-      WsfServiceException {
+      WsfPluginException {
     // prepare column order
     Map<String, Integer> columnOrders = new LinkedHashMap<>(
         orderedColumns.length);
@@ -489,7 +489,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   private void writeFeature(PluginResponse response,
       Map<String, Integer> columnOrders, Feature feature)
-      throws WsfServiceException {
+      throws WsfPluginException {
     // format the matched regions
     StringBuilder builder = new StringBuilder();
     for (Feature fr : feature.matched) {

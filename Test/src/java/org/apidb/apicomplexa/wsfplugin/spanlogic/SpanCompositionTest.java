@@ -39,7 +39,7 @@ import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,7 +62,7 @@ public class SpanCompositionTest {
 
   @Test
   public void testSpanLogic() throws URISyntaxException, IOException,
-      WsfServiceException, WdkModelException {
+      WsfPluginException, WdkModelException {
     List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
     for (SpanCompositionTestCase testCase : testCases) {
@@ -101,7 +101,7 @@ public class SpanCompositionTest {
   }
 
   private List<SpanCompositionTestCase> loadTestCases(String resourceName)
-      throws URISyntaxException, IOException, WsfServiceException {
+      throws URISyntaxException, IOException, WsfPluginException {
     List<SpanCompositionTestCase> testCases = new ArrayList<SpanCompositionTestCase>();
     URL url = SpanCompositionTest.class.getResource(resourceName);
     if (url != null) {
@@ -216,7 +216,7 @@ public class SpanCompositionTest {
     testCase.success = true;
   }
 
-  private SpanCompositionPlugin createPlugin() throws WsfServiceException {
+  private SpanCompositionPlugin createPlugin() throws WsfPluginException {
     SpanCompositionPlugin plugin = new SpanCompositionPlugin();
 
     Map<String, Object> context = new HashMap<String, Object>();

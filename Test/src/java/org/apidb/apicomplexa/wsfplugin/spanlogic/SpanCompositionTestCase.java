@@ -1,7 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
 
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class SpanCompositionTestCase {
 
@@ -32,7 +32,7 @@ public class SpanCompositionTestCase {
     public String[] actualOutput;
     public boolean success;
 
-    public SpanCompositionTestCase(String description) throws WsfServiceException {
+    public SpanCompositionTestCase(String description) throws WsfPluginException {
         this.description = description;
 
         // parse the input
@@ -52,7 +52,7 @@ public class SpanCompositionTestCase {
         if (operator.equals("contains")) operator = SpanCompositionPlugin.PARAM_VALUE_A_CONTAIN_B;
         else if (operator.equals("contained")) operator = SpanCompositionPlugin.PARAM_VALUE_B_CONTAIN_A;
         else if (!operator.equals(SpanCompositionPlugin.PARAM_VALUE_OVERLAP))
-            throw new WsfServiceException("Invalid operation: " + operator);
+            throw new WsfPluginException("Invalid operation: " + operator);
 
         this.beginB = parts[9].trim();
         this.beginDirectionB = parts[10].trim();

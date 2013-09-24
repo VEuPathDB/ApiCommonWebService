@@ -20,7 +20,7 @@ import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Before;
@@ -93,7 +93,7 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testDnaMotifSearch() throws WsfServiceException,
+  public void testDnaMotifSearch() throws WsfPluginException,
       URISyntaxException, IOException {
     AbstractMotifPlugin search = new DnaMotifPlugin();
     try {
@@ -122,7 +122,7 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testProteinMotifSearch() throws WsfServiceException,
+  public void testProteinMotifSearch() throws WsfPluginException,
       URISyntaxException, IOException {
     AbstractMotifPlugin search = new ProteinMotifPlugin();
 

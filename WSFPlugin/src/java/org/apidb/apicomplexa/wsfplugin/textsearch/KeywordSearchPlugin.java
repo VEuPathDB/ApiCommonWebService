@@ -24,7 +24,7 @@ import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author John I
@@ -50,7 +50,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    */
   @Override
   public void execute(PluginRequest request, PluginResponse response)
-      throws WsfServiceException {
+      throws WsfPluginException {
     logger.info("Invoking KeywordSearchPlugin...");
 
     // get parameters
@@ -115,7 +115,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         // logger.debug("after validation commentMatches = "
         // + commentMatches.toString());
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
-        throw new WsfServiceException(ex);
+        throw new WsfPluginException(ex);
       } finally {
         SqlUtils.closeStatement(ps);
       }
@@ -134,7 +134,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         // process the remaining ones from comments, but not found in component
         componentContainer.processRemainingResults();
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
-        throw new WsfServiceException(ex);
+        throw new WsfPluginException(ex);
       } finally {
         SqlUtils.closeStatement(ps);
       }
@@ -163,7 +163,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   private PreparedStatement getCommentQuery(String projectId,
       String recordTypePredicate, String oracleTextExpression,
       boolean commentRecords, boolean communityAnnotationRecords)
-      throws WsfServiceException, SQLException, WdkModelException,
+      throws WsfPluginException, SQLException, WdkModelException,
       EuPathServiceException {
     Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
 
@@ -208,7 +208,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       ps.setString(1, oracleTextExpression);
     } catch (SQLException e) {
       logger.error("caught SQLException " + e.getMessage());
-      throw new WsfServiceException(e);
+      throw new WsfPluginException(e);
     }
 
     return ps;
@@ -216,7 +216,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
   private PreparedStatement getComponentQuery(String projectId,
       String recordType, String organisms, String oracleTextExpression,
-      String fields, String maxPvalue) throws WsfServiceException,
+      String fields, String maxPvalue) throws WsfPluginException,
       SQLException, WdkModelException, EuPathServiceException {
     Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
 
@@ -311,7 +311,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       ps.setString(5, oracleTextExpression);
     } catch (SQLException e) {
       logger.error("caught SQLException " + e.getMessage());
-      throw new WsfServiceException(e);
+      throw new WsfPluginException(e);
     }
 
     return ps;
@@ -340,7 +340,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
   private Map<String, SearchResult> validateRecords(String projectId,
       Map<String, SearchResult> commentResults, String organisms)
-      throws WsfServiceException {
+      throws WsfPluginException {
 
     Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
     newCommentResults.putAll(commentResults);
@@ -398,7 +398,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
-        throw new WsfServiceException(ex);
+        throw new WsfPluginException(ex);
       } finally {
         // try {
         // rs.close();

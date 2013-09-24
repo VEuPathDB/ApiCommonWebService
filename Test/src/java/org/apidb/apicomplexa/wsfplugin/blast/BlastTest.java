@@ -23,7 +23,7 @@ import org.eupathdb.websvccommon.wsfplugin.blast.ResultFormatter;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,7 +67,7 @@ public class BlastTest {
    * test if the all the fields are populated correctly from the config file;
    */
   @Test
-  public void testLoadAllFields() throws WsfServiceException {
+  public void testLoadAllFields() throws WsfPluginException {
     // populate all fields with random values
     Random random = new Random();
 
@@ -107,7 +107,7 @@ public class BlastTest {
    * test if the defaults are used if an optional field is not specified.
    */
   @Test
-  public void testUseDefaultFields() throws WsfServiceException {
+  public void testUseDefaultFields() throws WsfPluginException {
     // populate all fields with random values
     Random random = new Random();
 
@@ -132,7 +132,7 @@ public class BlastTest {
 
   @Test
   public void testFormatNcbiResultsWithHits() throws URISyntaxException,
-      WsfServiceException, WdkModelException, WdkUserException, IOException,
+      WsfPluginException, WdkModelException, WdkUserException, IOException,
       SQLException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
@@ -149,7 +149,7 @@ public class BlastTest {
 
   @Test
   public void testFormatNcbiResultsWithoutHits() throws WdkModelException,
-      WdkUserException, WsfServiceException, URISyntaxException, IOException,
+      WdkUserException, WsfPluginException, URISyntaxException, IOException,
       SQLException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
@@ -161,7 +161,7 @@ public class BlastTest {
 
   @Test
   public void testFormatNcbiResultsWithError() throws WdkModelException,
-      WdkUserException, WsfServiceException, URISyntaxException, IOException,
+      WdkUserException, WsfPluginException, URISyntaxException, IOException,
       SQLException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
@@ -213,7 +213,7 @@ public class BlastTest {
   // }
 
   private String[][] format(ResultFormatter formatter, String fileName,
-      StringBuffer message) throws WsfServiceException, URISyntaxException,
+      StringBuffer message) throws WsfPluginException, URISyntaxException,
       WdkModelException, WdkUserException, IOException, SQLException {
     BlastConfig config = new BlastConfig(properties);
     ProjectMapper projectMapper = new MockProjectMapper();

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -44,7 +44,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   public void initialize(Map<String, Object> context)
-      throws WsfServiceException {
+      throws WsfPluginException {
     super.initialize(context);
   }
 
@@ -70,7 +70,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   @Override
   protected void findMatches(PluginResponse response,
       Map<String, Integer> orders, String headline, Pattern searchPattern,
-      String sequence) throws WsfServiceException {
+      String sequence) throws WsfPluginException {
     MotifConfig config = getConfig();
 
     // parse the headline
@@ -90,7 +90,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     try {
       match.projectId = getProjectId(organism);
     } catch (SQLException ex) {
-      throw new WsfServiceException(ex);
+      throw new WsfPluginException(ex);
     }
 
     StringBuffer sbLoc = new StringBuffer();

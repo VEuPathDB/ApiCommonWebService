@@ -16,7 +16,7 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.WsfPluginException;
 import org.xml.sax.SAXException;
 
 /**
@@ -49,7 +49,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    */
   @Override
   public void initialize(Map<String, Object> context)
-      throws WsfServiceException {
+      throws WsfPluginException {
     super.initialize(context);
 
     WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
@@ -57,7 +57,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
     } catch (WdkModelException | SAXException | IOException
         | ParserConfigurationException ex) {
-      throw new WsfServiceException(ex);
+      throw new WsfPluginException(ex);
     }
   }
 
@@ -89,7 +89,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    */
   @Override
   public void validateParameters(PluginRequest request)
-      throws WsfServiceException {
+      throws WsfPluginException {
     // Do Nothing in this plugin
   }
 
@@ -100,7 +100,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    */
   @Override
   public void execute(PluginRequest request, PluginResponse response)
-      throws WsfServiceException {
+      throws WsfPluginException {
     logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
 
     // Splitting the QueryName up for Mapping
@@ -144,7 +144,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         } catch (InterruptedException ex) {}
       }
     } catch (SQLException ex) {
-      throw new WsfServiceException(ex);
+      throw new WsfPluginException(ex);
     }
   }
 
