@@ -41,7 +41,6 @@ my $DISTANCE_MEASURES = {
 			       },
 };
 
-
 # ----------------------------------------------------------------------
 # Input
 # ----------------------------------------------------------------------
@@ -108,7 +107,11 @@ my $dbPassword = $ARGV[11];
 
 
 # setup DBI connections
-my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword);
+my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Cannot connect to database";
+
+$dbh->{RaiseError} = 1;
+$dbh->{LongTruncOk} = 0;
+$dbh->{LongReadLen} = 10000000;
 
 # get the expression profile of the given gene
 my $sql = <<EOSQL;

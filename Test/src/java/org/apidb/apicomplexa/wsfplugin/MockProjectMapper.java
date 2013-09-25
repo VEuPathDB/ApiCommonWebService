@@ -20,7 +20,7 @@ public class MockProjectMapper extends ProjectMapper {
   }
 
   @Override
-  public synchronized String getProjectByOrganism(String organism)
+  public String getProjectByOrganism(String organism)
       throws SQLException {
     return TEST_PROJECT;
   }
