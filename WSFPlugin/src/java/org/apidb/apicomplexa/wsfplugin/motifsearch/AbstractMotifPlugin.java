@@ -80,8 +80,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   protected static final String MOTIF_STYLE_CLASS = "motif";
 
-  private static final long MAX_MILLISECONDS = 5 * 60 * 1000;
-
   private String regexField;
   private String defaultRegex;
 
@@ -180,7 +178,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       throws WsfPluginException {
     logger.info("Invoking MotifSearchPlugin...");
 
-    long start = System.currentTimeMillis();
     Map<String, String> params = request.getParams();
     // create a column order map
     String[] orderedColumns = request.getOrderedColumns();
@@ -213,7 +210,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
         }
 
         findMatches(response, dsId.trim(), searchPattern,
-            config.getContextLength(), start, orders);
+            config.getContextLength(), orders);
       }
     } catch (Exception ex) {
       throw new WsfPluginException(ex);
@@ -262,7 +259,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   }
 
   private void findMatches(PluginResponse response, String datasetID,
-      Pattern searchPattern, int contextLength, long start,
+      Pattern searchPattern, int contextLength, 
       Map<String, Integer> orders) throws IOException, WsfPluginException,
       WdkModelException, WdkUserException, SQLException {
     File datasetFile = openDataFile(datasetID);
@@ -282,14 +279,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
           if (sequence.length() > 0) {
             findMatches(response, orders, headline, searchPattern,
                 sequence.toString());
-
-            // stop the process if maximum time is reached, to avoid
-            // slow/generic patterns
-            long spent = System.currentTimeMillis() - start;
-            if (spent > MAX_MILLISECONDS)
-              throw new WsfPluginException("Your search pattern is "
-                  + "too generic, please refine your search "
-                  + "pattern to make it more specific.");
 
             // clear the sequence buffer to be ready for the next one
             sequence = new StringBuilder();
