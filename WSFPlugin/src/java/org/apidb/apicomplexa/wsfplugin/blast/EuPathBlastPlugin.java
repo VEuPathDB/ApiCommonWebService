@@ -3,6 +3,7 @@ package org.apidb.apicomplexa.wsfplugin.blast;
 import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.BlastConfig;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
@@ -10,8 +11,8 @@ public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
   static final String BLAST_DB_NAME = "$$BlastDatabaseOrganism$$$$BlastDatabaseType$$";
 
-  public EuPathBlastPlugin(BlastConfig config) {
-    super(config, new EuPathBlastCommandFormatter(), new NcbiBlastResultFormatter());
+  public EuPathBlastPlugin() throws WsfPluginException {
+    super(new BlastConfig(), new EuPathBlastCommandFormatter(), new NcbiBlastResultFormatter());
   }
 
   @Override
