@@ -2,7 +2,7 @@ package org.apidb.apicomplexa.wsfplugin;
 
 import java.sql.SQLException;
 
-import org.apidb.apicommon.model.ProjectMapper;
+import org.eupathdb.common.model.ProjectMapper;
 
 public class MockProjectMapper extends ProjectMapper {
 

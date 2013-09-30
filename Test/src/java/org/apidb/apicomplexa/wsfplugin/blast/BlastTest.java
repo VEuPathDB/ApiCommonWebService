@@ -14,8 +14,8 @@ import java.util.Random;
 
 import junit.framework.Assert;
 
-import org.apidb.apicommon.model.ProjectMapper;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
+import org.eupathdb.common.model.ProjectMapper;
 import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.BlastConfig;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
