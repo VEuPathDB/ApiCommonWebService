@@ -39,6 +39,8 @@ public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
     }
     // sb.append("\"");
     return sb.toString().trim();
+    // TEST
+    // return "/eupath/data/apiSiteFilesStaging/ToxoDB/19/real/webServices/ToxoDB/release-CURRENT/TgondiiME49/blast/AnnotatedTranscripts";
   }
 
 }
