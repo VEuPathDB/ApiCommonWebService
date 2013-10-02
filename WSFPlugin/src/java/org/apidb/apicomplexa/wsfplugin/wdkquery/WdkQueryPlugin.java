@@ -304,6 +304,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
                 resultSize = 0;
             } else if (msg.contains("Invalid term")) {
                 resultSize = 0;
+						} else if (msg.contains("Some of the input parameters are invalid")) {
+                resultSize = 0;
             } else {
                 ex.printStackTrace();
                 resultSize = -1; // actual error, can't handle
