@@ -28,7 +28,6 @@ public class ComponentQuery extends Thread {
     this.url = url;
     this.request = new WsfRequest(pluginRequest);
     this.request.setPluginClass(WdkQueryPlugin.class.getName());
-    this.request.putParam(WdkQueryPlugin.SITE_MODEL, projectId);
     this.result = result;
     this.running = false;
     this.stopRequested = false;

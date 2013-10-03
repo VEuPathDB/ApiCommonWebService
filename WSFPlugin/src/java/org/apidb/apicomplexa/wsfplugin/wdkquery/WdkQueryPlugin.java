@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.gusdb.wdk.model.ModelXmlParser;
+import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -42,36 +42,21 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 public class WdkQueryPlugin extends AbstractPlugin {
 
   // Propert values
-  public static final String PROPERTY_FILE = "wdkquery-config.xml";
-  public static final String MODEL_NAME = "ModelName";
-  public static final String GUS_HOME = "Gus_Home";
 
-  public static final String VERSION = "2.1";
+  public static final String VERSION = "3.0";
   // Input Parameters
   public static final String PARAM_PARAMETERS = "Parameters";
   public static final String PARAM_COLUMNS = "Columns";
-  public static final String SITE_MODEL = "SiteModel";
 
   public static final int STATUS_ERROR_NO_QUERY = -2;
   public static final int STATUS_ERROR_MODEL_EXCEPTION = -1;
   public static final int STATUS_ERROR_SERVICE_UNAVAILABLE = -3;
 
   // Member Variables
-  // private WdkModelBean[] models = null;
-  private WdkModel wdkModel = null;
-  // private static File m_modelFile = null;
-  // private static File m_modelPropFile = null;
-  // private static File m_schemaFile = null;
-  // private static File m_configFile = null;
-  // private static File m_xmlSchemaFile = null;
-  private String[] modelNames;
-  private String[] gus_homes;
-  private String[] siteNames;
-  private static Map<String, WdkModelBean> modelName2Model = null;
-  private static Object lock = new Object();
+  private WdkModel wdkModel;
 
   public WdkQueryPlugin() {
-    super(PROPERTY_FILE);
+    super();
   }
 
   // load properties
@@ -86,17 +71,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
       throws WsfPluginException {
     super.initialize(context);
 
-    String modelName = getProperty(MODEL_NAME);
-    modelNames = modelName.split(",");
+    WdkModelBean wdkModelBean = (WdkModelBean)context.get(CConstants.WDK_MODEL_KEY);
+    wdkModel = wdkModelBean.getModel();
 
-    String gus_home = getProperty(GUS_HOME);
-    gus_homes = gus_home.split(",");
-
-    String siteName = getProperty(SITE_MODEL);
-    siteNames = siteName.split(",");
-
-    // modelName2Model = new HashMap<String,WdkModelBean>();
-    initial();
     // logger.info("------------Plugin Initialized-----------------");
   }
 
@@ -160,15 +137,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     if (paramValues.containsKey("Query"))
       paramValues.remove("Query");
-    String siteModel = paramValues.remove(SITE_MODEL);
-    wdkModel = modelName2Model.get(siteModel).getModel();
     // logger.info("QueryName = "+ invokeKey);
 
     // Map<String,Object>SOParams = convertParams(params);
     // logger.info("Parameters were processed");
 
     logger.debug("context question: '" + questionName + "', param: '"
-        + paramName + "', query: '" + queryName + "', SiteModel=" + siteModel);
+        + paramName + "', query: '" + queryName + "', SiteModel=" + wdkModel.getProjectId());
 
     // Variable to maintain the order of columns in the result... maintains
     // order given by Federation Plugin
@@ -415,40 +390,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return ret;
   }
 
-  private void initial() {
-    synchronized (lock) {
-      if (modelName2Model == null) {
-        modelName2Model = new HashMap<String, WdkModelBean>();
-        int i = 0;
-        for (String modelName : modelNames) { // Start the Model
-          // FileName Loop
-          logger.info("===================ModelName = " + modelName);
-          try {
-            // logger.info("------------intial---------------");
-            logger.info("===================GUS_HOME = " + gus_homes[i]);
-            // loadConfig(modelName, gus_homes[i]);
-            // logger.info("------------Config
-            // Loaded---------------");
-            // logger.info(m_modelFile.toURL().toString()+"\n"+m_modelPropFile.toURL().toString()+"\n"+m_configFile.toURL().toString()+"\n"+m_schemaFile.toURL().toString()+"\n"+m_xmlSchemaFile.toURL().toString());
-
-            ModelXmlParser parser = new ModelXmlParser(gus_homes[i]);
-            WdkModel myModel = parser.parseModel(modelName);
-            WdkModelBean mb = new WdkModelBean(myModel);
-            logger.info("===================Model Loaded Was  "
-                + mb.getModel().getProjectId());
-            modelName2Model.put(siteNames[i], mb);
-            // logger.info("------------Model
-            // Loaded----------------");
-          } catch (Exception ex) {
-            logger.info("ERROR : " + ex.toString());
-          }
-          i++;
-        }// End the Model FileName Loop
-
-      }
-    }
-  }
-
   private boolean validateSingleValues(EnumParamBean p, String value) {
     String[] conVocab = p.getVocab();
     logger.info("conVocab.length = " + conVocab.length);
@@ -518,7 +459,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
   @Override
   protected String[] defineContextKeys() {
-    return null;
+    return new String[]{CConstants.WDK_MODEL_KEY};
   }
 
   private String unescapeValue(String value, boolean quoted) {
