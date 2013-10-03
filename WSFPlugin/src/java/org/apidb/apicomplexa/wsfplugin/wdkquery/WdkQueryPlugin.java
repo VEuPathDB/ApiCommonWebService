@@ -215,17 +215,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
       } else if (msg.contains("Invalid term")) {
         resultSize = 0;
       } else {
-        ex.printStackTrace();
+        logger.error("WdkModelException: " + ex);
         resultSize = -1; // actual error, can't handle
       }
     } catch (Exception ex) {
-      logger.info("OTHERexception IN execute()" + ex.toString());
+      logger.error("OTHERexception IN execute()", ex);
 
-      ex.printStackTrace();
       resultSize = -1;
-
-      // write error out
-      response.addRow(new String[] { "ERROR" });
     }
 
     response.setMessage(Integer.toString(resultSize));
