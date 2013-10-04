@@ -69,6 +69,9 @@ public class ComponentQuery extends Thread {
       int pageId = 0;
       while (!stopRequested) {
         String[][] resultArray = wsfResponse.getResult();
+
+        logger.debug("caching page " + pageId + "/" + pages + ", " + resultArray.length + " rows...");
+
         for (int i = 0; i < resultArray.length; i++) {
           result.addRow(resultArray[i]);
         }
@@ -83,7 +86,7 @@ public class ComponentQuery extends Thread {
       logger.info("Thread (" + url + ") has returned results in "
           + ((end - start) / 1000.0) + " seconds.");
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error("Error occurred.", ex);
       errorMessage = ex.getMessage() + " Occured : Thread exited"
           + ex.getCause();
       result.setMessage(projectId,

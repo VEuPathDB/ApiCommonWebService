@@ -130,15 +130,24 @@ public class ApiFedPlugin extends AbstractPlugin {
       // reached.
       long timeout = projectMapper.getTimeout();
       long start = System.currentTimeMillis();
-      while (((System.currentTimeMillis() - start) / 1000D) < timeout) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ex) {}
-        if (isAllStopped(queries))
-          break;
-      }
-      // now wait for all the queries to finish
-      while (isAllStopped(queries)) {
+
+      // wait for a bit to make sure all queries are running
+      try {
+          Thread.sleep(500);
+      } catch (InterruptedException ex) {}
+
+      // this flag is to make sure we only request timeout stop once.
+      boolean timedOut = false;
+      while (!isAllStopped(queries)) {
+        double elapsed = (System.currentTimeMillis() - start) / 1000D;
+        if (!timedOut && elapsed >= timeout) {
+          // timeout reached, force all queries to stop
+          timedOut = true;
+          for (ComponentQuery query : queries) {
+            if (query.isRunning())
+              query.requestStop();
+          }
+        }
         try {
           Thread.sleep(500);
         } catch (InterruptedException ex) {}
@@ -146,6 +155,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     } catch (SQLException ex) {
       throw new WsfPluginException(ex);
     }
+    logger.info("ApiFedPlugin finished.");
   }
 
   private boolean isAllStopped(List<ComponentQuery> queries) {
