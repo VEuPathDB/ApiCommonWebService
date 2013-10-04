@@ -3,7 +3,9 @@ package org.apidb.apicomplexa.wsfplugin.apifed;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -119,7 +121,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     // determine components that we will call
     try {
-      List<String> projects = getProjects(params);
+      Set<String> projects = getProjects(params);
       List<ComponentQuery> queries = getComponents(request, projects,
           componentResult);
       for (ComponentQuery query : queries) {
@@ -140,7 +142,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       boolean timedOut = false;
       while (!isAllStopped(queries)) {
         double elapsed = (System.currentTimeMillis() - start) / 1000D;
-        if (!timedOut && elapsed >= timeout) {
+        if (timeout > 0 && !timedOut && elapsed >= timeout) {
           // timeout reached, force all queries to stop
           timedOut = true;
           for (ComponentQuery query : queries) {
@@ -166,7 +168,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     return true;
   }
 
-  private List<String> getProjects(Map<String, String> params)
+  private Set<String> getProjects(Map<String, String> params)
       throws SQLException {
     // check if organism param is present
     String organisms = null;
@@ -177,7 +179,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       }
     }
     // if organism exists, find the mapped project
-    List<String> projects = new ArrayList<>();
+    Set<String> projects = new LinkedHashSet<>();
     if (organisms != null) {
       organisms = stripLeadingAndTrailingQuotes(organisms);
       for (String organism : organisms.split(",")) {
@@ -191,7 +193,7 @@ public class ApiFedPlugin extends AbstractPlugin {
   }
 
   private List<ComponentQuery> getComponents(PluginRequest request,
-      List<String> projects, ComponentResult result) {
+      Set<String> projects, ComponentResult result) {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
       String url = projectMapper.getWebServiceUrl(projectId);
