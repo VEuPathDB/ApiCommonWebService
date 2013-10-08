@@ -24,9 +24,9 @@ import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.WsfRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -53,6 +53,19 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     public String getReversed() {
       return reversed ? "-" : "+";
     }
+
+    /**
+     * format the region of the feature
+     * 
+     * @return
+     */
+    public String getRegion() {
+      StringBuilder buffer = new StringBuilder();
+      buffer.append(begin).append("&nbsp;-&nbsp;").append(end);
+      buffer.append("&nbsp;(").append(getReversed()).append(")");
+      return buffer.toString();
+    }
+
   }
 
   public static final String COLUMN_SOURCE_ID = "source_id";
@@ -113,7 +126,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   @Override
-  public void validateParameters(WsfRequest request) throws WsfServiceException {
+  public void validateParameters(PluginRequest request)
+      throws WsfPluginException {
     Map<String, String> params = request.getParams();
     Set<String> operators = new HashSet<String>(Arrays.asList(
         PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B, PARAM_VALUE_B_CONTAIN_A));
@@ -131,21 +145,21 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     if (params.containsKey(PARAM_OPERATION)) {
       String op = params.get(PARAM_OPERATION);
       if (!operators.contains(op))
-        throw new WsfServiceException("Invalid " + PARAM_OPERATION + ": " + op);
+        throw new WsfPluginException("Invalid " + PARAM_OPERATION + ": " + op);
     }
 
     // validate output choice
     if (params.containsKey(PARAM_OUTPUT)) {
       String out = params.get(PARAM_OUTPUT);
       if (!outputs.contains(out))
-        throw new WsfServiceException("Invalid " + PARAM_OUTPUT + ": " + out);
+        throw new WsfPluginException("Invalid " + PARAM_OUTPUT + ": " + out);
     }
 
     // validate strand
     if (params.containsKey(PARAM_STRAND)) {
       String strand = params.get(PARAM_STRAND);
       if (!strands.contains(strand))
-        throw new WsfServiceException("Invalid " + PARAM_STRAND + ": " + strand);
+        throw new WsfPluginException("Invalid " + PARAM_STRAND + ": " + strand);
     }
 
     // validate begin a
@@ -174,38 +188,39 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private void validateAnchorParams(Map<String, String> params,
-      Set<String> anchors, String param) throws WsfServiceException {
+      Set<String> anchors, String param) throws WsfPluginException {
     if (params.containsKey(param)) {
       String anchor = params.get(param).intern();
       if (!anchors.contains(anchor))
-        throw new WsfServiceException("Invalid " + param + ": " + anchor);
+        throw new WsfPluginException("Invalid " + param + ": " + anchor);
     }
   }
 
   private void validateDirectionParams(Map<String, String> params,
-      Set<String> directions, String param) throws WsfServiceException {
+      Set<String> directions, String param) throws WsfPluginException {
     if (params.containsKey(param)) {
       String direction = params.get(param).intern();
       if (!directions.contains(direction))
-        throw new WsfServiceException("Invalid " + param + ": " + direction);
+        throw new WsfPluginException("Invalid " + param + ": " + direction);
     }
   }
 
   private void validateOffsetParams(Map<String, String> params, String param)
-      throws WsfServiceException {
+      throws WsfPluginException {
     if (params.containsKey(param)) {
       String offset = params.get(param);
       try {
         Integer.parseInt(offset);
       } catch (NumberFormatException ex) {
-        throw new WsfServiceException("Invalid " + param
+        throw new WsfPluginException("Invalid " + param
             + " (expected number): " + offset);
       }
     }
   }
 
   @Override
-  public WsfResponse execute(WsfRequest request) throws WsfServiceException {
+  public void execute(PluginRequest request, PluginResponse response)
+      throws WsfPluginException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
 
@@ -236,23 +251,22 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       // compose the final sql by comparing two regions with span
       // operation.
       String sql = composeSql(request.getProjectId(), operation, tempA, tempB,
-          strand);
+          strand, output);
 
       logger.debug("SPAN LOGIC SQL:\n" + sql);
 
       // execute the final sql, and fetch the result for the output.
-      WsfResponse response = getResult(wdkModel, sql, request.getOrderedColumns(), output);
-      
+      prepareResult(wdkModel, response, sql, request.getOrderedColumns(),
+          output);
+
       // drop the cache tables
       DBPlatform platform = wdkModel.getAppDb().getPlatform();
       DataSource dataSource = wdkModel.getAppDb().getDataSource();
       String schema = wdkModel.getAppDb().getDefaultSchema();
       platform.dropTable(dataSource, schema, tempA, true);
       platform.dropTable(dataSource, schema, tempB, true);
-      
-      return response;
     } catch (Exception ex) {
-      throw new WsfServiceException(ex);
+      throw new WsfPluginException(ex);
     } finally {
       // dropTempTables(wdkModel, tempA, tempB);
     }
@@ -316,7 +330,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private String composeSql(String projectId, String operation,
-      String tempTableA, String tempTableB, String strand) {
+      String tempTableA, String tempTableB, String strand, String output) {
     StringBuilder builder = new StringBuilder();
 
     // determine the output type
@@ -357,6 +371,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       builder.append("  AND fa.begin >= fb.begin ");
       builder.append("  AND fa.end <= fb.end ");
     }
+
+    // sort the result by output records
+    builder.append("ORDER BY f" + output + ".project_id ASC, ");
+    builder.append("         f" + output + ".source_id ASC ");
 
     return builder.toString();
   }
@@ -425,105 +443,86 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
   }
 
-  private WsfResponse getResult(WdkModel wdkModel, String sql,
-      String[] orderedColumns, String output) throws SQLException {
-    List<Map<String, String>> results = prepareResults(wdkModel, sql, output);
-    List<String[]> records = new ArrayList<String[]>();
-    for (Map<String, String> result : results) {
-      String[] record = new String[orderedColumns.length];
-      for (int i = 0; i < record.length; i++) {
-        if (result.get(orderedColumns[i]) == null)
-          logger.error("No value match for column: " + orderedColumns[i]);
-        record[i] = result.get(orderedColumns[i]).toString();
+  private void prepareResult(WdkModel wdkModel, PluginResponse response,
+      String sql, String[] orderedColumns, String output) throws SQLException,
+      WsfPluginException {
+    // prepare column order
+    Map<String, Integer> columnOrders = new LinkedHashMap<>(
+        orderedColumns.length);
+    for (int i = 0; i < orderedColumns.length; i++) {
+      columnOrders.put(orderedColumns[i], i);
+    }
+
+    // read results
+    DataSource dataSource = wdkModel.getAppDb().getDataSource();
+    ResultSet resultSet = null;
+    try {
+      resultSet = SqlUtils.executeQuery(dataSource, sql, "span-logic-cached");
+      Feature feature = null;
+      String ref = output.equals("a") ? "b" : "a";
+      while (resultSet.next()) {
+        String sourceId = resultSet.getString("source_id_" + output);
+        // the result is sorted by the ids of the output result
+        if (feature == null) {
+          // reading the first line
+          feature = new Feature();
+        } else if (!feature.sourceId.equals(sourceId)) {
+          // start on a new record, output the previous feature
+          writeFeature(response, columnOrders, feature);
+          feature = new Feature();
+        }
+        // store info into feature
+        readFeature(resultSet, feature, output);
+
+        // read the reference
+        Feature reference = new Feature();
+        readFeature(resultSet, reference, ref);
+        feature.matched.add(reference);
       }
-      records.add(record);
+      if (feature != null) { // write the last feature
+        writeFeature(response, columnOrders, feature);
+      }
+    } finally {
+      SqlUtils.closeResultSetAndStatement(resultSet);
     }
-
-    // now copy the records into an array
-    String[][] array = new String[records.size()][orderedColumns.length];
-    for (int i = 0; i < array.length; i++) {
-      String[] record = records.get(i);
-      System.arraycopy(record, 0, array[i], 0, record.length);
-    }
-
-    WsfResponse wsfResult = new WsfResponse();
-    wsfResult.setResult(array);
-    return wsfResult;
   }
 
-  private List<Map<String, String>> prepareResults(WdkModel wdkModel,
-      String sql, String output) throws SQLException {
-    DataSource dataSource = wdkModel.getAppDb().getDataSource();
-    ResultSet results = null;
-
-    try {
-      results = SqlUtils.executeQuery(dataSource, sql, "span-logic-cached");
-      Map<String, Feature> fas = new LinkedHashMap<String, Feature>();
-      Map<String, Feature> fbs = new LinkedHashMap<String, Feature>();
-      while (results.next()) {
-        // get feature a
-        String sourceIdA = results.getString("source_id_a");
-        Feature a = fas.get(sourceIdA);
-        if (a == null) {
-          a = new Feature();
-          a.sourceId = sourceIdA;
-          a.projectId = results.getString("project_id_a");
-          a.begin = results.getInt("begin_a");
-          a.end = results.getInt("end_a");
-          a.weight = results.getInt("wdk_weight_a");
-          a.reversed = results.getBoolean("is_reversed_a");
-          fas.put(sourceIdA, a);
-        }
-
-        // get feature b
-        String sourceIdB = results.getString("source_id_b");
-        Feature b = fbs.get(sourceIdB);
-        if (b == null) {
-          b = new Feature();
-          b.sourceId = sourceIdB;
-          b.projectId = results.getString("project_id_b");
-          b.begin = results.getInt("begin_b");
-          b.end = results.getInt("end_b");
-          b.weight = results.getInt("wdk_weight_b");
-          b.reversed = results.getBoolean("is_reversed_b");
-          fbs.put(sourceIdB, b);
-        }
-
-        a.matched.add(b);
-        b.matched.add(a);
-      }
-
-      // now format the features int map
-      Map<String, Feature> fs = output.equals("a") ? fas : fbs;
-      List<Map<String, String>> records = new ArrayList<Map<String, String>>();
-      for (Feature feature : fs.values()) {
-        Map<String, String> record = new LinkedHashMap<String, String>();
-        record.put(COLUMN_SOURCE_ID, feature.sourceId);
-        record.put(COLUMN_PROJECT_ID, feature.projectId);
-        String region = feature.getBegin() + "&nbsp;-&nbsp;" + feature.getEnd()
-            + "&nbsp;(" + feature.getReversed() + ")";
-        record.put(COLUMN_FEATURE_REGION, region);
-        record.put(COLUMN_MATCHED_COUNT, "" + feature.matched.size());
-        record.put(COLUMN_WDK_WEIGHT, "" + feature.weight);
-
-        StringBuilder builder = new StringBuilder();
-        for (Feature fr : feature.matched) {
-          if (builder.length() > 0)
-            builder.append("; ");
-          builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin()
-              + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;(" + fr.getReversed()
-              + ")");
-        }
-        String regions = builder.toString();
-        if (regions.length() > 4000)
-          regions = regions.substring(0, 3998) + "...";
-        record.put(COLUMN_MATCHED_REGIONS, regions);
-        records.add(record);
-      }
-      return records;
-    } finally {
-      SqlUtils.closeResultSetAndStatement(results);
+  private void writeFeature(PluginResponse response,
+      Map<String, Integer> columnOrders, Feature feature)
+      throws WsfPluginException {
+    // format the matched regions
+    StringBuilder builder = new StringBuilder();
+    for (Feature fr : feature.matched) {
+      if (builder.length() > 0)
+        builder.append("; ");
+      builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;"
+          + fr.getEnd() + "&nbsp;(" + fr.getReversed() + ")");
     }
+    String matched = builder.toString();
+    if (matched.length() > 4000)
+      matched = matched.substring(0, 3998) + "...";
+
+    // construct row by column orders
+    String[] row = new String[columnOrders.size()];
+    row[columnOrders.get(COLUMN_SOURCE_ID)] = feature.sourceId;
+    row[columnOrders.get(COLUMN_PROJECT_ID)] = feature.projectId;
+    row[columnOrders.get(COLUMN_FEATURE_REGION)] = feature.getRegion();
+    row[columnOrders.get(COLUMN_MATCHED_COUNT)] = Integer.toString(feature.matched.size());
+    row[columnOrders.get(COLUMN_WDK_WEIGHT)] = Integer.toString(feature.weight);
+    row[columnOrders.get(COLUMN_MATCHED_REGIONS)] = matched;
+
+    // save the row
+    response.addRow(row);
+  }
+
+  private void readFeature(ResultSet resultSet, Feature feature, String suffix)
+      throws SQLException {
+    feature.sourceId = resultSet.getString("source_id_" + suffix);
+    feature.projectId = resultSet.getString("project_id_" + suffix);
+    feature.begin = resultSet.getInt("begin_" + suffix);
+    feature.end = resultSet.getInt("end_" + suffix);
+    feature.weight = resultSet.getInt("wdk_weight_" + suffix);
+    feature.reversed = resultSet.getBoolean("is_reversed_" + suffix);
   }
 
   @Override

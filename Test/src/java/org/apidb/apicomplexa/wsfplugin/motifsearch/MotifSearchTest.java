@@ -18,9 +18,9 @@ import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.plugin.WsfRequest;
-import org.gusdb.wsf.plugin.WsfResponse;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfPluginException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Before;
@@ -93,8 +93,8 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testDnaMotifSearch() throws WsfServiceException,
-      URISyntaxException {
+  public void testDnaMotifSearch() throws WsfPluginException,
+      URISyntaxException, IOException {
     AbstractMotifPlugin search = new DnaMotifPlugin();
     try {
       search.initialize(getContext());
@@ -110,18 +110,20 @@ public class MotifSearchTest {
         getPath("/fasta/sample-dna.fasta"));
 
     // invoke the plugin and get result back
-    WsfRequest request = getRequest(params);
-    WsfResponse wsfResult = search.execute(request);
+    PluginRequest request = getRequest(params);
+    PluginResponse response = getResponse();
+    search.execute(request, response);
 
     // print results
-    System.out.println(Formatter.printArray(wsfResult.getResult()));
+    String[][] results = response.getPage(0);
+    System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(2, wsfResult.getResult().length);
+    Assert.assertEquals(2, results.length);
   }
 
   @Test
-  public void testProteinMotifSearch() throws WsfServiceException,
-      URISyntaxException {
+  public void testProteinMotifSearch() throws WsfPluginException,
+      URISyntaxException, IOException {
     AbstractMotifPlugin search = new ProteinMotifPlugin();
 
     // ignore the exceptions here, use a mock project mapper
@@ -139,13 +141,17 @@ public class MotifSearchTest {
         getPath("/fasta/sample-protein.fasta"));
 
     // invoke the plugin and get result back
-    WsfRequest request = getRequest(params);
-    WsfResponse wsfResult = search.execute(request);
+    PluginRequest request = getRequest(params);
+    PluginResponse response = getResponse();
+    search.execute(request, response);
 
     // print results
-    System.out.println(Formatter.printArray(wsfResult.getResult()));
+    String[][] results = response.getPage(0);
 
-    Assert.assertEquals(3, wsfResult.getResult().length);
+    // print results
+    System.out.println(Formatter.printArray(results));
+
+    Assert.assertEquals(3, results.length);
   }
 
   private Map<String, Object> getContext() {
@@ -154,7 +160,7 @@ public class MotifSearchTest {
     return context;
   }
 
-  private WsfRequest getRequest(Map<String, String> params) {
+  private PluginRequest getRequest(Map<String, String> params) {
     // prepare columns
     String[] columns = new String[] { AbstractMotifPlugin.COLUMN_SOURCE_ID,
         AbstractMotifPlugin.COLUMN_PROJECT_ID,
@@ -162,7 +168,7 @@ public class MotifSearchTest {
         AbstractMotifPlugin.COLUMN_LOCATIONS,
         AbstractMotifPlugin.COLUMN_SEQUENCE };
 
-    WsfRequest request = new WsfRequest();
+    PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());
@@ -174,5 +180,12 @@ public class MotifSearchTest {
     URL url = getClass().getResource(resourceName);
     File file = new File(url.toURI());
     return file.getAbsolutePath();
+  }
+
+  private PluginResponse getResponse() throws IOException {
+    File storageDir = File.createTempFile("temp/wsf", null);
+    storageDir.mkdirs();
+    PluginResponse response = new PluginResponse(storageDir, 0);
+    return response;
   }
 }

@@ -6,14 +6,12 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
-import org.gusdb.wsf.plugin.WsfServiceException;
+import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -36,7 +34,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   public void initialize(Map<String, Object> context)
-      throws WsfServiceException {
+      throws WsfPluginException {
     super.initialize(context);
   }
 
@@ -59,9 +57,8 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
   }
 
   @Override
-  protected void findMatches(Set<Match> matches, String headline,
-      Pattern searchPattern, String sequence) throws WdkModelException,
-      WdkUserException, SQLException {
+  protected void findMatches(PluginResponse response, Map<String, Integer> orders, String headline,
+      Pattern searchPattern, String sequence) throws WsfPluginException {
     // parse the headline
     MotifConfig config = getConfig();
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
@@ -75,7 +72,12 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
     String sequenceId = deflineMatcher.group(1).intern();
     String strand = deflineMatcher.group(2).intern();
     String organism = deflineMatcher.group(3).intern();
-    String projectId = getProjectId(organism).intern();
+    String projectId;
+    try {
+      projectId = getProjectId(organism).intern();
+    } catch (SQLException ex) {
+      throw new WsfPluginException(ex);
+    }
 
     int length = sequence.length();
     strand = strand.equals("-") ? "r" : "f";
@@ -109,7 +111,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
         context.append("...");
 
       match.sequence = context.toString();
-      matches.add(match);
+      addMatch(response, match, orders);
     }
   }
 }
