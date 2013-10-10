@@ -17,7 +17,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -260,8 +259,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   private void findMatches(PluginResponse response, String datasetID,
       Pattern searchPattern, int contextLength, 
-      Map<String, Integer> orders) throws IOException, WsfPluginException,
-      WdkModelException, WdkUserException, SQLException {
+      Map<String, Integer> orders) throws IOException, WsfPluginException {
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 

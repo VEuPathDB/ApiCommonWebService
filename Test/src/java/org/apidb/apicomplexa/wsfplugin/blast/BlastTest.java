@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 import java.util.Random;
@@ -20,8 +19,6 @@ import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.BlastConfig;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
 import org.eupathdb.websvccommon.wsfplugin.blast.ResultFormatter;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 import org.junit.Before;
@@ -132,8 +129,7 @@ public class BlastTest {
 
   @Test
   public void testFormatNcbiResultsWithHits() throws URISyntaxException,
-      WsfPluginException, WdkModelException, WdkUserException, IOException,
-      SQLException {
+      WsfPluginException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-hits.out", message);
@@ -148,9 +144,8 @@ public class BlastTest {
   }
 
   @Test
-  public void testFormatNcbiResultsWithoutHits() throws WdkModelException,
-      WdkUserException, WsfPluginException, URISyntaxException, IOException,
-      SQLException {
+  public void testFormatNcbiResultsWithoutHits() throws
+      WsfPluginException, URISyntaxException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-no-hits.out", message);
@@ -160,9 +155,8 @@ public class BlastTest {
   }
 
   @Test
-  public void testFormatNcbiResultsWithError() throws WdkModelException,
-      WdkUserException, WsfPluginException, URISyntaxException, IOException,
-      SQLException {
+  public void testFormatNcbiResultsWithError() throws 
+      WsfPluginException, URISyntaxException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-err.out", message);
@@ -213,8 +207,7 @@ public class BlastTest {
   // }
 
   private String[][] format(ResultFormatter formatter, String fileName,
-      StringBuffer message) throws WsfPluginException, URISyntaxException,
-      WdkModelException, WdkUserException, IOException, SQLException {
+      StringBuffer message) throws WsfPluginException, URISyntaxException, IOException {
     BlastConfig config = new BlastConfig(properties);
     ProjectMapper projectMapper = new MockProjectMapper();
     formatter.setConfig(config);

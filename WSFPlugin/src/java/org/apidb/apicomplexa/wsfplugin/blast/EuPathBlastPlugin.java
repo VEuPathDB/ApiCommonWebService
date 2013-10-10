@@ -2,7 +2,6 @@ package org.apidb.apicomplexa.wsfplugin.blast;
 
 import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
-import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
@@ -10,7 +9,7 @@ public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
   static final String BLAST_DB_NAME = "$$BlastDatabaseOrganism$$$$BlastDatabaseType$$";
 
-  public EuPathBlastPlugin() throws WsfPluginException {
+  public EuPathBlastPlugin() {
     super(new EuPathBlastCommandFormatter(), new NcbiBlastResultFormatter());
   }
 
