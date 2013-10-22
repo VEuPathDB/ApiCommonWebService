@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($hasStrainId) = @ARGV;
+
+usage() if !defined($hasStrainId);
+
+while(<STDIN>) {
+  chomp;
+  next if /^\s*$/;
+  my ($seq, $loc, $allele, $product, $strain) = split(/\t/);
+  if ($hasStrainId eq '1') {
+    print STDOUT pack("slccs", $seq, $loc, $allele, $product, $strain)
+  } else {
+    print STDOUT pack("slcc", $seq, $loc, $allele, $product);
+  }
+#  print STDERR join(",", $seq, $loc, $allele, $product, $strain) . "\n";
+}
+
+sub usage {
+  die "
+Usage: strainsTextToBinary [0|1] < strains_file
+
+second argument is 0 if the file does not include a fifth strain id column; 1 if it does
+";
+}
