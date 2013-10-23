@@ -1,0 +1,9 @@
+# convert txt files to binary
+
+# convert one binary back to text and compare w/ original
+
+# merge two files, convert back to text and compare with expected
+
+# generate findPolymorphism script
+
+# run that script and compare output with expected.
