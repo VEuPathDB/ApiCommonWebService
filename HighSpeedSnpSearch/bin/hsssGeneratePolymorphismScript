@@ -1,9 +1,10 @@
 #!/usr/bin/perl
 use strict;
-my ($strainsDir, $final, $polymorphismThreshold, $unknownThreshold) = @ARGV;
+my ($strainsDir, $outputFile, $polymorphismThreshold, $unknownThreshold) = @ARGV;
 
-die "usage: perl generateFindPolymorphismScript.pl strains_dir final_file polymorphism_threshold unknown_threshold\n" unless scalar(@ARGV) == 4;
+die "usage: hsssGeneratePolymorphismScript output_file polymorphism_threshold unknown_threshold < cat strains_list_file\n" unless scalar(@ARGV) == 3;
 
+=head
 if ($strainsDir =~ /(.+)\/$/) { $strainsDir = $1 }   # strip trailing /
 
 # get list of files into array
@@ -22,6 +23,10 @@ closedir $dh;
 
 my @mergeQueue = sort {-s "$strainsDir/$b" <=> -s "$strainsDir/$a"} @mergeQueueOriginal;
 
+=cut
+
+my @mergeQueue = <STDIN>;
+
 my $fifoCursor = 0;
 
 print "set -e\n";
@@ -37,7 +42,7 @@ print "\n";
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print "findPolymorphic $allMerged referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $final &\n";
+    print "hsssFindPolymorphic $allMerged referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFile &\n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
@@ -46,7 +51,7 @@ while(1) {
     push(@mergeQueue, "fifo$fifoCursor");
     my $strain1 = $input1 =~ /^\d+/? $input1 : 0;
     my $strain2 = $input2 =~ /^\d+/? $input2 : 0;
-    print "mergeStrains $input1 $strain1 $input2 $strain2 > fifo$fifoCursor &\n";
+    print "hsssMergeStrains $input1 $strain1 $input2 $strain2 > fifo$fifoCursor &\n";
   }
 }
 print "wait\n";
