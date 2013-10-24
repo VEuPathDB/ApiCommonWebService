@@ -26,7 +26,7 @@ main(int argc, char *argv[]) {
 	int16_t cmdLineStrain1;
 
 	if ( argc != 2 ) {
-		printf( "usage: %s strain_id < strainFile\n\nstrain_id should be 0 if input includes strain info per row ", argv[0] );
+		printf( "usage: %s strain_id < strainFile\n\nstrain_id should be 0 if input includes strain info per row \n", argv[0] );
 		return -1;
 	}
 	cmdLineStrain1 = atoi(argv[1]);
