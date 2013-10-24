@@ -53,7 +53,7 @@ main(int argc, char *argv[]) {
   int16_t *strain2_p = &strain2;
 
 	if ( argc != 5 ) {
-		fprintf(stderr, "usage: %s strain1_file strain1_id strain2_file strain2_id \n\nstrain1_id should be 0 if strain1_file includes strain info per row (and same for strain2\n", argv[0] );
+		fprintf(stderr, "usage: %s strain1_file strain1_id strain2_file strain2_id \n\nstrain1_id should be 0 if strain1_file includes strain info per row (and same for strain2)\n\n", argv[0] );
 		return -1;
 	}
 
