@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 use strict;
+use File::Basename;
+
 my ($strainFilesDir, $tmpDir, $polymorphismThreshold, $unknownThreshold) = @ARGV;
 
-usage() unless scalar(@ARGV) == 3;
+usage() unless scalar(@ARGV) == 4;
 
 =head
 if ($strainsDir =~ /(.+)\/$/) { $strainsDir = $1 }   # strip trailing /
@@ -26,46 +28,44 @@ my @mergeQueue = sort {-s "$strainsDir/$b" <=> -s "$strainsDir/$a"} @mergeQueueO
 =cut
 
 my @mergeQueueOriginal = <STDIN>;
-my @mergeQueue = map { "$strainFilesDir/$_"} @mergeQueueOriginal;
+my @mergeQueue = map { chomp; "$strainFilesDir/$_"} @mergeQueueOriginal;
 my $strainsCount = scalar(@mergeQueue);
 my $fifoCount = $strainsCount;
 
 my $fifoCursor = 0;
-my $time = time;
-my $fifoPrefix = "fifo.$time.";
+my $fifoPrefix = "fifo";
 
 print "set -e\n";
 print "set -x\n";
-print "date\n";
 print "cd $tmpDir\n";
 print "mkfifo ";
 for (my $i = 1; $i <= scalar(@mergeQueue); $i++) {
-  print "$fifoPrefix.$i ";
+  print "$fifoPrefix$i ";
 }
 print "\n";
 
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print "hsssFindPolymorphic $allMerged referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold &\n";
+    print "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold \n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
     my $input2 = shift(@mergeQueue);
     $fifoCursor++;
     push(@mergeQueue, "$fifoPrefix.$fifoCursor");
-    my $strain1 = $input1 =~ /^\d+/? $input1 : 0;
-    my $strain2 = $input2 =~ /^\d+/? $input2 : 0;
-    print "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix.$fifoCursor &\n";
+    my $strain1 = basename($input1);
+    my $strain2 = basename($input2);
+    $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
+    $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
+    print "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
   }
 }
-print "wait\n";
 print "rm ";
 for (my $i = 1; $i <= $fifoCount; $i++) {
-  print "$fifoPrefix.$i ";
+  print "$fifoPrefix$i ";
 }
 print "\n";
-print "date\n";
 print "exit\n";
 
 
@@ -77,7 +77,8 @@ Generate a bash script that will run a high-speed SNP search to find polymorphis
 usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold < cat strains_list_file
 
 where:
-  - tmp_dir:  a temp directory in which to create a set of unix fifos
+  - strains_file_dir:  the directory in which to find strain files.
+  - tmp_dir:  a temp directory in which to create a set of unix fifos for this run.
   - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
