@@ -24,7 +24,7 @@ hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSea
 hsssMergeStrains 1 1 2 2 > mergeStrains_test.out
 hsssDumpStrains 0 < mergeStrains_test.out > mergeStrains_test.txt
 
-diff mergeStrains_test.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/mergeStrains_answer.txt
+diff mergeStrains_test.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/mergeStrains.txt
 diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
@@ -37,7 +37,7 @@ chmod +x runPolymorphismSearch
 # run that script and compare output with expected.
 ./runPolymorphismSearch > polymorphismSearch_result.txt
 
-diff polymorphismSearch_result.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/polymorphismSearch_expected.txt
+diff polymorphismSearch_result.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearch.txt
 diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
