@@ -31,7 +31,14 @@ if [ $diffStat != 0 ]; then
 fi
 
 # generate findPolymorphism script
-echo -e "1\n2\n3\n4" | hsssGeneratePolymorphismScript $testDir $testDir 1 1 > runSearch
-chmod +x runSearch
+echo -e "1\n2\n3\n4" | hsssGeneratePolymorphismScript $testDir $testDir 1 1 > runPolymorphismSearch
+chmod +x runPolymorphismSearch
 
 # run that script and compare output with expected.
+./runPolymorphismSearch > polymorphismSearch_result.txt
+
+diff polymorphismSearch_result.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/polymorphismSearch_expected.txt
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
