@@ -53,7 +53,7 @@ while(1) {
     my $input1 = shift(@mergeQueue);
     my $input2 = shift(@mergeQueue);
     $fifoCursor++;
-    push(@mergeQueue, "$fifoPrefix.$fifoCursor");
+    push(@mergeQueue, "$fifoPrefix$fifoCursor");
     my $strain1 = basename($input1);
     my $strain2 = basename($input2);
     $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
