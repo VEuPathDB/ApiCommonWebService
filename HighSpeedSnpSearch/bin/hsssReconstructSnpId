@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($contigIdFile) = @ARGV;
+
+usage() unless $contigIdFile;
+
+open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
+my %contigHash;
+while (<C>) {
+  chomp;
+  my ($contigIndex, $contigSourceId) = split(/\t/);
+  $contigHash{$contigIndex} = $contigSourceId;
+}
+close(C);
+
+while(<STDIN>) {
+  chomp;
+  my @fields = split(/\t/);
+  my $contigIndex = shift(@fields);
+  my $location = shift(@fields);
+  my $contigSourceId = $contigHash{$contigIndex};
+  die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
+  print STDOUT join("\t", "$contigSourceId-$location", @fields);
+}
+
+sub usage {
+  die "
+Replace the first and second columns of a stream with a SNP ID, given a file with a mapping.
+
+Usage: hsssReconstructSnpId contig_id_file < snp_search_result
+
+Where:
+  - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
+
+  - snp_search_result: tab_delimited where first column is contig index and second is genomic location.
+
+Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+";
+}
