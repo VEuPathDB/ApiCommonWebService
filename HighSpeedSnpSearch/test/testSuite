@@ -31,7 +31,8 @@ if [ $diffStat != 0 ]; then
 fi
 
 # generate findPolymorphism script
-echo -e "1\n2\n3\n4" | hsssGeneratePolymorphismScript $testDir $testDir 1 1 > runPolymorphismSearch
+echo -e "1\n2\n3\n4" > strainsList.txt
+hsssGeneratePolymorphismScript $testDir $testDir 1 1 stranisList.txt runPolymorphismSearch
 chmod +x runPolymorphismSearch
 
 # run that script and compare output with expected.
