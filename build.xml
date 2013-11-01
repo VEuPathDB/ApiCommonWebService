@@ -71,7 +71,8 @@
   <target name="ApiCommonWebService-Installation" depends="EuPathWebSvcCommon-Installation,
                                                            ApiCommonShared-Installation,
                                                            ApiCommonWebService/WSFPlugin-Installation,
-                                                           ApiCommonWebService/HighSpeedSnpSearch-Installation">
+                                                           ApiCommonWebService/HighSpeedSnpSearch-Installation,
+                                                           ApiCommonWebService/Test-Installation">
 
     <ant target="defaultProjectInstall"/>
 
@@ -100,6 +101,15 @@
       <property name="component" value="HighSpeedSnpSearch"/>
     </ant>
     
+ </target>
+
+  <target name="ApiCommonWebService/Test-Installation">
+
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ApiCommonWebService"/>
+      <property name="component" value="Test"/>
+    </ant>
+
  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
