@@ -71,6 +71,7 @@ for (my $i = 1; $i <= $fifoCount; $i++) {
 print O "\n";
 print O "exit\n";
 close(O);
+system("chmod +x $outputFile");
 
 sub usage {
 
