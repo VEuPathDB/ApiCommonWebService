@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
 import java.io.BufferedReader;
@@ -10,16 +7,26 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
+import java.util.Scanner;
 
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.fgputil.FormatUtil;
+import org.eupathdb.common.model.ProjectMapper;
+import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.xml.sax.SAXException;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * @author steve
@@ -43,19 +50,25 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String COLUMN_IS_SYNONYMOUS = "IsSynonymous";
 
   // property definition
-  private static final String PROPERTY_JOBS_DIR = "jobsDir";
-  private static final String PROPERTY_DATA_DIR = "dataDir";
-  private static final String PROPERTY_PROJECT_ID = "projectId";
+  public static final String PROPERTY_JOBS_DIR = "jobsDir";
+  public static final String PROPERTY_DATA_DIR = "dataDir";
 
   private File jobsDir;
   private File dataDir;
   private String projectId;
+  private ProjectMapper projectMapper;
 
   public FindPolymorphismsPlugin() {
     super(PROPERTY_FILE);
   }
 
-  // load properties
+  public ProjectMapper getProjectMapper() {
+    return projectMapper;
+  }
+
+  public void setProjectMapper(ProjectMapper projectMapper) {
+    this.projectMapper = projectMapper;
+  }
 
   /*
    * (non-Javadoc)
@@ -65,15 +78,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override  public void initialize(Map<String, Object> context)     throws WsfPluginException {
     super.initialize(context);
 
-    // load properties
-
-    // project id
-    projectId = getProperty(PROPERTY_PROJECT_ID);
-    if (projectId == null)
-      throw new WsfPluginException(PROPERTY_PROJECT_ID
-				   + " is missing from the configuration file");
+    System.err.println("inside init");
 
     // jobs dir
+    System.err.println(properties);
     String jobsDirName  = getProperty(PROPERTY_JOBS_DIR);
     if (jobsDirName == null)
       throw new WsfPluginException(PROPERTY_JOBS_DIR 
@@ -84,6 +92,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
     // data dir
     String dataDirName  = getProperty(PROPERTY_DATA_DIR);
+    System.err.println("datadir: " + dataDirName);
     if (dataDirName == null)
       throw new WsfPluginException(PROPERTY_DATA_DIR
 				   + " is missing from the configuration file");
@@ -91,6 +100,14 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (!dataDir.exists()) 
       throw new WsfPluginException(PROPERTY_DATA_DIR
 				   + " " + dataDirName + " does not exist");
+    // create project mapper
+    WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
+    try {
+      projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
+    } catch (WdkModelException | SAXException | IOException
+        | ParserConfigurationException ex) {
+      throw new WsfPluginException(ex);
+    }
   }
 
   synchronized String getTimeStamp() {
@@ -140,13 +157,20 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     logger.info("Invoking FindPolymorphisms Plugin...");
 
     // make job dir
-    File jobDir = new File(jobsDir, getTimeStamp());
+    File jobDir = new File(jobsDir, "findPolymorphisms." + getTimeStamp());
     jobDir.mkdirs();
+
+    logger.info("  jobDir: " + jobDir.getPath());
 
     // find organism's strain dir
     Map<String, String> params = request.getParams();
     String organism = params.get(PARAM_ORGANISM);
-    File organismDir = new File(dataDir, organism);
+    String projectId = getProjectId(organism);
+    File projectDir = new File(dataDir, projectId);
+    if (!projectDir.exists()) throw new WsfPluginException("Strains dir for project '" + projectId
+							    + "'does not exist:\n" + projectDir);
+
+    File organismDir = new File(projectDir, organism);
     if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organism
 							    + "'does not exist:\n" + organismDir);
 
@@ -167,7 +191,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     try {
       StringBuffer output = new StringBuffer();
 
-      String[] cmds = {"findPolymorphisms"};
+      String[] cmds = {jobDir.getPath() + "/findPolymorphisms"};
       int signal = invokeCommand(cmds, output, 2 * 60);
       long end = System.currentTimeMillis();
       logger.info("Invocation takes: " + ((end - start) / 1000.0)
@@ -214,20 +238,49 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     return strainsArray.length;
   }
     
-  private void runCommandToCreateBashScript(File organismDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName) {
-    List<String> cmds = new ArrayList<String>();
+  private void runCommandToCreateBashScript(File organismDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName) throws WsfPluginException {
+    List<String> command = new ArrayList<String>();
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_file
-    cmds.add("hsssGeneratePolymorphismScript");
-    cmds.add(organismDir.getPath());
-    cmds.add(jobDir.getPath());
-    cmds.add(new Integer(polymorphismsThreshold).toString());
-    cmds.add(new Integer(unknownsThreshold).toString());
-    cmds.add(strainsFileName);
-    cmds.add(bashScriptFileName);
+    command.add("hsssGeneratePolymorphismScript");
+    command.add(organismDir.getPath());
+    command.add(jobDir.getPath());
+    command.add(new Integer(polymorphismsThreshold).toString());
+    command.add(new Integer(unknownsThreshold).toString());
+    command.add(jobDir.getPath() + "/" + strainsFileName);
+    command.add(jobDir.getPath() + "/" + bashScriptFileName);
 
-    String[] array = new String[cmds.size()];
-    cmds.toArray(array);
+    String[] array = new String[command.size()];
+    command.toArray(array);
+    try {
+      Process process = new ProcessBuilder(command).start();
+        process.waitFor();
+        if (process.exitValue() != 0) {
+            Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
+            String errMsg = (s.hasNext() ? s.next() : "");
+            throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+        }
+    } catch (IOException|InterruptedException e) {
+      throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " "), e);
+    }
+    /*
+    try {
+      Process process = Runtime.getRuntime().exec(array);
+      process.wait();
+      if (process.exitValue() != 0) {
+	BufferedReader stdError = 
+	  new BufferedReader(new InputStreamReader(process.getErrorStream()));
+	StringBuffer errMsg = new StringBuffer();
+	String s;
+	while ((s = stdError.readLine()) != null) {
+	  errMsg.append(s);
+	}
+	throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array) + ": " + errMsg);
+      }
+    } catch (IOException|InterruptedException e) {
+      throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array), e);
+    }
+    */
   }
 
   private void prepareResult(PluginResponse response, String content, String[] orderedColumns) throws WsfPluginException, IOException {
@@ -266,8 +319,16 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     in.close();
   }
 
+  protected String getProjectId(String organism) throws WsfPluginException {
+    try {
+      return projectMapper.getProjectByOrganism(organism);
+    } catch (SQLException e) {
+      throw new WsfPluginException("Failed getting projectId for organism " + organism, e);
+    }
+  }
+
   @Override
     protected String[] defineContextKeys() {
-    return null;
+    return new String[] { CConstants.WDK_MODEL_KEY };
   }
 }
