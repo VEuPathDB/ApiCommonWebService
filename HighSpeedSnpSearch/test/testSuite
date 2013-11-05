@@ -14,11 +14,11 @@ testDir=$1
 cd $testDir
 
 # convert txt files to binary
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/strain1.txt > 1
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/strain2.txt > 2
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/strain3.txt > 3
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/strain4.txt > 4
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/referenceGenome.txt > referenceGenome.dat
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain1.txt > 1
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain2.txt > 2
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain3.txt > 3
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain4.txt > 4
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/referenceGenome.txt > referenceGenome.dat
 
 # merge two files, convert back to text and compare with expected
 hsssMergeStrains 1 1 2 2 > mergeStrains_test.out
