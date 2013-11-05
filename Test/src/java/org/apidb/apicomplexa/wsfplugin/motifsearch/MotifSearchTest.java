@@ -31,7 +31,7 @@ public class MotifSearchTest {
   @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(MotifSearchTest.class.getName());
 
-  private static final String SYS_PROJECT_HOME = "project_home";
+  private static final String SYS_PROJECT_HOME = "PROJECT_HOME";
 
   private final String gusHome;
   private final String projectHome;
@@ -39,7 +39,7 @@ public class MotifSearchTest {
   private Properties properties;
 
   public MotifSearchTest() throws Exception {
-    projectHome = System.getProperty(SYS_PROJECT_HOME);
+    projectHome = System.getenv(SYS_PROJECT_HOME);
     if (projectHome == null)
       throw new Exception("Required system environment variable not set: "
           + SYS_PROJECT_HOME);
@@ -63,6 +63,8 @@ public class MotifSearchTest {
     InputStream inStream = new FileInputStream(sampleFile);
     properties.loadFromXML(inStream);
     inStream.close();
+    properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
+
   }
 
   @Test
