@@ -5,14 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
@@ -86,8 +82,7 @@ public class FindPolymorphismsSearchTest {
   }
 
   @Test
-  public void testSearch() throws WsfPluginException,
-      URISyntaxException, IOException {
+  public void testSearch() throws WsfPluginException {
     FindPolymorphismsPlugin search = new FindPolymorphismsPlugin();
     System.err.println("first" + properties);
     try {
@@ -142,7 +137,7 @@ public class FindPolymorphismsSearchTest {
     return request;
   }
 
-  private PluginResponse getResponse() throws IOException {
+  private PluginResponse getResponse() {
     int invokeId = 0;
     File storageDir = new File("/tmp/junk");
     new File(storageDir, Integer.toString(invokeId)).mkdirs();

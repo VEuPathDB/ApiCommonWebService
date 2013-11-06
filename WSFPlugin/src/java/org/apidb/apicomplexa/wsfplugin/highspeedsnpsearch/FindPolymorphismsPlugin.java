@@ -3,30 +3,30 @@ package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 import java.util.Scanner;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.eupathdb.common.model.ProjectMapper;
+import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.fgputil.FormatUtil;
-import org.eupathdb.common.model.ProjectMapper;
-import org.gusdb.wdk.controller.CConstants;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.xml.sax.SAXException;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * @author steve
