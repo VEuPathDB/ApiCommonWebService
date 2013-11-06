@@ -2,9 +2,9 @@
 use strict;
 use File::Basename;
 
-my ($strainFilesDir, $tmpDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $outputFile) = @ARGV;
+my ($strainFilesDir, $tmpDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $outputScriptFile, $outputDataFile) = @ARGV;
 
-usage() unless scalar(@ARGV) == 6;
+usage() unless scalar(@ARGV) == 6 || scalar(@ARGV) == 7;
 
 =head
 if ($strainsDir =~ /(.+)\/$/) { $strainsDir = $1 }   # strip trailing /
@@ -37,7 +37,7 @@ my $fifoCount = $strainsCount;
 my $fifoCursor = 0;
 my $fifoPrefix = "fifo";
 
-open(O, ">$outputFile") || die "Can't open output_file '' for writing\n";
+open(O, ">$outputScriptFile") || die "Can't open output_file '' for writing\n";
 print O "set -e\n";
 print O "set -x\n";
 print O "cd $tmpDir\n";
@@ -47,10 +47,12 @@ for (my $i = 1; $i <= scalar(@mergeQueue); $i++) {
 }
 print O "\n";
 
+my $output = $outputDataFile? ">$outputDataFile" : "";
+
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold \n";
+    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold $output\n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
@@ -71,14 +73,14 @@ for (my $i = 1; $i <= $fifoCount; $i++) {
 print O "\n";
 print O "exit\n";
 close(O);
-system("chmod +x $outputFile");
+system("chmod +x $outputScriptFile");
 
 sub usage {
 
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold cat strains_list_file output_file
+usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold cat strains_list_file output_script_file [output_data_file]
 
 where:
   - strains_file_dir:  the directory in which to find strain files.
@@ -86,7 +88,8 @@ where:
   - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
-  - output_file: the script
+  - output_script_file: the script
+  - output_data_file: optional file for the output script to write its output to.  if absent, script will write to stdout.
 
 ";
 }
