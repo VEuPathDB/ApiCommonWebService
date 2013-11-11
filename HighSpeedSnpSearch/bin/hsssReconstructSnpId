@@ -22,7 +22,7 @@ while(<STDIN>) {
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
-  print STDOUT join("\t", "$contigSourceId-$location", @fields);
+  print STDOUT join("\t", "$contigSourceId-$location", @fields) . "\n";
 }
 
 sub usage {

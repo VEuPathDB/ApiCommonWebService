@@ -14,11 +14,11 @@ testDir=$1
 cd $testDir
 
 # convert txt files to binary
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain1.txt > 1
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain2.txt > 2
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain3.txt > 3
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/strain4.txt > 4
-hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/TestDB/Hippo/referenceGenome.txt > referenceGenome.dat
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/strain1.txt > 1
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/strain2.txt > 2
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/strain3.txt > 3
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/strain4.txt > 4
+hsssStrainTextFileToBinary 0 < $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/referenceGenome.txt > referenceGenome.dat
 
 # merge two files, convert back to text and compare with expected
 hsssMergeStrains 1 1 2 2 > mergeStrains_test.out
@@ -32,14 +32,23 @@ fi
 
 # generate findPolymorphism script
 echo -e "1\n2\n3\n4" > strainsList.txt
-hsssGeneratePolymorphismScript $testDir $testDir 1 1 strainsList.txt runPolymorphismSearch
+hsssGeneratePolymorphismScript $testDir $testDir 1 1 strainsList.txt runPolymorphismSearch polymorphismSearch_result.txt
 chmod +x runPolymorphismSearch
 
 # run that script and compare output with expected.
-./runPolymorphismSearch > polymorphismSearch_result.txt
+./runPolymorphismSearch
 
 diff polymorphismSearch_result.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearch.txt
 diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
 fi
+
+hsssReconstructSnpId $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/contigIdToSourceId.txt < polymorphismSearch_result.txt > withSnpIds.txt
+
+diff withSnpIds.txt  $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIds.txt 
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
+

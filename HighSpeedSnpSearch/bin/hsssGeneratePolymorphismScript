@@ -80,7 +80,7 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold cat strains_list_file output_script_file [output_data_file]
+usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_script_file [output_data_file]
 
 where:
   - strains_file_dir:  the directory in which to find strain files.
