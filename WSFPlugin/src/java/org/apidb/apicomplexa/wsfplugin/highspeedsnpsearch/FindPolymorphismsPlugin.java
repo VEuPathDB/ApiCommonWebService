@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -184,7 +185,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100);  // round up
     int percentUnknowns = Integer.parseInt(params.get(PARAM_MAX_PERCENT_UNKNOWNS));
     int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100);  // round down
-    runCommandToCreateBashScript(organismDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms");
+    runCommandToCreateBashScript(organismDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
@@ -202,7 +203,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 				     + output);
 
       // prepare the result
-      prepareResult(response, output.toString(),
+      prepareResult(response, jobDir.getPath() + "/result",
                     request.getOrderedColumns());
 
       response.setSignal(signal);
@@ -238,7 +239,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     return strainsArray.length;
   }
     
-  private void runCommandToCreateBashScript(File organismDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName) throws WsfPluginException {
+  private void runCommandToCreateBashScript(File organismDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_file
@@ -249,6 +250,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     command.add(new Integer(unknownsThreshold).toString());
     command.add(jobDir.getPath() + "/" + strainsFileName);
     command.add(jobDir.getPath() + "/" + bashScriptFileName);
+    command.add(jobDir.getPath() + "/" + resultFileName);
 
     String[] array = new String[command.size()];
     command.toArray(array);
@@ -283,7 +285,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     */
   }
 
-  private void prepareResult(PluginResponse response, String content, String[] orderedColumns) throws WsfPluginException, IOException {
+  private void prepareResult(PluginResponse response, String resultFileName, String[] orderedColumns) throws WsfPluginException, IOException {
     // create a map of <column/position>
     Map<String, Integer> columns = new HashMap<String, Integer>(
 								orderedColumns.length);
@@ -291,22 +293,16 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       columns.put(orderedColumns[i], i);
     }
 
-    // check if the output contains error message
-    if (content.indexOf("ERROR:") >= 0)
-      throw new WsfPluginException(content);
-
     // read from the buffered stream
-    BufferedReader in = new BufferedReader(new InputStreamReader(
-								 new ByteArrayInputStream(content.getBytes())));
+    BufferedReader in = new BufferedReader(new FileReader(resultFileName));
 
     String line;
     while ((line = in.readLine()) != null) {
       line = line.trim();
       String[] parts = line.split("\t");
 
-      if (parts.length != 5)
-	throw new WsfPluginException("Invalid output format:\n"
-				     + content);
+      if (parts.length != 4)
+	throw new WsfPluginException("Invalid output format in results file");
 
       String[] row = new String[5];
       row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];

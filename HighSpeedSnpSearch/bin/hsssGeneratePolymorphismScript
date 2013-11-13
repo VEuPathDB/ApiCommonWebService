@@ -52,7 +52,7 @@ my $output = $outputDataFile? ">$outputDataFile" : "";
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold $output\n";
+    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.txt $output\n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
