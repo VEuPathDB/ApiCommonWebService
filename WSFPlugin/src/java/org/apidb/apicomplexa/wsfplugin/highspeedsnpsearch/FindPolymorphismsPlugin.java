@@ -42,10 +42,11 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String PARAM_STRAIN_LIST = "StrainList";
   public static final String PARAM_MAX_PERCENT_UNKNOWNS = "MaxPercentUnknowns";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentPolymorphisms";
+  public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";
-  public static final String COLUMN_SNP_SOURCE_ID = "SnpSourceId";
+  public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentOfPolymorphisms";
   public static final String COLUMN_PERCENT_OF_UNKNOWNS = "PercentOfUnknowns";
   public static final String COLUMN_IS_SYNONYMOUS = "IsSynonymous";
@@ -123,7 +124,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST,
-			  PARAM_MAX_PERCENT_UNKNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS};
+			  PARAM_MAX_PERCENT_UNKNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
   }
 
   /*
@@ -175,6 +176,12 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organism
 							    + "'does not exist:\n" + organismDir);
 
+    String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
+    File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
+    if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq '" + readFreqPercent
+							    + "'does not exist:\n" + readFreqDir);
+    
+
     // write strain IDs to file
     File strainsFile = new File(jobDir, "strains");
     String strains = params.get(PARAM_STRAIN_LIST);
@@ -185,7 +192,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100);  // round up
     int percentUnknowns = Integer.parseInt(params.get(PARAM_MAX_PERCENT_UNKNOWNS));
     int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100);  // round down
-    runCommandToCreateBashScript(organismDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
+    runCommandToCreateBashScript(readFreqDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
@@ -239,12 +246,12 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     return strainsArray.length;
   }
     
-  private void runCommandToCreateBashScript(File organismDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
+  private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_file
     command.add("hsssGeneratePolymorphismScript");
-    command.add(organismDir.getPath());
+    command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
     command.add(new Integer(unknownsThreshold).toString());
@@ -327,4 +334,20 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     protected String[] defineContextKeys() {
     return new String[] { CConstants.WDK_MODEL_KEY };
   }
+
+  /*
+  private void cleanup() {
+    long todayLong = new Date().getTime();
+    // remove files older than a week (500000000)
+    for (File tempFile : jobsDir.listFiles()) {
+      if (tempFile.isFile() && tempFile.canWrite()
+          && (todayLong - (tempFile.lastModified())) > 500000000) {
+        logger.info("Temp file to be deleted: " + tempFile.getAbsolutePath()
+            + "\n");
+        tempFile.delete();
+      }
+    }
+  }
+  */
+
 }

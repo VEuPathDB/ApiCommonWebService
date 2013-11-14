@@ -99,6 +99,7 @@ public class FindPolymorphismsSearchTest {
     // prepare parameters
     Map<String, String> params = new HashMap<String, String>();
     params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Hippo");
+    params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
     params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
     params.put(FindPolymorphismsPlugin.PARAM_MAX_PERCENT_UNKNOWNS, "1");
     params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "1");
