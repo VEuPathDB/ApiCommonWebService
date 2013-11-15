@@ -37,7 +37,7 @@ my $fifoCount = $strainsCount;
 my $fifoCursor = 0;
 my $fifoPrefix = "fifo";
 
-open(O, ">$outputScriptFile") || die "Can't open output_file '' for writing\n";
+open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
 print O "set -e\n";
 print O "set -x\n";
 print O "cd $tmpDir\n";
