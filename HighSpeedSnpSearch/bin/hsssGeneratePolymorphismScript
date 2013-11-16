@@ -2,9 +2,9 @@
 use strict;
 use File::Basename;
 
-my ($strainFilesDir, $tmpDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $outputScriptFile, $outputDataFile) = @ARGV;
+my ($strainFilesDir, $tmpDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
 
-usage() unless scalar(@ARGV) == 6 || scalar(@ARGV) == 7;
+usage() unless scalar(@ARGV) == 7 || scalar(@ARGV) == 8;
 
 =head
 if ($strainsDir =~ /(.+)\/$/) { $strainsDir = $1 }   # strip trailing /
@@ -27,10 +27,24 @@ my @mergeQueue = sort {-s "$strainsDir/$b" <=> -s "$strainsDir/$a"} @mergeQueueO
 
 =cut
 
+my %strainNameToNum;
+if ($strainsAreNames) {
+  open(SN, "$strainFilesDir/strainIdToName.dat") || die "Can't open strain id mapping file '$strainFilesDir/strainIdToName.dat'\n";
+  while(<SN>) {
+    chomp;
+    my ($num, $name) = split(/\t/);
+    $strainNameToNum{$name} = $num;
+  }
+  close(SN);
+}
+
 open(S, $strainsListFile) || die "Can't open strains_list_file '$strainsListFile'\n";
 my @mergeQueueOriginal = <S>;
 close(S);
-my @mergeQueue = map { chomp; "$strainFilesDir/$_"} @mergeQueueOriginal;
+my @mergeQueue = $strainsAreNames?
+  map { chomp; "$strainFilesDir/$strainNameToNum{$_}"} @mergeQueueOriginal
+  : map { chomp; "$strainFilesDir/$_"} @mergeQueueOriginal;
+
 my $strainsCount = scalar(@mergeQueue);
 my $fifoCount = $strainsCount;
 
@@ -52,7 +66,7 @@ my $output = $outputDataFile? ">$outputDataFile" : "";
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.txt $output\n";
+    print O "/var/www/sfischer.plasmodb.org/gus_home/bin/hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | /var/www/sfischer.plasmodb.org/gus_home/bin/hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
@@ -63,7 +77,7 @@ while(1) {
     my $strain2 = basename($input2);
     $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
     $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
-    print O "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
+    print O "/var/www/sfischer.plasmodb.org/gus_home/bin/hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
   }
 }
 print O "rm ";
@@ -80,7 +94,7 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_script_file [output_data_file]
+usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file translate_strains output_script_file [output_data_file]
 
 where:
   - strains_file_dir:  the directory in which to find strain files.
@@ -88,6 +102,7 @@ where:
   - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
+  - strains_are_names: 0/1.  1=the strains in strains_list_file are strain names, not numbers as found in strains_file_dir.
   - output_script_file: the script
   - output_data_file: optional file for the output script to write its output to.  if absent, script will write to stdout.
 

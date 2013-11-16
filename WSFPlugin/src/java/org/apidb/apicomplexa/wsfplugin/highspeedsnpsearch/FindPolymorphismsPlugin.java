@@ -36,8 +36,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private static final String PROPERTY_FILE = "highSpeedSnpSearch-config.xml";
 
   // required parameter definition
-  public static final String PARAM_ORGANISM = "Organism";
-  public static final String PARAM_STRAIN_LIST = "StrainList";
+  public static final String PARAM_ORGANISM = "organism";
+  public static final String PARAM_STRAIN_LIST = "htsSnp_strains";
   public static final String PARAM_MAX_PERCENT_UNKNOWNS = "MaxPercentUnknowns";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentPolymorphisms";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
@@ -47,7 +47,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentOfPolymorphisms";
   public static final String COLUMN_PERCENT_OF_UNKNOWNS = "PercentOfUnknowns";
-  public static final String COLUMN_IS_SYNONYMOUS = "IsSynonymous";
+  public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
 
   // property definition
   public static final String PROPERTY_JOBS_DIR = "jobsDir";
@@ -55,7 +55,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
   private File jobsDir;
   private File dataDir;
-  private String projectId;
   private ProjectMapper projectMapper;
 
   public FindPolymorphismsPlugin() {
@@ -133,7 +132,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getColumns() {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-			  COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_UNKNOWNS, COLUMN_IS_SYNONYMOUS };
+			  COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_UNKNOWNS, COLUMN_IS_NONSYNONYMOUS };
   }
 
   /*
@@ -165,13 +164,18 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     // find organism's strain dir
     Map<String, String> params = request.getParams();
     String organism = params.get(PARAM_ORGANISM);
+    if (organism.startsWith("'")) {  // remove single quotes possibly supplied by wdk
+      organism = organism.substring(1, organism.length());
+      organism = organism.substring(0, organism.length() - 1);
+    }
     String projectId = getProjectId(organism);
     File projectDir = new File(dataDir, projectId);
     if (!projectDir.exists()) throw new WsfPluginException("Strains dir for project '" + projectId
 							    + "'does not exist:\n" + projectDir);
 
-    File organismDir = new File(projectDir, organism);
-    if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organism
+    String organismNoSpaces = organism.replaceAll(" ","");
+    File organismDir = new File(projectDir, organismNoSpaces);
+    if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organismNoSpaces
 							    + "'does not exist:\n" + organismDir);
 
     String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
@@ -208,7 +212,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 				     + output);
 
       // prepare the result
-      prepareResult(response, jobDir.getPath() + "/result",
+      prepareResult(response, projectId, jobDir.getPath() + "/result",
                     request.getOrderedColumns());
 
       response.setSignal(signal);
@@ -229,7 +233,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       FileWriter w = new FileWriter(strainsFile);
       bw = new BufferedWriter(w);
       for (String strain : strainsArray) {
-	bw.write(strain);
+	String t = strain.trim();
+	bw.write(t);
 	bw.newLine();
       }
     } catch (IOException e) {
@@ -247,13 +252,14 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
 
-    //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file output_file
-    command.add("hsssGeneratePolymorphismScript");
+    //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
+    command.add("/var/www/sfischer.plasmodb.org/gus_home/bin/hsssGeneratePolymorphismScript");
     command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
     command.add(new Integer(unknownsThreshold).toString());
     command.add(jobDir.getPath() + "/" + strainsFileName);
+    command.add("1");
     command.add(jobDir.getPath() + "/" + bashScriptFileName);
     command.add(jobDir.getPath() + "/" + resultFileName);
 
@@ -268,7 +274,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
             throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
         }
     } catch (IOException|InterruptedException e) {
-      throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " "), e);
+      throw new WsfPluginException("Exception running " + FormatUtil.arrayToString(array, " ") + e, e);
     }
     /*
     try {
@@ -290,7 +296,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     */
   }
 
-  private void prepareResult(PluginResponse response, String resultFileName, String[] orderedColumns) throws WsfPluginException, IOException {
+  private void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws WsfPluginException, IOException {
     // create a map of <column/position>
     Map<String, Integer> columns = new HashMap<String, Integer>(
 								orderedColumns.length);
@@ -312,9 +318,9 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       String[] row = new String[5];
       row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
       row[columns.get(COLUMN_PROJECT_ID)] = projectId;
-      row[columns.get(COLUMN_PERCENT_OF_POLYMORPHISMS)] = parts[1];
-      row[columns.get(COLUMN_PERCENT_OF_UNKNOWNS)] = parts[2];
-      row[columns.get(COLUMN_IS_SYNONYMOUS)] = parts[3];
+      row[columns.get(COLUMN_PERCENT_OF_UNKNOWNS)] = parts[1];
+      row[columns.get(COLUMN_PERCENT_OF_POLYMORPHISMS)] = parts[2];
+      row[columns.get(COLUMN_IS_NONSYNONYMOUS)] = parts[3];
       response.addRow(row);
     }
     in.close();
