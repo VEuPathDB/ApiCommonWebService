@@ -128,7 +128,7 @@ public class FindPolymorphismsSearchTest {
         FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
         FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
         FindPolymorphismsPlugin.COLUMN_PERCENT_OF_UNKNOWNS,
-        FindPolymorphismsPlugin.COLUMN_IS_SYNONYMOUS };
+        FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
 
     PluginRequest request = new PluginRequest();
     request.setParams(params);
