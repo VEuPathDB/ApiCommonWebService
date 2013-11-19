@@ -56,6 +56,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private File jobsDir;
   private File dataDir;
   private ProjectMapper projectMapper;
+  private String gusHome;
+  private String envPath;
+
+  private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
   public FindPolymorphismsPlugin() {
     super(PROPERTY_FILE);
@@ -107,6 +111,9 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
         | ParserConfigurationException ex) {
       throw new WsfPluginException(ex);
     }
+
+    gusHome = System.getProperty("GUS_HOME");
+    envPath = System.getenv("PATH");
   }
 
   synchronized String getTimeStamp() {
@@ -153,10 +160,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
    */
   @Override
     public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
-    logger.info("Invoking FindPolymorphisms Plugin...");
+    logger.info("Invoking FindPolymorphisms Plugin execute...");
 
     // make job dir
-    File jobDir = new File(jobsDir, "findPolymorphisms." + getTimeStamp());
+    File jobDir = new File(jobsDir, JOBS_DIR_PREFIX + getTimeStamp());
     jobDir.mkdirs();
 
     logger.info("  jobDir: " + jobDir.getPath());
@@ -203,8 +210,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
       String[] cmds = {jobDir.getPath() + "/findPolymorphisms"};
       int signal = invokeCommand(cmds, output, 2 * 60);
-      long end = System.currentTimeMillis();
-      logger.info("Invocation takes: " + ((end - start) / 1000.0)
+      long invoke_end = System.currentTimeMillis();
+      logger.info("Running findPolymorphisms takes: " + ((invoke_end - start) / 1000.0)
 		  + " seconds");
 
       if (signal != 0)
@@ -222,7 +229,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 		  + " seconds");
 
       throw new WsfPluginException(ex);
+    } finally {
+      cleanup();
     }
+    logger.info("Done FindPolymorphisms Plugin execute...");
   }
 
   private int writeStrainsFile(File strainsFile, String strains) throws WsfPluginException {
@@ -253,7 +263,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     List<String> command = new ArrayList<String>();
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
-    command.add("/var/www/sfischer.plasmodb.org/gus_home/bin/hsssGeneratePolymorphismScript");
+    command.add("hsssGeneratePolymorphismScript");
     command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
@@ -266,7 +276,12 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     String[] array = new String[command.size()];
     command.toArray(array);
     try {
-      Process process = new ProcessBuilder(command).start();
+      ProcessBuilder builder = new ProcessBuilder(command);
+      Map<String,String> env = builder.environment();
+      // env.put("PATH", gusHome + "/bin:" + envPath);
+      env.put("PATH", "/var/www/sfischer.plasmodb.org/gus_home/bin:" + "/bin");
+      logger.info("path: " + gusHome + "/bin:" + envPath);
+      Process process = builder.start();
         process.waitFor();
         if (process.exitValue() != 0) {
             Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
@@ -339,19 +354,20 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     return new String[] { CConstants.WDK_MODEL_KEY };
   }
 
-  /*
   private void cleanup() {
     long todayLong = new Date().getTime();
     // remove files older than a week (500000000)
-    for (File tempFile : jobsDir.listFiles()) {
-      if (tempFile.isFile() && tempFile.canWrite()
-          && (todayLong - (tempFile.lastModified())) > 500000000) {
-        logger.info("Temp file to be deleted: " + tempFile.getAbsolutePath()
+    for (File jobDir : jobsDir.listFiles()) {
+      if (jobDir.isDirectory() && jobsDir.canWrite() 
+	  && jobDir.getPath().contains("findPolym")
+          && (todayLong - (jobDir.lastModified())) > 500000000) {
+	if (jobDir.listFiles() == null) System.err.println("was null: " + jobDir.getPath());
+	for (File tmpFile : jobDir.listFiles()) tmpFile.delete();
+	logger.info("Job dir to be deleted: " + jobDir.getAbsolutePath()
             + "\n");
-        tempFile.delete();
+	jobDir.delete();
       }
     }
   }
-  */
 
 }
