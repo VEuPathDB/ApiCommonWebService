@@ -163,10 +163,10 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc) {
 		// write it out if has enough polymorphisms
 		int polyMorphisms = strainCount - U_count - *majorCount;
 		int polyMorphismsPercent = (polyMorphisms * 100) / (strainCount - U_count);
-		int unknownPercent = U_count * 100 / strainCount;
+		int knownPercent = (strainCount - U_count) * 100 / strainCount;
 
 		if (polyMorphisms >= polymorphismThreshold) {
-			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, unknownPercent, polyMorphismsPercent, nonSyn);
+			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polyMorphismsPercent, nonSyn);
 		}
 	}
 
