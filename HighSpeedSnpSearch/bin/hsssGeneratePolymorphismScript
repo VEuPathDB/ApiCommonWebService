@@ -41,7 +41,7 @@ if ($strainsAreNames) {
 open(S, $strainsListFile) || die "Can't open strains_list_file '$strainsListFile'\n";
 my @mergeQueueOriginal = <S>;
 close(S);
-my @mergeQueue = map { chomp; "$strainFilesDir/" + getStrainNum($_)} @mergeQueueOriginal;
+my @mergeQueue = map { chomp; "$strainFilesDir/" . getStrainNum($_)} @mergeQueueOriginal;
 
 my $strainsCount = scalar(@mergeQueue);
 my $fifoCount = $strainsCount;
