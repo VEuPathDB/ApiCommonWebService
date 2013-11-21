@@ -39,7 +39,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   // required parameter definition
   public static final String PARAM_ORGANISM = "organism";
   public static final String PARAM_STRAIN_LIST = "htsSnp_strains";
-  public static final String PARAM_MAX_PERCENT_UNKNOWNS = "MaxPercentUnknowns";
+  public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentKnowns";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentPolymorphisms";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
 
@@ -47,7 +47,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String COLUMN_PROJECT_ID = "ProjectId";
   public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentOfPolymorphisms";
-  public static final String COLUMN_PERCENT_OF_UNKNOWNS = "PercentOfUnknowns";
+  public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentOfKnowns";
   public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
 
   // property definition
@@ -81,6 +81,9 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     super.initialize(context);
 
     System.err.println("inside init");
+    gusHome = GusHome.getGusHome();
+    if (gusHome == null) gusHome = "/var/www/sfischer.plasmodb.org/gus_home";
+    envPath = System.getenv("PATH");
 
     // jobs dir
     System.err.println(properties);
@@ -102,6 +105,9 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (!dataDir.exists()) 
       throw new WsfPluginException(PROPERTY_DATA_DIR
 				   + " " + dataDirName + " does not exist");
+
+    // BEWARE:  this try THROWS an exception in the unit testing context, which is ignored.
+    // don't put any code after it
     // create project mapper
     WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
     try {
@@ -124,7 +130,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST,
-			  PARAM_MAX_PERCENT_UNKNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
+			  PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
   }
 
   /*
@@ -135,7 +141,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getColumns() {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-			  COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_UNKNOWNS, COLUMN_IS_NONSYNONYMOUS };
+			  COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_IS_NONSYNONYMOUS };
   }
 
   /*
@@ -194,9 +200,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
     // create bash script
     int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
-    int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100);  // round up
-    int percentUnknowns = Integer.parseInt(params.get(PARAM_MAX_PERCENT_UNKNOWNS));
-    int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100);  // round down
+    int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100.0);  // round up
+    logger.debug("strainsCount: " + strainsCount + "pp: " + percentPolymorphisms + "thresh: " + polymorphismsThreshold);
+    int percentUnknowns = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS));
+    int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100.0);  // round down
     runCommandToCreateBashScript(readFreqDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
 
     // invoke the command, and set default 2 min as timeout limit
@@ -260,7 +267,11 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     String gusBin = GusHome.getGusHome() + "/bin";
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
+<<<<<<< .mine
+    command.add(gusHome + "/bin/hsssGeneratePolymorphismScript");
+=======
     command.add(gusBin + "/hsssGeneratePolymorphismScript");
+>>>>>>> .r59131
     command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
@@ -277,9 +288,14 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       
       // set path on command
       Map<String,String> env = builder.environment();
+<<<<<<< .mine
+      env.put("PATH", gusHome + "/bin:" + envPath);
+      logger.debug("path: " + gusHome + "/bin:" + envPath);
+=======
       env.put("PATH", gusBin + ":" + env.get("PATH"));
       logger.info("Path sent to subprocesses: " + env.get("PATH"));
 
+>>>>>>> .r59131
       Process process = builder.start();
       process.waitFor();
       if (process.exitValue() != 0) {
@@ -332,7 +348,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       String[] row = new String[5];
       row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
       row[columns.get(COLUMN_PROJECT_ID)] = projectId;
-      row[columns.get(COLUMN_PERCENT_OF_UNKNOWNS)] = parts[1];
+      row[columns.get(COLUMN_PERCENT_OF_KNOWNS)] = parts[1];
       row[columns.get(COLUMN_PERCENT_OF_POLYMORPHISMS)] = parts[2];
       row[columns.get(COLUMN_IS_NONSYNONYMOUS)] = parts[3];
       response.addRow(row);
