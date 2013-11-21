@@ -18,6 +18,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
@@ -56,8 +57,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private File jobsDir;
   private File dataDir;
   private ProjectMapper projectMapper;
-  private String gusHome;
-  private String envPath;
 
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
@@ -111,9 +110,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
         | ParserConfigurationException ex) {
       throw new WsfPluginException(ex);
     }
-
-    gusHome = System.getProperty("GUS_HOME");
-    envPath = System.getenv("PATH");
   }
 
   synchronized String getTimeStamp() {
@@ -261,9 +257,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     
   private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
+    String gusBin = GusHome.getGusHome() + "/bin";
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
-    command.add("hsssGeneratePolymorphismScript");
+    command.add(gusBin + "/hsssGeneratePolymorphismScript");
     command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
@@ -277,17 +274,19 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     command.toArray(array);
     try {
       ProcessBuilder builder = new ProcessBuilder(command);
+      
+      // set path on command
       Map<String,String> env = builder.environment();
-      // env.put("PATH", gusHome + "/bin:" + envPath);
-      env.put("PATH", "/var/www/sfischer.plasmodb.org/gus_home/bin:" + "/bin");
-      logger.info("path: " + gusHome + "/bin:" + envPath);
+      env.put("PATH", gusBin + ":" + env.get("PATH"));
+      logger.info("Path sent to subprocesses: " + env.get("PATH"));
+
       Process process = builder.start();
-        process.waitFor();
-        if (process.exitValue() != 0) {
-            Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
-            String errMsg = (s.hasNext() ? s.next() : "");
-            throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
-        }
+      process.waitFor();
+      if (process.exitValue() != 0) {
+    	Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
+        String errMsg = (s.hasNext() ? s.next() : "");
+        throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+      }
     } catch (IOException|InterruptedException e) {
       throw new WsfPluginException("Exception running " + FormatUtil.arrayToString(array, " ") + e, e);
     }
