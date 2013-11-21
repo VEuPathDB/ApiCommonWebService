@@ -64,7 +64,7 @@ my $output = $outputDataFile? ">$outputDataFile" : "";
 while(1) {
   if (scalar(@mergeQueue) == 1) {
     my $allMerged = shift(@mergeQueue);
-    print O "/var/www/sfischer.plasmodb.org/gus_home/bin/hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | /var/www/sfischer.plasmodb.org/gus_home/bin/hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
+    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
     last;
   } else {
     my $input1 = shift(@mergeQueue);
@@ -75,7 +75,7 @@ while(1) {
     my $strain2 = basename($input2);
     $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
     $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
-    print O "/var/www/sfischer.plasmodb.org/gus_home/bin/hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
+    print O "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
   }
 }
 print O "rm ";
