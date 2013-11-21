@@ -57,6 +57,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private File jobsDir;
   private File dataDir;
   private ProjectMapper projectMapper;
+  private String gusHome;
+  private String envPath;
 
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
@@ -82,7 +84,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
     System.err.println("inside init");
     gusHome = GusHome.getGusHome();
-    if (gusHome == null) gusHome = "/var/www/sfischer.plasmodb.org/gus_home";
     envPath = System.getenv("PATH");
 
     // jobs dir
@@ -192,7 +193,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq '" + readFreqPercent
 							    + "'does not exist:\n" + readFreqDir);
     
-
     // write strain IDs to file
     File strainsFile = new File(jobDir, "strains");
     String strains = params.get(PARAM_STRAIN_LIST);
@@ -212,7 +212,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       StringBuffer output = new StringBuffer();
 
       String[] cmds = {jobDir.getPath() + "/findPolymorphisms"};
-      int signal = invokeCommand(cmds, output, 2 * 60);
+      String env[] = {"PATH=" + gusHome + "/bin:" + envPath};
+      int signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();
       logger.info("Running findPolymorphisms takes: " + ((invoke_end - start) / 1000.0)
 		  + " seconds");
@@ -264,14 +265,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     
   private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
-    String gusBin = GusHome.getGusHome() + "/bin";
+    String gusBin = gusHome + "/bin";
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
-<<<<<<< .mine
-    command.add(gusHome + "/bin/hsssGeneratePolymorphismScript");
-=======
     command.add(gusBin + "/hsssGeneratePolymorphismScript");
->>>>>>> .r59131
     command.add(strainsDir.getPath());
     command.add(jobDir.getPath());
     command.add(new Integer(polymorphismsThreshold).toString());
@@ -288,14 +285,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       
       // set path on command
       Map<String,String> env = builder.environment();
-<<<<<<< .mine
-      env.put("PATH", gusHome + "/bin:" + envPath);
-      logger.debug("path: " + gusHome + "/bin:" + envPath);
-=======
-      env.put("PATH", gusBin + ":" + env.get("PATH"));
-      logger.info("Path sent to subprocesses: " + env.get("PATH"));
-
->>>>>>> .r59131
+      env.put("PATH", gusBin + ":" + envPath);
+      logger.debug("Path sent to subprocesses: " + envPath);
       Process process = builder.start();
       process.waitFor();
       if (process.exitValue() != 0) {
