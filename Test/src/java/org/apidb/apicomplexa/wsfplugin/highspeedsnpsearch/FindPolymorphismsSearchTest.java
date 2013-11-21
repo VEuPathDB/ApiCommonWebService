@@ -101,7 +101,7 @@ public class FindPolymorphismsSearchTest {
     params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Hippo");
     params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
     params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
-    params.put(FindPolymorphismsPlugin.PARAM_MAX_PERCENT_UNKNOWNS, "1");
+    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "1");
     params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "1");
 
     // invoke the plugin and get result back
@@ -127,7 +127,7 @@ public class FindPolymorphismsSearchTest {
     String[] columns = new String[] { FindPolymorphismsPlugin.COLUMN_SNP_SOURCE_ID,
         FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
         FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
-        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_UNKNOWNS,
+        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
         FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
 
     PluginRequest request = new PluginRequest();
