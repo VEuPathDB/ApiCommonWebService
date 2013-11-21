@@ -16,6 +16,7 @@ import java.util.Scanner;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.runtime.GusHome;
@@ -30,9 +31,10 @@ import org.xml.sax.SAXException;
 
 /**
  * @author steve
- * 
  */
 public class FindPolymorphismsPlugin extends AbstractPlugin {
+
+  private static final Logger LOG = Logger.getLogger(FindPolymorphismsPlugin.class);
 
   private static final String PROPERTY_FILE = "highSpeedSnpSearch-config.xml";
 
@@ -57,8 +59,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private File jobsDir;
   private File dataDir;
   private ProjectMapper projectMapper;
-  private String gusHome;
-  private String envPath;
 
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
@@ -79,33 +79,31 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
    * 
    * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
    */
-  @Override  public void initialize(Map<String, Object> context)     throws WsfPluginException {
+  @Override
+  public void initialize(Map<String, Object> context) throws WsfPluginException {
     super.initialize(context);
 
-    System.err.println("inside init");
-    gusHome = GusHome.getGusHome();
-    envPath = System.getenv("PATH");
-
     // jobs dir
-    System.err.println(properties);
-    String jobsDirName  = getProperty(PROPERTY_JOBS_DIR);
+    LOG.debug(properties);
+    String jobsDirName = getProperty(PROPERTY_JOBS_DIR);
     if (jobsDirName == null)
-      throw new WsfPluginException(PROPERTY_JOBS_DIR 
-				   + " is missing from the configuration file");
+        throw new WsfPluginException(PROPERTY_JOBS_DIR
+                + " is missing from the configuration file");
     jobsDir = new File(jobsDirName);
-    if (!jobsDir.exists()) throw new WsfPluginException(PROPERTY_JOBS_DIR
-							+ " " + jobsDirName + " does not exist");
+    if (!jobsDir.exists())
+        throw new WsfPluginException(PROPERTY_JOBS_DIR
+                + " " + jobsDirName + " does not exist");
 
     // data dir
-    String dataDirName  = getProperty(PROPERTY_DATA_DIR);
-    System.err.println("datadir: " + dataDirName);
+    String dataDirName = getProperty(PROPERTY_DATA_DIR);
+    LOG.debug("datadir: " + dataDirName);
     if (dataDirName == null)
-      throw new WsfPluginException(PROPERTY_DATA_DIR
-				   + " is missing from the configuration file");
+        throw new WsfPluginException(PROPERTY_DATA_DIR
+                + " is missing from the configuration file");
     dataDir = new File(dataDirName);
     if (!dataDir.exists()) 
-      throw new WsfPluginException(PROPERTY_DATA_DIR
-				   + " " + dataDirName + " does not exist");
+        throw new WsfPluginException(PROPERTY_DATA_DIR
+                + " " + dataDirName + " does not exist");
 
     // BEWARE:  this try THROWS an exception in the unit testing context, which is ignored.
     // don't put any code after it
@@ -131,7 +129,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST,
-			  PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
+              PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
   }
 
   /*
@@ -142,7 +140,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getColumns() {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-			  COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_IS_NONSYNONYMOUS };
+              COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_IS_NONSYNONYMOUS };
   }
 
   /*
@@ -181,17 +179,17 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     String projectId = getProjectId(organism);
     File projectDir = new File(dataDir, projectId);
     if (!projectDir.exists()) throw new WsfPluginException("Strains dir for project '" + projectId
-							    + "'does not exist:\n" + projectDir);
+                                + "'does not exist:\n" + projectDir);
 
     String organismNoSpaces = organism.replaceAll(" ","");
     File organismDir = new File(projectDir, organismNoSpaces);
     if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organismNoSpaces
-							    + "'does not exist:\n" + organismDir);
+                                + "'does not exist:\n" + organismDir);
 
     String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
     File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
     if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq '" + readFreqPercent
-							    + "'does not exist:\n" + readFreqDir);
+                                + "'does not exist:\n" + readFreqDir);
     
     // write strain IDs to file
     File strainsFile = new File(jobDir, "strains");
@@ -211,16 +209,16 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     try {
       StringBuffer output = new StringBuffer();
 
-      String[] cmds = {jobDir.getPath() + "/findPolymorphisms"};
-      String env[] = {"PATH=" + gusHome + "/bin:" + envPath};
+      String[] cmds = { jobDir.getPath() + "/findPolymorphisms" };
+      String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH") };
       int signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();
       logger.info("Running findPolymorphisms takes: " + ((invoke_end - start) / 1000.0)
-		  + " seconds");
+          + " seconds");
 
       if (signal != 0)
-	throw new WsfPluginException("The findPolymorphisms job in jobDir " + jobDir + " failed: "
-				     + output);
+          throw new WsfPluginException("The findPolymorphisms job in jobDir " +
+                  jobDir + " failed: " + output);
 
       // prepare the result
       prepareResult(response, projectId, jobDir.getPath() + "/result",
@@ -230,7 +228,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     } catch (IOException ex) {
       long end = System.currentTimeMillis();
       logger.info("Invocation takes: " + ((end - start) / 1000.0)
-		  + " seconds");
+          + " seconds");
 
       throw new WsfPluginException(ex);
     } finally {
@@ -247,17 +245,17 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       FileWriter w = new FileWriter(strainsFile);
       bw = new BufferedWriter(w);
       for (String strain : strainsArray) {
-	String t = strain.trim();
-	bw.write(t);
-	bw.newLine();
+        String t = strain.trim();
+        bw.write(t);
+        bw.newLine();
       }
     } catch (IOException e) {
       throw new WsfPluginException("Failed writing to strains file", e);
     } finally {
       try {
-	if (bw != null) bw.close();
+        if (bw != null) bw.close();
       } catch (IOException e) {
-	throw new WsfPluginException("Failed closing strains file", e);
+        throw new WsfPluginException("Failed closing strains file", e);
       }
     }
     return strainsArray.length;
@@ -265,7 +263,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     
   private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
-    String gusBin = gusHome + "/bin";
+    String gusBin = GusHome.getGusHome() + "/bin";
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
     command.add(gusBin + "/hsssGeneratePolymorphismScript");
@@ -285,12 +283,12 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       
       // set path on command
       Map<String,String> env = builder.environment();
-      env.put("PATH", gusBin + ":" + envPath);
-      logger.debug("Path sent to subprocesses: " + envPath);
+      env.put("PATH", gusBin + ":" + env.get("PATH"));
+      logger.debug("Path sent to subprocesses: " + env.get("PATH"));
       Process process = builder.start();
       process.waitFor();
       if (process.exitValue() != 0) {
-    	Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
+        Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
         String errMsg = (s.hasNext() ? s.next() : "");
         throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
       }
@@ -302,14 +300,14 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       Process process = Runtime.getRuntime().exec(array);
       process.wait();
       if (process.exitValue() != 0) {
-	BufferedReader stdError = 
-	  new BufferedReader(new InputStreamReader(process.getErrorStream()));
-	StringBuffer errMsg = new StringBuffer();
-	String s;
-	while ((s = stdError.readLine()) != null) {
-	  errMsg.append(s);
-	}
-	throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array) + ": " + errMsg);
+    BufferedReader stdError = 
+      new BufferedReader(new InputStreamReader(process.getErrorStream()));
+    StringBuffer errMsg = new StringBuffer();
+    String s;
+    while ((s = stdError.readLine()) != null) {
+      errMsg.append(s);
+    }
+    throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array) + ": " + errMsg);
       }
     } catch (IOException|InterruptedException e) {
       throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array), e);
@@ -319,8 +317,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
   private void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws WsfPluginException, IOException {
     // create a map of <column/position>
-    Map<String, Integer> columns = new HashMap<String, Integer>(
-								orderedColumns.length);
+    Map<String, Integer> columns = new HashMap<String, Integer>(orderedColumns.length);
     for (int i = 0; i < orderedColumns.length; i++) {
       columns.put(orderedColumns[i], i);
     }
@@ -334,7 +331,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       String[] parts = line.split("\t");
 
       if (parts.length != 4)
-	throw new WsfPluginException("Invalid output format in results file");
+        throw new WsfPluginException("Invalid output format in results file");
 
       String[] row = new String[5];
       row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
@@ -365,15 +362,13 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     // remove files older than a week (500000000)
     for (File jobDir : jobsDir.listFiles()) {
       if (jobDir.isDirectory() && jobsDir.canWrite() 
-	  && jobDir.getPath().contains("findPolym")
+          && jobDir.getPath().contains("findPolym")
           && (todayLong - (jobDir.lastModified())) > 500000000) {
-	if (jobDir.listFiles() == null) System.err.println("was null: " + jobDir.getPath());
-	for (File tmpFile : jobDir.listFiles()) tmpFile.delete();
-	logger.info("Job dir to be deleted: " + jobDir.getAbsolutePath()
-            + "\n");
-	jobDir.delete();
+        if (jobDir.listFiles() == null) LOG.warn("was null: " + jobDir.getPath());
+        for (File tmpFile : jobDir.listFiles()) tmpFile.delete();
+        logger.info("Job dir to be deleted: " + jobDir.getAbsolutePath() + "\n");
+        jobDir.delete();
       }
     }
   }
-
 }
