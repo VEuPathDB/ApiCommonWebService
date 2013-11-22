@@ -75,6 +75,9 @@ while(1) {
     my $strain2 = basename($input2);
     $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
     $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
+    # explicitly check existence of input files because it is hard to get exit status of bgd processes
+    print O "if [ ! -e $input1 ]; then exit 1; fi\n";
+    print O "if [ ! -e $input2 ]; then exit 1; fi\n";
     print O "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
   }
 }
