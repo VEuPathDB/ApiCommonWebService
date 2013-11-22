@@ -101,8 +101,8 @@ public class FindPolymorphismsSearchTest {
     params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Hippo");
     params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
     params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
-    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "1");
-    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "1");
+    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "20");
+    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "20");
 
     // invoke the plugin and get result back
     PluginRequest request = getRequest(params);
@@ -113,7 +113,7 @@ public class FindPolymorphismsSearchTest {
     String[][] results = response.getPage(0);
     System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(7, results.length);
+    Assert.assertEquals(6, results.length);
   }
 
   private Map<String, Object> getContext() {
