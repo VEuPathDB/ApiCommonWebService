@@ -3,11 +3,11 @@
 
 <properties>
 
-  <comment>The configuration file for MotifSearch WSF Plugin.</comment>
+  <comment>The configuration file for HighSpeedSnpSearch WSF Plugin.</comment>
 
   <!-- $Revision: 1 $ -->
 
-  <entry key="jobsDir">/eupath/data/htsSnpsPrototype/jobs</entry>
-  <entry key="dataDir">/eupath/data/htsSnpsPrototype/data</entry>
+  <entry key="jobsDir">/tmp</entry>
+  <entry key="dataDir">/eupath/data/htsSnpsPrototype/bld19Extract</entry>
 
 </properties>
