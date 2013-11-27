@@ -40,7 +40,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
   // required parameter definition
   public static final String PARAM_ORGANISM = "organism";
-  public static final String PARAM_STRAIN_LIST = "htsSnp_strains";
+  public static final String PARAM_META = "ontology_type";
+  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_meta";
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentKnowns";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentPolymorphisms";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
@@ -128,7 +129,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
    */
   @Override
     public String[] getRequiredParameterNames() {
-    return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST,
+    return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
               PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
   }
 
@@ -161,13 +162,12 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
    */
   @Override
     public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
-    logger.info("Invoking FindPolymorphisms Plugin execute...");
 
     // make job dir
     File jobDir = new File(jobsDir, JOBS_DIR_PREFIX + getTimeStamp());
     jobDir.mkdirs();
 
-    logger.info("  jobDir: " + jobDir.getPath());
+    logger.info("Invoking FindPolymorphismsPlugin execute for job " + jobDir.getPath());
 
     // find organism's strain dir
     Map<String, String> params = request.getParams();
@@ -199,9 +199,11 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     // create bash script
     int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
     int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100.0);  // round up
+    if (polymorphismsThreshold == 0) polymorphismsThreshold++;
     logger.debug("strainsCount: " + strainsCount + "pp: " + percentPolymorphisms + "thresh: " + polymorphismsThreshold);
     int percentUnknowns = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS));
     int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100.0);  // round down
+    if (unknownsThreshold > (strainsCount - 2)) unknownsThreshold = strainsCount - 2;  // must be at least 2 known
     runCommandToCreateBashScript(readFreqDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
 
     // invoke the command, and set default 2 min as timeout limit
@@ -213,7 +215,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH") };
       int signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();
-      logger.info("Running findPolymorphisms takes: " + ((invoke_end - start) / 1000.0)
+      logger.info("Running findPolymorphisms took: " + ((invoke_end - start) / 1000.0)
           + " seconds");
 
       if (signal != 0)
@@ -240,14 +242,17 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private int writeStrainsFile(File strainsFile, String strains) throws WsfPluginException {
     String[] strainsArray = strains.split(",");
     BufferedWriter bw = null;
+    int count = 0;
     try {
       if (!strainsFile.exists()) strainsFile.createNewFile();
       FileWriter w = new FileWriter(strainsFile);
       bw = new BufferedWriter(w);
       for (String strain : strainsArray) {
-        String t = strain.trim();
-        bw.write(t);
-        bw.newLine();
+	if (strain.equals("-1")) continue;  // workaround: -1 is the internal value passed for non-leaf nodes of a wdk tree param, until wdk stops passing those through.
+	String t = strain.trim();
+	bw.write(t);
+	bw.newLine();
+	count++;
       }
     } catch (IOException e) {
       throw new WsfPluginException("Failed writing to strains file", e);
@@ -258,7 +263,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
         throw new WsfPluginException("Failed closing strains file", e);
       }
     }
-    return strainsArray.length;
+    return count;
   }
     
   private void runCommandToCreateBashScript(File strainsDir, File jobDir, int polymorphismsThreshold, int unknownsThreshold, String strainsFileName, String bashScriptFileName, String resultFileName) throws WsfPluginException {
