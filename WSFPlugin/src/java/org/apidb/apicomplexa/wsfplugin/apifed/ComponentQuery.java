@@ -86,7 +86,7 @@ public class ComponentQuery extends Thread {
       logger.info("Thread (" + url + ") has returned results in "
           + ((end - start) / 1000.0) + " seconds.");
     } catch (Exception ex) {
-      logger.error("Error occurred.", ex);
+      logger.error("Error occurred related to " + url, ex);
       errorMessage = ex.getMessage() + " Occured : Thread exited"
           + ex.getCause();
       result.setMessage(projectId,
