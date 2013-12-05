@@ -248,8 +248,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       FileWriter w = new FileWriter(strainsFile);
       bw = new BufferedWriter(w);
       for (String strain : strainsArray) {
-	if (strain.equals("-1")) continue;  // workaround: -1 is the internal value passed for non-leaf nodes of a wdk tree param, until wdk stops passing those through.
 	String t = strain.trim();
+	if (t.equals("-1")) continue;  // workaround: -1 is the internal value passed for non-leaf nodes of a wdk tree param, until wdk stops passing those through.
 	bw.write(t);
 	bw.newLine();
 	count++;
