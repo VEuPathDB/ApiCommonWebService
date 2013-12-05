@@ -194,6 +194,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     // write strain IDs to file
     File strainsFile = new File(jobDir, "strains");
     String strains = params.get(PARAM_STRAIN_LIST);
+    if (strains == null) throw new WsfPluginException("Strains param is empty");
     int strainsCount = writeStrainsFile(strainsFile, strains);
 
     // create bash script
