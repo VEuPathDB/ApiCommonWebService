@@ -39,7 +39,7 @@ int g_count = 0;
 int t_count = 0;
 int U_count = 0; // unknown
 int diploidCount = 0; // for a given SNP, the number of variants that are diploid.  incremented for each variant beyond the first per strain.
-int sumCount = 0;
+int nonRefStrainsCount = 0;
 
 int prevProduct = -1;
 int prevStrain = -1;
@@ -86,15 +86,14 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 static inline updateCounts() {
 	if (allele == 0 && product == -1) {
 		U_count += strain;
-		sumCount += strain;
+		nonRefStrainsCount += strain;
 	} else {
 		if (allele == 1) a_count++;
 		else if (allele == 2) c_count++;
 		else if (allele == 3) g_count++;
 		else if (allele == 4) t_count++;
 		else U_count++;
-		sumCount++;
-		if (strain == prevStrain) diploidCount++;  // more than one variant for this strain.  count as a diploid variant
+		if (strain != prevStrain) nonRefStrainsCount++;
 	}
 	if (product != prevProduct && product > 0 && prevProduct > 0) nonSyn = 1;
 }
@@ -163,7 +162,7 @@ main(int argc, char *argv[]) {
 		// get reference genome allele and product for this SNP
 		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
-		int ref_count = (strainCount + diploidCount) - sumCount; // sumCount includes unknowns
+		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid count are extras for some strains
 
 		if (ref_count > 0 && refProduct != prevProduct && prevProduct > 0) nonSyn = 1;  // we saw some ref alleles, might have a second product
 
@@ -182,8 +181,6 @@ main(int argc, char *argv[]) {
 
 		//		fprintf(stderr, "seq:%i loc:%i refSeq:%i refLoc:%i refAllele:%i ref_count:%i, a:%i c:%i g:%i t:%i\n", prevSeq, prevLoc, refSeq, refLoc, refAllele, ref_count, a_count, c_count, g_count, t_count);
 
-
-
 		// write it out if has enough polymorphisms
 		int polymorphisms = strainCount - U_count - *majorCount;
 		int polymorphismsPercent = (polymorphisms * 100) / (strainCount - U_count);
@@ -200,7 +197,7 @@ main(int argc, char *argv[]) {
 	g_count = 0;
 	t_count = 0;
 	U_count = 0;
-	sumCount = 0;
+	nonRefStrainsCount = 0;
 	nonSyn = 0;
 	diploidCount = 0;
 
