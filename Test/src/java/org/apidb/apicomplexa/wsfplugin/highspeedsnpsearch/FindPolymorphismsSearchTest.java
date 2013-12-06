@@ -113,7 +113,7 @@ public class FindPolymorphismsSearchTest {
     String[][] results = response.getPage(0);
     System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(5, results.length);
+    Assert.assertEquals(6, results.length);
   }
 
   private Map<String, Object> getContext() {
