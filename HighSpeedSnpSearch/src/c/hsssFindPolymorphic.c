@@ -63,11 +63,13 @@ static inline int readStrainRow() {
 static inline getRefGenomeInfo(int16_t seq, int32_t loc) {
 	// refGenome file is a strain file: one row per SNP, showing the ref genomes values
 	// advance through SNPs to our current one
-	while(refSeq != seq && refLoc != loc) {
+	//		fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
+		while(!(refSeq == seq && refLoc== loc)) {
 		fread(refSeq_p, 2, 1, refFile);  
 		fread(refLoc_p, 4, 1, refFile);  
 		fread(refAllele_p, 1, 1, refFile); 
 		fread(refProduct_p, 1, 1, refFile);
+		//fprintf(stderr,"%i %i\n" ,refSeq, refLoc);
 	}
 }
 
@@ -168,6 +170,10 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc) {
 		if (c_count > *majorCount) majorCount = &c_count;
 		if (g_count > *majorCount) majorCount = &g_count;
 		if (t_count > *majorCount) majorCount = &t_count;
+
+		//		fprintf(stderr, "seq:%i loc:%i refSeq:%i refLoc:%i refAllele:%i ref_count:%i, a:%i c:%i g:%i t:%i\n", prevSeq, prevLoc, refSeq, refLoc, refAllele, ref_count, a_count, c_count, g_count, t_count);
+
+
 
 		// write it out if has enough polymorphisms
 		int polymorphisms = strainCount - U_count - *majorCount;
