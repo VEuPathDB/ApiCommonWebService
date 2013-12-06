@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h> 
 
 // using global variables to cut down on stack pushing operations.
@@ -46,29 +47,38 @@ int nonSyn = 0;
 int16_t prevSeq;
 int32_t prevLoc;
 
+static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
+	int bytes = fread(ptr, size, count,stream);
+	if (ferror(stream)) {
+		fprintf(stderr, "Failed reading file '%s' \n", filename );
+	 	exit(-1);
+	}
+	return bytes;
+}
 
-static inline int readStrainRow() {
+
+static inline int readStrainRow(char *filename) {
 	prevSeq = seq;
 	prevLoc = loc;
 	if (product > 0) prevProduct = product;  // remember last known product
 	prevStrain = strain;
 
-	fread(seq_p, 2, 1, strainFile);  
-	fread(loc_p, 4, 1, strainFile);  
-	fread(allele_p, 1, 1, strainFile); 
-	fread(product_p, 1, 1, strainFile);
-	return fread(strain_p, 2, 1, strainFile);
+	freadCheck(filename, seq_p, 2, 1, strainFile);  
+	freadCheck(filename, loc_p, 4, 1, strainFile);  
+	freadCheck(filename, allele_p, 1, 1, strainFile); 
+	freadCheck(filename, product_p, 1, 1, strainFile);
+	return freadCheck(filename, strain_p, 2, 1, strainFile);
 }
 
-static inline getRefGenomeInfo(int16_t seq, int32_t loc) {
+static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 	// refGenome file is a strain file: one row per SNP, showing the ref genomes values
 	// advance through SNPs to our current one
-	//		fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
+	//	fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
 		while(!(refSeq == seq && refLoc== loc)) {
-		fread(refSeq_p, 2, 1, refFile);  
-		fread(refLoc_p, 4, 1, refFile);  
-		fread(refAllele_p, 1, 1, refFile); 
-		fread(refProduct_p, 1, 1, refFile);
+		freadCheck(filename, refSeq_p, 2, 1, refFile);  
+		freadCheck(filename, refLoc_p, 4, 1, refFile);  
+		freadCheck(filename, refAllele_p, 1, 1, refFile); 
+		freadCheck(filename, refProduct_p, 1, 1, refFile);
 		//fprintf(stderr,"%i %i\n" ,refSeq, refLoc);
 	}
 }
@@ -112,14 +122,13 @@ main(int argc, char *argv[]) {
 	}
 
 	int strainFileGot;
-
 	// prime things by reading, but not processing, first SNP in the input
-	strainFileGot = readStrainRow();
+	strainFileGot = readStrainRow(argv[1]);
 	prevSeq = seq;
 	prevLoc = loc;
 	while (seq == prevSeq && loc == prevLoc && strainFileGot != 0) {
 		updateCounts();
-		strainFileGot = readStrainRow();		
+		strainFileGot = readStrainRow(argv[1]);		
 	}
 
 	// read and process the rest of the SNPs in the input
@@ -127,15 +136,15 @@ main(int argc, char *argv[]) {
 
 		// first process prev SNP and clear counts
 		// fprintf(stderr, "%i %i %i %i\n", seq, prevSeq, loc, prevLoc);
-		if (seq != prevSeq || loc != prevLoc) processPreviousSnp(prevSeq, prevLoc);
+		if (seq != prevSeq || loc != prevLoc) processPreviousSnp(prevSeq, prevLoc, argv[2]);
 
 		// update counts with this variant
 		updateCounts();
 
 		// read next variant
-		strainFileGot = readStrainRow();
+		strainFileGot = readStrainRow(argv[1]);
 	}	
-	processPreviousSnp(prevSeq, prevLoc); // process final snp
+	processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp
 
 	fclose(strainFile);
 	fclose(refFile);
@@ -146,13 +155,13 @@ main(int argc, char *argv[]) {
  * Look at the data accumulated for a SNP.  If above threshold write it out.
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
-processPreviousSnp(int32_t prevSeq, int32_t prevLoc) {
+	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 	// only consider SNPs that are under unknowns threshold
 	if (U_count <= unknownsThreshold) {
 
 		// get reference genome allele and product for this SNP
-		getRefGenomeInfo(prevSeq, prevLoc);
+		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 		int ref_count = (strainCount + diploidCount) - sumCount; // sumCount includes unknowns
 
