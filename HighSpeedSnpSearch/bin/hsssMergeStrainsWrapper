@@ -1,0 +1,9 @@
+#!/bin/bash
+
+trap "kill -TERM -$PPID" ERR
+
+fifo=$1
+shift;
+
+hsssMergeStrains "$@" > $fifo
+
