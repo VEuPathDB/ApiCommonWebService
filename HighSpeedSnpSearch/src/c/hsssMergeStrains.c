@@ -22,10 +22,10 @@ static inline int fwriteCheck (char *filename, void *ptr, size_t size, size_t co
 
 // input files that are unmerged strain files have a constant strain; the rows do not include strain.
 // in that case the strain is provided on the cmd line.  otherwise read the strain from the file.
-inline static int readStrainRow(FILE *file, int16_t *seq, int32_t *loc, int8_t *allele, char *product, int16_t *strain, int16_t cmdLineStrain, char *filename) {
+inline static int readStrainRow(FILE *file, int16_t *seq_p, int32_t *loc_p, int8_t *allele, char *product, int16_t *strain, int16_t cmdLineStrain, char *filename) {
 	int retval;
-	freadCheck(filename, seq, 2, 1, file);  
-	freadCheck(filename, loc, 4, 1, file);  
+	freadCheck(filename, seq_p, 2, 1, file);  
+	freadCheck(filename, loc_p, 4, 1, file);  
 	freadCheck(filename, allele, 1, 1, file); 
 	retval = freadCheck(filename, product, 1, 1, file);
 	if (cmdLineStrain == 0) retval = freadCheck(filename, strain, 2, 1, file);
@@ -33,13 +33,23 @@ inline static int readStrainRow(FILE *file, int16_t *seq, int32_t *loc, int8_t *
 	return retval;
 }
 
-inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq, int32_t *loc, int8_t *allele, char *product, int16_t *strain, int16_t cmdLineStrain, char *filename) {
-	fwriteCheck(filename, seq, 2, 1, stdout);  
-	fwriteCheck(filename, loc, 4, 1, stdout);  
-	fwriteCheck(filename, allele, 1, 1, stdout); 
-	fwriteCheck(filename, product, 1, 1, stdout);
-	fwriteCheck(filename, strain, 2, 1, stdout);
-	return readStrainRow(file, seq, loc, allele, product, strain, cmdLineStrain, filename);
+// write out a row and read next from that file.  if polyploid, write all variants for this strain at
+// this location.  this ensures that polyploid variants from one strain are sequential.
+inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq_p, int32_t *loc_p, int8_t *allele, char *product, int16_t *strain, int16_t cmdLineStrain, char *filename) {
+	int bytesRead = 1;
+	int prevSeq = *seq_p;
+	int prevLoc = *loc_p;
+	while (bytesRead != 0 && *seq_p == prevSeq && *loc_p == prevLoc) {
+		prevSeq = *seq_p;
+		prevLoc = *loc_p;
+		fwriteCheck(filename, seq_p, 2, 1, stdout);  
+		fwriteCheck(filename, loc_p, 4, 1, stdout);  
+		fwriteCheck(filename, allele, 1, 1, stdout); 
+		fwriteCheck(filename, product, 1, 1, stdout);
+		fwriteCheck(filename, strain, 2, 1, stdout);
+		bytesRead = readStrainRow(file, seq_p, loc_p, allele, product, strain, cmdLineStrain, filename);
+	}
+	return bytesRead;
 }
 
 main(int argc, char *argv[]) {
