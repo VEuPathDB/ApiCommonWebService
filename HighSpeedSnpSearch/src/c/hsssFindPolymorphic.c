@@ -101,7 +101,7 @@ static inline updateCounts() {
 main(int argc, char *argv[]) {
 
 	if ( argc != 6 ) {
-		fprintf(stderr,"usage: %s mergedStrainFiles refGenomeFile strainCount polymorphismThreshold unknownsTrheshold\n", argv[0] );
+		fprintf(stderr,"\nUsage: %s mergedStrainFiles refGenomeFile strainCount polymorphismThreshold unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  polymorphismThreshold:  there must be this many or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
