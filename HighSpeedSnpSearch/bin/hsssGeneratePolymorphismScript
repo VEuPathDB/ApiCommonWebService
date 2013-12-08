@@ -81,7 +81,8 @@ while(1) {
     my $strain2 = basename($input2);
     $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
     $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
-    print O "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
+    print O "hsssMergeStrainsWrapper $fifoPrefix$fifoCursor $input1 $strain1 $input2 $strain2  &\n";
+#    print O "hsssMergeStrains $input1 $strain1 $input2 $strain2 > $fifoPrefix$fifoCursor &\n";
   }
 }
 print O "rm ";
