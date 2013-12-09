@@ -42,15 +42,15 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String PARAM_ORGANISM = "organism";
   public static final String PARAM_META = "ontology_type";
   public static final String PARAM_STRAIN_LIST = "htsSnp_strain_meta";
-  public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentKnowns";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentPolymorphisms";
+  public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";
   public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
-  public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentOfPolymorphisms";
-  public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentOfKnowns";
+  public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
+  public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
   public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
 
   // property definition
@@ -196,7 +196,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     String strains = params.get(PARAM_STRAIN_LIST);
     if (strains == null) throw new WsfPluginException("Strains param is empty");
     int strainsCount = writeStrainsFile(strainsFile, strains);
-
+ 
     // create bash script
     int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
     int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100.0);  // round up
