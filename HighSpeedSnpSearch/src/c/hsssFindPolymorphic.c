@@ -9,6 +9,7 @@ FILE *refFile;
 int polymorphismThreshold;
 int unknownsThreshold;
 int strainCount;
+int alleleCount;
 char *sourceIdPrefix;
 
 // input strains
@@ -88,10 +89,10 @@ static inline updateCounts() {
 		U_count += strain;
 		nonRefStrainsCount += strain;
 	} else {
-		if (allele == 1) a_count++;
-		else if (allele == 2) c_count++;
-		else if (allele == 3) g_count++;
-		else if (allele == 4) t_count++;
+		if (allele == 1) { a_count++; alleleCount++; }
+		else if (allele == 2) { c_count++; alleleCount++; }
+		else if (allele == 3) { g_count++; alleleCount++; }
+		else if (allele == 4) { t_count++; alleleCount++; }
 		else U_count++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
@@ -156,13 +157,15 @@ main(int argc, char *argv[]) {
  */
 	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
-	// only consider SNPs that are under unknowns threshold
+	// only consider SNPs that are under or equal to unknowns threshold
 	if (U_count <= unknownsThreshold) {
 
 		// get reference genome allele and product for this SNP
 		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
-		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid count are extras for some strains
+		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
+
+		alleleCount += ref_count;
 
 		if (ref_count > 0 && refProduct != prevProduct && prevProduct > 0) nonSyn = 1;  // we saw some ref alleles, might have a second product
 
@@ -179,11 +182,11 @@ main(int argc, char *argv[]) {
 		if (g_count > *majorCount) majorCount = &g_count;
 		if (t_count > *majorCount) majorCount = &t_count;
 
-		//		fprintf(stderr, "seq:%i loc:%i refSeq:%i refLoc:%i refAllele:%i ref_count:%i, a:%i c:%i g:%i t:%i\n", prevSeq, prevLoc, refSeq, refLoc, refAllele, ref_count, a_count, c_count, g_count, t_count);
+		// fprintf(stderr, "seq:%i loc:%i refSeq:%i refLoc:%i refAllele:%i ref_count:%i, a:%i c:%i g:%i t:%i nonRefStrainsCount:%i\n", prevSeq, prevLoc, refSeq, refLoc, refAllele, ref_count, a_count, c_count, g_count, t_count,nonRefStrainsCount );
 
 		// write it out if has enough polymorphisms
-		int polymorphisms = strainCount - U_count - *majorCount;
-		int polymorphismsPercent = (polymorphisms * 100) / (strainCount - U_count);
+		int polymorphisms = alleleCount - *majorCount;
+		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
 		int knownPercent = (strainCount - U_count) * 100 / strainCount;
 
 		if (polymorphisms >= polymorphismThreshold) {
@@ -200,6 +203,7 @@ main(int argc, char *argv[]) {
 	nonRefStrainsCount = 0;
 	nonSyn = 0;
 	diploidCount = 0;
+	alleleCount = 0;
 
 	// reset prev for new snp
 	prevProduct = -1;
