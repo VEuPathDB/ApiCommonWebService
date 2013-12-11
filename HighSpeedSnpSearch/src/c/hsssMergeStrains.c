@@ -3,6 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// these are used for the compaction of unknowns
+int16_t unknownCount =0;
+int16_t prevSeq = -1;
+int32_t prevLoc = -1;
+int8_t zero = 0;
+int8_t minusOne = -1;
+
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
 	if (ferror(stream)) {
@@ -33,20 +40,58 @@ inline static int readStrainRow(FILE *file, int16_t *seq_p, int32_t *loc_p, int8
 	return retval;
 }
 
-// write out a row and read next from that file.  if polyploid, write all variants for this strain at
-// this location.  this ensures that polyploid variants from one strain are sequential.
+
+inline static int writeCompactedUnknowns() {
+	if (unknownCount != 0) { 
+		fwrite(&prevSeq, 2, 1, stdout);  
+		fwrite(&prevLoc, 4, 1, stdout);  
+		fwrite(&zero, 1, 1, stdout); 
+		fwrite(&minusOne, 1, 1, stdout);
+		fwrite(&unknownCount, 2, 1, stdout);
+	}
+}
+
+// write out a row and read next from that file.  
+// this method is tricky for two reasons.
+//
+// first, if we have a heterozygous strain at this location, write all its alleles at one time.
+// this ensures that they are kept together, which is needed by downstream analysis.
+//
+// second, we are compacting unknowns from a SNP into a single row.  the input may already include
+// such compaction.  a row with a -1 for product holds an unknown count in the strain field, not strain number.
+// we keep track of the unknowns for a SNP and write out the compacted row when we go to the next SNP
 inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq_p, int32_t *loc_p, int8_t *allele, char *product, int16_t *strain, int16_t cmdLineStrain, char *filename) {
 	int bytesRead = 1;
-	int prevSeq = *seq_p;
-	int prevLoc = *loc_p;
-	while (bytesRead != 0 && *seq_p == prevSeq && *loc_p == prevLoc) {
+	int currSeq = *seq_p;
+	int currLoc = *loc_p;
+
+	// first write out any accummulated unknownCount from previous SNP, if any.
+	if (*seq_p != prevSeq || *loc_p != prevLoc) {
+		writeCompactedUnknowns();
 		prevSeq = *seq_p;
 		prevLoc = *loc_p;
-		fwriteCheck(filename, seq_p, 2, 1, stdout);  
-		fwriteCheck(filename, loc_p, 4, 1, stdout);  
-		fwriteCheck(filename, allele, 1, 1, stdout); 
-		fwriteCheck(filename, product, 1, 1, stdout);
-		fwriteCheck(filename, strain, 2, 1, stdout);
+		unknownCount = 0; 
+	}
+
+	while (bytesRead != 0 && *seq_p == currSeq && *loc_p == currLoc) {
+		currSeq = *seq_p;
+		currLoc = *loc_p;
+
+		// if regular allele, write it out
+		if (*allele != 0) {
+			fwriteCheck(filename, seq_p, 2, 1, stdout);  
+			fwriteCheck(filename, loc_p, 4, 1, stdout);  
+			fwriteCheck(filename, allele, 1, 1, stdout); 
+			fwriteCheck(filename, product, 1, 1, stdout);
+			fwriteCheck(filename, strain, 2, 1, stdout);
+		} 
+		// if unknown add to unknowns accumulator for this SNP.  if product is a -1 then it already holds
+		// an accumulated count.  add it in.  otherwise, start accumulating fresh.
+		else {
+			if (*product == minusOne) unknownCount += *strain;
+			else unknownCount++;
+		}
+
 		bytesRead = readStrainRow(file, seq_p, loc_p, allele, product, strain, cmdLineStrain, filename);
 	}
 	return bytesRead;
@@ -119,6 +164,7 @@ main(int argc, char *argv[]) {
 		if (f2got == 0) f1got = writeStrainRowAndReadNext(f1, seq1_p, loc1_p, a1_p, p1_p, strain1_p, cmdLineStrain1, argv[1]);
 		else if (f1got == 0) f2got = writeStrainRowAndReadNext(f2, seq2_p, loc2_p, a2_p, p2_p, strain2_p, cmdLineStrain2, argv[2]);
 	}
+	writeCompactedUnknowns();
 	fclose(f1);
 	fclose(f2);
 	return 0;
