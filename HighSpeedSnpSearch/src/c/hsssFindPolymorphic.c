@@ -6,7 +6,7 @@
 // using global variables to cut down on stack pushing operations.
 FILE *strainFile;
 FILE *refFile;
-int polymorphismThreshold;
+int minPolymorphismPct;
 int unknownsThreshold;
 int strainCount;
 int alleleCount;
@@ -102,11 +102,11 @@ static inline updateCounts() {
 main(int argc, char *argv[]) {
 
 	if ( argc != 6 ) {
-		fprintf(stderr,"\nUsage: %s mergedStrainFiles refGenomeFile strainCount polymorphismThreshold unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  polymorphismThreshold:  there must be this many or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\n", argv[0] );
+		fprintf(stderr,"\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
-	polymorphismThreshold = atoi(argv[4]);
+	minPolymorphismPct = atoi(argv[4]);
 	unknownsThreshold = atoi(argv[5]);
 
 	strainFile = fopen(argv[1], "rb");
@@ -189,7 +189,7 @@ main(int argc, char *argv[]) {
 		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
 		int knownPercent = (strainCount - U_count) * 100 / strainCount;
 
-		if (polymorphisms >= polymorphismThreshold) {
+		if (polymorphismsPercent >= minPolymorphismPct) {
 			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, nonSyn);
 		}
 	}
