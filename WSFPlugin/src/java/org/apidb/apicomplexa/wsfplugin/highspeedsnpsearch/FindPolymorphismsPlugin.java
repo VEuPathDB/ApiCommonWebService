@@ -199,13 +199,10 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
  
     // create bash script
     int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
-    int polymorphismsThreshold = (int)Math.ceil(strainsCount * percentPolymorphisms / 100.0);  // round up
-    if (polymorphismsThreshold == 0) polymorphismsThreshold++;
-    logger.debug("strainsCount: " + strainsCount + "pp: " + percentPolymorphisms + "thresh: " + polymorphismsThreshold);
     int percentUnknowns = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS));
     int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100.0);  // round down
     if (unknownsThreshold > (strainsCount - 2)) unknownsThreshold = strainsCount - 2;  // must be at least 2 known
-    runCommandToCreateBashScript(readFreqDir, jobDir, polymorphismsThreshold, unknownsThreshold, "strains", "findPolymorphisms", "result");
+    runCommandToCreateBashScript(readFreqDir, jobDir, percentPolymorphisms, unknownsThreshold, "strains", "findPolymorphisms", "result");
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
