@@ -1,6 +1,6 @@
 #!/bin/bash
 
-trap "kill -TERM 0" ERR
+trap "kill -TERM 0" ERR # kill process group on error
 
 fifo=$1
 shift;
