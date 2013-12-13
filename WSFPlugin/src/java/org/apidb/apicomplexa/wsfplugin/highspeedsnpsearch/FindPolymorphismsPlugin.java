@@ -209,6 +209,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     try {
       StringBuffer output = new StringBuffer();
 
+      // call in new bash shell so it is in its own process group.
+      // bash traps kill the process group on error.  
       String[] cmds = { "/bin/bash", jobDir.getPath() + "/findPolymorphisms" };
       String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH") };
       int signal = invokeCommand(cmds, output, 2 * 60, env);
