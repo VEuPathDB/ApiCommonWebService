@@ -209,7 +209,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     try {
       StringBuffer output = new StringBuffer();
 
-      String[] cmds = { jobDir.getPath() + "/findPolymorphisms" };
+      String[] cmds = { "/bin/bash", jobDir.getPath() + "/findPolymorphisms" };
       String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH") };
       int signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();

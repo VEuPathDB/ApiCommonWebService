@@ -1,6 +1,6 @@
 #!/bin/bash
 
-trap "kill -TERM -$PPID" ERR
+trap "kill -TERM 0" ERR
 
 fifo=$1
 shift;
