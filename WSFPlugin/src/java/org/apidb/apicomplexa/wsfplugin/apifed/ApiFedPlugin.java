@@ -50,8 +50,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
    */
   @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
+  public void initialize(Map<String, Object> context) throws WsfPluginException {
     super.initialize(context);
 
     WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
@@ -113,11 +112,17 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     Map<String, String> params = request.getParams();
 
+    String[] tokens = projectMapper.getAllProjects().toArray(new String[0]);
+
     // Determine if the Query is a Parameter Query. if it's a param query, we
     // need to combine the result and remove duplicated values; for other type,
     // we just cache the result as we get them.
+
+    // we will use tokens for param queries, so that the order of the terms are
+    // preserved in each component.
     ComponentResult componentResult = (paramName != null)
-        ? new UniqueComponentResult(response) : new ComponentResult(response);
+        ? new UniqueComponentResult(response, tokens) : new ComponentResult(
+            response);
 
     // determine components that we will call
     try {
@@ -135,7 +140,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
       // wait for a bit to make sure all queries are running
       try {
-          Thread.sleep(500);
+        Thread.sleep(500);
       } catch (InterruptedException ex) {}
 
       // this flag is to make sure we only request timeout stop once.
@@ -146,8 +151,7 @@ public class ApiFedPlugin extends AbstractPlugin {
           // timeout reached, force all queries to stop
           timedOut = true;
           for (ComponentQuery query : queries) {
-            if (query.isRunning())
-              query.requestStop();
+            if (query.isRunning()) query.requestStop();
           }
         }
         try {
@@ -162,8 +166,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
   private boolean isAllStopped(List<ComponentQuery> queries) {
     for (ComponentQuery query : queries) {
-      if (query.isRunning())
-        return false;
+      if (query.isRunning()) return false;
     }
     return true;
   }

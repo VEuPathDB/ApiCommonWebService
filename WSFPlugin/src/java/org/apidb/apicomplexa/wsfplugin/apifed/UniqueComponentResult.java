@@ -15,14 +15,19 @@ public class UniqueComponentResult extends ComponentResult {
     super(response);
   }
 
+  public UniqueComponentResult(PluginResponse response, String[] tokens) {
+    super(response, tokens);
+  }
+  
   @Override
-  public synchronized void addRow(String[] row) throws WsfPluginException {
+  public synchronized boolean addRow(String token, String[] row) throws WsfPluginException {
     // only store unique rows, and ignore the duplicated ones
     String key = getKey(row);
     if (!rows.contains(key)) {
-      super.addRow(row);
-      rows.add(key);
+      super.addRow(token, row);
+      return rows.add(key);
     }
+    return true;
   }
 
   private String getKey(String[] row) {

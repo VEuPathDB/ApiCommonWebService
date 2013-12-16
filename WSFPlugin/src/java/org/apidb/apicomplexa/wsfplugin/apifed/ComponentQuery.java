@@ -60,6 +60,11 @@ public class ComponentQuery extends Thread {
       int invokeId = wsfResponse.getInvokeId();
       int pages = wsfResponse.getPageCount();
 
+      // wait for the token to be available
+      while (!result.requestToken(projectId)) {
+        Thread.sleep(500);
+      }
+
       // set the additional info from the first response; those info might not
       // be present in the subsequent responses.
       result.setMessage(projectId, wsfResponse.getMessage());
@@ -73,7 +78,7 @@ public class ComponentQuery extends Thread {
         logger.debug("caching page " + pageId + "/" + pages + ", " + resultArray.length + " rows...");
 
         for (int i = 0; i < resultArray.length; i++) {
-          result.addRow(resultArray[i]);
+          result.addRow(projectId, resultArray[i]);
         }
         // advance to the next page.
         pageId++;
@@ -92,6 +97,7 @@ public class ComponentQuery extends Thread {
       result.setMessage(projectId,
           Integer.toString(WdkQueryPlugin.STATUS_ERROR_SERVICE_UNAVAILABLE));
     } finally {
+      result.releaseToken(projectId);
       logger.debug("The Thread is stopped(" + url
           + ").................. : by request: " + stopRequested
           + "  Error Message = " + errorMessage);
