@@ -189,7 +189,7 @@ main(int argc, char *argv[]) {
 		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
 		int knownPercent = (strainCount - U_count) * 100 / strainCount;
 
-		if (polymorphismsPercent >= minPolymorphismPct) {
+		if (polymorphismsPercent >= minPolymorphismPct && polymorphisms > 0) {
 			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, nonSyn);
 		}
 	}
