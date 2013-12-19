@@ -61,10 +61,8 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
 
   // property definition
   public static final String PROPERTY_JOBS_DIR = "jobsDir";
-  public static final String PROPERTY_DATA_DIR = "dataDir";
 
   private File jobsDir;
-  private File dataDir;
   private ProjectMapper projectMapper;
   private String organismNameForFiles_forTesting = null;
 
@@ -101,17 +99,6 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (!jobsDir.exists())
         throw new WsfPluginException(PROPERTY_JOBS_DIR
                 + " " + jobsDirName + " does not exist");
-
-    // data dir
-    String dataDirName = getProperty(PROPERTY_DATA_DIR);
-    LOG.debug("datadir: " + dataDirName);
-    if (dataDirName == null)
-        throw new WsfPluginException(PROPERTY_DATA_DIR
-                + " is missing from the configuration file");
-    dataDir = new File(dataDirName);
-    if (!dataDir.exists()) 
-        throw new WsfPluginException(PROPERTY_DATA_DIR
-                + " " + dataDirName + " does not exist");
 
     // BEWARE:  this try THROWS an exception in the unit testing context, which is ignored.
     // don't put any code after it

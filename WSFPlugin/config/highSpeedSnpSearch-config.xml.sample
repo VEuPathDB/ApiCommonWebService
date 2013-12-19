@@ -8,6 +8,5 @@
   <!-- $Revision: 1 $ -->
 
   <entry key="jobsDir">/tmp</entry>
-  <entry key="dataDir">/eupath/data/htsSnpsPrototype/heterozygosityEnabled</entry>
 
 </properties>
