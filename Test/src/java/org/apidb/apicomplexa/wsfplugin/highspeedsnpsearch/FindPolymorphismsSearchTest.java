@@ -84,6 +84,7 @@ public class FindPolymorphismsSearchTest {
   @Test
   public void testSearch() throws WsfPluginException {
     FindPolymorphismsPlugin search = new FindPolymorphismsPlugin();
+    search.setOrganismNameForFiles("Hsapiens123");
     System.err.println("first" + properties);
     try {
       System.err.println("calling init");
@@ -98,7 +99,8 @@ public class FindPolymorphismsSearchTest {
 
     // prepare parameters
     Map<String, String> params = new HashMap<String, String>();
-    params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Hippo");
+    params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Homo sapiens 123");
+    params.put(FindPolymorphismsPlugin.PARAM_WEBSVCPATH, projectHome + "/ApiCommonWebService/HighSpeedSnpSearch/test/PROJECT_GOES_HERE");
     params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
     params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
     params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "20");

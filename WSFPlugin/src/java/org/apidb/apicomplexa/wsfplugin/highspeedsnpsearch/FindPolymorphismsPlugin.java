@@ -7,6 +7,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,12 +19,14 @@ import java.util.Scanner;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.gusdb.wdk.model.dbms.ConnectionContainer;
 import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -45,6 +50,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
+  public static final String PARAM_WEBSVCPATH = "WebServicesPath";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";
@@ -60,6 +66,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   private File jobsDir;
   private File dataDir;
   private ProjectMapper projectMapper;
+  private String organismNameForFiles_forTesting = null;
 
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
@@ -130,7 +137,7 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
-              PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT};
+			  PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH};
   }
 
   /*
@@ -177,19 +184,19 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
       organism = organism.substring(0, organism.length() - 1);
     }
     String projectId = getProjectId(organism);
-    File projectDir = new File(dataDir, projectId);
-    if (!projectDir.exists()) throw new WsfPluginException("Strains dir for project '" + projectId
-                                + "'does not exist:\n" + projectDir);
 
-    String organismNoSpaces = organism.replaceAll(" ","");
-    File organismDir = new File(projectDir, organismNoSpaces);
-    if (!organismDir.exists()) throw new WsfPluginException("Strains dir for organism '" + organismNoSpaces
-                                + "'does not exist:\n" + organismDir);
+    String organismNameForFiles = getOrganismNameForFiles(organism);
+
+    String webSvcPathRaw = params.get(PARAM_WEBSVCPATH);
+    String organismDirStr = webSvcPathRaw.replaceAll("PROJECT_GOES_HERE", projectId) + "/" + organismNameForFiles + "/highSpeedSnpSearch";
+
+    File organismDir = new File(organismDirStr);
+    if (!organismDir.exists()) throw new WsfPluginException("Organism dir does not exist:\n" + organismDirStr);
 
     String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
     File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
-    if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq '" + readFreqPercent
-                                + "'does not exist:\n" + readFreqDir);
+    if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq ' " + readFreqPercent
+                                + "' does not exist:\n" + readFreqDir);
     
     // write strain IDs to file
     File strainsFile = new File(jobDir, "strains");
@@ -358,6 +365,46 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
   @Override
     protected String[] defineContextKeys() {
     return new String[] { CConstants.WDK_MODEL_KEY };
+  }
+  
+  public void setOrganismNameForFiles(String name) {
+    organismNameForFiles_forTesting = name;
+  }
+
+  private String getOrganismNameForFiles(String organism) throws WsfPluginException {
+    if (organismNameForFiles_forTesting != null) return organismNameForFiles_forTesting;
+
+    String sql = "select distinct o.name_for_filenames from apidb.organism o, apidbtuning.snpstrains s where s.organism = ? and s.taxon_id = o.taxon_id";
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+      Connection conn = getDbConnection();
+      PreparedStatement stmt = conn.prepareStatement(sql);
+      stmt.setString(1, organism);
+      rs = stmt.executeQuery();
+      rs.next();
+      return rs.getString(1);
+    } catch (SQLException|WdkModelException e) {
+      logger.error("caught SQLException or WdkModelException " + e.getMessage());
+      throw new WsfPluginException(e);
+    } finally {
+      try {
+	if (rs != null) rs.close();
+      } catch (SQLException e) {
+	 throw new WsfPluginException(e);
+      }
+    }
+  }
+
+  private Connection getDbConnection()
+      throws SQLException, WsfPluginException, WdkModelException {
+    ConnectionContainer container = (ConnectionContainer) context.get(CConstants.WDK_MODEL_KEY);
+    if (container == null)
+      throw new WsfPluginException("The container cannot be found in the "
+          + "context with key: " + WdkModel.CONNECTION_APP + ". Please check if the "
+          + "container is declared in the context.");
+
+    return container.getConnection(WdkModel.CONNECTION_APP);
   }
 
   private void cleanup() {
