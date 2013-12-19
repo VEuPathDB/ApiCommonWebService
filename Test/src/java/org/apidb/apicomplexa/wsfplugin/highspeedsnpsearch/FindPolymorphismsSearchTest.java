@@ -58,8 +58,6 @@ public class FindPolymorphismsSearchTest {
     properties.loadFromXML(inStream);
     inStream.close();
     properties.setProperty(FindPolymorphismsPlugin.PROPERTY_JOBS_DIR, "/tmp");
-    properties.setProperty(FindPolymorphismsPlugin.PROPERTY_DATA_DIR, projectHome + "/ApiCommonWebServices/HighSpeedSnpSearch/test");
-
   }
 
   @Test
@@ -76,9 +74,7 @@ public class FindPolymorphismsSearchTest {
     properties.loadFromXML(inStream);
     inStream.close();
     String jobDir = properties.getProperty(FindPolymorphismsPlugin.PROPERTY_JOBS_DIR);
-    String dataDir = properties.getProperty(FindPolymorphismsPlugin.PROPERTY_DATA_DIR);
     Assert.assertTrue(jobDir != null);
-    Assert.assertTrue(dataDir != null);
   }
 
   @Test
