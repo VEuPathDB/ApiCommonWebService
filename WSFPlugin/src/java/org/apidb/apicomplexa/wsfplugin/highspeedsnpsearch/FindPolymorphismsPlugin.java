@@ -6,10 +6,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,14 +19,15 @@ import java.util.Scanner;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.gusdb.wdk.model.dbms.ConnectionContainer;
 import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wdk.controller.CConstants;
-import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkModel;
+import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.dbms.ConnectionContainer;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -362,24 +363,25 @@ public class FindPolymorphismsPlugin extends AbstractPlugin {
     if (organismNameForFiles_forTesting != null) return organismNameForFiles_forTesting;
 
     String sql = "select distinct o.name_for_filenames from apidb.organism o, apidbtuning.snpstrains s where s.organism = ? and s.taxon_id = o.taxon_id";
-    PreparedStatement ps = null;
+    Connection conn = null;
+    PreparedStatement stmt = null;
     ResultSet rs = null;
     try {
-      Connection conn = getDbConnection();
-      PreparedStatement stmt = conn.prepareStatement(sql);
+      conn = getDbConnection();
+      stmt = conn.prepareStatement(sql);
       stmt.setString(1, organism);
       rs = stmt.executeQuery();
-      rs.next();
-      return rs.getString(1);
-    } catch (SQLException|WdkModelException e) {
+      if (rs.next()) {
+        return rs.getString(1);
+      }
+      throw new WsfPluginException("Unable to find file organism name for param '" + organism + "'.");
+    }
+    catch (SQLException | WdkModelException e) {
       logger.error("caught SQLException or WdkModelException " + e.getMessage());
       throw new WsfPluginException(e);
-    } finally {
-      try {
-	if (rs != null) rs.close();
-      } catch (SQLException e) {
-	 throw new WsfPluginException(e);
-      }
+    }
+    finally {
+      SqlUtils.closeQuietly(rs, stmt, conn);
     }
   }
 
