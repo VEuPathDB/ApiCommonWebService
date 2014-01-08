@@ -4,28 +4,23 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="EuPathWebSvcCommon-Installation">
-    <ant antfile="../EuPathWebSvcCommon/build.xml" target="EuPathWebSvcCommon-Installation">
-      <property name="project" value="EuPathWebSvcCommon"/>
-      <property name="version" value="WDK_version_1-18"/>
-    </ant>
-  </target>  
-    
- <target name="EuPathWebSvcCommon-WebInstallation">
-    <ant antfile="../EuPathWebSvcCommon/build.xml" target="EuPathWebSvcCommon-WebInstallation">
-      <property name="project" value="EuPathWebSvcCommon"/>
-      <property name="version" value="WDK_version_1-18"/>
-    </ant>
-  </target>  
+  <import file="${projectsDir}/EuPathWebSvcCommon/build.xml" />
+  <import file="${projectsDir}/ApiCommonShared/build.xml" />
 
-  <target name="ApiCommonShared-Installation">
-    <ant antfile="../ApiCommonShared/build.xml" target="ApiCommonShared-Installation">
-      <property name="project" value="ApiCommonShared"/>
-      <property name="version" value="api-build-17"/>
-    </ant>
-  </target>  
  
-  <target name="ApiCommonShared-Checkout" unless="ApiCommonShared.present"> 
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <target name="ApiCommonWebService-ChildCheckout">
+    <available file="${projectsDir}/EuPathWebSvcCommon" type="dir"  property="EuPathWebSvcCommon.present" />
+    <antcall target="EuPathWebSvcCommon-Checkout"/>
+
+    <available file="${projectsDir}/ApiCommonShared" type="dir"  property="ApiCommonShared.present" />
+    <antcall target="ApiCommonShared-Checkout"/>
+  </target>
+  
+
+  <target name="ApiCommonShared-Checkout" unless="ApiCommonShared.present">
     <ant target="defaultProjectCheckout" inheritAll="false">
       <property name="svnurl" value="https://www.cbil.upenn.edu/svn/apidb/ApiCommonShared"/>
       <property name="project" value="ApiCommonShared"/>
@@ -41,17 +36,7 @@
     </ant>
   </target>
 
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <target name="ApiCommonWebService-ChildCheckout">
-    <available file="../EuPathWebSvcCommon" type="dir"  property="EuPathWebSvcCommon.present" />
-    <antcall target="EuPathWebSvcCommon-Checkout"/>
 
-    <available file="../ApiCommonShared" type="dir"  property="ApiCommonShared.present" />
-    <antcall target="ApiCommonShared-Checkout"/>
-  </target>
-  
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -74,11 +59,9 @@
                                                            ApiCommonWebService/HighSpeedSnpSearch-Installation,
                                                            ApiCommonWebService/Test-Installation">
 
-    <ant target="defaultProjectInstall"/>
-
-    <!-- copy the WSF-Clisnt.jar, which will be used by IDE -->
-    <copy  file="${targetDir}/lib/java/WSF-Client.jar"
-           toDir="../ApiCommonWebService/WSFPlugin/lib/java" />
+    <ant target="defaultProjectInstall">
+      <property name="project" value="ApiCommonWebService"/>
+    </ant>
 
   </target>
 
@@ -146,5 +129,4 @@
   </target>  
 
 </project>
-
 
