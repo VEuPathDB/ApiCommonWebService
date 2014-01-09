@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-<properties>
-<comment>The configuration file for PlasmoAP WSF Plugin.</comment>
-<entry key="PerlExe">(the absolute path to your Perl executable)</entry>
-<entry key="PlasmoAPScript">(the absolute path to plasmoap.pl)/plasmoap.pl</entry>
-</properties>
