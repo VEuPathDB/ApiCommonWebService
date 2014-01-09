@@ -1,19 +1,22 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
+import java.io.File;
 import java.util.Map;
 import java.util.regex.Matcher;
 
 import org.apache.log4j.Logger;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastCommandFormatter;
+import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
 
   private static final Logger logger = Logger.getLogger(EuPathBlastCommandFormatter.class);
-  
+
   @Override
-  public String getBlastDatabase(Map<String, String> params) {
+  public String getBlastDatabase(Map<String, String> params)
+      throws WsfPluginException {
     String dbType = params.get(EuPathBlastPlugin.PARAM_DATA_TYPE);
-    
+
     // the dborgs is a multipick value, containing several organisms,
     // separated by a comma
     String dbOrgs = params.get(EuPathBlastPlugin.PARAM_DATABASE_ORGANISM);
@@ -30,17 +33,25 @@ public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
         continue;
       }
       // construct file path pattern
-      String path = EuPathBlastPlugin.BLAST_DB_NAME.replaceAll(
-          "\\$\\$" + EuPathBlastPlugin.PARAM_DATABASE_ORGANISM + "\\$\\$",
+      String path = EuPathBlastPlugin.BLAST_DB_NAME.replaceAll("\\$\\$"
+          + EuPathBlastPlugin.PARAM_DATABASE_ORGANISM + "\\$\\$",
           Matcher.quoteReplacement(organism));
       path = path.replaceAll("\\$\\$" + EuPathBlastPlugin.PARAM_DATA_TYPE
           + "\\$\\$", dbType);
+
+      // check if database file exists
+      File blastFile = new File(path + ".pin");
+      if (!blastFile.exists())
+        throw new WsfPluginException("The blast database doesn't exist: "
+            + path);
+
       sb.append(path + " ");
     }
     // sb.append("\"");
     return sb.toString().trim();
     // TEST
-    // return "/eupath/data/apiSiteFilesStaging/ToxoDB/19/real/webServices/ToxoDB/release-CURRENT/TgondiiME49/blast/AnnotatedTranscripts";
+    // return
+    // "/eupath/data/apiSiteFilesStaging/ToxoDB/19/real/webServices/ToxoDB/release-CURRENT/TgondiiME49/blast/AnnotatedTranscripts";
   }
 
 }
