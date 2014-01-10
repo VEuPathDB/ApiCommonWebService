@@ -40,7 +40,7 @@ public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
           + "\\$\\$", dbType);
 
       // check if database file exists
-      File blastFile = new File(path + ".pin");
+      File blastFile = new File(path + ".nin");
       if (!blastFile.exists())
         throw new WsfPluginException("The blast database doesn't exist: "
             + path);
