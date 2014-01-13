@@ -57,9 +57,9 @@ public class ComponentResult {
   public synchronized void setMessage(String projectId, String message) {
     String previous = response.getMessage();
     if (previous != null && previous.length() > 0) {
-      message = previous + ",";
-    }
-    message = projectId + ":" + message;
+      previous = previous + ",";
+    } else previous = "";
+    message = previous + projectId + ":" + message;
     response.setMessage(message);
   }
 
