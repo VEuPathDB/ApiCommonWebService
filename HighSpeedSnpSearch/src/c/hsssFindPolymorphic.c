@@ -102,7 +102,7 @@ static inline updateCounts() {
 main(int argc, char *argv[]) {
 
 	if ( argc != 6 ) {
-		fprintf(stderr,"\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\n", argv[0] );
+		fprintf(stderr,"\nReport SNPs with polymorphism from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nTab delimited output: contig_id, location, knowns_percent, non-major_allele_percent, nonSynonymous\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
