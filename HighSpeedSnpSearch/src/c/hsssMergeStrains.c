@@ -10,6 +10,8 @@ int32_t prevLoc = -1;
 int8_t zero = 0;
 int8_t minusOne = -1;
 
+static char *stdoutStr = "STDOUT";
+
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
 	if (ferror(stream)) {
@@ -64,7 +66,6 @@ inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq_p, int32_t 
 	int bytesRead = 1;
 	int currSeq = *seq_p;
 	int currLoc = *loc_p;
-	char *stdoutStr = "stdout";
 
 	// first write out any accummulated unknownCount from previous SNP, if any.
 	if (*seq_p != prevSeq || *loc_p != prevLoc) {
