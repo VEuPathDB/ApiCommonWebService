@@ -64,6 +64,7 @@ inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq_p, int32_t 
 	int bytesRead = 1;
 	int currSeq = *seq_p;
 	int currLoc = *loc_p;
+	char *stdoutStr = "stdout";
 
 	// first write out any accummulated unknownCount from previous SNP, if any.
 	if (*seq_p != prevSeq || *loc_p != prevLoc) {
@@ -79,11 +80,11 @@ inline static int writeStrainRowAndReadNext(FILE *file, int16_t *seq_p, int32_t 
 
 		// if regular allele, write it out
 		if (*allele != 0) {
-			fwriteCheck(filename, seq_p, 2, 1, stdout);  
-			fwriteCheck(filename, loc_p, 4, 1, stdout);  
-			fwriteCheck(filename, allele, 1, 1, stdout); 
-			fwriteCheck(filename, product, 1, 1, stdout);
-			fwriteCheck(filename, strain, 2, 1, stdout);
+			fwriteCheck(stdoutStr, seq_p, 2, 1, stdout);  
+			fwriteCheck(stdoutStr, loc_p, 4, 1, stdout);  
+			fwriteCheck(stdoutStr, allele, 1, 1, stdout); 
+			fwriteCheck(stdoutStr, product, 1, 1, stdout);
+			fwriteCheck(stdoutStr, strain, 2, 1, stdout);
 		} 
 		// if unknown add to unknowns accumulator for this SNP.  if product is a -1 then it already holds
 		// an accumulated count.  add it in.  otherwise, start accumulating fresh.
