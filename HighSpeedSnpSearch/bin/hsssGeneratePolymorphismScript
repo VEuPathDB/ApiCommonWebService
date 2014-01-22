@@ -53,8 +53,10 @@ my $fifoPrefix = "fifo";
 open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
 print O "#!/usr/bin/perl
 # this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
+use Cwd;
 setpgrp(0,0);
-system('$outputScriptFile.bash') && die 'perl could not run $outputScriptFile.bash ' . \$?;
+\$pwd = cwd();
+system(\"\$pwd/$outputScriptFile.bash\") && die 'perl could not run $outputScriptFile.bash ' . \$?;
 ";
 close(O);
 
