@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($consensus_file) = @ARGV;
+
+usage() if !defined($consensus_file);
+
+while(<STDIN>) {
+ # my ($contigId, $loc, $majAllele, $majAlleleProd, $majAlleleProdIsVar, $minAllele, $minAlleleProd, $minAlleleProdIsVar, $majAllelePerTenThou, $minAllelePerTenThou, $triallelic) = unpack("slccccccssc");
+  my @record = unpack("slccccccssc");
+  print join("\t", @record) . "\n";
+}
+
+sub usage {
+  die "
+Dump a binary consensus file to text.
+
+Usage: hsssConsensusFileToText consensus_file
+
+";
+}

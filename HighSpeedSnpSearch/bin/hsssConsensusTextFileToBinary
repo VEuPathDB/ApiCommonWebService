@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($consensusTextFile) = @ARGV;
+
+usage() if !defined($consensusTextFile);
+
+while(<STDIN>) {
+  chomp;
+  next if /^\s*$/;
+  # my ($contigId, $loc, $majAllele, $majAlleleProd, $majAlleleProdIsVar, $minAllele, $minAlleleProd, $minAlleleProdIsVar, $majAllelePerTenThou, $minAllelePerTenThou, $triallelic)
+  my @record = split(/\t/);
+  print STDOUT pack("slccccccssc", @record)
+}
+
+sub usage {
+  die "
+Usage: hsssConsensusTextFileToBinary consensus_text_file
+
+second argument is 0 if the file does not include a fifth strain id column; 1 if it does
+";
+}
