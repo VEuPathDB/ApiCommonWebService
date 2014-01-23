@@ -6,7 +6,13 @@ my ($consensus_file) = @ARGV;
 
 usage() if !defined($consensus_file);
 
-while(<STDIN>) {
+open(F, $consensus_file) || die "Can't open file '$consensus_file'\n";
+binmode(F);
+
+$/ = \17; ## set record size
+
+
+while(<F>) {
  # my ($contigId, $loc, $majAllele, $majAlleleProd, $majAlleleProdIsVar, $minAllele, $minAlleleProd, $minAlleleProdIsVar, $majAllelePerTenThou, $minAllelePerTenThou, $triallelic) = unpack("slccccccssc");
   my @record = unpack("slccccccssc");
   print join("\t", @record) . "\n";
