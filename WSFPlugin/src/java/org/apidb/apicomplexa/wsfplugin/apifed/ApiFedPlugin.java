@@ -126,7 +126,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     // determine components that we will call
     try {
-      Set<String> projects = getProjects(params);
+      Set<String> projects = getProjects(params, (paramName != null));
       List<ComponentQuery> queries = getComponents(request, projects,
           componentResult);
       for (ComponentQuery query : queries) {
@@ -171,8 +171,14 @@ public class ApiFedPlugin extends AbstractPlugin {
     return true;
   }
 
-  private Set<String> getProjects(Map<String, String> params)
+  private Set<String> getProjects(Map<String, String> params, boolean all)
       throws SQLException {
+    Set<String> projects = new LinkedHashSet<>();
+    if (all) {
+      projects.addAll(projectMapper.getAllProjects());
+      return projects;
+    }
+
     // check if organism param is present
     String organisms = null;
     for (String paramName : PARAM_ORGANISMS) {
@@ -182,7 +188,6 @@ public class ApiFedPlugin extends AbstractPlugin {
       }
     }
     // if organism exists, find the mapped project
-    Set<String> projects = new LinkedHashSet<>();
     if (organisms != null) {
       organisms = stripLeadingAndTrailingQuotes(organisms);
       for (String organism : organisms.split(",")) {
