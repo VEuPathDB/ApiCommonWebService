@@ -34,6 +34,20 @@ diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
 fi 
+echo "matched"
+
+# test making a consensus from a merged output
+hsssMergedToConsensus mergeStrains_test.out referenceGenome.dat 4 0 1 > consensus.out
+hsssDumpConsensusFile consensus.out > consensus.txt
+
+echo "Comparing expected consensus with consensus output..."
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/mergeStrainsConsensus.txt consensus.txt
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
+echo "matched"
+
 
 # generate findPolymorphism script
 echo -e "1\n2\n3\n4" > strainsList.txt
