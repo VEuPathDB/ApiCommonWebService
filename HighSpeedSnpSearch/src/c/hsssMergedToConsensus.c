@@ -4,74 +4,68 @@
 #include <string.h> 
 
 // using global variables to cut down on stack pushing operations.
+
+// input parameters
 FILE *strainFile;
 FILE *refFile;
 int minPolymorphismPct;
 int unknownsThreshold;
 int strainCount;
-int alleleCount;
 char *sourceIdPrefix;
 
-// input strains
+// values read from input strains file (and pointers to them)
 int16_t seq = -1;
-int16_t *seq_p = &seq;
 int32_t loc = -1;
-int32_t *loc_p = &loc;
 char allele = -1;  
-char *allele_p = &allele;
 char product = -1;  
-char *product_p = &product;
 int8_t strain = -1;  
+int16_t *seq_p = &seq;
+int32_t *loc_p = &loc;
+char *allele_p = &allele;
+char *product_p = &product;
 int8_t *strain_p = &strain;
 
-// reference genome
+// values read from reference strains file (and pointers to them)
 int16_t refSeq = 0;
-int16_t *refSeq_p = &refSeq;
 int32_t refLoc = 0;
-int32_t *refLoc_p = &refLoc;
 char refAllele; 
-char *refAllele_p = &refAllele;
 char refProduct;
+int16_t *refSeq_p = &refSeq;
+int32_t *refLoc_p = &refLoc;
+char *refAllele_p = &refAllele;
 char *refProduct_p = &refProduct;
 
-int a_count = 0;
-int c_count = 0;
-int g_count = 0;
-int t_count = 0;
-int U_count = 0; // unknown
-int diploidCount = 0; // for a given SNP, the number of variants that are diploid.  incremented for each variant beyond the first per strain.
-int nonRefStrainsCount = 0;
+// per SNP counters
+int alleleCount;   // number of known alleles for this SNP (might include more than one per strain, if diploid)
+int nonRefStrainsCount = 0;   // number of strains that are not like-reference in this SNP
+int alleles[5] = {0};  // hold count of alleles.  init array to 0. 0th allele is unknowns
+int products[4][27] = {{0}, {0}, {0}, {0}};  // hold count of products. initialize array to 0.  the 0th product element means no product
 
-// need a double buffer to store previous SNPs product info
-int products_1[4][27] = {{0}, {0}, {0}, {0}};  // initialize array to 0.  the 0th product element means no product
-int products_2[4][27] = {{0}, {0}, {0}, {0}};  
-
-int (*products)[4][27] = &products_1;
-int (*prevProducts)[4][27] = &products_2;
-
+// prev SNP
 int prevProduct = -1;
 int prevStrain = -1;
-int nonSyn = 0;
 int16_t prevSeq;
 int32_t prevLoc;
 
 static char *stdoutStr = "STDOUT";
 
-static inline void initProductArrays(int (*prodArray)[4][27]) {
+static inline void initProductArrays(int prodArray[4][27]) {
 	int i;
 	for (i=0; i<4; i++) { 
 		int j;
-		for (j=0; j<27; j++) (*prodArray)[i][j] = 0;
+		for (j=0; j<27; j++) prodArray[i][j] = 0;
 	}
 }
 
-static inline void findProduct(int allele, char *majorProduct, char *isVariable) {
+// in a product array, find the product with the highest count.
+// also see if there is more than one with non-zero count (isVariable)
+static inline void findMaxProduct(int allele, char *majorProduct, char *isVariable) {
 	int max = 0;
 	int i;
 	int index = allele - 1;
 
 	for (i=0; i<27; i++) {
-		int prodCount = (*products)[index][i];
+		int prodCount = products[index][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
 			*majorProduct = i;
@@ -80,6 +74,21 @@ static inline void findProduct(int allele, char *majorProduct, char *isVariable)
 	}
 }
 
+static inline char findMaxAllele(char *maxAllele, int *maxCount) {
+	int i;
+	char isVariable = 0;
+	for (i=1; i<5; i++) {
+		int alleleCnt = alleles[i];
+		if (alleleCnt > *maxCount) {
+			if (*maxCount != 0) isVariable = 1;
+			*maxAllele = i;
+			*maxCount = alleleCnt;
+		}
+	}
+	return isVariable;
+}
+
+// read binary input and check for error
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
 	if (ferror(stream)) {
@@ -89,6 +98,7 @@ static inline int freadCheck (char *filename, void *ptr, size_t size, size_t cou
 	return bytes;
 }
 
+// write binary output and check for error
 static inline int fwriteCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	fwrite(ptr, size, count,stream);
 	if (ferror(stream)) {
@@ -97,6 +107,7 @@ static inline int fwriteCheck (char *filename, void *ptr, size_t size, size_t co
 	}
 }
 
+// read a row of merged strains input file (ie, a variant) and update global variables with the values
 static inline int readStrainRow(char *filename) {
 	prevSeq = seq;
 	prevLoc = loc;
@@ -110,19 +121,19 @@ static inline int readStrainRow(char *filename) {
 	return freadCheck(filename, strain_p, 2, 1, strainFile);
 }
 
+// update the current SNP's alleles and products counts with the current variant's info
 static inline updateCounts() {
+
+	// -1 product means the strain id is actually a compressed count of unknowns for this SNP
 	if (allele == 0 && product == -1) {
-		U_count += strain;
+		alleles[0] += strain;
 		nonRefStrainsCount += strain;
 	} else {
-		if (allele == 1) { a_count++; alleleCount++; (*products)[0][product]++; }
-		else if (allele == 2) { c_count++; alleleCount++; (*products)[1][product]++; }
-		else if (allele == 3) { g_count++; alleleCount++; (*products)[2][product]++; }
-		else if (allele == 4) { t_count++; alleleCount++; (*products)[3][product]++; }
-		else U_count++;
+		alleles[allele]++;
+		products[allele-1][product]++;
+		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
-	if (product != prevProduct && product > 0 && prevProduct > 0) nonSyn = 1;
 }
 
 static inline writeRecord(int16_t prevSeq, int32_t prevLoc, char majorAllele, char majorProduct, char majorProductIsVariable, char minorAllele, char minorProduct, char minorProductIsVariable, int16_t majorAllelePerTenThou, int16_t minorAllelePerTenThou, char isTriallelic) {
@@ -141,22 +152,22 @@ static inline writeRecord(int16_t prevSeq, int32_t prevLoc, char majorAllele, ch
 			fwriteCheck(stdoutStr, &isTriallelic, 1, 1, stdout);
 }
 
+// read a row from the ref genome file. it is a strain file containing one row per SNP, showing the ref genome's values
 static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
-	// refGenome file is a strain file: one row per SNP, showing the ref genomes values
-	// advance through SNPs to our current one
-	//	fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
-		while(1) {
-			freadCheck(filename, refSeq_p, 2, 1, refFile);  
-			freadCheck(filename, refLoc_p, 4, 1, refFile);  
-			freadCheck(filename, refAllele_p, 1, 1, refFile); 
-			int bytes = freadCheck(filename, refProduct_p, 1, 1, refFile);
-			if (bytes == 0 || (refSeq == seq && refLoc== loc)) break;
 
-			// write out a record for SNPs that completely agree w/ reference
-			writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
-			
-			//fprintf(stderr,"%i %i\n" ,refSeq, refLoc);
-		}
+	// advance through reference SNPs to the one that corresponds to the input SNP we are processing
+	while(1) {
+		freadCheck(filename, refSeq_p, 2, 1, refFile);  
+		freadCheck(filename, refLoc_p, 4, 1, refFile);  
+		freadCheck(filename, refAllele_p, 1, 1, refFile); 
+		int bytes = freadCheck(filename, refProduct_p, 1, 1, refFile);
+
+		if (bytes == 0 || (refSeq == seq && refLoc== loc)) break;
+
+		// along the way, write out a record for SNPs that completely agree w/ reference 
+		// (ie, that are not in our input SNPs)
+		writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
+	}
 }
 
 main(int argc, char *argv[]) {
@@ -219,125 +230,51 @@ main(int argc, char *argv[]) {
 	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 	// only consider SNPs that are under or equal to unknowns threshold
-		//		fprintf(stderr, "checking 1 %i %i %i %i\n", prevSeq, prevLoc, U_count, unknownsThreshold);
-	if (U_count <= unknownsThreshold) {
+	if (alleles[0] <= unknownsThreshold) {
 
-		// get reference genome allele and product for this SNP
+		// get reference genome allele and product for this SNP and add to counts
 		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
-
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
-
 		alleleCount += ref_count;
-
-		if (ref_count > 0 && refProduct != prevProduct && prevProduct > 0) nonSyn = 1;  // we saw some ref alleles, might have a second product
-
-		// add in ref allele
-		if (refAllele == 1) { a_count += ref_count; (*products)[0][refProduct] += ref_count; }
-		else if (refAllele == 2) { c_count += ref_count; (*products)[1][refProduct] += ref_count; }
-		else if (refAllele == 3) { g_count += ref_count; (*products)[2][refProduct] += ref_count; }
-		else if (refAllele == 4) { t_count += ref_count; (*products)[3][refProduct] += ref_count; }
+		alleles[refAllele] += ref_count;
+		products[refAllele-1][refProduct] += ref_count;
 
 		// find major allele
-		int *majorCount = &a_count;
-		
-		int majorAllele = 1;
-		if (c_count > *majorCount) { 
-			majorCount = &c_count;
-			majorAllele = 2;
-		}
-		if (g_count > *majorCount) {
-			majorCount = &g_count;
-			majorAllele = 3;
-		} 
-		if (t_count > *majorCount) {
-			majorCount = &t_count;
-			majorAllele = 4;
-		}
+		char majorAllele;
+		int majorCount = 0;
+		findMaxAllele(&majorAllele, &majorCount);
 
+		// find major product
 		char majorProduct = 0;
 		char majorProductIsVariable = 0;
-
-		findProduct(majorAllele, &majorProduct, &majorProductIsVariable);
+		findMaxProduct(majorAllele, &majorProduct, &majorProductIsVariable);
 
 		// find minor allele
-		int *minorCount;
 		char minorAllele;
-		int *minorProductArray;
+		int minorCount = 0;
+		alleles[majorAllele] = 0;  // no longer consider major allele
+		char isTriallelic = findMaxAllele(&minorAllele, &minorCount);
 
-		if (majorAllele == 1) {
-			minorCount =  &c_count;
-			minorAllele = 2;
-			if (g_count > *minorCount) { 
-				minorCount = &g_count;
-				minorAllele = 3;
-			}
-			if (t_count > *minorCount) { 
-				minorCount = &t_count;
-				minorAllele = 4;
-			}
-		} else if (majorAllele == 2) {
-			minorCount =  &a_count;
-			minorAllele = 1;
-			if (g_count > *minorCount) { 
-				minorCount = &g_count;
-				minorAllele = 3;
-			}
-			if (t_count > *minorCount) { 
-				minorCount = &t_count;
-				minorAllele = 4;
-			}
-		} else if (majorAllele == 3) {
-			minorCount =  &a_count;
-			minorAllele = 1;
-			if (c_count > *minorCount) { 
-				minorCount = &c_count;
-				minorAllele = 2;
-			}
-			if (t_count > *minorCount) { 
-				minorCount = &t_count;
-				minorAllele = 4;
-			}
-		} else {
-			minorCount =  &a_count;
-			minorAllele = 1;
-			if (c_count > *minorCount) { 
-				minorCount = &c_count;
-				minorAllele = 2;
-			}
-			if (g_count > *minorCount) { 
-				minorCount = &g_count;
-				minorAllele = 3;
-			}
-		}
-
+		// find minor product
 		char minorProduct = 0;
 		char minorProductIsVariable = 0;
-
-		findProduct(minorAllele, &minorProduct, &minorProductIsVariable);
+		findMaxProduct(minorAllele, &minorProduct, &minorProductIsVariable);
 
 		// write it out if has enough polymorphisms
-		int polymorphisms = alleleCount - *majorCount;
+		int polymorphisms = alleleCount - majorCount;
 		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
-		int knownPercent = (strainCount - U_count) * 100 / strainCount;
 
 		if (polymorphismsPercent >= minPolymorphismPct) {
 			// calculate  major allele perTenThou and  minor allele perTenThou
-			int16_t majorAllelePerTenThou = *majorCount * 10000 / alleleCount;
-			int16_t minorAllelePerTenThou = *minorCount * 10000 / alleleCount;
-			//			fprintf(stderr, "majProd %i\n", majorProduct);
-			writeRecord(prevSeq, prevLoc, majorAllele, majorProduct, majorProductIsVariable, minorAllele, minorProduct, minorProductIsVariable, majorAllelePerTenThou, minorAllelePerTenThou, minorProductIsVariable);
+			int16_t majorAllelePerTenThou = majorCount * 10000 / alleleCount;
+			int16_t minorAllelePerTenThou = minorCount * 10000 / alleleCount;
+			writeRecord(prevSeq, prevLoc, majorAllele, majorProduct, majorProductIsVariable, minorAllele, minorProduct, minorProductIsVariable, majorAllelePerTenThou, minorAllelePerTenThou, isTriallelic);
 		}
 	}
 
 	// zero out counts
-	a_count = 0;
-	c_count = 0;
-	g_count = 0;
-	t_count = 0;
-	U_count = 0;
+	int j; for (j=0; j<5; j++) alleles[j] = 0;
 	nonRefStrainsCount = 0;
-	nonSyn = 0;
-	diploidCount = 0;
 	alleleCount = 0;
 	initProductArrays(products);
 
