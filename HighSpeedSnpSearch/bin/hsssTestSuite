@@ -48,6 +48,8 @@ if [ $diffStat != 0 ]; then
 fi
 echo "matched"
 
+hsssConsensusTextFileToBinary $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/mergeStrainsConsensus2.txt > consensus2.out
+hsssFindMajorAlleles consensus.out consensus2.out > majorAlleles
 
 # generate findPolymorphism script
 echo -e "1\n2\n3\n4" > strainsList.txt
