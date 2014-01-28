@@ -72,16 +72,20 @@ for (my $i = 1; $i <= $fifoCount; $i++) {
 }
 print O "\" EXIT TERM\n";
 
-printMakeConsensus(\@mergeQueueA, "A", $fifoCount-1);  # use second to last fifo
-printMakeConsensus(\@mergeQueueB, "B", $fifoCount); # use last fifo
+my $consensusFifoA = $fifoPrefix . $fifoCount-1;
+my $consensusFifoB = $fifoPrefix . $fifoCount;
 
+printMakeConsensus(\@mergeQueueA, "A", $conensusFifoA);  # use second to last fifo
+printMakeConsensus(\@mergeQueueB, "B", $consensusFifoB); # use last fifo
+
+my $output = $outputDataFile? ">$outputDataFile" : "";
+print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output";
 
 # print final stuff and clean up
 print O "exit\n";
 close(O);
 system("chmod +x $outputScriptFile");
 system("chmod +x $outputScriptFile.bash");
-
 
 # get strain num from strain name (unity mapping if there were no names on input)
 sub getStrainNum {
@@ -97,7 +101,7 @@ sub getStrainNum {
 }
 
 sub printMakeConsensus {
-  my ($mergeQueue, $setLetter, $outputFifoNum) = @_;
+  my ($mergeQueue, $outputFifo) = @_;
 
   # print out merge commands and then the find polymorphic command
   my $output = $outputDataFile? ">$outputDataFile" : "";
@@ -117,11 +121,10 @@ sub printMakeConsensus {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@mergeQueue);
-      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $fifoPrefix$outputFifoNum\n";
+      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $outputFifo\n";
       last;
     }
   }
-
 }
 
 sub usage {
