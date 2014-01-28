@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+use strict;
+use File::Basename;
+
+my ($strainFilesDir, $tmpDir, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
+
+usage() unless scalar(@ARGV) == 10 || scalar(@ARGV) == 11;
+
+#
+# write a perl wrapper because perl has the ninja power to change process group id
+#
+open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
+print O "#!/usr/bin/perl
+# this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
+use Cwd;
+setpgrp(0,0);
+\$pwd = cwd();
+system(\"\$pwd/$outputScriptFile.bash\") && die 'perl could not run $outputScriptFile.bash ' . \$?;
+";
+close(O);
+
+#
+# write main script
+#
+
+# if strains are names, make a mapping from strain names to strain numbers
+my %strainNameToNum;
+if ($strainsAreNames) {
+  open(SN, "$strainFilesDir/strainIdToName.dat") || die "Can't open strain id mapping file '$strainFilesDir/strainIdToName.dat'\n";
+  while(<SN>) {
+    chomp;
+    my ($num, $name) = split(/\t/);
+    $strainNameToNum{$name} = $num;
+  }
+  close(SN);
+}
+
+# open target script file and write initial stuff to it
+open(O, ">$outputScriptFile.bash") || die "Can't open output_file '$outputScriptFile.bash' for writing\n";
+print O "set -e\n";
+print O "set -x\n";
+print O "cd $tmpDir\n";
+
+# read strains list file A and make a queue of strains in set A to process from it
+open(S, $strainsListFileA) || die "Can't open strains_list_file_a '$strainsListFileA'\n";
+my @mergeQueueOriginalA = <S>;
+close(S);
+my @mergeQueueA = map { chomp; "$strainFilesDir/" . getStrainNum($_)} @mergeQueueOriginalA;
+my $strainsCountA = scalar(@mergeQueueA);
+
+
+# read strains list file B and make a queue of strains in set B to process from it
+open(S, $strainsListFileB) || die "Can't open strains_list_file_b '$strainsListFileB'\n";
+my @mergeQueueOriginalB = <S>;
+close(S);
+my @mergeQueueB = map { chomp; "$strainFilesDir/" . getStrainNum($_)} @mergeQueueOriginalB;
+my $strainsCountB = scalar(@mergeQueueB);
+
+
+# write making of fifos and a trap to remove them
+my $fifoCount = $strainsCountA + $strainsCountB + 2;   # add two to hold consensuses for A and B
+my $fifoCursor = 0;
+my $fifoPrefix = "fifo";
+print O "mkfifo ";
+for (my $i = 1; $i <= scalar(@mergeQueue); $i++) {
+  print O "$fifoPrefix$i ";
+}
+print O "\n";
+print O "trap \"rm ";
+for (my $i = 1; $i <= $fifoCount; $i++) {
+  print O "$fifoPrefix$i ";
+}
+print O "\" EXIT TERM\n";
+
+printMakeConsensus(\@mergeQueueA, "A", $fifoCount-1);  # use second to last fifo
+printMakeConsensus(\@mergeQueueB, "B", $fifoCount); # use last fifo
+
+
+# print final stuff and clean up
+print O "exit\n";
+close(O);
+system("chmod +x $outputScriptFile");
+system("chmod +x $outputScriptFile.bash");
+
+
+# get strain num from strain name (unity mapping if there were no names on input)
+sub getStrainNum {
+  my ($strain) = @_;
+
+  my $strainNum = $strain;
+
+  if ($strainsAreNames) {
+    $strainNum = $strainNameToNum{$strain};
+    die "Can't find strain number for strain name '$strain'" unless $strainNum;
+  }
+  return $strainNum;
+}
+
+sub printMakeConsensus {
+  my ($mergeQueue, $setLetter, $outputFifoNum) = @_;
+
+  # print out merge commands and then the find polymorphic command
+  my $output = $outputDataFile? ">$outputDataFile" : "";
+  while (1) {
+    # if the merge queue has more than one stream in it, merge two at a time
+    if (scalar(@$mergeQueue) > 1) {
+      my $input1 = shift(@$mergeQueue);
+      my $input2 = shift(@$mergeQueue);
+      $fifoCursor++;
+      push(@$mergeQueue, "$fifoPrefix$fifoCursor");
+      my $strain1 = basename($input1);
+      my $strain2 = basename($input2);
+      $strain1 = 0 if $strain1 =~ /$fifoPrefix/;
+      $strain2 = 0 if $strain2 =~ /$fifoPrefix/;
+      print O "hsssMergeStrainsWrapper $fifoPrefix$fifoCursor $input1 $strain1 $input2 $strain2  &\n";
+    }
+    # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
+    else {
+      my $allMerged = shift(@mergeQueue);
+      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $fifoPrefix$outputFifoNum\n";
+      last;
+    }
+  }
+
+}
+
+sub usage {
+
+die "
+Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
+
+usage: hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_ab_strains_list_file strains_are_names output_script_file [output_data_file]
+
+where:
+  - strains_file_dir:  the directory in which to find strain files.
+  - tmp_dir:  a temp directory in which to create a set of unix fifos for this run.
+  - set_a_polymorphism_threshold: see the hsssFindMajorAlleles program for documentation on this argument
+  - set_a_unknown_threshold: see the hsssFindMajorAlleles program for documentation on this argument
+  - set_a_strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
+  - set_b_polymorphism_threshold: similar to set_a_polymorphism_threshold, but for set B
+  - set_b_unknown_threshold: similar to set_a_unknown_threshold, but for set B
+  - set_b_strains_list_file: similar to set_a_strains_list_file, but for set B
+  - strains_are_names: 0/1.  1=the strains in strains_list_files are strain names, not numbers as found in strains_file_dir.
+  - output_script_file: the script
+  - output_data_file: optional file for the output script to write its output to.  if absent, script will write to stdout.
+
+";
+}
+
