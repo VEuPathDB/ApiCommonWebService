@@ -36,6 +36,24 @@ if [ $diffStat != 0 ]; then
 fi 
 echo "matched"
 
+# generate findPolymorphism script
+echo -e "1\n2\n3\n4" > strainsList.txt
+hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolymorphismSearch polymorphismSearch_result.txt
+chmod +x runPolymorphismSearch
+
+# run that script and compare output with expected.
+./runPolymorphismSearch
+
+echo "Comparing expected findPolymorphism output with result..."
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIds.txt polymorphismSearch_result.txt  
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
+
+echo "matched"
+echo ""
+
 # test making a consensus from a merged output
 hsssMergedToConsensus mergeStrains_test.out referenceGenome.dat 4 0 1 > consensus.out
 hsssDumpConsensusFile consensus.out > consensus.txt
@@ -48,23 +66,22 @@ if [ $diffStat != 0 ]; then
 fi
 echo "matched"
 
+# test finding major alleles
 hsssConsensusTextFileToBinary $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/mergeStrainsConsensus2.txt > consensus2.out
-hsssFindMajorAlleles consensus.out consensus2.out > majorAlleles
+hsssFindMajorAlleles consensus.out consensus2.out > majorAlleles.txt
 
-# generate findPolymorphism script
-echo -e "1\n2\n3\n4" > strainsList.txt
-hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolymorphismSearch polymorphismSearch_result.txt
-chmod +x runPolymorphismSearch
-
-# run that script and compare output with expected.
-./runPolymorphismSearch
-
-echo "Comparing expected output with result..."
-diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIds.txt polymorphismSearch_result.txt  
+echo "Comparing expected majorAlleles with majorAlleles output..."
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/majorAlleles.txt majorAlleles.txt
 diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
 fi
-
 echo "matched"
-echo ""
+
+# generate findMajorAlleles script
+echo -e "3\n4" > strainsListA.txt
+echo -e "1\n2" > strainsListB.txt
+hsssGenerateMajorAllelesScript $testDir $testDir 20 1 strainsListA.txt 20 1 strainsListB.txt 1 runMajorAllelesSearch majorAlleles_result.txt
+chmod +x runMajorAllelesSearch
+
+

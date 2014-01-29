@@ -62,7 +62,7 @@ my $fifoCount = $strainsCountA + $strainsCountB + 2;   # add two to hold consens
 my $fifoCursor = 0;
 my $fifoPrefix = "fifo";
 print O "mkfifo ";
-for (my $i = 1; $i <= scalar(@mergeQueue); $i++) {
+for (my $i = 1; $i <= $fifoCount; $i++) {
   print O "$fifoPrefix$i ";
 }
 print O "\n";
@@ -72,14 +72,14 @@ for (my $i = 1; $i <= $fifoCount; $i++) {
 }
 print O "\" EXIT TERM\n";
 
-my $consensusFifoA = $fifoPrefix . $fifoCount-1;
+my $consensusFifoA = $fifoPrefix . ($fifoCount-1);
 my $consensusFifoB = $fifoPrefix . $fifoCount;
 
-printMakeConsensus(\@mergeQueueA, "A", $conensusFifoA);  # use second to last fifo
-printMakeConsensus(\@mergeQueueB, "B", $consensusFifoB); # use last fifo
+printMakeConsensus(\@mergeQueueA, $consensusFifoA, $strainsCountA, $polymorphismThresholdA, $unknownThresholdA);  # use second to last fifo
+printMakeConsensus(\@mergeQueueB, $consensusFifoB, $strainsCountB, $polymorphismThresholdB, $unknownThresholdB); # use last fifo
 
 my $output = $outputDataFile? ">$outputDataFile" : "";
-print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output";
+print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
 
 # print final stuff and clean up
 print O "exit\n";
@@ -101,7 +101,7 @@ sub getStrainNum {
 }
 
 sub printMakeConsensus {
-  my ($mergeQueue, $outputFifo) = @_;
+  my ($mergeQueue, $outputFifo, $strainsCount, $polymorphismThreshold, $unknownThreshold) = @_;
 
   # print out merge commands and then the find polymorphic command
   my $output = $outputDataFile? ">$outputDataFile" : "";
@@ -120,7 +120,7 @@ sub printMakeConsensus {
     }
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
-      my $allMerged = shift(@mergeQueue);
+      my $allMerged = shift(@$mergeQueue);
       print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $outputFifo\n";
       last;
     }
@@ -132,7 +132,7 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_ab_strains_list_file strains_are_names output_script_file [output_data_file]
+usage: hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
 
 where:
   - strains_file_dir:  the directory in which to find strain files.
