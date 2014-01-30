@@ -45,8 +45,7 @@ static inline int readSnp(FILE *stream, snp *snp, char *filename) {
 }
 
 static inline void reportSnp(snp snp1, snp snp2) {
-	printf("%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n", snp1.seq, snp1.loc, snp1.majorAllele, snp1.majorProduct, snp1.majorProductIsVariable, snp1.majorAllelePerTenThou, snp1.isTriallelic, snp2.majorAllele, snp2.majorProduct, snp2.majorProductIsVariable, snp2.majorAllelePerTenThou, snp2.isTriallelic);
-
+	printf("%i\t%i\t%i\t%.2f\t%i\t%i\t%i\t%i\t%.2f\t%i\t%i\t%i\n", snp1.seq, snp1.loc, snp1.majorAllele, (float)snp1.majorAllelePerTenThou/100, snp1.isTriallelic, snp1.majorProduct, snp1.majorProductIsVariable, snp2.majorAllele, (float)snp2.majorAllelePerTenThou/100, snp2.isTriallelic, snp2.majorProduct, snp2.majorProductIsVariable);
 }
 
 main(int argc, char *argv[]) {
