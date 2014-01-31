@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
@@ -29,6 +28,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
   public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
 
+  @SuppressWarnings("unused")
   private static final String JOBS_DIR_PREFIX = "hsssFindMajorAlleles.";
 
   /*
@@ -63,10 +63,13 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     throws WsfPluginException {
   }
 
+  @Override
   protected String getCommandName() { return "findMajorAlleles"; }
 
+  @Override
   protected String getJobsDirPrefix() { return "hsssFindMajorAlleles."; }
     
+  @Override
   protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) {
     String[] row = new String[5];
     row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
@@ -77,6 +80,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     return row;
   }
 
+  @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
     // write strain IDs to file
     String strains = params.get(PARAM_STRAIN_LIST);
