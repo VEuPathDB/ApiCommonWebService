@@ -121,7 +121,7 @@ sub printMakeConsensus {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@$mergeQueue);
-      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $outputFifo\n";
+      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFifo &\n";
       last;
     }
   }
