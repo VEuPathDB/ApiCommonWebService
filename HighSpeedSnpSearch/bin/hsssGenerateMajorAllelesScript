@@ -2,9 +2,9 @@
 use strict;
 use File::Basename;
 
-my ($strainFilesDir, $tmpDir, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
+my ($tmpDir, $strainFilesDirA, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $strainFilesDirB, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
 
-usage() unless scalar(@ARGV) == 10 || scalar(@ARGV) == 11;
+usage() unless scalar(@ARGV) == 11 || scalar(@ARGV) == 12;
 
 #
 # write a perl wrapper because perl has the ninja power to change process group id
@@ -24,9 +24,10 @@ close(O);
 #
 
 # if strains are names, make a mapping from strain names to strain numbers
+# this file is identical in strainFilesDir for A and B, so just use A
 my %strainNameToNum;
 if ($strainsAreNames) {
-  open(SN, "$strainFilesDir/strainIdToName.dat") || die "Can't open strain id mapping file '$strainFilesDir/strainIdToName.dat'\n";
+  open(SN, "$strainFilesDirA/strainIdToName.dat") || die "Can't open strain id mapping file '$strainFilesDirA/strainIdToName.dat'\n";
   while(<SN>) {
     chomp;
     my ($num, $name) = split(/\t/);
@@ -45,7 +46,7 @@ print O "cd $tmpDir\n";
 open(S, $strainsListFileA) || die "Can't open strains_list_file_a '$strainsListFileA'\n";
 my @mergeQueueOriginalA = <S>;
 close(S);
-my @mergeQueueA = map { chomp; "$strainFilesDir/" . getStrainNum($_)} @mergeQueueOriginalA;
+my @mergeQueueA = map { chomp; "$strainFilesDirA/" . getStrainNum($_)} @mergeQueueOriginalA;
 my $strainsCountA = scalar(@mergeQueueA);
 
 
@@ -53,7 +54,7 @@ my $strainsCountA = scalar(@mergeQueueA);
 open(S, $strainsListFileB) || die "Can't open strains_list_file_b '$strainsListFileB'\n";
 my @mergeQueueOriginalB = <S>;
 close(S);
-my @mergeQueueB = map { chomp; "$strainFilesDir/" . getStrainNum($_)} @mergeQueueOriginalB;
+my @mergeQueueB = map { chomp; "$strainFilesDirB/" . getStrainNum($_)} @mergeQueueOriginalB;
 my $strainsCountB = scalar(@mergeQueueB);
 
 
@@ -79,7 +80,7 @@ printMakeConsensus(\@mergeQueueA, $consensusFifoA, $strainsCountA, $polymorphism
 printMakeConsensus(\@mergeQueueB, $consensusFifoB, $strainsCountB, $polymorphismThresholdB, $unknownThresholdB); # use last fifo
 
 my $output = $outputDataFile? ">$outputDataFile" : "";
-print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
+print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDirA/contigIdToSourceId.dat $output\n";
 
 # print final stuff and clean up
 print O "exit\n";
@@ -121,7 +122,7 @@ sub printMakeConsensus {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@$mergeQueue);
-      print O "hsssMergedToConsensus $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFifo &\n";
+      print O "hsssMergedToConsensus $allMerged $strainFilesDirA/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFifo &\n";
       last;
     }
   }
@@ -132,14 +133,15 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
+usage: hsssGenerateMajorAllelesScript tmp_dir set_a_strain_files_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_strain_files_dir set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
 
 where:
-  - strains_file_dir:  the directory in which to find strain files.
   - tmp_dir:  a temp directory in which to create a set of unix fifos for this run.
+  - set_a_strains_file_dir:  the directory in which to find strain files for set A (ie, at a certain read freq).
   - set_a_polymorphism_threshold: see the hsssFindMajorAlleles program for documentation on this argument
   - set_a_unknown_threshold: see the hsssFindMajorAlleles program for documentation on this argument
   - set_a_strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
+  - set_b_strains_file_dir:  the directory in which to find strain files for set B (ie, at a certain read freq).
   - set_b_polymorphism_threshold: similar to set_a_polymorphism_threshold, but for set B
   - set_b_unknown_threshold: similar to set_a_unknown_threshold, but for set B
   - set_b_strains_list_file: similar to set_a_strains_list_file, but for set B

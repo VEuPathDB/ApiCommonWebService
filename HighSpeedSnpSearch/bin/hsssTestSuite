@@ -81,7 +81,7 @@ echo "matched"
 # generate findMajorAlleles script
 echo -e "3\n4" > strainsListA.txt
 echo -e "1\n2" > strainsListB.txt
-hsssGenerateMajorAllelesScript $testDir $testDir 20 1 strainsListA.txt 20 1 strainsListB.txt 1 runMajorAllelesSearch majorAlleles_result.txt
+hsssGenerateMajorAllelesScript $testDir $testDir 20 1 strainsListA.txt $testDir 20 1 strainsListB.txt 1 runMajorAllelesSearch majorAlleles_result.txt
 chmod +x runMajorAllelesSearch
 
 

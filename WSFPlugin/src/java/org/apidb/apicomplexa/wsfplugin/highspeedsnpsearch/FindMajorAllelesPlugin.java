@@ -16,10 +16,14 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
   public static final String PARAM_META = "ontology_type";
-  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_meta";
-  public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
-  public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
+  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_meta";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAlleles";
+  public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
+  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_meta";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCalls";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAlleles";
+  public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercent";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";
@@ -38,8 +42,9 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public String[] getRequiredParameterNames() {
-    return new String[] { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
-			  PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH};
+    return new String[] { PARAM_ORGANISM, PARAM_META, PARAM_WEBSVCPATH,
+			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_POLYMORPHISMS_A, PARAM_READ_FREQ_PERCENT_A,
+			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_POLYMORPHISMS_B, PARAM_READ_FREQ_PERCENT_B};
   }
 
   /*
@@ -82,31 +87,46 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
-    // write strain IDs to file
-    String strains = params.get(PARAM_STRAIN_LIST);
-    int strainsCount = writeStrainsFile(jobDir, strains, "strains");
-    if (strains == null) throw new WsfPluginException("Strains param is empty");
- 
     List<String> command = new ArrayList<String>();
     String gusBin = GusHome.getGusHome() + "/bin";
 
-    String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
-    File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
-    if (!readFreqDir.exists()) throw new WsfPluginException("Strains dir for readFreq ' " + readFreqPercent
-                                + "' does not exist:\n" + readFreqDir);
-    
-    int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
-    int percentUnknowns = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS));
-    int unknownsThreshold = (int)Math.floor(strainsCount * percentUnknowns / 100.0);  // round down
-    if (unknownsThreshold > (strainsCount - 2)) unknownsThreshold = strainsCount - 2;  // must be at least 2 known
+    // set A
+    String strainsA = params.get(PARAM_STRAIN_LIST_A);
+    if (strainsA == null) throw new WsfPluginException("Strains param is empty");
+    int strainsCountA = writeStrainsFile(jobDir, strainsA, "strainsA");
+    String readFreqPercentA = params.get(PARAM_READ_FREQ_PERCENT_A);
+    File readFreqDirA = new File(organismDir, "readFreq" + readFreqPercentA);
+    if (!readFreqDirA.exists()) throw new WsfPluginException("StrainsA dir for readFreq ' " + readFreqPercentA
+                                + "' does not exist:\n" + readFreqDirA);
+    int percentPolymorphismsA = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS_A));
+    int percentUnknownsA = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_A));
+    int unknownsThresholdA = (int)Math.floor(strainsCountA * percentUnknownsA / 100.0);  // round down
+    if (unknownsThresholdA > (strainsCountA - 2)) unknownsThresholdA = strainsCountA - 2;  // must be at least 2 known
 
-    //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
+    // set B
+    String strainsB = params.get(PARAM_STRAIN_LIST_B);
+    if (strainsB == null) throw new WsfPluginException("Strains param is empty");
+    int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsA");
+    String readFreqPercentB = params.get(PARAM_READ_FREQ_PERCENT_B);
+    File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);
+    if (!readFreqDirB.exists()) throw new WsfPluginException("StrainsB dir for readFreq ' " + readFreqPercentB
+                                + "' does not exist:\n" + readFreqDirB);
+    int percentPolymorphismsB = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS_B));
+    int percentUnknownsB = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_B));
+    int unknownsThresholdB = (int)Math.floor(strainsCountB * percentUnknownsB / 100.0);  // round down
+    if (unknownsThresholdB > (strainsCountB - 2)) unknownsThresholdB = strainsCountB - 2;  // must be at least 2 known
+
+    // hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
-    command.add(readFreqDir.getPath());
     command.add(jobDir.getPath());
-    command.add(new Integer(percentPolymorphisms).toString());
-    command.add(new Integer(unknownsThreshold).toString());
-    command.add(jobDir.getPath() + "/" + "strains");
+    command.add(readFreqDirA.getPath());
+    command.add(new Integer(percentPolymorphismsA).toString());
+    command.add(new Integer(unknownsThresholdA).toString());
+    command.add(jobDir.getPath() + "/" + "strainsA");
+    command.add(readFreqDirB.getPath());
+    command.add(new Integer(percentPolymorphismsB).toString());
+    command.add(new Integer(unknownsThresholdB).toString());
+    command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
     command.add(jobDir.getPath() + "/" + "results");
