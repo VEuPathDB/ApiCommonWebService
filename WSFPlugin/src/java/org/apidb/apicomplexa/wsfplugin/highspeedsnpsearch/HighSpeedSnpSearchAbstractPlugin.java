@@ -123,7 +123,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     // create bash script
     List<String> command = makeCommandToCreateBashScript(jobDir, params, organismDir);
-    runCommandToCreateBashScript(command, commandName, "result");
+    runCommandToCreateBashScript(command, commandName);
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
@@ -142,7 +142,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
                   jobDir + " failed: " + output);
 
       // prepare the result
-      prepareResult(response, projectId, jobDir.getPath() + "/result",
+      prepareResult(response, projectId, jobDir.getPath() + "/" + getResultsFileBaseName(),
                     request.getOrderedColumns());
 
       response.setSignal(signal);
@@ -165,6 +165,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   }
 
   protected abstract String getCommandName();
+
+  protected abstract String getResultsFileBaseName();
 
   protected String getProjectId(Map<String, String> params) throws WsfPluginException {
     String organism = params.get(PARAM_ORGANISM);
@@ -229,7 +231,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     
   protected abstract List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException;
 
-  protected void runCommandToCreateBashScript( List<String> command, String bashScriptFileName, String resultFileName) throws WsfPluginException {
+  protected void runCommandToCreateBashScript( List<String> command, String bashScriptFileName) throws WsfPluginException {
     String gusBin = GusHome.getGusHome() + "/bin";
 
     String[] array = new String[command.size()];
@@ -271,15 +273,12 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       line = line.trim();
       String[] parts = line.split("\t");
 
-      if (parts.length != 4)
-        throw new WsfPluginException("Invalid output format in results file");
-
       response.addRow(makeResultRow(parts, columns, projectId));
     }
     in.close();
   }
 
-  protected abstract String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId);
+  protected abstract String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException;
 
   @Override
     protected String[] defineContextKeys() {

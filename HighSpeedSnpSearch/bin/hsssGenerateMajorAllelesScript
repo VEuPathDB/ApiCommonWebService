@@ -2,7 +2,7 @@
 use strict;
 use File::Basename;
 
-my ($tmpDir, $strainFilesDirA, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $strainFilesDirB, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
+my ($jobDir, $strainFilesDirA, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $strainFilesDirB, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
 
 usage() unless scalar(@ARGV) == 11 || scalar(@ARGV) == 12;
 
@@ -12,10 +12,9 @@ usage() unless scalar(@ARGV) == 11 || scalar(@ARGV) == 12;
 open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
 print O "#!/usr/bin/perl
 # this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
-use Cwd;
 setpgrp(0,0);
-\$pwd = cwd();
-system(\"\$pwd/$outputScriptFile.bash\") && die 'perl could not run $outputScriptFile.bash ' . \$?;
+\$cmd = \"$outputScriptFile.bash\";
+system(\$cmd) && die \"perl could not run \$cmd \$?\";
 ";
 close(O);
 
@@ -40,7 +39,7 @@ if ($strainsAreNames) {
 open(O, ">$outputScriptFile.bash") || die "Can't open output_file '$outputScriptFile.bash' for writing\n";
 print O "set -e\n";
 print O "set -x\n";
-print O "cd $tmpDir\n";
+print O "cd $jobDir\n";
 
 # read strains list file A and make a queue of strains in set A to process from it
 open(S, $strainsListFileA) || die "Can't open strains_list_file_a '$strainsListFileA'\n";
@@ -133,10 +132,10 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGenerateMajorAllelesScript tmp_dir set_a_strain_files_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_strain_files_dir set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
+usage: hsssGenerateMajorAllelesScript job_dir set_a_strain_files_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_strain_files_dir set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
 
 where:
-  - tmp_dir:  a temp directory in which to create a set of unix fifos for this run.
+  - job_dir:  a temp directory in which to create a set of unix fifos for this run, and in which to run the job.
   - set_a_strains_file_dir:  the directory in which to find strain files for set A (ie, at a certain read freq).
   - set_a_polymorphism_threshold: see the hsssFindMajorAlleles program for documentation on this argument
   - set_a_unknown_threshold: see the hsssFindMajorAlleles program for documentation on this argument

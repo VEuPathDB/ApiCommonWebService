@@ -55,7 +55,7 @@ public class FindMajorAllelesSearchTest extends HsssTest {
     params.put(FindMajorAllelesPlugin.PARAM_READ_FREQ_PERCENT_A, "80");
     params.put(FindMajorAllelesPlugin.PARAM_STRAIN_LIST_A, "1,2");
     params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_KNOWNS_A, "20");
-    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS_A, "20");
+    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS_A, "20"); 
     params.put(FindMajorAllelesPlugin.PARAM_READ_FREQ_PERCENT_B, "80");
     params.put(FindMajorAllelesPlugin.PARAM_STRAIN_LIST_B, "3,4");
     params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_KNOWNS_B, "20");
@@ -70,16 +70,25 @@ public class FindMajorAllelesSearchTest extends HsssTest {
     String[][] results = response.getPage(0);
     System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(8, results.length);
+    Assert.assertEquals(2, results.length);
   }
 
   private PluginRequest getRequest(Map<String, String> params) {
     // prepare columns
-    String[] columns = new String[] { FindPolymorphismsPlugin.COLUMN_SNP_SOURCE_ID,
-        FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
-        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
-        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
-        FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
+    String[] columns = new String[] { 
+      FindMajorAllelesPlugin.COLUMN_SNP_SOURCE_ID,
+      FindMajorAllelesPlugin.COLUMN_PROJECT_ID,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_ALLELE_A,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_ALLELE_PCT_A,
+      FindMajorAllelesPlugin.COLUMN_TRIALLELIC_A,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_PRODUCT_A,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_PRODUCT_VARIABLE_A,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_ALLELE_B,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_ALLELE_PCT_B,
+      FindMajorAllelesPlugin.COLUMN_TRIALLELIC_B,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_PRODUCT_B,
+      FindMajorAllelesPlugin.COLUMN_MAJOR_PRODUCT_VARIABLE_B,
+    };
 
     PluginRequest request = new PluginRequest();
     request.setParams(params);

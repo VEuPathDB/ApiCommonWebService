@@ -16,21 +16,29 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
   public static final String PARAM_META = "ontology_type";
-  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_meta";
-  public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAlleles";
-  public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_meta";
-  public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCalls";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAlleles";
-  public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercent";
+  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_metaA";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCallsA";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAllelesA";
+  public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercentA";
+  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_metaB";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsB";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAllelesB";
+  public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentB";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";
   public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
-  public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
-  public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
-  public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
+  public static final String COLUMN_MAJOR_ALLELE_A = "MajorAlleleA";
+  public static final String COLUMN_MAJOR_ALLELE_PCT_A = "MajorAllelePctA";
+  public static final String COLUMN_TRIALLELIC_A = "IsTriallelicA";
+  public static final String COLUMN_MAJOR_PRODUCT_A = "MajorProductA";
+  public static final String COLUMN_MAJOR_PRODUCT_VARIABLE_A = "MajorProductIsVariableA";
+  public static final String COLUMN_MAJOR_ALLELE_B = "MajorAlleleB";
+  public static final String COLUMN_MAJOR_ALLELE_PCT_B = "MajorAllelePctB";
+  public static final String COLUMN_TRIALLELIC_B = "IsTriallelicB";
+  public static final String COLUMN_MAJOR_PRODUCT_B = "MajorProductB";
+  public static final String COLUMN_MAJOR_PRODUCT_VARIABLE_B = "MajorProductIsVariableB";
+
 
   @SuppressWarnings("unused")
   private static final String JOBS_DIR_PREFIX = "hsssFindMajorAlleles.";
@@ -55,7 +63,8 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
     public String[] getColumns() {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-              COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_IS_NONSYNONYMOUS };
+			  COLUMN_MAJOR_ALLELE_A, COLUMN_MAJOR_ALLELE_PCT_A, COLUMN_TRIALLELIC_A, COLUMN_MAJOR_PRODUCT_A, COLUMN_MAJOR_PRODUCT_VARIABLE_A,
+			  COLUMN_MAJOR_ALLELE_B, COLUMN_MAJOR_ALLELE_PCT_B, COLUMN_TRIALLELIC_B, COLUMN_MAJOR_PRODUCT_B, COLUMN_MAJOR_PRODUCT_VARIABLE_B};
   }
 
   /*
@@ -75,16 +84,8 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   protected String getJobsDirPrefix() { return "hsssFindMajorAlleles."; }
     
   @Override
-  protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) {
-    String[] row = new String[5];
-    row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
-    row[columns.get(COLUMN_PROJECT_ID)] = projectId;
-    row[columns.get(COLUMN_PERCENT_OF_KNOWNS)] = parts[1];
-    row[columns.get(COLUMN_PERCENT_OF_POLYMORPHISMS)] = parts[2];
-    row[columns.get(COLUMN_IS_NONSYNONYMOUS)] = parts[3];  
-    return row;
-  }
-
+  protected String getResultsFileBaseName() { return "results"; }
+    
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
     List<String> command = new ArrayList<String>();
@@ -106,7 +107,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     // set B
     String strainsB = params.get(PARAM_STRAIN_LIST_B);
     if (strainsB == null) throw new WsfPluginException("Strains param is empty");
-    int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsA");
+    int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsB");
     String readFreqPercentB = params.get(PARAM_READ_FREQ_PERCENT_B);
     File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);
     if (!readFreqDirB.exists()) throw new WsfPluginException("StrainsB dir for readFreq ' " + readFreqPercentB
@@ -129,9 +130,29 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
-    command.add(jobDir.getPath() + "/" + "results");
+    command.add(jobDir.getPath() + "/" + getResultsFileBaseName());
     return command;
   }
 
+  @Override
+  protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException {
+      if (parts.length != 11)
+        throw new WsfPluginException("Wrong number of columns in results file.  Expected 11, found " + parts.length);
+
+    String[] row = new String[12];
+    row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
+    row[columns.get(COLUMN_PROJECT_ID)] = projectId;
+    row[columns.get(COLUMN_MAJOR_ALLELE_A)] = parts[1];
+    row[columns.get(COLUMN_MAJOR_ALLELE_PCT_A)] = parts[2];
+    row[columns.get(COLUMN_TRIALLELIC_A)] = parts[3];  
+    row[columns.get(COLUMN_MAJOR_PRODUCT_A)] = parts[4];  
+    row[columns.get(COLUMN_MAJOR_PRODUCT_VARIABLE_A)] = parts[5];  
+    row[columns.get(COLUMN_MAJOR_ALLELE_B)] = parts[6];
+    row[columns.get(COLUMN_MAJOR_ALLELE_PCT_B)] = parts[7];
+    row[columns.get(COLUMN_TRIALLELIC_B)] = parts[8];  
+    row[columns.get(COLUMN_MAJOR_PRODUCT_B)] = parts[9];  
+    row[columns.get(COLUMN_MAJOR_PRODUCT_VARIABLE_B)] = parts[10];  
+    return row;
+  }
   
 }
