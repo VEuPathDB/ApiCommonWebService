@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
@@ -41,6 +43,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  */
 public class WdkQueryPlugin extends AbstractPlugin {
 
+  private static final Logger logger = Logger.getLogger(WdkQueryPlugin.class);
+  
   // Propert values
 
   public static final String VERSION = "3.0";
@@ -182,6 +186,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
+      logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
       QueryInstance queryInstance = query.makeInstance(user, SOParams, true, 0,
           context);
       resultList = queryInstance.getResults();
