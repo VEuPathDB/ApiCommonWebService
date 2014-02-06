@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use strict;
+
+usage() unless scalar(@ARGV) > 1;
+
+my $buildNum = shift(@ARGV);
+
+my @projects = (@ARGV);
+
+my $stupidHash = { PlasmoDB => ['Plasmodiumfalciparum3D7', 'Pfalciparum3D7',
+				'PlasmodiumvivaxSal-1', 'PvivaxSal1'],
+		   ToxoDB => ['ToxoplasmagondiiME49', 'TgondiiME49'],
+		   TriTrypDB => ['LeishmaniabraziliensisMHOMBR75M2904', 'LbraziliensisMHOMBR75M2904',
+				 'LeishmaniadonovaniBPK282A1', 'LdonovaniBPK282A1',
+				 'LeishmaniainfantumJPCM5', 'LinfantumJPCM5',
+				 'LeishmaniamajorstrainFriedlin', 'LmajorFriedlin',
+				 'LeishmaniamexicanaMHOM', 'LmexicanaMHOMGT2001U1103',
+				 'TrypanosomabruceigambienseDAL972', 'TbruceigambienseDAL972',
+				 'TrypanosomabruceiTREU927', 'TbruceiTREU927',
+				 'TrypanosomacruziCLBrenerEsmeraldo-like', 'TcruziCLBrenerEsmeraldo-like',
+				 'TrypanosomacruziCLBrenerNon-Esmeraldo-like', 'TcruziCLBrenerNon-Esmeraldo-like',
+				 'TrypanosomacruzistrainCLBrener', 'TcruziCLBrener']
+		 };
+
+my $webSvcDir = "/eupath/data/apiSiteFiles/webServices";
+
+foreach my $project (@projects) {
+  my $orgs = $stupidHash->{$project};
+  for (my $i=0; $i<scalar(@$orgs); $i+=2) {
+    my $j = $i+1;
+    my $sourceDir = "/eupath/data/htsSnpsPrototype/heterozygosityEnabled/$project/$orgs->[$i]";
+    die "source dir $sourceDir does not exist" unless -e $sourceDir;
+    my $targetDir = "$webSvcDir/$project/build-$buildNum/$orgs->[$j]/highSpeedSnpSearch";
+    die "$project $orgs->[$i] already copied\n" if (-e $targetDir);
+    my $cmd = "cp -r $sourceDir $targetDir";
+    print STDERR "$cmd\n";
+    system($cmd) && die "failed running cmd: $cmd\n";
+  }
+}
+
+sub usage {
+  die "
+
+Copy files from /eupath/data/htsSnpPrototype into apiSiteFiles.
+
+usage:  hsssCopyFilesToWebSvcDir buildNum projects
+
+where:  buildNum:  20 or 21
+projects:  one or more of ToxoDB PlasmoDB TriTrypDB
+
+example:   hsssCopyFilesToWebSvcDir 21 ToxoDB PlasmoDB
+
+";
+}
