@@ -19,6 +19,9 @@ typedef struct {
 
 static char *stdoutStr = "STDOUT";
 
+static char alleles[5] = {0, 'A', 'C', 'G', 'T'};
+static char products[27] = {'-', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
 	if (ferror(stream)) {
@@ -45,7 +48,7 @@ static inline int readSnp(FILE *stream, snp *snp, char *filename) {
 }
 
 static inline void reportSnp(snp snp1, snp snp2) {
-	printf("%i\t%i\t%i\t%.2f\t%i\t%i\t%i\t%i\t%.2f\t%i\t%i\t%i\n", snp1.seq, snp1.loc, snp1.majorAllele, (float)snp1.majorAllelePerTenThou/100, snp1.isTriallelic, snp1.majorProduct, snp1.majorProductIsVariable, snp2.majorAllele, (float)snp2.majorAllelePerTenThou/100, snp2.isTriallelic, snp2.majorProduct, snp2.majorProductIsVariable);
+	printf("%i\t%i\t%c\t%.2f\t%i\t%c\t%i\t%c\t%.2f\t%i\t%c\t%i\n", snp1.seq, snp1.loc, alleles[snp1.majorAllele], (float)snp1.majorAllelePerTenThou/100, snp1.isTriallelic, products[snp1.majorProduct], snp1.majorProductIsVariable, alleles[snp2.majorAllele], (float)snp2.majorAllelePerTenThou/100, snp2.isTriallelic, products[snp2.majorProduct], snp2.majorProductIsVariable);
 }
 
 main(int argc, char *argv[]) {
