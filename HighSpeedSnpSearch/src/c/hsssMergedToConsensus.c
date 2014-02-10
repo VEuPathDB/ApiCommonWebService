@@ -68,7 +68,7 @@ static inline void findMaxProduct(int allele, char *majorProduct, char *isVariab
 		int prodCount = products[index][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
-			*majorProduct = i;
+			*majorProduct = i + 64;
 			max = prodCount;
 		}
 	}
@@ -130,7 +130,7 @@ static inline updateCounts() {
 		nonRefStrainsCount += strain;
 	} else {
 		alleles[allele]++;
-		products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+		if (product != 0) products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
 		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
@@ -238,7 +238,7 @@ main(int argc, char *argv[]) {
 		alleleCount += ref_count;
 		alleles[refAllele] += ref_count;
 
-		products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+		if (refProduct != 0) products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
 
 		// find major allele
 		char majorAllele;
