@@ -16,14 +16,14 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
   public static final String PARAM_META = "ontology_type";
-  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_metaA";
-  public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCallsA";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAllelesA";
-  public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercentA";
-  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_metaB";
-  public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsB";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAllelesB";
-  public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentB";
+  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_meta";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAlleles";
+  public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
+  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_m";
+  public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
+  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAllelesTwo";
+  public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
 
   // required result column definition
   public static final String COLUMN_PROJECT_ID = "ProjectId";

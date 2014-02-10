@@ -169,7 +169,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   protected abstract String getResultsFileBaseName();
 
   protected String getProjectId(Map<String, String> params) throws WsfPluginException {
-    String organism = params.get(PARAM_ORGANISM);
+    String organism = removeSingleQuotes(params.get(PARAM_ORGANISM));
+    
     try {
       return projectMapper.getProjectByOrganism(organism);
     } catch (SQLException e) {
@@ -177,14 +178,19 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     }
   }
 
+  String removeSingleQuotes(String inputText) {
+    String text = inputText;
+    if (text.startsWith("'")) {  // remove single quotes possibly supplied by wdk
+      text = text.substring(1, text.length());
+      text = text.substring(0, text.length() - 1);
+    }
+    return text;
+  }
+
   File findOrganismDir(Map<String, String> params, String projectId) throws WsfPluginException {
 
     // find organism's strain dir
-    String organism = params.get(PARAM_ORGANISM);
-    if (organism.startsWith("'")) {  // remove single quotes possibly supplied by wdk
-      organism = organism.substring(1, organism.length());
-      organism = organism.substring(0, organism.length() - 1);
-    }
+    String organism = removeSingleQuotes(params.get(PARAM_ORGANISM));
 
     String organismNameForFiles = getOrganismNameForFiles(organism);
 

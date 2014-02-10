@@ -130,7 +130,7 @@ static inline updateCounts() {
 		nonRefStrainsCount += strain;
 	} else {
 		alleles[allele]++;
-		products[allele-1][product]++;
+		products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
 		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
@@ -228,16 +228,17 @@ main(int argc, char *argv[]) {
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
 	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
-
 	// only consider SNPs that are under or equal to unknowns threshold
 	if (alleles[0] <= unknownsThreshold) {
 
 		// get reference genome allele and product for this SNP and add to counts
 		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
+
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 		alleleCount += ref_count;
 		alleles[refAllele] += ref_count;
-		products[refAllele-1][refProduct] += ref_count;
+
+		products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
 
 		// find major allele
 		char majorAllele;
