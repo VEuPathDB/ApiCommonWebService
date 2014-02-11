@@ -44,11 +44,11 @@ public class FindMajorAllelesSearchTest extends HsssTest {
     params.put(FindMajorAllelesPlugin.PARAM_READ_FREQ_PERCENT_A, "80");
     params.put(FindMajorAllelesPlugin.PARAM_STRAIN_LIST_A, "1,2");
     params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_KNOWNS_A, "20");
-    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS_A, "20"); 
+    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_MAJOR_ALLELES_A, "80"); 
     params.put(FindMajorAllelesPlugin.PARAM_READ_FREQ_PERCENT_B, "80");
     params.put(FindMajorAllelesPlugin.PARAM_STRAIN_LIST_B, "3,4");
     params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_KNOWNS_B, "20");
-    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS_B, "20");
+    params.put(FindMajorAllelesPlugin.PARAM_MIN_PERCENT_MAJOR_ALLELES_B, "80");
 
     // invoke the plugin and get result back
     PluginRequest request = getRequest(params);
