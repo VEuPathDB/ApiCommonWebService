@@ -8,7 +8,7 @@
 // input parameters
 FILE *strainFile;
 FILE *refFile;
-int minPolymorphismPct;
+int minMajorAllelePerTenThou;
 int unknownsThreshold;
 int strainCount;
 char *sourceIdPrefix;
@@ -173,11 +173,11 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 main(int argc, char *argv[]) {
 
 	if ( argc != 6 ) {
-		fprintf(stderr,"\nProduce a binary SNP consensus from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nBinary output: contig_id(2), location(4), major_allele(1), major_allele_product(1), major_product_is_variable(1), minor_allele(1), minor_allele_product(1), minor_product_is_variable(1), major_allele_perTenThou(2), minor_allele_perTenThou(2), triallelic(1)\n", argv[0] );
+		fprintf(stderr,"\nProduce a binary SNP consensus from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount maxPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minMajorAllelePct:  there must be this percent or more major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nBinary output: contig_id(2), location(4), major_allele(1), major_allele_product(1), major_product_is_variable(1), minor_allele(1), minor_allele_product(1), minor_product_is_variable(1), major_allele_perTenThou(2), minor_allele_perTenThou(2), triallelic(1)\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
-	minPolymorphismPct = atoi(argv[4]);
+	minMajorAllelePerTenThou = atoi(argv[4]) * 100;
 	unknownsThreshold = atoi(argv[5]);
 
 	strainFile = fopen(argv[1], "rb");
@@ -227,7 +227,7 @@ main(int argc, char *argv[]) {
  * Look at the data accumulated for a SNP.  If above threshold write it out.
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
-	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
+processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 	// only consider SNPs that are under or equal to unknowns threshold
 	if (alleles[0] <= unknownsThreshold) {
 
@@ -251,7 +251,7 @@ main(int argc, char *argv[]) {
 		findMaxProduct(majorAllele, &majorProduct, &majorProductIsVariable);
 
 		// find minor allele
-		char minorAllele;
+		char minorAllele = 0;
 		int minorCount = 0;
 		alleles[majorAllele] = 0;  // no longer consider major allele
 		char isTriallelic = findMaxAllele(&minorAllele, &minorCount);
@@ -262,15 +262,16 @@ main(int argc, char *argv[]) {
 		findMaxProduct(minorAllele, &minorProduct, &minorProductIsVariable);
 
 		// write it out if has enough polymorphisms
-		int polymorphisms = alleleCount - majorCount;
-		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
+		int16_t majorAllelePerTenThou = majorCount * 10000 / alleleCount;
 
-		if (polymorphismsPercent >= minPolymorphismPct) {
+		if (majorAllelePerTenThou >= minMajorAllelePerTenThou) {
 			// calculate  major allele perTenThou and  minor allele perTenThou
-			int16_t majorAllelePerTenThou = majorCount * 10000 / alleleCount;
 			int16_t minorAllelePerTenThou = minorCount * 10000 / alleleCount;
 			writeRecord(prevSeq, prevLoc, majorAllele, majorProduct, majorProductIsVariable, minorAllele, minorProduct, minorProductIsVariable, majorAllelePerTenThou, minorAllelePerTenThou, isTriallelic);
 		}
+	} 
+	else {
+		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 	}
 
 	// zero out counts

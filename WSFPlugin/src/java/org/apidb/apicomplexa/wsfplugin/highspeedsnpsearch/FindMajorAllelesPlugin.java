@@ -18,11 +18,11 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String PARAM_META = "ontology_type";
   public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_meta";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_A = "MinPercentMinorAlleles";
+  public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
   public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_m";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
-  public static final String PARAM_MIN_PERCENT_POLYMORPHISMS_B = "MinPercentMinorAllelesTwo";
+  public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
 
   // required result column definition
@@ -51,8 +51,8 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM, PARAM_META, PARAM_WEBSVCPATH,
-			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_POLYMORPHISMS_A, PARAM_READ_FREQ_PERCENT_A,
-			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_POLYMORPHISMS_B, PARAM_READ_FREQ_PERCENT_B};
+			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
+			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
   }
 
   /*
@@ -99,7 +99,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     File readFreqDirA = new File(organismDir, "readFreq" + readFreqPercentA);
     if (!readFreqDirA.exists()) throw new WsfPluginException("StrainsA dir for readFreq ' " + readFreqPercentA
                                 + "' does not exist:\n" + readFreqDirA);
-    int percentPolymorphismsA = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS_A));
+    int percentMajorAllelesA = Integer.parseInt(params.get(PARAM_MIN_PERCENT_MAJOR_ALLELES_A));
     int percentUnknownsA = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_A));
     int unknownsThresholdA = (int)Math.floor(strainsCountA * percentUnknownsA / 100.0);  // round down
     if (unknownsThresholdA > (strainsCountA - 2)) unknownsThresholdA = strainsCountA - 2;  // must be at least 2 known
@@ -112,20 +112,20 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);
     if (!readFreqDirB.exists()) throw new WsfPluginException("StrainsB dir for readFreq ' " + readFreqPercentB
                                 + "' does not exist:\n" + readFreqDirB);
-    int percentPolymorphismsB = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS_B));
+    int percentMajorAllelesB = Integer.parseInt(params.get(PARAM_MIN_PERCENT_MAJOR_ALLELES_B));
     int percentUnknownsB = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_B));
     int unknownsThresholdB = (int)Math.floor(strainsCountB * percentUnknownsB / 100.0);  // round down
     if (unknownsThresholdB > (strainsCountB - 2)) unknownsThresholdB = strainsCountB - 2;  // must be at least 2 known
 
-    // hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_polymorphism_threshold set_a_unknown_threshold set_a_strains_list_file set_b_polymorphism_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
+    // hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
     command.add(jobDir.getPath());
     command.add(readFreqDirA.getPath());
-    command.add(new Integer(percentPolymorphismsA).toString());
+    command.add(new Integer(percentMajorAllelesA).toString());
     command.add(new Integer(unknownsThresholdA).toString());
     command.add(jobDir.getPath() + "/" + "strainsA");
     command.add(readFreqDirB.getPath());
-    command.add(new Integer(percentPolymorphismsB).toString());
+    command.add(new Integer(percentMajorAllelesB).toString());
     command.add(new Integer(unknownsThresholdB).toString());
     command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
