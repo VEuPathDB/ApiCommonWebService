@@ -19,21 +19,12 @@ int32_t loc = -1;
 char allele = -1;  
 char product = -1;  
 int8_t strain = -1;  
-int16_t *seq_p = &seq;
-int32_t *loc_p = &loc;
-char *allele_p = &allele;
-char *product_p = &product;
-int8_t *strain_p = &strain;
 
 // values read from reference strains file (and pointers to them)
 int16_t refSeq = 0;
 int32_t refLoc = 0;
 char refAllele; 
 char refProduct;
-int16_t *refSeq_p = &refSeq;
-int32_t *refLoc_p = &refLoc;
-char *refAllele_p = &refAllele;
-char *refProduct_p = &refProduct;
 
 // per SNP counters
 int alleleCount;   // number of known alleles for this SNP (might include more than one per strain, if diploid)
@@ -114,11 +105,11 @@ static inline int readStrainRow(char *filename) {
 	if (product > 0) prevProduct = product;  // remember last known product
 	prevStrain = strain;
 
-	freadCheck(filename, seq_p, 2, 1, strainFile);  
-	freadCheck(filename, loc_p, 4, 1, strainFile);  
-	freadCheck(filename, allele_p, 1, 1, strainFile); 
-	freadCheck(filename, product_p, 1, 1, strainFile);
-	return freadCheck(filename, strain_p, 2, 1, strainFile);
+	freadCheck(filename, &seq, 2, 1, strainFile);  
+	freadCheck(filename, &loc, 4, 1, strainFile);  
+	freadCheck(filename, &allele, 1, 1, strainFile); 
+	freadCheck(filename, &product, 1, 1, strainFile);
+	return freadCheck(filename, &strain, 2, 1, strainFile);
 }
 
 // update the current SNP's alleles and products counts with the current variant's info
@@ -157,10 +148,11 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 
 	// advance through reference SNPs to the one that corresponds to the input SNP we are processing
 	while(1) {
-		freadCheck(filename, refSeq_p, 2, 1, refFile);  
-		freadCheck(filename, refLoc_p, 4, 1, refFile);  
-		freadCheck(filename, refAllele_p, 1, 1, refFile); 
-		int bytes = freadCheck(filename, refProduct_p, 1, 1, refFile);
+		int16_t refSeq22;
+		freadCheck(filename, &refSeq, 2, 1, refFile);  
+		freadCheck(filename, &refLoc, 4, 1, refFile);  
+		freadCheck(filename, &refAllele, 1, 1, refFile); 
+		int bytes = freadCheck(filename, &refProduct, 1, 1, refFile);
 
 		if (bytes == 0 || (refSeq == seq && refLoc== loc)) break;
 

@@ -14,25 +14,16 @@ char *sourceIdPrefix;
 
 // input strains
 int16_t seq = -1;
-int16_t *seq_p = &seq;
 int32_t loc = -1;
-int32_t *loc_p = &loc;
 char allele = -1;  
-char *allele_p = &allele;
 char product = -1;  
-char *product_p = &product;
 int8_t strain = -1;  
-int8_t *strain_p = &strain;
 
 // reference genome
 int16_t refSeq = 0;
-int16_t *refSeq_p = &refSeq;
 int32_t refLoc = 0;
-int32_t *refLoc_p = &refLoc;
 char refAllele; 
-char *refAllele_p = &refAllele;
 char refProduct;
-char *refProduct_p = &refProduct;
 
 int a_count = 0;
 int c_count = 0;
@@ -64,11 +55,11 @@ static inline int readStrainRow(char *filename) {
 	if (product > 0) prevProduct = product;  // remember last known product
 	prevStrain = strain;
 
-	freadCheck(filename, seq_p, 2, 1, strainFile);  
-	freadCheck(filename, loc_p, 4, 1, strainFile);  
-	freadCheck(filename, allele_p, 1, 1, strainFile); 
-	freadCheck(filename, product_p, 1, 1, strainFile);
-	return freadCheck(filename, strain_p, 2, 1, strainFile);
+	freadCheck(filename, &seq, 2, 1, strainFile);  
+	freadCheck(filename, &loc, 4, 1, strainFile);  
+	freadCheck(filename, &allele, 1, 1, strainFile); 
+	freadCheck(filename, &product, 1, 1, strainFile);
+	return freadCheck(filename, &strain, 2, 1, strainFile);
 }
 
 static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
@@ -76,10 +67,10 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 	// advance through SNPs to our current one
 	//	fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
 		while(!(refSeq == seq && refLoc== loc)) {
-		freadCheck(filename, refSeq_p, 2, 1, refFile);  
-		freadCheck(filename, refLoc_p, 4, 1, refFile);  
-		freadCheck(filename, refAllele_p, 1, 1, refFile); 
-		freadCheck(filename, refProduct_p, 1, 1, refFile);
+		freadCheck(filename, &refSeq, 2, 1, refFile);  
+		freadCheck(filename, &refLoc, 4, 1, refFile);  
+		freadCheck(filename, &refAllele, 1, 1, refFile); 
+		freadCheck(filename, &refProduct, 1, 1, refFile);
 		//fprintf(stderr,"%i %i\n" ,refSeq, refLoc);
 	}
 }
