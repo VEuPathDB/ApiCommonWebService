@@ -10,10 +10,11 @@ usage() unless scalar(@ARGV) == 11 || scalar(@ARGV) == 12;
 # write a perl wrapper because perl has the ninja power to change process group id
 #
 open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
+my $cmdString = $outputScriptFile =~ /^\//? "$outputScriptFile.bash" : "$jobDir/$outputScriptFile.bash";
 print O "#!/usr/bin/perl
 # this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
 setpgrp(0,0);
-\$cmd = \"./$outputScriptFile.bash\";
+\$cmd = \"$cmdString\";
 system(\$cmd) && die \"perl could not run \$cmd \$?\";
 ";
 close(O);
