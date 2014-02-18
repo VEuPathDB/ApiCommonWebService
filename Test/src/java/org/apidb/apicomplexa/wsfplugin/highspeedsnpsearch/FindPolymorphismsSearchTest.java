@@ -22,59 +22,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FindPolymorphismsSearchTest {
+public class FindPolymorphismsSearchTest extends HsssTest {
 
   @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(FindPolymorphismsSearchTest.class.getName());
 
-  private static final String SYS_PROJECT_HOME = "PROJECT_HOME";
-
-  private final String gusHome;
-  private final String projectHome;
-
-  private Properties properties;
-
   public FindPolymorphismsSearchTest() throws Exception {
-    projectHome = System.getenv(SYS_PROJECT_HOME);
-    if (projectHome == null)
-      throw new Exception("Required system environment variable not set: "
-          + SYS_PROJECT_HOME);
-
-    gusHome = System.getProperty(Utilities.SYSTEM_PROPERTY_GUS_HOME);
-    if (gusHome == null)
-      throw new Exception("Required system environment variable not set: "
-          + Utilities.SYSTEM_PROPERTY_GUS_HOME);
-  }
-
-  @Before
-  public void prepareConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
-
-    // prepare the config file
-    properties = new Properties();
-    String sampleFile = projectHome
-        + "/ApiCommonWebService/WSFPlugin/config/highSpeedSnpSearch-config.xml.sample";
-    InputStream inStream = new FileInputStream(sampleFile);
-    properties.loadFromXML(inStream);
-    inStream.close();
-    properties.setProperty(FindPolymorphismsPlugin.PROPERTY_JOBS_DIR, "/tmp");
-  }
-
-  @Test
-  public void testReadConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
-
-    // prepare the config file
-    Properties properties = new Properties();
-
-    // read the sample config file with default values
-    String sampleFile = projectHome
-        + "/ApiCommonWebService/WSFPlugin/config/highSpeedSnpSearch-config.xml.sample";
-    InputStream inStream = new FileInputStream(sampleFile);
-    properties.loadFromXML(inStream);
-    inStream.close();
-    String jobDir = properties.getProperty(FindPolymorphismsPlugin.PROPERTY_JOBS_DIR);
-    Assert.assertTrue(jobDir != null);
+    super();
   }
 
   @Test
@@ -114,19 +68,14 @@ public class FindPolymorphismsSearchTest {
     Assert.assertEquals(8, results.length);
   }
 
-  private Map<String, Object> getContext() {
-    Map<String, Object> context = new HashMap<String, Object>();
-    context.put(Plugin.CTX_CONFIG_PATH, gusHome + "/config/");
-    return context;
-  }
-
   private PluginRequest getRequest(Map<String, String> params) {
     // prepare columns
-    String[] columns = new String[] { FindPolymorphismsPlugin.COLUMN_SNP_SOURCE_ID,
-        FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
-        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
-        FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
-        FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
+    String[] columns = new String[] { 
+      FindPolymorphismsPlugin.COLUMN_SNP_SOURCE_ID,
+      FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
+      FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
+      FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
+      FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
 
     PluginRequest request = new PluginRequest();
     request.setParams(params);
@@ -136,12 +85,5 @@ public class FindPolymorphismsSearchTest {
     return request;
   }
 
-  private PluginResponse getResponse() {
-    int invokeId = 0;
-    File storageDir = new File("/tmp/junk");
-    new File(storageDir, Integer.toString(invokeId)).mkdirs();
-    PluginResponse response = new PluginResponse(storageDir, invokeId);
-    return response;
-  }
 }
  
