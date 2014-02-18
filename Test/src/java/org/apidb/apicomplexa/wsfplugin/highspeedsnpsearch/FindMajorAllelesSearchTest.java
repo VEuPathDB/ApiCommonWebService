@@ -59,7 +59,7 @@ public class FindMajorAllelesSearchTest extends HsssTest {
     String[][] results = response.getPage(0);
     System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(2, results.length);
+    Assert.assertEquals(1, results.length);
   }
 
   private PluginRequest getRequest(Map<String, String> params) {
