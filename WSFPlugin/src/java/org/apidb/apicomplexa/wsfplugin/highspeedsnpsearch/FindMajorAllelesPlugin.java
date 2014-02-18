@@ -117,7 +117,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     int unknownsThresholdB = (int)Math.floor(strainsCountB * percentUnknownsB / 100.0);  // round down
     if (unknownsThresholdB > (strainsCountB - 2)) unknownsThresholdB = strainsCountB - 2;  // must be at least 2 known
 
-    // hsssGenerateMajorAllelesScript strain_files_dir tmp_dir set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
+    // hsssGenerateMajorAllelesScript tmp_dir strain_files_dir_a  set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file strain_files_dir_a set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
     command.add(jobDir.getPath());
     command.add(readFreqDirA.getPath());
