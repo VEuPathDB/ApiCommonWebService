@@ -23,8 +23,6 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String PARAM_WEBSVCPATH = "WebServicesPath";
 
   // required result column definition
-  public static final String COLUMN_PROJECT_ID = "ProjectId";
-  public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
   public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
   public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
