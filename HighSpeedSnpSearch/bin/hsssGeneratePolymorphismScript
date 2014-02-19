@@ -2,9 +2,9 @@
 use strict;
 use File::Basename;
 
-my ($strainFilesDir, $jobDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $strainsAreNames, $outputScriptFile, $outputDataFile) = @ARGV;
+my ($strainFilesDir, $jobDir, $polymorphismThreshold, $unknownThreshold, $strainsListFile, $strainsAreNames, $outputScriptFile, $outputDataFile, $seqFilter, $minLoc, $maxLoc) = @ARGV;
 
-usage() unless scalar(@ARGV) == 7 || scalar(@ARGV) == 8;
+usage() unless scalar(@ARGV) == 8 || scalar(@ARGV) == 11;
 
 #
 # write a perl wrapper because perl has the ninja power to change process group id
@@ -113,7 +113,7 @@ sub usage {
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file strains_are_names output_script_file [output_data_file]
+usage: hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file strains_are_names output_script_file output_data_file [seq_id min_loc max_loc]
 
 where:
   - strains_file_dir:  the directory in which to find strain files.
@@ -123,7 +123,10 @@ where:
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
   - strains_are_names: 0/1.  1=the strains in strains_list_file are strain names, not numbers as found in strains_file_dir.
   - output_script_file: the script
-  - output_data_file: optional file for the output script to write its output to.  if absent, script will write to stdout.
+  - output_data_file: where to write the results
+  - seq_id:  optional encoded sequence id.  if present, return only SNPs on this sequence.
+  - min_loc: required if seq_id provided.  return only SNPs at this location or larger
+  - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
 
 ";
 }

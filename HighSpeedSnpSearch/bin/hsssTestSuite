@@ -54,6 +54,24 @@ fi
 echo "matched"
 echo ""
 
+# generate findPolymorphism script with filter
+echo -e "1\n2\n3\n4" > strainsList.txt
+hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolymorphismSearchWithFilter polymorphismSearchWithFilter_result.txt 100 21 25
+chmod +x runPolymorphismSearchWithFilter
+
+# run that script and compare output with expected.
+./runPolymorphismSearch
+
+echo "Comparing expected filtered findPolymorphism output with result..."
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIdsWithFilter.txt polymorphismSearchWithFilter_result.txt  
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
+
+echo "matched"
+echo ""
+
 # test making a consensus from a merged output
 hsssMergedToConsensus mergeStrains_test.out referenceGenome.dat 4 0 1 > consensus.out
 hsssDumpConsensusFile consensus.out > consensus.txt
