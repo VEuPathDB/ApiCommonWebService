@@ -11,6 +11,9 @@ int unknownsThreshold;
 int strainCount;
 int alleleCount;
 char *sourceIdPrefix;
+int seqFilter = -1;
+int minLoc;
+int maxLoc;
 
 // input strains
 int16_t seq = -1;
@@ -92,13 +95,19 @@ static inline updateCounts() {
 
 main(int argc, char *argv[]) {
 
-	if ( argc != 6 ) {
-		fprintf(stderr,"\nReport SNPs with polymorphism from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nTab delimited output: contig_id, location, knowns_percent, non-major_allele_percent, nonSynonymous\n", argv[0] );
+	if ( argc != 6 && argc != 9) {
+		fprintf(stderr,"\nReport SNPs with polymorphism from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold [seq_id loc_min loc_max]\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n  seq_id:  an optional encoded sequence ID to limit results to\n  loc_min: required if seq_id is provided.  SNPs on seq_id at a location less than this are excluded from output.\n  max_loc: required if seq_id is provided.  SNPs on seq_id at a location greather than this are excluded from output\n\nTab delimited output: contig_id, location, knowns_percent, non-major_allele_percent, nonSynonymous\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
 	minPolymorphismPct = atoi(argv[4]);
 	unknownsThreshold = atoi(argv[5]);
+
+	if ( argc == 9) {
+		seqFilter = atoi(argv[6]);
+		minLoc = atoi(argv[7]);
+		maxLoc = atoi(argv[8]);
+	}
 
 	strainFile = fopen(argv[1], "rb");
 	if (strainFile == 0) {
@@ -146,13 +155,13 @@ main(int argc, char *argv[]) {
  * Look at the data accumulated for a SNP.  If above threshold write it out.
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
-	processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
+processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
-	// only consider SNPs that are under or equal to unknowns threshold
-	if (U_count <= unknownsThreshold) {
+	// only consider SNPs that are under or equal to unknowns threshold, and that pass seq filter, if we have one
+	if (U_count <= unknownsThreshold && (seqFilter == -1 || (prevSeq == seqFilter && prevLoc >= minLoc && prevLoc <= maxLoc))) {
 
 		// get reference genome allele and product for this SNP
-		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
+	  getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 
