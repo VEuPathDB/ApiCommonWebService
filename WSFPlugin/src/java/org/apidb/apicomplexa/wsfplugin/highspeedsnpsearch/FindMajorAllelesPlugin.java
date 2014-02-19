@@ -26,8 +26,6 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
 
   // required result column definition
-  public static final String COLUMN_PROJECT_ID = "ProjectId";
-  public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
   public static final String COLUMN_MAJOR_ALLELE_A = "MajorAlleleA";
   public static final String COLUMN_MAJOR_ALLELE_PCT_A = "MajorAllelePctA";
   public static final String COLUMN_TRIALLELIC_A = "IsTriallelicA";

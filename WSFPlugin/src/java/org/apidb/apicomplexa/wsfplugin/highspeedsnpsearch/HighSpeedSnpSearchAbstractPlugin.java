@@ -46,6 +46,9 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   public static final String PARAM_ORGANISM = "organism";
   public static final String PARAM_WEBSVCPATH = "WebServicesPath";
 
+  public static final String COLUMN_PROJECT_ID = "ProjectId";
+  public static final String COLUMN_SNP_SOURCE_ID = "SourceId";
+
   // property definition
   public static final String PROPERTY_JOBS_DIR = "jobsDir";
 
