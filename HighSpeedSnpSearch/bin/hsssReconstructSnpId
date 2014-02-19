@@ -2,7 +2,7 @@
 
 use strict;
 
-my ($contigIdFile) = @ARGV;
+my ($contigIdFile, $seqFilter, $minLoc, $maxLoc) = @ARGV;
 
 usage() unless $contigIdFile;
 
@@ -22,17 +22,21 @@ while(<STDIN>) {
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
-  print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
+  print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne &seqFilter || $location  < $minLoc || $location > $maxLoc))
 }
 
 sub usage {
   die "
 Replace the first and second columns of a stream with a SNP ID, given a file with a mapping.
 
-Usage: hsssReconstructSnpId contig_id_file < snp_search_result
+Usage: hsssReconstructSnpId contig_id_file [seq_id min_loc max_loc] < snp_search_result
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
+  - seq_source_id:  optional  sequence source id.  if present, return only SNPs on this sequence.
+  - min_loc: required if seq_id provided.  return only SNPs at this location or larger
+  - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
+
 
   - snp_search_result: tab_delimited where first column is contig index and second is genomic location.
 
