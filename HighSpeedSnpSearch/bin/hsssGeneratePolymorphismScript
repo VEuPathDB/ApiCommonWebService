@@ -83,7 +83,7 @@ while(1) {
   # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
   else {
     my $allMerged = shift(@mergeQueue);
-    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
+    print O "hsssFindPolymorphic $allMerged $strainFilesDir/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold $seqFilter $minLoc $maxLoc | hsssReconstructSnpId $strainFilesDir/contigIdToSourceId.dat $output\n";
     last;
   }
 }

@@ -60,10 +60,10 @@ hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolym
 chmod +x runPolymorphismSearchWithFilter
 
 # run that script and compare output with expected.
-./runPolymorphismSearch
+./runPolymorphismSearchWithFilter
 
 echo "Comparing expected filtered findPolymorphism output with result..."
-diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIdsWithFilter.txt polymorphismSearchWithFilter_result.txt  
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/polymorphismSearchWithSourceIdsAndSeqFilter.txt polymorphismSearchWithFilter_result.txt  
 diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
