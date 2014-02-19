@@ -22,7 +22,7 @@ while(<STDIN>) {
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
-  print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne &seqFilter || $location  < $minLoc || $location > $maxLoc))
+  print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
 }
 
 sub usage {
