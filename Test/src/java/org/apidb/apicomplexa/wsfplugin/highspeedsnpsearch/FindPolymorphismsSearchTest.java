@@ -31,9 +31,24 @@ public class FindPolymorphismsSearchTest extends HsssTest {
     super();
   }
 
+  public FindPolymorphismsPlugin getPlugin() {
+    return new FindPolymorphismsPlugin();
+  }
+  
+  public void prepareParams(Map<String, String> params) {
+    params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Homo sapiens 123");
+    params.put(FindPolymorphismsPlugin.PARAM_WEBSVCPATH, projectHome + "/ApiCommonWebService/HighSpeedSnpSearch/test/PROJECT_GOES_HERE");
+    params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
+    params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
+    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "20");
+    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "20");
+  }
+
+  public int getExpectedResultCount() { return 8; }
+
   @Test
   public void testSearch() throws WsfPluginException {
-    FindPolymorphismsPlugin search = new FindPolymorphismsPlugin();
+    FindPolymorphismsPlugin search = getPlugin();
     search.setOrganismNameForFiles("Hsapiens123");
     System.err.println("first" + properties);
     try {
@@ -49,12 +64,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
 
     // prepare parameters
     Map<String, String> params = new HashMap<String, String>();
-    params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Homo sapiens 123");
-    params.put(FindPolymorphismsPlugin.PARAM_WEBSVCPATH, projectHome + "/ApiCommonWebService/HighSpeedSnpSearch/test/PROJECT_GOES_HERE");
-    params.put(FindPolymorphismsPlugin.PARAM_READ_FREQ_PERCENT, "80");
-    params.put(FindPolymorphismsPlugin.PARAM_STRAIN_LIST, "1,2,3,4");
-    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_KNOWNS, "20");
-    params.put(FindPolymorphismsPlugin.PARAM_MIN_PERCENT_POLYMORPHISMS, "20");
+    prepareParams(params);
 
     // invoke the plugin and get result back
     PluginRequest request = getRequest(params);
@@ -65,7 +75,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
     String[][] results = response.getPage(0);
     System.out.println(Formatter.printArray(results));
 
-    Assert.assertEquals(8, results.length);
+    Assert.assertEquals(getExpectedResultCount(), results.length);
   }
 
   private PluginRequest getRequest(Map<String, String> params) {
