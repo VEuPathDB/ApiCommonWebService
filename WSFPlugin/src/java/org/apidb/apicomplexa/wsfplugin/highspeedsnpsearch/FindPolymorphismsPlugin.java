@@ -91,12 +91,12 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     command.add(gusBin + "/hsssGeneratePolymorphismScript");
     command.add(readFreqDir.getPath());
     command.add(jobDir.getPath());
-    command.add(new Integer(percentPolymorphisms).toString());
-    command.add(new Integer(unknownsThreshold).toString());
-    command.add(jobDir.getPath() + "/strains");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
     command.add(jobDir.getPath() + "/" + getResultsFileBaseName());
+    command.add(new Integer(percentPolymorphisms).toString());
+    command.add(new Integer(unknownsThreshold).toString());
+    command.add(jobDir.getPath() + "/strains");
     return command;
   }
     

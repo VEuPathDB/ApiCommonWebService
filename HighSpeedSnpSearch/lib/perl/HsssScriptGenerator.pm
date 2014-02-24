@@ -19,11 +19,11 @@ sub run {
 
 # extracts standard args, and returns arg list with extra args only
 sub extractArgs {
-  my ($self, $argsRef) = @_;
-  $self->usage() unless scalar(@$argsRef) >= 5);
+  my ($self) = @_;
+  $self->usage() unless scalar(@ARGV) >= 5;
   my @extraArgs;
   ($self->{strainFilesDir}, $self->{jobDir}, $self->{strainsAreNames}, $self->{outputScriptFile}, $self->{outputDataFile}, @extraArgs) = @ARGV;
-  $self->extraArgs = \@extraArgs;
+  return @extraArgs;
 }
 
 sub getStandardArgsUsage {
@@ -62,17 +62,15 @@ system(\$cmd) && die \"perl could not run \$cmd \$?\";
 sub makeStrainNamesToNumbersMap {
   my ($self) = @_;
   # if strains are names, make a mapping from strain names to strain numbers
-  my %strainNameToNum;
   if ($self->{strainsAreNames}) {
     open(SN, "$self->{strainFilesDir}/strainIdToName.dat") || die "Can't open strain id mapping file '$self->{strainFilesDir}/strainIdToName.dat'\n";
     while(<SN>) {
       chomp;
       my ($num, $name) = split(/\t/);
-      $strainNameToNum{$name} = $num;
+      $self->{strainNameToNum}->{$name} = $num;
     }
     close(SN);
   }
-  return %strainNameToNum;
 }
 
 sub writeMainScript {
@@ -84,7 +82,7 @@ sub writeMainScript {
   open(my $o, ">$outputScriptFile.bash") || die "Can't open output_file '$outputScriptFile.bash' for writing\n";
   print $o "set -e\n";
   print $o "set -x\n";
-  print $o "cd $jobDir\n";
+  print $o "cd $self->{jobDir}\n";
 
   $self->writeMainScriptBody($o, $self->{outputDataFile});
 
@@ -120,3 +118,4 @@ sub usage {
   die "subclass must override this method";
 }
 
+1;

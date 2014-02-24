@@ -38,7 +38,7 @@ echo "matched"
 
 # generate findPolymorphism script
 echo -e "1\n2\n3\n4" > strainsList.txt
-hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolymorphismSearch polymorphismSearch_result.txt
+hsssGeneratePolymorphismScript $testDir $testDir 1 runPolymorphismSearch polymorphismSearch_result.txt 20 1 strainsList.txt 
 chmod +x runPolymorphismSearch
 
 # run that script and compare output with expected.
@@ -56,7 +56,7 @@ echo ""
 
 # generate findPolymorphism script with filter
 echo -e "1\n2\n3\n4" > strainsList.txt
-hsssGeneratePolymorphismScript $testDir $testDir 20 1 strainsList.txt 1 runPolymorphismSearchWithFilter polymorphismSearchWithFilter_result.txt c100 21 25
+hsssGeneratePolymorphismScript $testDir $testDir 1 runPolymorphismSearchWithFilter polymorphismSearchWithFilter_result.txt 20 1 strainsList.txt c100 21 25
 chmod +x runPolymorphismSearchWithFilter
 
 # run that script and compare output with expected.
