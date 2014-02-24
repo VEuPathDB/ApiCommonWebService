@@ -37,7 +37,6 @@ Where:
   - min_loc: required if seq_id provided.  return only SNPs at this location or larger
   - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
 
-
   - snp_search_result: tab_delimited where first column is contig index and second is genomic location.
 
 Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
