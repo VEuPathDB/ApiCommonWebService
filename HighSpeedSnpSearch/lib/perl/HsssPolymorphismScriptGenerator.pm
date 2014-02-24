@@ -35,6 +35,8 @@ sub writeMainScriptBody {
 
   # print out merge commands and then the find polymorphic command
   my $output = $outputDataFile? ">$outputDataFile" : "";
+  my $finalCommand = $self->getFinalCommandString();
+
   while (1) {
     # if the merge queue has more than one stream in it, merge two at a time
     if (scalar(@mergeQueue) > 1) {
@@ -51,10 +53,18 @@ sub writeMainScriptBody {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@mergeQueue);
-      print $fh "hsssFindPolymorphic $allMerged $self->{strainFilesDir}/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat $seqFilter $minLoc $maxLoc $output\n";
+      print $fh "hsssFindPolymorphic $allMerged $self->{strainFilesDir}/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $finalComand $output\n";
       last;
     }
   }
+}
+
+sub getFinalCommandString {
+  my ($self) = @_;
+
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
+
+  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat $seqFilter $minLoc $maxLoc";
 }
 
 # abstract method
