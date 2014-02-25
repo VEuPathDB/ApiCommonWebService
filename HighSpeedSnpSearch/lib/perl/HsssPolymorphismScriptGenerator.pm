@@ -9,7 +9,7 @@ use File::Basename;
 sub writeMainScriptBody {
   my ($self, $fh, $outputDataFile) = @_;
 
-  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile) = $self->extractArgs();
 
   # read strains list file and make a queue of strains to process from it
   open(S, $strainsListFile) || die "Can't open strains_list_file '$strainsListFile'\n";
@@ -67,22 +67,35 @@ sub getFinalCommandString {
   return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat $seqFilter $minLoc $maxLoc";
 }
 
+sub getPolymorphismArgsUsage{
+  return "polymorphism_threshold unknown_threshold strains_list_file";
+}
+
+sub getPolymorphismsArgsHelp {
+  return "  - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
+  - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
+  - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
+"
+}
+
 # abstract method
 sub usage {
   my ($self) = @_;
 
   my $standardArgsUsage = $self->getStandardArgsUsage();
   my $standardArgsHelp = $self->getStandardArgsHelp();
+
+  my $polymorphismArgsUsage = $self->getPolymorphismArgsUsage();
+  my $polymorphismArgsHelp = $self->getPolymorphismArgsHelp();
+
 die "
 Generate a bash script that will run a high-speed SNP search to find polymorphism among a set of input strain files.
 
-usage: hsssGeneratePolymorphismScript $standardArgsUsage polymorphism_threshold unknown_threshold strains_list_file [seq_id min_loc max_loc]
+usage: hsssGeneratePolymorphismScript $standardArgsUsage $polymorphismArgsUsage [seq_id min_loc max_loc]
 
 where:
 $standardArgsHelp
-  - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
-  - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
-  - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
+$polymorphismArgsHelp
   - seq_id:  optional encoded sequence id.  if present, return only SNPs on this sequence.
   - min_loc: required if seq_id provided.  return only SNPs at this location or larger
   - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
