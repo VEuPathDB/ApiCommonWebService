@@ -13,7 +13,7 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 /**
  * @author steve
  */
-public class FindSnpsByGenomicLocationPlugin extends FindPolymorphismsPlugin {
+public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 
   // required parameter definition
   public static final String PARAM_GENES_DATASET = "ds_gene_ids";
