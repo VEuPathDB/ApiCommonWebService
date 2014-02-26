@@ -9,7 +9,7 @@ public class FindSnpsByGeneIdsTest extends FindPolymorphismsSearchTest {
   }
 
   public FindPolymorphismsPlugin getPlugin() {
-    return new FindSnpsByGenomicLocationPlugin();
+    return new FindSnpsByGeneIdsPlugin();
   }
   
   public void prepareParams(Map<String, String> params) {
