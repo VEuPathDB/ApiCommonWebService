@@ -26,13 +26,8 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
    * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
    */
   @Override
-  public String[] getRequiredParameterNames() {
-    String[] superParameters = super.getRequiredParameterNames();
-    String[] extraParameters = {PARAM_CHROMOSOME, PARAM_SEQUENCE, PARAM_START_POINT, PARAM_END_POINT};
-    String[] combined = new String[superParameters.length + extraParameters.length];
-    System.arraycopy(superParameters, 0, combined, 0, superParameters.length);
-    System.arraycopy(extraParameters, 0, combined, superParameters.length, extraParameters.length);
-    return combined;
+  public String[] getExtraParamNames() {
+    return new String[] {PARAM_CHROMOSOME, PARAM_SEQUENCE, PARAM_START_POINT, PARAM_END_POINT};
   }
 
   /*
