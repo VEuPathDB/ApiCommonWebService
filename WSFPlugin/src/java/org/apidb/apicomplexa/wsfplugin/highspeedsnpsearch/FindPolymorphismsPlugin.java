@@ -104,7 +104,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     if (unknownsThreshold > (strainsCount - 2)) unknownsThreshold = strainsCount - 2;  // must be at least 2 known
 
     //  hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold strains_list_file 1 output_file result_file
-    command.add(gusBin + "/hsssGeneratePolymorphismScript");
+    command.add(gusBin + "/" + getGenerateScriptName());
     command.add(readFreqDir.getPath());
     command.add(jobDir.getPath());
     command.add("1");
@@ -114,6 +114,10 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     command.add(new Integer(unknownsThreshold).toString());
     command.add(jobDir.getPath() + "/strains");
     return command;
+  }
+
+  protected String getGenerateScriptName() {
+    return "hsssGeneratePolymorphismScript";
   }
     
   @Override
