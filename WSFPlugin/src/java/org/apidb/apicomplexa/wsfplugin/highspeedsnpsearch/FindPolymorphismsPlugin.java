@@ -36,7 +36,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public String[] getRequiredParameterNames() {
-    String[] baseParams = { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
+    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
 			     PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH};
     String[] extraParameters = getExtraParamNames();
     String[] combined = new String[baseParameters.length + extraParameters.length];
@@ -80,14 +80,13 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
   protected String getResultsFileBaseName() { return "results"; }
 
-  @Override
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
   }
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
 
-    initForBashScript();
+    initForBashScript(jobDir, params, organismDir);
 
     List<String> command = new ArrayList<String>();
     String gusBin = GusHome.getGusHome() + "/bin";

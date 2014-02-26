@@ -25,8 +25,8 @@ public class FindSnpsByGenomicLocationPlugin extends FindPolymorphismsPlugin {
    * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
    */
   @Override
-  public String[] geExtraParamNames() {
-    return new String[] {PARAM_GENE_IDS};
+  public String[] getExtraParamNames() {
+    return new String[] {PARAM_GENES_DATASET};
   }
 
   /*
@@ -46,16 +46,8 @@ public class FindSnpsByGenomicLocationPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
-    String chromosome = params.get(PARAM_CHROMOSOME);
-    String seq = params.get(PARAM_SEQUENCE);
-    if (seq.equals("")) seq = chromosome;
-    String start = params.get(PARAM_START_POINT);
-    int end = Integer.parseInt(params.get(PARAM_END_POINT));
-    if (end == 0) end = 1000000000;
     List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);
-    command.add(seq);
-    command.add(start);
-    command.add("" + end);
+    command.add(genomicLocationsFileName);
     return command;
   }
  
