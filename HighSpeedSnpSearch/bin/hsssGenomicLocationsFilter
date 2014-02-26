@@ -44,7 +44,7 @@ while(<STDIN>) {
     $genomicLocationLine = <F>;
     last unless $genomicLocationLine;
     ($filterContigId, $filterStart, $filterEnd) = split(/\t/, $genomicLocationLine);
-    if ($contigSourceId eq $filterContigId && $location >= $filterStart && location <= $filterEnd) {
+    if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
       print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
     }
   }

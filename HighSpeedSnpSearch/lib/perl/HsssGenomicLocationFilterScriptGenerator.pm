@@ -1,4 +1,4 @@
-package ApiCommonWebService::HighSpeedSnpSearch::HsssPolymorphismScriptGenerator;
+package ApiCommonWebService::HighSpeedSnpSearch::HsssGenomicLocationFilterScriptGenerator;
 
 use ApiCommonWebService::HighSpeedSnpSearch::HsssPolymorphismScriptGenerator;
 

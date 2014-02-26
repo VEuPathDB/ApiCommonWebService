@@ -54,9 +54,9 @@ fi
 echo "matched"
 echo ""
 
-# generate findPolymorphism script with filter
+# generate findPolymorphism script with single genomic location filter
 echo -e "1\n2\n3\n4" > strainsList.txt
-hsssGeneratePolymorphismScript $testDir $testDir 1 runPolymorphismSearchWithFilter polymorphismSearchWithFilter_result.txt 20 1 strainsList.txt c100 21 25
+hsssGeneratePolymorphismScript $testDir $testDir 1 runPolymorphismSearchWithFilter polymorphismSearchWithFilter_result.txt 20 1 strainsList.txt f100 21 25
 chmod +x runPolymorphismSearchWithFilter
 
 # run that script and compare output with expected.
@@ -68,7 +68,23 @@ diffStat=$?
 if [ $diffStat != 0 ]; then
    exit -1
 fi
+echo "matched"
+echo ""
 
+# generate findPolymorphism script with genomic locations filter
+echo -e "1\n2\n3\n4" > strainsList.txt
+hsssGenerateGenomicLocationsScript $testDir $testDir 1 runGenomicLocations genomicLocations_result.txt 20 1 strainsList.txt $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/genomicLocationFilters.txt
+chmod +x runGenomicLocations
+
+# run that script and compare output with expected.
+./runGenomicLocations
+
+echo "Comparing expected runGenomicLocations output with result..."
+diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/genomicLocationFilter.txt genomicLocations_result.txt  
+diffStat=$?
+if [ $diffStat != 0 ]; then
+   exit -1
+fi
 echo "matched"
 echo ""
 
