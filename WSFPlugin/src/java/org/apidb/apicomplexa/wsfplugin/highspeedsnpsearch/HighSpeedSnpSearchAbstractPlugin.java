@@ -134,7 +134,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       StringBuffer output = new StringBuffer();
 
       String[] cmds = { jobDir.getPath() + "/" + commandName };
-      String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH") };
+      String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH"), "GUS_HOME=" + GusHome.getGusHome() };
       int signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();
       logger.info("Running " + commandName + " bash took: " + ((invoke_end - start) / 1000.0)
@@ -251,6 +251,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       // set path on command
       Map<String,String> env = builder.environment();
       env.put("PATH", gusBin + ":" + env.get("PATH"));
+      env.put("GUS_HOME", GusHome.getGusHome());
       logger.debug("Path sent to subprocesses: " + env.get("PATH"));
       Process process = builder.start();
       process.waitFor();
