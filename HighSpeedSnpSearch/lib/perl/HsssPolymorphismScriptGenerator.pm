@@ -71,7 +71,7 @@ sub getPolymorphismArgsUsage{
   return "polymorphism_threshold unknown_threshold strains_list_file";
 }
 
-sub getPolymorphismsArgsHelp {
+sub getPolymorphismArgsHelp {
   return "  - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
