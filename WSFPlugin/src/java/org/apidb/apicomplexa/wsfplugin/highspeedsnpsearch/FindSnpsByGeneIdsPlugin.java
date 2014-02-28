@@ -124,7 +124,9 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
     String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +
       "from apidbtuning.geneattributes g, " + newline +
       "(" + geneIdsSubquery + ") user_genes" + newline +
-      "where g.source_id = user_genes.source_id";
+      "where g.source_id = user_genes.source_id" + newline +
+      "order by g.sequence_id, g.start_min, g.end_max";
+      logger.info(sql);
 
     try {
       ps = connection.prepareStatement(sql);
