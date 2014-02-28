@@ -64,7 +64,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
     if (gene_list_dataset.equals("unit test")) {
       testFilters = new String[] {"e99\t1000\t3000", "f100\t500\t700", "h103\t30021\t40000", "j201\t20\t50"};
     } else {
-      logger.info("gene list dataset: " + gene_list_dataset + " ==================");
       try {
 	connection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
 	pstmt = getPreparedStmt(gene_list_dataset, connection);
@@ -126,7 +125,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
       "(" + geneIdsSubquery + ") user_genes" + newline +
       "where g.source_id = user_genes.source_id" + newline +
       "order by g.sequence_id, g.start_min, g.end_max";
-      logger.info(sql);
 
     try {
       ps = connection.prepareStatement(sql);
