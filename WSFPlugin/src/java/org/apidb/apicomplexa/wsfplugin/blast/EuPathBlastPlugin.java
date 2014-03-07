@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.blast;
 
 import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
+import org.gusdb.fgputil.ArrayUtil;
 
 public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
@@ -15,10 +16,6 @@ public class EuPathBlastPlugin extends AbstractBlastPlugin {
 
   @Override
   public String[] getRequiredParameterNames() {
-    String[] partParams = super.getRequiredParameterNames();
-    String[] params = new String[partParams.length + 1];
-    System.arraycopy(partParams, 0, params, 0, partParams.length);
-    params[params.length - 1] = PARAM_DATABASE_ORGANISM;
-    return params;
+    return ArrayUtil.append(super.getRequiredParameterNames(), PARAM_DATABASE_ORGANISM);
   }
 }

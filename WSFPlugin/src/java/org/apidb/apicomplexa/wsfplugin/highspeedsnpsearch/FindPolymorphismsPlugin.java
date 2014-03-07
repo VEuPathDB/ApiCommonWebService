@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
@@ -39,10 +40,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
 			     PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH};
     String[] extraParameters = getExtraParamNames();
-    String[] combined = new String[baseParameters.length + extraParameters.length];
-    System.arraycopy(baseParameters, 0, combined, 0, baseParameters.length);
-    System.arraycopy(extraParameters, 0, combined, baseParameters.length, extraParameters.length);
-    return combined;
+    return ArrayUtil.concatenate(baseParameters, extraParameters);
   }
 
   String[] getExtraParamNames() {
