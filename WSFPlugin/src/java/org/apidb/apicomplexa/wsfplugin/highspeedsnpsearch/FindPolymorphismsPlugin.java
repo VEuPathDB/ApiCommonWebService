@@ -28,6 +28,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
   public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
 
+  @SuppressWarnings("unused")
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
 
   /*
@@ -78,6 +79,9 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
   protected String getResultsFileBaseName() { return "results"; }
 
+  /**
+   * @throws WsfPluginException  
+   */
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
   }
 

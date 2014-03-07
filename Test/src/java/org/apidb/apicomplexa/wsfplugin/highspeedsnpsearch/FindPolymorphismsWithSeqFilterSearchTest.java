@@ -8,10 +8,12 @@ public class FindPolymorphismsWithSeqFilterSearchTest extends FindPolymorphismsS
     super();
   }
 
+  @Override
   public FindPolymorphismsPlugin getPlugin() {
     return new FindPolymorphismsWithSeqFilterPlugin();
   }
   
+  @Override
   public void prepareParams(Map<String, String> params) {
     super.prepareParams(params);
     params.put(FindPolymorphismsWithSeqFilterPlugin.PARAM_CHROMOSOME, "");
@@ -20,6 +22,7 @@ public class FindPolymorphismsWithSeqFilterSearchTest extends FindPolymorphismsS
     params.put(FindPolymorphismsWithSeqFilterPlugin.PARAM_END_POINT, "25");
   }
 
+  @Override
   public int getExpectedResultCount() { return 1; }
 
 }

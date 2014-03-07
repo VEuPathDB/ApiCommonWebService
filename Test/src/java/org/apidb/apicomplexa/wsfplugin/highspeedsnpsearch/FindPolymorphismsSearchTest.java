@@ -1,25 +1,15 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
-import org.gusdb.wdk.model.Utilities;
-import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class FindPolymorphismsSearchTest extends HsssTest {
