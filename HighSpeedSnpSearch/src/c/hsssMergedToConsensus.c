@@ -30,7 +30,10 @@ char refProduct;
 int alleleCount;   // number of known alleles for this SNP (might include more than one per strain, if diploid)
 int nonRefStrainsCount = 0;   // number of strains that are not like-reference in this SNP
 int alleles[5] = {0};  // hold count of alleles.  init array to 0. 0th allele is unknowns
-int products[4][27] = {{0}, {0}, {0}, {0}};  // hold count of products. initialize array to 0.  the 0th product element means no product
+
+// hold count of products. initialize array to 0.  the 0th product element means no product.  the 28th is for nonsense product
+int products[4][28] = {{0}, {0}, {0}, {0}};
+
 
 // prev SNP
 int prevProduct = -1;
@@ -40,11 +43,11 @@ int32_t prevLoc;
 
 static char *stdoutStr = "STDOUT";
 
-static inline void initProductArrays(int prodArray[4][27]) {
+static inline void initProductArrays(int prodArray[4][28]) {
 	int i;
 	for (i=0; i<4; i++) { 
 		int j;
-		for (j=0; j<27; j++) prodArray[i][j] = 0;
+		for (j=0; j<28; j++) prodArray[i][j] = 0;
 	}
 }
 
@@ -59,9 +62,12 @@ static inline void findMaxProduct(int allele, char *majorProduct, char *isVariab
 		int prodCount = products[index][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
-			*majorProduct = i + 64;
 			max = prodCount;
+			*majorProduct = i + 64;
 		}
+	}
+	if (products[index][28] > max) {
+		*majorProduct = '*';
 	}
 }
 
@@ -121,7 +127,10 @@ static inline updateCounts() {
 		nonRefStrainsCount += strain;
 	} else {
 		alleles[allele]++;
-		if (product != 0) products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+		if (product != 0) {
+			if (product == '*') products[allele-1][28]++;
+			else products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+		}
 		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
@@ -230,7 +239,10 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		alleleCount += ref_count;
 		alleles[refAllele] += ref_count;
 
-		if (refProduct != 0) products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+		if (refProduct != 0) {
+			if (refProduct == '*') products[refAllele-1][28] += ref_count;
+			else products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+		}
 
 		// find major allele
 		char majorAllele;
