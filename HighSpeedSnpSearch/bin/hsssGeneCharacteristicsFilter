@@ -2,7 +2,7 @@
 
 use strict;
 
-my ($contigIdFile, $genomicLocationsFile, $snpClass, $snpsMin, $snpsMax, $dndsMin, $dndsMax, $densityMin, $densityMax) = @ARGV;
+my ($contigIdFile, $geneLocationsFile, $snpClass, $snpsMin, $snpsMax, $dndsMin, $dndsMax, $densityMin, $densityMax) = @ARGV;
 
 usage() unless scalar(@ARGV) == 9;
 
@@ -24,7 +24,7 @@ my $withinFilter = 0;
 my $snpsCount;
 my $codingCount;
 my $nonsenseCount;
-my $synCount;
+my $nonSynCount;
 
 
 while(<STDIN>) {
@@ -79,7 +79,7 @@ sub checkFilter {
   my $synCount = $snpsCount - $nonSynCount;
   my $nonCodingCount = $snpsCount - $codingCount;
   my $dnds = $nonSynCount / $synCount;
-  my $density = $snpCount / (($filterEnd - $filterStart) / 1000);
+  my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
   if ($snpClass && ($snpsMin || $snpsMax ne "")) {
     if ($snpClass eq 'coding') {
