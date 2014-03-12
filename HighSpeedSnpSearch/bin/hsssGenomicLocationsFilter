@@ -25,6 +25,8 @@ my $withinFilter = 0;
 while(<STDIN>) {
   chomp;
   my @fields = split(/\t/);
+  $fields[4] = ($fields[4] >= 1)? 'y' : '';  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
+
   my $contigIndex = shift(@fields);
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
@@ -67,8 +69,10 @@ Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
   - genomic_locations_filter_file: a tab delimited file with three columns:  contig_source_id, start, end
 
-  - snp_search_result: tab_delimited where first column is contig index and second is genomic location.
+  - snp_search_result: tab_delimited with columns contig_index, genomic_location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense).
 
 Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+Also converts protein_class to 'y' if class is nonsyn or nonsense.
+Filters away SNPs that are not within the provided genomic locations.
 ";
 }

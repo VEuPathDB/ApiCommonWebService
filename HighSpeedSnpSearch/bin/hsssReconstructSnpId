@@ -18,6 +18,8 @@ close(C);
 while(<STDIN>) {
   chomp;
   my @fields = split(/\t/);
+  $fields[4]= ($fields[4] >= 1)? 'y' : '';  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
+
   my $contigIndex = shift(@fields);
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
@@ -37,8 +39,9 @@ Where:
   - min_loc: required if seq_id provided.  return only SNPs at this location or larger
   - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
 
-  - snp_search_result: tab_delimited where first column is contig index and second is genomic location.
+  - snp_search_result: tab_delimited with columns contig_index, genomic_location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense).
 
-Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id. 
+Also converts protein_class to 'y' if class is nonsyn or nonsense.
 ";
 }

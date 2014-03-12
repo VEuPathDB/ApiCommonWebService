@@ -30,7 +30,7 @@ my $nonSynCount;
 while(<STDIN>) {
   chomp;
 
-  my ($contigIndex, $location, $allele, $product, $nonSyn) = split(/\t/);
+  my ($contigIndex, $location, $knownsPercent, $nonMajorAllelesPct, $productClass) = split(/\t/);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
 
@@ -42,9 +42,9 @@ while(<STDIN>) {
   # gather stats for this SNP if within current gene
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $snpsCount++;
-    $codingCount++ if $product;
-    $nonsenseCount++ if $product eq '*';
-    $nonSynCount++ if $nonSyn;
+    $codingCount++ if $productClass == 0;
+    $nonSynCount++ if $productClass == 1;
+    $nonsenseCount++ if $productClass == 2;
   }
 
   # read next gene if beyond current gene
