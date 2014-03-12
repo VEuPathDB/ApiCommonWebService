@@ -66,9 +66,9 @@ while(<STDIN>) {
     # if this SNP is inside the next gene, update counts
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
       $snpsCount++;
-      $codingCount++ if $product;
-      $nonsenseCount++ if $product eq '*';
-      $nonSynCount++ if $nonSyn;
+      $codingCount++ if $productClass == 0;
+      $nonSynCount++ if $productClass == 1;
+      $nonsenseCount++ if $productClass == 2;
     }
   }
 }
