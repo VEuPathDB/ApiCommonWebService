@@ -36,7 +36,7 @@ while(<STDIN>) {
   }
 
   # print this SNP if within current filter
-  elsif ($location <= $filterEnd) {
+  elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
   }
 
