@@ -40,7 +40,7 @@ while(<STDIN>) {
   }
 
   # gather stats for this SNP if within current gene
-  elsif ($location <= $filterEnd) {
+  elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $snpsCount++;
     $codingCount++ if $product;
     $nonsenseCount++ if $product eq '*';
@@ -50,7 +50,7 @@ while(<STDIN>) {
   # read next gene if beyond current gene
   else {
     # process current gene before reading next
-    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount);
+    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
 
     # zero counts
     $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = 0;
@@ -73,12 +73,12 @@ while(<STDIN>) {
   }
 }
 
-sub checkFilter {
+sub processGene {
   my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) = @_;
 
   my $synCount = $snpsCount - $nonSynCount;
   my $nonCodingCount = $snpsCount - $codingCount;
-  my $dnds = $nonSynCount / $synCount;
+  my $dnds = $synCount? $nonSynCount / $synCount : $nonSynCount;
   my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
   if ($snpClass && ($snpsMin || $snpsMax ne "")) {
@@ -120,7 +120,7 @@ Usage: hsssGeneCharacteristicsFilter contig_id_file gene_locations_filter_file s
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
-  - gene_locations_filter_file: a tab delimited file with three columns:  contig_source_id, start, end
+  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location
   - snp_class:  coding, noncoding, synonymous, nonsynonymous, nonsense
   - snps_min: min percent of SNPs in the gene that belong to the specified class
   - snps_min: max percent of SNPs in the gene that belong to the specified class
