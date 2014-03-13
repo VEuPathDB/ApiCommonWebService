@@ -10,7 +10,7 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 /**
  * @author steve
  */
-public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugin {
+public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   // required parameter definition
   public static final String PARAM_SNP_CLASS = "snp_stat";
