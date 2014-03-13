@@ -53,7 +53,7 @@ static inline void initProductArrays(int prodArray[4][28]) {
 
 // in a product array, find the product with the highest count.
 // also see if there is more than one with non-zero count (isVariable)
-static inline void findMaxProduct(int allele, char *majorProduct, char *isVariable) {
+static inline void findMaxProduct(int allele, char *product, char *isVariable) {
 	int max = 0;
 	int i;
 	int index = allele - 1;
@@ -63,11 +63,11 @@ static inline void findMaxProduct(int allele, char *majorProduct, char *isVariab
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
 			max = prodCount;
-			*majorProduct = i + 64;
+			*product = i + 64;
 		}
 	}
-	if (products[index][28] > max) {
-		*majorProduct = '*';
+	if (products[index][27] > max) {
+		*product = '*';
 	}
 }
 
@@ -128,7 +128,7 @@ static inline updateCounts() {
 	} else {
 		alleles[allele]++;
 		if (product != 0) {
-			if (product == '*') products[allele-1][28]++;
+			if (product == '*') products[allele-1][27]++;
 			else products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
 		}
 		alleleCount++;
@@ -177,6 +177,7 @@ main(int argc, char *argv[]) {
 		fprintf(stderr,"\nProduce a binary SNP consensus from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount maxPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minMajorAllelePct:  there must be this percent or more major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nBinary output: contig_id(2), location(4), major_allele(1), major_allele_product(1), major_product_is_variable(1), minor_allele(1), minor_allele_product(1), minor_product_is_variable(1), major_allele_perTenThou(2), minor_allele_perTenThou(2), triallelic(1)\n", argv[0] );
 		return -1;
 	}
+
 	strainCount = atoi(argv[3]);
 	minMajorAllelePerTenThou = atoi(argv[4]) * 100;
 	unknownsThreshold = atoi(argv[5]);
@@ -240,7 +241,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		alleles[refAllele] += ref_count;
 
 		if (refProduct != 0) {
-			if (refProduct == '*') products[refAllele-1][28] += ref_count;
+			if (refProduct == '*') products[refAllele-1][27] += ref_count;
 			else products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
 		}
 
