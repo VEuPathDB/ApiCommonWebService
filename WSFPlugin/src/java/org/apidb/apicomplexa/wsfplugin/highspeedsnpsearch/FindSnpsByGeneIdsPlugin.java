@@ -84,7 +84,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 	ResultSet rs = null;
 
 	try {
-	  rs = SqlUtils.executeQuery(dataSource, sql, "the-name-of-your-sql");
+	  rs = SqlUtils.executeQuery(dataSource, sql, "FindSnpsByGeneIdsPlugin");
 
 	  while (rs.next()) {
 	    String sourceId = rs.getString(1);
