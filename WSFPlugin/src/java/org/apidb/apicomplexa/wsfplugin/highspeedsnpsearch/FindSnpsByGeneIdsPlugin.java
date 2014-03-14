@@ -4,8 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
@@ -16,7 +14,6 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.dbms.ConnectionContainer;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -32,8 +29,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
   public static final String genomicLocationsFileName = "genomicLocations.txt";
 
   private static final String CTX_CONTAINER_APP = "wdkModel";
-  private static final String CONNECTION_APP = WdkModel.CONNECTION_APP;
-
 
   /*
    * (non-Javadoc)
@@ -111,35 +106,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
       }
     }
   }
-
-  PreparedStatement getPreparedStmt(String geneIdsSubquery, Connection connection) throws WsfPluginException {
-    PreparedStatement ps = null;
-    String newline = System.lineSeparator();
-    String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +
-      "from apidbtuning.geneattributes g, " + newline +
-      "(" + geneIdsSubquery + ") user_genes" + newline +
-      "where g.source_id = user_genes.source_id" + newline +
-      "order by g.sequence_id, g.start_min, g.end_max";
-
-    try {
-      ps = connection.prepareStatement(sql);
-    } catch (SQLException e) {
-      throw new WsfPluginException(e);
-    }
-    return ps;
-  }
-
-  protected Connection getDbConnection(String containerKey, String connectionKey)
-    throws SQLException, WsfPluginException, WdkModelException {
-    ConnectionContainer container = (ConnectionContainer) context.get(containerKey);
-    if (container == null)
-      throw new WsfPluginException("The container cannot be found in the "
-          + "context with key: " + containerKey + ". Please check if the "
-          + "container is declared in the context.");
-
-    return container.getConnection(connectionKey);
-  }
-
 
   @Override
   protected String getGenerateScriptName() {

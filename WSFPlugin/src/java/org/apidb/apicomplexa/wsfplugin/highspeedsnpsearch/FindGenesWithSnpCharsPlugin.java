@@ -1,9 +1,19 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
 import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 
+import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.wdk.model.WdkModel;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -11,6 +21,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  * @author steve
  */
 public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
+
+  private static final String CTX_CONTAINER_APP = "wdkModel";
 
   // required parameter definition
   public static final String PARAM_SNP_CLASS = "snp_stat";
@@ -43,14 +55,14 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
-    String gene_list_dataset = params.get(PARAM_GENES_DATASET);
-    File filtersFile = new File(jobDir, genomicLocationsFileName);
+    File filtersFile = new File(jobDir, "geneLocations.txt");
     BufferedWriter bw = null;
+    String snpClass = params.get(PARAM_SNP_CLASS);
     try {
       if (!filtersFile.exists()) filtersFile.createNewFile();
       FileWriter w = new FileWriter(filtersFile);
       bw = new BufferedWriter(w);
-      if (gene_list_dataset.equals("unit test")) {
+      if (snpClass.equals("unit test")) {
 	String[] testFilters = new String[] {"e99\t1000\t3000\tg1", "f100\t500\t700\tg2", "h103\t30021\t40000\tg3", "j201\t20\t50\tg4"};
 	for (String filter : testFilters ) {
 	  bw.write(filter);
@@ -105,6 +117,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
     String snpClass = params.get(PARAM_SNP_CLASS);
+    if (snpClass.equals("unit test")) snpClass = "coding";
     String min  = params.get(PARAM_OCCURENCES_LOWER);
     String max = params.get(PARAM_OCCURENCES_UPPER);
     String dnds_min = params.get(PARAM_DNDS_LOWER);
