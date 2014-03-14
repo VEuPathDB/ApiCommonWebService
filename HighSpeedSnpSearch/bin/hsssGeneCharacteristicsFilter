@@ -1,0 +1,136 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($contigIdFile, $geneLocationsFile, $snpClass, $snpsMin, $snpsMax, $dndsMin, $dndsMax, $densityMin, $densityMax) = @ARGV;
+
+usage() unless scalar(@ARGV) == 9;
+
+open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
+my %contigHash;
+while (<C>) {
+  chomp;
+  my ($contigIndex, $contigSourceId) = split(/\t/);
+  $contigHash{$contigIndex} = $contigSourceId;
+}
+close(C);
+
+open(F, $geneLocationsFile) || die "Can't open gene locations file '$geneLocationsFile'\n";
+my $geneLocationLine = <F>;
+chomp $geneLocationLine;
+my ($filterGeneId, $filterContigId, $filterStart, $filterEnd) = split(/\t/, $geneLocationLine);
+
+my $withinFilter = 0;
+my $snpsCount;
+my $codingCount;
+my $nonsenseCount;
+my $nonSynCount;
+
+
+while(<STDIN>) {
+  chomp;
+
+  my ($contigIndex, $location, $knownsPercent, $nonMajorAllelesPct, $productClass) = split(/\t/);
+  my $contigSourceId = $contigHash{$contigIndex};
+  die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
+
+  # skip this SNP if before current gene
+  if ($contigSourceId lt $filterContigId || ($contigSourceId eq $filterContigId && $location < $filterStart)) {
+    next;
+  }
+
+  # gather stats for this SNP if within current gene
+  elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
+    $snpsCount++;
+    $codingCount++ if $productClass == 0;
+    $nonSynCount++ if $productClass == 1;
+    $nonsenseCount++ if $productClass == 2;
+  }
+
+  # read next gene if beyond current gene
+  else {
+    # process current gene before reading next
+    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
+
+    # zero counts
+    $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = 0;
+
+    # find next gene that is not behind us
+    while ($contigSourceId gt $filterContigId || ($contigSourceId eq $filterContigId && $location > $filterEnd)) {
+      $geneLocationLine = <F>;
+      chomp $geneLocationLine;
+      last unless $geneLocationLine;
+      ($filterContigId, $filterStart, $filterEnd) = split(/\t/, $geneLocationLine);
+    }
+
+    # if this SNP is inside the next gene, update counts
+    if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
+      $snpsCount++;
+      $codingCount++ if $productClass == 0;
+      $nonSynCount++ if $productClass == 1;
+      $nonsenseCount++ if $productClass == 2;
+    }
+  }
+}
+
+sub processGene {
+  my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) = @_;
+
+  my $synCount = $snpsCount - $nonSynCount;
+  my $nonCodingCount = $snpsCount - $codingCount;
+  my $dnds = $synCount? $nonSynCount / $synCount : $nonSynCount;
+  my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
+
+  if ($snpClass && ($snpsMin || $snpsMax ne "")) {
+    if ($snpClass eq 'coding') {
+      return 0 if ($codingCount < $snpsMin || ($snpsMax != 0 && $codingCount > $snpsMax));
+    } elsif ($snpClass eq 'noncoding') {
+      return 0 if ($nonCodingCount < $snpsMin || ($snpsMax != 0 && $nonCodingCount > $snpsMax));
+    } elsif ($snpClass eq 'synonymous') {
+      return 0 if ($synCount < $snpsMin || ($snpsMax != 0 && $synCount > $snpsMax));
+    } elsif ($snpClass eq 'nonsynonymous') {
+      return 0 if ($nonSynCount < $snpsMin || ($snpsMax != 0 && $nonSynCount > $snpsMax));
+    } elsif ($snpClass eq 'nonsense') {
+      return 0 if ($nonsenseCount < $snpsMin || ($snpsMax != 0 && $nonsenseCount > $snpsMax));
+    }
+  }
+
+  if ($dndsMin || $dndsMax ne "") {
+    if ($synCount == 0) {
+      return 0 unless $dndsMax == 0;
+    } else {
+      return 0 if $dnds < $dndsMin || ($dndsMax != 0 && $dnds > $dndsMax);
+    }
+  }
+
+  if ($densityMin || $densityMax ne "") {
+    return 0 if ($density < $densityMin || ($densityMax != 0 && $density > $densityMax));
+  }
+
+  print STDOUT join("\t", $filterGeneId, $density, $dnds, $synCount, $nonSynCount, $nonCodingCount, $nonsenseCount, $snpsCount) . "\n";
+}
+
+sub usage {
+  die "
+Replace the first and second columns of a stream with a SNP ID, given a file with a mapping, and filter the SNPs based on a set of
+gene locations, provided in input file, and snp characteristics, provided on command line.  Only SNPs within those spans and with
+those characteristics are returned.
+
+Usage: hsssGeneCharacteristicsFilter contig_id_file gene_locations_filter_file snp_class snps_min snps_max dnds_min dnds_max density_min density_max < snp_search_result
+
+Where:
+  - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
+  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location
+  - snp_class:  coding, noncoding, synonymous, nonsynonymous, nonsense
+  - snps_min: min percent of SNPs in the gene that belong to the specified class
+  - snps_min: max percent of SNPs in the gene that belong to the specified class
+  - dnds_min: min dn/ds ratio
+  - dnds_min: max dn/ds ratio
+  - density_min: min SNPs density
+  - density_max: max SNPs density
+
+  - snp_search_result: tab_delimited where first column is contig index and second is gene location.
+
+Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+";
+}

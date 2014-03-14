@@ -305,7 +305,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     try {
       ps = dbConnection.prepareStatement(sql);
       ps.setString(1, oracleTextExpression);
-      ps.setInt(2, Integer.parseInt(maxPvalue));
+      ps.setFloat(2, Float.valueOf(maxPvalue));
       ps.setString(3, oracleTextExpression);
       ps.setString(4, oracleTextExpression);
       ps.setString(5, oracleTextExpression);

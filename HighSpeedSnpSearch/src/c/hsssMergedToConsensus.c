@@ -30,7 +30,10 @@ char refProduct;
 int alleleCount;   // number of known alleles for this SNP (might include more than one per strain, if diploid)
 int nonRefStrainsCount = 0;   // number of strains that are not like-reference in this SNP
 int alleles[5] = {0};  // hold count of alleles.  init array to 0. 0th allele is unknowns
-int products[4][27] = {{0}, {0}, {0}, {0}};  // hold count of products. initialize array to 0.  the 0th product element means no product
+
+// hold count of products. initialize array to 0.  the 0th product element means no product.  the 28th is for nonsense product
+int products[4][28] = {{0}, {0}, {0}, {0}};
+
 
 // prev SNP
 int prevProduct = -1;
@@ -40,17 +43,17 @@ int32_t prevLoc;
 
 static char *stdoutStr = "STDOUT";
 
-static inline void initProductArrays(int prodArray[4][27]) {
+static inline void initProductArrays(int prodArray[4][28]) {
 	int i;
 	for (i=0; i<4; i++) { 
 		int j;
-		for (j=0; j<27; j++) prodArray[i][j] = 0;
+		for (j=0; j<28; j++) prodArray[i][j] = 0;
 	}
 }
 
 // in a product array, find the product with the highest count.
 // also see if there is more than one with non-zero count (isVariable)
-static inline void findMaxProduct(int allele, char *majorProduct, char *isVariable) {
+static inline void findMaxProduct(int allele, char *product, char *isVariable) {
 	int max = 0;
 	int i;
 	int index = allele - 1;
@@ -59,9 +62,12 @@ static inline void findMaxProduct(int allele, char *majorProduct, char *isVariab
 		int prodCount = products[index][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
-			*majorProduct = i + 64;
 			max = prodCount;
+			*product = i + 64;
 		}
+	}
+	if (products[index][27] > max) {
+		*product = '*';
 	}
 }
 
@@ -121,7 +127,10 @@ static inline updateCounts() {
 		nonRefStrainsCount += strain;
 	} else {
 		alleles[allele]++;
-		if (product != 0) products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+		if (product != 0) {
+			if (product == '*') products[allele-1][27]++;
+			else products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+		}
 		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
@@ -168,6 +177,7 @@ main(int argc, char *argv[]) {
 		fprintf(stderr,"\nProduce a binary SNP consensus from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount maxPolymorphismPct unknownsThreshold\n\nWhere:\n  strainCount: number of input strains\n  minMajorAllelePct:  there must be this percent or more major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nBinary output: contig_id(2), location(4), major_allele(1), major_allele_product(1), major_product_is_variable(1), minor_allele(1), minor_allele_product(1), minor_product_is_variable(1), major_allele_perTenThou(2), minor_allele_perTenThou(2), triallelic(1)\n", argv[0] );
 		return -1;
 	}
+
 	strainCount = atoi(argv[3]);
 	minMajorAllelePerTenThou = atoi(argv[4]) * 100;
 	unknownsThreshold = atoi(argv[5]);
@@ -230,7 +240,10 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		alleleCount += ref_count;
 		alleles[refAllele] += ref_count;
 
-		if (refProduct != 0) products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+		if (refProduct != 0) {
+			if (refProduct == '*') products[refAllele-1][27] += ref_count;
+			else products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+		}
 
 		// find major allele
 		char majorAllele;

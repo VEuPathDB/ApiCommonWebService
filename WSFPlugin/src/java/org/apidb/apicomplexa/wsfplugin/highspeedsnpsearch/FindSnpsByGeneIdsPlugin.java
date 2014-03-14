@@ -8,11 +8,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.wdk.model.WdkModel;
+import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.ConnectionContainer;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -56,42 +58,34 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
   @Override
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
     String gene_list_dataset = params.get(PARAM_GENES_DATASET);
-    String[] testFilters = null;
-    Connection connection = null;
-    PreparedStatement pstmt = null;
-    ResultSet rs = null;
-    
-    if (gene_list_dataset.equals("unit test")) {
-      testFilters = new String[] {"e99\t1000\t3000", "f100\t500\t700", "h103\t30021\t40000", "j201\t20\t50"};
-    } else {
-      try {
-	connection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
-	pstmt = getPreparedStmt(gene_list_dataset, connection);
-	rs = pstmt.executeQuery();
-	//      pstmt.setFetchSize(100);
-      } catch (Exception ex) {
-	try {
-	  if (connection != null) connection.close();
-	} catch (Exception ex2) {
-	  throw new WsfPluginException(ex2);
-	}
-	throw new WsfPluginException(ex);
-      } 
-    }
-
     File filtersFile = new File(jobDir, genomicLocationsFileName);
     BufferedWriter bw = null;
     try {
       if (!filtersFile.exists()) filtersFile.createNewFile();
       FileWriter w = new FileWriter(filtersFile);
       bw = new BufferedWriter(w);
-      if (testFilters != null) {
+      if (gene_list_dataset.equals("unit test")) {
+	String[] testFilters = new String[] {"e99\t1000\t3000", "f100\t500\t700", "h103\t30021\t40000", "j201\t20\t50"};
 	for (String filter : testFilters ) {
 	  bw.write(filter);
 	  bw.newLine();
 	}
       } else {
+	WdkModelBean wdkModelBean = (WdkModelBean)context.get(CTX_CONTAINER_APP);
+	WdkModel wdkModel = wdkModelBean.getModel();
+	DataSource dataSource = wdkModel.getAppDb().getDataSource();
+	String newline = System.lineSeparator();
+	String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +
+	  "from apidbtuning.geneattributes g, " + newline +
+	  "(" + gene_list_dataset + ") user_genes" + newline +
+	  "where g.source_id = user_genes.source_id" + newline +
+	  "order by g.sequence_id, g.start_min, g.end_max";
+   
+	ResultSet rs = null;
+
 	try {
+	  rs = SqlUtils.executeQuery(dataSource, sql, "FindSnpsByGeneIdsPlugin");
+
 	  while (rs.next()) {
 	    String sourceId = rs.getString(1);
 	    String start = rs.getString(2);
@@ -100,10 +94,11 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 	    bw.newLine();
 	  }
 	  logger.info("finished fetching rows");
+
 	} catch (Exception ex) {
 	  throw new WsfPluginException(ex);
 	} finally {
-	  SqlUtils.closeQuietly(rs);
+	  SqlUtils.closeResultSetAndStatement(rs);
 	}
       }
     } catch (IOException e) {

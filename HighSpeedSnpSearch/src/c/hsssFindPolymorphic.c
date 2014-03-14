@@ -36,6 +36,8 @@ int nonRefStrainsCount = 0;
 int prevProduct = -1;
 int prevStrain = -1;
 int nonSyn = 0;
+int coding = 0;
+int nonsense = 0;
 int16_t prevSeq;
 int32_t prevLoc;
 
@@ -87,13 +89,16 @@ static inline updateCounts() {
 		else U_count++;
 		if (strain != prevStrain) nonRefStrainsCount++;
 	}
-	if (product != prevProduct && product > 0 && prevProduct > 0) nonSyn = 1;
+	if (product != prevProduct && product > 0 && prevProduct > 0) {
+		nonSyn = 1;
+		if (product == '*' || prevProduct == '*') nonsense = 1;
+	}
 }
 
 main(int argc, char *argv[]) {
 
 	if ( argc != 6) {
-		fprintf(stderr,"\nReport SNPs with polymorphism from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold [seq_id loc_min loc_max]\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nTab delimited output: contig_id, location, knowns_percent, non-major_allele_percent, nonSynonymous\n", argv[0] );
+		fprintf(stderr,"\nReport SNPs with polymorphism from an input of merged strain files.\n\nUsage: %s mergedStrainFiles refGenomeFile strainCount minPolymorphismPct unknownsThreshold [seq_id loc_min loc_max]\n\nWhere:\n  strainCount: number of input strains\n  minPolymorphismPct:  there must be this percent or more non-major alleles for a SNP to be reported\n  unknownsThreshold: there must be this many or fewer unknowns for this SNP to be reported.\n\nTab delimited output: contig_id, location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense)\n", argv[0] );
 		return -1;
 	}
 	strainCount = atoi(argv[3]);
@@ -158,7 +163,10 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 		alleleCount += ref_count;
 
-		if (ref_count > 0 && refProduct != prevProduct && prevProduct > 0) nonSyn = 1;  // we saw some ref alleles, might have a second product
+		if (ref_count > 0 && refProduct != prevProduct && refProduct > 0 && prevProduct > 0) {
+			nonSyn = 1;  // we saw some ref alleles, might have a second product
+			if (refProduct == '*' || prevProduct == '*') nonsense = 1;			
+		}
 
 		// add in ref allele
 		if (refAllele == 1) a_count += ref_count;
@@ -179,9 +187,14 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		int polymorphisms = alleleCount - *majorCount;
 		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
 		int knownPercent = (strainCount - U_count) * 100 / strainCount;
+		
+		int productClass = -1;  // noncoding
+		if (nonsense) productClass = 2;
+		else if (nonSyn) productClass = 1;
+		else if (refProduct > 0) productClass = 0; //coding
 
 		if (polymorphismsPercent >= minPolymorphismPct && polymorphisms > 0) {
-			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, nonSyn);
+			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, productClass);
 		}
 	}
 

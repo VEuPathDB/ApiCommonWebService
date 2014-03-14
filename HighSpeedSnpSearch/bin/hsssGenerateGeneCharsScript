@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+
+use strict;
+use ApiCommonWebService::HighSpeedSnpSearch::HsssGeneCharsFilterScriptGenerator;
+
+my $generator = ApiCommonWebService::HighSpeedSnpSearch::HsssGeneCharsFilterScriptGenerator->new();
+
+$generator->run();

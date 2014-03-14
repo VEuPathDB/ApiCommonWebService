@@ -88,6 +88,23 @@ fi
 echo "matched"
 echo ""
 
+# generate findPolymorphism script with genes filter
+echo -e "1\n2\n3\n4" > strainsList.txt
+hsssGenerateGeneCharsScript $testDir $testDir 1 runGeneChars geneChars_result.txt 20 1 strainsList.txt $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/textData/geneFilters.txt coding 2 5 .1 .9 3 1000
+chmod +x runGeneChars
+
+# run that script and compare output with expected.
+./runGeneChars
+
+#echo "Comparing expected runGeneChars output with result..."
+#diff $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/test/expected/geneCharsFilter.txt geneChars_result.txt  
+#diffStat=$?
+#if [ $diffStat != 0 ]; then
+#   exit -1
+#fi
+#echo "matched"
+echo ""
+
 # test making a consensus from a merged output
 hsssMergedToConsensus mergeStrains_test.out referenceGenome.dat 4 0 1 > consensus.out
 hsssDumpConsensusFile consensus.out > consensus.txt
