@@ -1,19 +1,18 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
-import java.io.File;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
