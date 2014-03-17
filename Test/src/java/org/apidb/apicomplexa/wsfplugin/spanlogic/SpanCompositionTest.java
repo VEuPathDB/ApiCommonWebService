@@ -33,6 +33,7 @@ import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
@@ -62,7 +63,7 @@ public class SpanCompositionTest {
 
   @Test
   public void testSpanLogic() throws URISyntaxException, IOException,
-      WsfPluginException, WdkModelException {
+      WsfPluginException, WdkModelException, WdkUserException {
     List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
     for (SpanCompositionTestCase testCase : testCases) {
@@ -123,7 +124,7 @@ public class SpanCompositionTest {
   }
 
   private PluginRequest createRequest(SpanCompositionTestCase testCase)
-      throws WdkModelException {
+      throws WdkModelException, WdkUserException {
     // prepare parameters
     Map<String, String> params = new HashMap<String, String>();
 
@@ -163,7 +164,7 @@ public class SpanCompositionTest {
     return request;
   }
 
-  private String createGeneStep(String[] input) throws WdkModelException {
+  private String createGeneStep(String[] input) throws WdkModelException, WdkUserException {
     String key = Formatter.printArray(input).intern();
     if (steps.containsKey(key))
       return steps.get(key);
