@@ -7,7 +7,11 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
@@ -23,14 +27,30 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   private static final String CTX_CONTAINER_APP = "wdkModel";
 
+  private static final Set<String> legalParams = 
+    new HashSet<String>(Arrays.asList(new String[] {"coding","nonsynonymous","synonymous","nonsense", "all", "coding"} ));
+
+  private static final String geneLocationsFileName = "geneLocations.txt";
+
   // required parameter definition
-  public static final String PARAM_SNP_CLASS = "snp_stat";
+  public static final String PARAM_SNP_CLASS = "ngs_snp_class";
   public static final String PARAM_OCCURENCES_LOWER = "occurrences_lower";
   public static final String PARAM_OCCURENCES_UPPER = "occurrences_upper";
   public static final String PARAM_DNDS_LOWER = "dn_ds_ratio_lower";
   public static final String PARAM_DNDS_UPPER = "dn_ds_ratio_upper";
-  public static final String PARAM_DENSITY_LOWER = "density_lower";
-  public static final String PARAM_DENSITY_UPPER = "density_upper";
+  public static final String PARAM_DENSITY_LOWER = "snp_density_lower";
+  public static final String PARAM_DENSITY_UPPER = "snp_density_upper";
+
+  public static final String COLUMN_GENE_SOURCE_ID = "source_id";
+  public static final String COLUMN_GENE_PROJECT_ID = "project_id";
+  public static final String COLUMN_DENSITY = "cds_snp_density";
+  public static final String COLUMN_DNDS = "hts_dn_ds_ratio";
+  public static final String COLUMN_SYN = "hts_num_synonymous";
+  public static final String COLUMN_NONSYN = "hts_num_non_synonymous";
+  public static final String COLUMN_NONCODING = "num_noncoding";
+  public static final String COLUMN_NONSENSE = "num_nonsense";
+  public static final String COLUMN_TOTAL = "hts_total_snps";
+
 
   /*
    * (non-Javadoc)
@@ -54,7 +74,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
-    File filtersFile = new File(jobDir, "geneLocations.txt");
+    File filtersFile = new File(jobDir, geneLocationsFileName);
     BufferedWriter bw = null;
     String snpClass = params.get(PARAM_SNP_CLASS);
     try {
@@ -77,7 +97,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
 	// can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
 	String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + newline +
-	  "from apidbtuning.geneattributes g, " + newline +
+	  "from apidbtuning.geneattributes g " + newline +
 	  "where g.source_id is not null" + newline +
           " and g.organism = '" + organism + "'" + newline +
 	  "order by g.sequence_id, g.start_min, g.end_max";
@@ -88,10 +108,11 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 	  rs = SqlUtils.executeQuery(dataSource, sql, "FindGenesWithSnpCharsPlugin");
 
 	  while (rs.next()) {
-	    String sourceId = rs.getString(1);
+	    String seqId = rs.getString(1);
 	    String start = rs.getString(2);
 	    String end = rs.getString(3);
-	    bw.write(sourceId + "\t" + start + "\t" + end);
+	    String geneId = rs.getString(4);
+	    bw.write(seqId + "\t" + start + "\t" + end + "\t" + geneId);
 	    bw.newLine();
 	  }
 	  logger.info("finished fetching rows");
@@ -113,10 +134,25 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     }
   }
 
+ /*
+   * (non-Javadoc)
+   * 
+   * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
+   */
+  @Override
+    public String[] getColumns() {
+    return new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_GENE_PROJECT_ID, COLUMN_DENSITY, COLUMN_DNDS, COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL
+               };
+  }
+
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
     String snpClass = params.get(PARAM_SNP_CLASS);
     if (snpClass.equals("unit test")) snpClass = "coding";
+    
+    if (!legalParams.contains(snpClass)) {
+        throw new WsfPluginException("SNP class param has unrecognized value: " + snpClass);
+    }
     String min  = params.get(PARAM_OCCURENCES_LOWER);
     String max = params.get(PARAM_OCCURENCES_UPPER);
     String dnds_min = params.get(PARAM_DNDS_LOWER);
@@ -125,6 +161,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     String density_max = params.get(PARAM_DENSITY_UPPER);
 
     List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);
+    command.add(geneLocationsFileName);
     command.add(snpClass);
     command.add(min);
     command.add(max);
@@ -134,5 +171,26 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     command.add(density_max);
     return command;
   }
- 
+
+  protected String getGenerateScriptName() {
+    return "hsssGenerateGeneCharsScript";
+  }
+    
+  @Override
+  protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException {
+    if (parts.length != 8)
+      throw new WsfPluginException("Wrong number of columns in results file.  Expected 8, found " + parts.length);
+
+    String[] row = new String[9];
+    row[columns.get(COLUMN_GENE_SOURCE_ID)] = parts[0];
+    row[columns.get(COLUMN_GENE_PROJECT_ID)] = projectId;
+    row[columns.get(COLUMN_DENSITY)] = parts[1];
+    row[columns.get(COLUMN_DNDS)] = parts[2];
+    row[columns.get(COLUMN_SYN)] = parts[3];
+    row[columns.get(COLUMN_NONSYN)] = parts[4];
+    row[columns.get(COLUMN_NONCODING)] = parts[5];
+    row[columns.get(COLUMN_NONSENSE)] = parts[6];
+    row[columns.get(COLUMN_TOTAL)] = parts[7];
+    return row;
+  }  
 }
