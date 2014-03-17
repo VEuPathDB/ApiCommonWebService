@@ -247,6 +247,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     command.toArray(array);
     try {
       ProcessBuilder builder = new ProcessBuilder(command);
+      System.err.println(command.toString());
       
       // set path on command
       Map<String,String> env = builder.environment();
