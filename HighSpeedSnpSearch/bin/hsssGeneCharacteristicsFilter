@@ -72,9 +72,12 @@ while(<STDIN>) {
     }
   }
 }
+processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
 
 sub processGene {
   my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) = @_;
+
+  return unless $snpsCount;
 
   my $synCount = $codingCount - $nonSynCount;
   my $nonCodingCount = $snpsCount - $codingCount;

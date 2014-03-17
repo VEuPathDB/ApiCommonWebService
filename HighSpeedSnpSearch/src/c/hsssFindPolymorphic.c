@@ -206,6 +206,8 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 	U_count = 0;
 	nonRefStrainsCount = 0;
 	nonSyn = 0;
+	coding = 0;
+	nonsense = 0;
 	diploidCount = 0;
 	alleleCount = 0;
 
