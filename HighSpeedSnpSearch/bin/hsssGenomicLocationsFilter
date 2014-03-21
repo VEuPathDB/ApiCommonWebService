@@ -25,7 +25,12 @@ my $withinFilter = 0;
 while(<STDIN>) {
   chomp;
   my @fields = split(/\t/);
-  $fields[4] = ($fields[4] >= 1)? 'y' : '';  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
+
+  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
+  if ($fields[4] == -1) { $fields[4] = '-'; }
+  elsif ($fields[4] == 0) { $fields[4] = 'n'; }
+  elsif ($fields[4] >= 1) { $fields[4] = 'Y'; }
+  else { die "invalid coding class: '$fields[4]'\n"; }
 
   my $contigIndex = shift(@fields);
   my $location = shift(@fields);
