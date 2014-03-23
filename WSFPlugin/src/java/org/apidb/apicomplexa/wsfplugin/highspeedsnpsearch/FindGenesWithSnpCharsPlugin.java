@@ -44,12 +44,12 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
   public static final String COLUMN_GENE_SOURCE_ID = "source_id";
   public static final String COLUMN_GENE_PROJECT_ID = "project_id";
   public static final String COLUMN_DENSITY = "cds_snp_density";
-  public static final String COLUMN_DNDS = "hts_dn_ds_ratio";
-  public static final String COLUMN_SYN = "hts_num_synonymous";
-  public static final String COLUMN_NONSYN = "hts_num_non_synonymous";
+  public static final String COLUMN_DNDS = "ngs_dn_ds_ratio";
+  public static final String COLUMN_SYN = "ngs_num_synonymous";
+  public static final String COLUMN_NONSYN = "ngs_num_non_synonymous";
   public static final String COLUMN_NONCODING = "num_noncoding";
   public static final String COLUMN_NONSENSE = "num_nonsense";
-  public static final String COLUMN_TOTAL = "hts_total_snps";
+  public static final String COLUMN_TOTAL = "ngs_total_snps";
 
 
   /*

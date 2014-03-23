@@ -26,7 +26,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   // required result column definition
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
   public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
-  public static final String COLUMN_IS_NONSYNONYMOUS = "IsNonSynonymous";
+  public static final String COLUMN_PHENOTYPE = "Phenotype";
 
   @SuppressWarnings("unused")
   private static final String JOBS_DIR_PREFIX = "hsssFindPolymorphisms.";
@@ -57,7 +57,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
     public String[] getColumns() {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-              COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_IS_NONSYNONYMOUS };
+              COLUMN_PERCENT_OF_POLYMORPHISMS, COLUMN_PERCENT_OF_KNOWNS, COLUMN_PHENOTYPE };
   }
 
   /*
@@ -132,7 +132,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     row[columns.get(COLUMN_PROJECT_ID)] = projectId;
     row[columns.get(COLUMN_PERCENT_OF_KNOWNS)] = parts[1];
     row[columns.get(COLUMN_PERCENT_OF_POLYMORPHISMS)] = parts[2];
-    row[columns.get(COLUMN_IS_NONSYNONYMOUS)] = parts[3];
+    row[columns.get(COLUMN_PHENOTYPE)] = parts[3];
     return row;
   }  
 }
