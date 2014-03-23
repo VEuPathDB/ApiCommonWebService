@@ -75,7 +75,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
       FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
       FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
       FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
-      FindPolymorphismsPlugin.COLUMN_IS_NONSYNONYMOUS };
+      FindPolymorphismsPlugin.COLUMN_PHENOTYPE };
 
     PluginRequest request = new PluginRequest();
     request.setParams(params);
