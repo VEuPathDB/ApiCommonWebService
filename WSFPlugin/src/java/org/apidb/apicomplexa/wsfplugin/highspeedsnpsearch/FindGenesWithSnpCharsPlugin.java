@@ -5,13 +5,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
@@ -50,7 +49,6 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
   public static final String COLUMN_NONCODING = "num_noncoding";
   public static final String COLUMN_NONSENSE = "num_nonsense";
   public static final String COLUMN_TOTAL = "ngs_total_snps";
-
 
   /*
    * (non-Javadoc)
@@ -172,6 +170,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     return command;
   }
 
+  @Override
   protected String getGenerateScriptName() {
     return "hsssGenerateGeneCharsScript";
   }
