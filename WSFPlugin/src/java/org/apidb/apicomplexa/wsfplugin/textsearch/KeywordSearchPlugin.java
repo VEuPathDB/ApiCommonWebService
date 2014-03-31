@@ -102,22 +102,25 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     // search comments
     Map<String, SearchResult> commentResults = new LinkedHashMap<>();
     String oracleTextExpression = transformQueryString(textExpression);
+    logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
     String projectId = request.getProjectId();
+    String sql;
     if (searchComments) {
       PreparedStatement ps = null;
       try {
-        ps = getCommentQuery(projectId, recordType, oracleTextExpression,
-            commentRecords, communityAnnotationRecords);
-        BufferedResultContainer commentContainer = new BufferedResultContainer();
-        textSearch(commentContainer, ps, "source_id");
-        commentResults = validateRecords(projectId,
-            commentContainer.getResults(), organisms);
-        // logger.debug("after validation commentMatches = "
-        // + commentMatches.toString());
+	  sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
+	  Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
+	  ps = dbConnection.prepareStatement(sql);
+	  ps.setString(1, oracleTextExpression);
+	  BufferedResultContainer commentContainer = new BufferedResultContainer();
+	  textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
+	  commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
+	  // logger.debug("after validation commentMatches = "
+	  // + commentMatches.toString());
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
-        throw new WsfPluginException(ex);
+	  throw new WsfPluginException(ex);
       } finally {
-        SqlUtils.closeStatement(ps);
+	  SqlUtils.closeStatement(ps);
       }
     }
 
@@ -125,12 +128,24 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     if (searchComponent) {
       PreparedStatement ps = null;
       try {
-        ps = getComponentQuery(projectId, recordType, organisms,
-            oracleTextExpression, quotedFields.toString(), maxPvalue);
+        sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString());
+
+	if (maxPvalue == null || maxPvalue.equals("")) {
+	    maxPvalue = "0";
+	}
+
+	Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
+	ps = dbConnection.prepareStatement(sql);
+	ps.setString(1, oracleTextExpression);
+	ps.setFloat(2, Float.valueOf(maxPvalue));
+	ps.setString(3, oracleTextExpression);
+	ps.setString(4, oracleTextExpression);
+	ps.setString(5, oracleTextExpression);
+
         // merge the result from component with the ones from comments
         MergeResultContainer componentContainer = new MergeResultContainer(
             response, request.getOrderedColumns(), commentResults);
-        textSearch(componentContainer, ps, "source_id");
+	textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
         // process the remaining ones from comments, but not found in component
         componentContainer.processRemainingResults();
       } catch (SQLException | WdkModelException | EuPathServiceException ex) {
@@ -160,22 +175,18 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sb.toString().trim().substring(0, strLen - 1);
   }
 
-  private PreparedStatement getCommentQuery(String projectId,
-      String recordTypePredicate, String oracleTextExpression,
-      boolean commentRecords, boolean communityAnnotationRecords)
+  private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
+				 boolean communityAnnotationRecords)
       throws WsfPluginException, SQLException, WdkModelException,
       EuPathServiceException {
-    Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
 
+    String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
       recordTypePredicate = new String(" and review_status_id != 'community' ");
     } else if (!commentRecords && communityAnnotationRecords) {
       recordTypePredicate = new String(" and review_status_id = 'community' ");
     } else {
-      // Added by Jerric - the code is unclear, why a value is passed in
-      // while it will be over-written within the method?
-      // handle the default case
-      recordTypePredicate = " AND comment_target_id = '" + recordTypePredicate
+      recordTypePredicate = " AND comment_target_id = '" + recordType
           + "'\n";
     }
 
@@ -187,7 +198,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
         + "      FROM (SELECT SCORE(1) \n"
         + "                     as scoring, \n"
-        + "             DECODE(c.review_status_id, 'community', 'community annotation', 'user comments') as table_name, \n"
+        + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
         + "            FROM apidb.TextSearchableComment tsc, comments2.Comments c \n"
         + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
@@ -200,29 +211,13 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "      ORDER BY max_score desc \n" + "     )";
 
     logger.debug("comment SQL: " + sql);
-    logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
 
-    PreparedStatement ps = null;
-    try {
-      ps = dbConnection.prepareStatement(sql);
-      ps.setString(1, oracleTextExpression);
-    } catch (SQLException e) {
-      logger.error("caught SQLException " + e.getMessage());
-      throw new WsfPluginException(e);
-    }
-
-    return ps;
+    return sql;
   }
 
-  private PreparedStatement getComponentQuery(String projectId,
-      String recordType, String organisms, String oracleTextExpression,
-      String fields, String maxPvalue) throws WsfPluginException,
+  private String getComponentQuery(String projectId, String recordType, String organisms,
+				   String fields) throws WsfPluginException,
       SQLException, WdkModelException, EuPathServiceException {
-    Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
-
-    if (maxPvalue == null || maxPvalue.equals("")) {
-      maxPvalue = "0";
-    }
 
     String sql = new String(
         "select source_id, project_id, count(*) as max_score,  \n"
@@ -277,26 +272,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "GROUP BY source_id, project_id  \n"
             + "      ORDER BY max_score desc, source_id \n");
     logger.debug("component SQL: " + sql);
-    logger.debug("organisms = \"" + organisms + "\"; oracleTextExpression = \""
-        + oracleTextExpression + "\"");
-    logger.debug("fields = \"" + fields + "\"");
-    logger.debug("recordType = \"" + recordType + "\"");
-    logger.debug("maxPvalue = \"" + maxPvalue + "\"");
 
-    PreparedStatement ps = null;
-    try {
-      ps = dbConnection.prepareStatement(sql);
-      ps.setString(1, oracleTextExpression);
-      ps.setFloat(2, Float.valueOf(maxPvalue));
-      ps.setString(3, oracleTextExpression);
-      ps.setString(4, oracleTextExpression);
-      ps.setString(5, oracleTextExpression);
-    } catch (SQLException e) {
-      logger.error("caught SQLException " + e.getMessage());
-      throw new WsfPluginException(e);
-    }
-
-    return ps;
+    return sql;
   }
 
   // private PreparedStatement getValidationQuery() throws WsfServiceException {
@@ -350,11 +327,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
         for (String sourceId : commentResults.keySet()) {
-          // logger.debug("validating sourceId \"" + sourceId + "\"");
+          logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
           validationQuery.setString(2, projectId);
-          rs = validationQuery.executeQuery();
+          rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
           if (!rs.next()) {
             // no match; drop result
             logger.trace("dropping unrecognized ID \"" + sourceId
@@ -376,7 +353,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               newCommentResults.put(returnedSourceId, result);
             }
           }
-
+	  SqlUtils.closeResultSetOnly(rs);
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
