@@ -176,9 +176,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   }
 
   private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
-				 boolean communityAnnotationRecords)
-      throws WsfPluginException, SQLException, WdkModelException,
-      EuPathServiceException {
+				 boolean communityAnnotationRecords) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -215,9 +213,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sql;
   }
 
-  private String getComponentQuery(String projectId, String recordType, String organisms,
-				   String fields) throws WsfPluginException,
-      SQLException, WdkModelException, EuPathServiceException {
+  private String getComponentQuery(String projectId, String recordType, String organisms, String fields) {
 
     String sql = new String(
         "select source_id, project_id, count(*) as max_score,  \n"
