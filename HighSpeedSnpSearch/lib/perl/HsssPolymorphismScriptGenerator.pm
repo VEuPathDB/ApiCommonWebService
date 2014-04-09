@@ -64,7 +64,7 @@ sub getFinalCommandString {
 
   my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
 
-  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat $seqFilter $minLoc $maxLoc";
+  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat 1 $seqFilter $minLoc $maxLoc";
 }
 
 sub getPolymorphismArgsUsage{
