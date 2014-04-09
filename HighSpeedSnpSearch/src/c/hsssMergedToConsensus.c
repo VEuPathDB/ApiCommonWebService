@@ -31,7 +31,7 @@ int alleleCount;   // number of known alleles for this SNP (might include more t
 int nonRefStrainsCount = 0;   // number of strains that are not like-reference in this SNP
 int alleles[5] = {0};  // hold count of alleles.  init array to 0. 0th allele is unknowns
 
-// hold count of products. initialize array to 0.  the 0th product element means no product.  the 28th is for nonsense product
+// hold count of products. initialize array to 0.  the 0th product element means no product.  the 27th is for nonsense product
 int products[4][28] = {{0}, {0}, {0}, {0}};
 
 
@@ -251,7 +251,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		findMaxAllele(&majorAllele, &majorCount);
 
 		// find major product
-		char majorProduct = 0;
+		char majorProduct = 63;   // 63 = ascii(A) - 1 which will be converted to '-' hsssFindMajorAlleles.c
 		char majorProductIsVariable = 0;
 		findMaxProduct(majorAllele, &majorProduct, &majorProductIsVariable);
 
@@ -262,7 +262,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		char isTriallelic = findMaxAllele(&minorAllele, &minorCount);
 
 		// find minor product
-		char minorProduct = 0;
+		char minorProduct = 63;  // 63 = ascii(A) - 1 which will be converted to '-' hsssFindMajorAlleles.c
 		char minorProductIsVariable = 0;
 		findMaxProduct(minorAllele, &minorProduct, &minorProductIsVariable);
 
