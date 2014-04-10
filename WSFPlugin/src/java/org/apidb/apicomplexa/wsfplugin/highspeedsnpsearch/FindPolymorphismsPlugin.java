@@ -16,8 +16,7 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_META = "ontology_type";
-  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_meta";
+  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_filter_meta";
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
@@ -38,7 +37,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public String[] getRequiredParameterNames() {
-    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_META,
+    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_LIST,
 			     PARAM_MIN_PERCENT_KNOWNS, PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH};
     String[] extraParameters = getExtraParamNames();
     return ArrayUtil.concatenate(baseParameters, extraParameters);
