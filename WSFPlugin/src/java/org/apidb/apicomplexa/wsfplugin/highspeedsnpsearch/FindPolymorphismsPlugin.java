@@ -16,7 +16,7 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_filter_meta";
+  public static final String PARAM_STRAIN_LIST = "htsSnp_strain_meta";
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
