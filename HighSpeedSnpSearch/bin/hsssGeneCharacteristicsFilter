@@ -85,7 +85,7 @@ sub processGene {
   my $dnds = $synCount? $totNonSyn / $synCount : $totNonSyn;
   my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
-  if ($snpClass && $snpClass ne 'all' && ($snpsMin || $snpsMax != -1)) {
+  if ($snpClass && ($snpsMin || $snpsMax != -1)) {
     if ($snpClass eq 'coding') {
       return 0 if ($codingCount < $snpsMin || ($snpsMax != -1 && $codingCount > $snpsMax));
     } elsif ($snpClass eq 'noncoding') {
@@ -96,6 +96,8 @@ sub processGene {
       return 0 if ($nonSynCount < $snpsMin || ($snpsMax != -1 && $nonSynCount > $snpsMax));
     } elsif ($snpClass eq 'nonsense') {
       return 0 if ($nonsenseCount < $snpsMin || ($snpsMax != -1 && $nonsenseCount > $snpsMax));
+    } elsif ($snpClass eq 'all') {
+      return 0 if ($snpsCount < $snpsMin || ($snpsMax != -1 && $snpsCount > $snpsMax));
     }
   }
 
