@@ -80,7 +80,7 @@ printMakeConsensus(\@mergeQueueA, $consensusFifoA, $strainsCountA, $polymorphism
 printMakeConsensus(\@mergeQueueB, $consensusFifoB, $strainsCountB, $polymorphismThresholdB, $unknownThresholdB); # use last fifo
 
 my $output = $outputDataFile? ">$outputDataFile" : "";
-print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDirA/contigIdToSourceId.dat $output\n";
+print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | hsssReconstructSnpId $strainFilesDirA/contigIdToSourceId.dat 2 $output\n";
 
 # print final stuff and clean up
 print O "exit\n";

@@ -19,6 +19,7 @@ import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
+import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
@@ -159,9 +160,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
 
     try {
+      // get the user
+      String userSignature = context.get(Utilities.QUERY_CTX_USER);
+      User user = wdkModel.getUserFactory().getUser(userSignature);
+      UserBean userBean = new UserBean(user);
+
       // web service call to get param values
       if (paramName != null) {
-        resultSize = writeParamResult(response, paramValues, columnOrders,
+        resultSize = writeParamResult(response, userBean, paramValues, columnOrders,
             questionName, paramName);
         logger.info("Param results have been processed.... " + resultSize);
         return;
@@ -176,12 +182,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
         query = (Query) wdkModel.resolveReference(queryName);
       }
 
-      // get the user
-      String userSignature = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUser(userSignature);
-
       // converting from internal values to dependent values
-      Map<String, String> SOParams = convertParams(user, paramValues,
+      Map<String, String> SOParams = convertParams(userBean, paramValues,
           query.getParamMap());// getParamsFromQuery(q));
 
       // execute query, and get results back
@@ -235,7 +237,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     response.setSignal(resultSize);
   }
 
-  private int writeParamResult(PluginResponse response,
+  private int writeParamResult(PluginResponse response, UserBean userBean,
       Map<String, String> paramValues, Map<String, Integer> columnOrders,
       String questionName, String paramName) throws WdkModelException,
       WsfPluginException {
@@ -270,7 +272,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // only process the result if it's an enum param
     if (param instanceof AbstractEnumParam) {
-      return handleVocabParams(response, (AbstractEnumParam) param,
+      return handleVocabParams(response, userBean, (AbstractEnumParam) param,
           paramValues, columnOrders);
     } else
       return 0;
@@ -309,7 +311,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return resultSize;
   }
 
-  private Map<String, String> convertParams(User user,
+  private Map<String, String> convertParams(UserBean userBean,
       Map<String, String> paramValues, Map<String, Param> params)
       throws WdkModelException {
     Map<String, String> ret = new HashMap<String, String>();
@@ -321,6 +323,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
           String valList = value;
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamBean abParamBean = new EnumParamBean(abParam);
+          abParamBean.setUser(userBean);
           if (abParam.isDependentParam()) {
             Map<String, String> dependedValues = new LinkedHashMap<>();
             for (Param dependedParam : abParam.getDependedParams()) {
@@ -407,13 +410,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return false;
   }
 
-  private int handleVocabParams(PluginResponse response,
+  private int handleVocabParams(PluginResponse response, UserBean userBean,
       AbstractEnumParam vocabParam, Map<String, String> ps,
       Map<String, Integer> columnOrders) throws WdkModelException,
       WsfPluginException {
     logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
         + vocabParam.getFullName());
     EnumParamBean paramBean = new EnumParamBean(vocabParam);
+    paramBean.setUser(userBean);
     // set depended value if needed
     if (vocabParam.isDependentParam()) {
       Map<String, String> dependedValues = new LinkedHashMap<>();

@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($contigIdFile, $genomicLocationsFile) = @ARGV;
+
+usage() unless $contigIdFile && $genomicLocationsFile;
+
+open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
+my %contigHash;
+while (<C>) {
+  chomp;
+  my ($contigIndex, $contigSourceId) = split(/\t/);
+  $contigHash{$contigIndex} = $contigSourceId;
+}
+close(C);
+
+open(F, $genomicLocationsFile) || die "Can't open genomic locations file '$genomicLocationsFile'\n";
+my $genomicLocationLine = <F>;
+chomp $genomicLocationLine;
+my ($filterContigId, $filterStart, $filterEnd) = split(/\t/, $genomicLocationLine);
+
+my $withinFilter = 0;
+
+while(<STDIN>) {
+  chomp;
+  my @fields = split(/\t/);
+
+  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
+  if ($fields[4] == -1) { $fields[4] = 'non-coding'; }
+  elsif ($fields[4] == 0) { $fields[4] = 'syn'; }
+  elsif ($fields[4] == 1) { $fields[4] = 'non-syn'; }
+  elsif ($fields[4] == 2) { $fields[4] = 'nonsense'; }
+  else { die "invalid coding class: '$fields[4]'\n"; }
+
+  my $contigIndex = shift(@fields);
+  my $location = shift(@fields);
+  my $contigSourceId = $contigHash{$contigIndex};
+  die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
+
+  # skip this SNP if before current filter
+  if ($contigSourceId lt $filterContigId || ($contigSourceId eq $filterContigId && $location < $filterStart)) {
+    next;
+  }
+
+  # print this SNP if within current filter
+  elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
+    print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
+  }
+
+  # read next filter if beyond current filter, and print if within that next filter
+  else {
+
+    while ($contigSourceId gt $filterContigId || ($contigSourceId eq $filterContigId && $location > $filterEnd)) {
+      $genomicLocationLine = <F>;
+      chomp $genomicLocationLine;
+      last unless $genomicLocationLine;
+      ($filterContigId, $filterStart, $filterEnd) = split(/\t/, $genomicLocationLine);
+    }
+
+    if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
+      print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
+    }
+  }
+}
+
+sub usage {
+  die "
+Replace the first and second columns of a stream with a SNP ID, given a file with a mapping, and filter the SNPs based on a set of
+genomic locations, provided in input file.  Only SNPs within those spans are returned.
+
+Usage: hsssGenomicLocationsFilter contig_id_file genomic_locations_filter_file < snp_search_result
+
+Where:
+  - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
+  - genomic_locations_filter_file: a tab delimited file with three columns:  contig_source_id, start, end
+
+  - snp_search_result: tab_delimited with columns contig_index, genomic_location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense).
+
+Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+Also converts protein_class to 'y' if class is nonsyn or nonsense.
+Filters away SNPs that are not within the provided genomic locations.
+";
+}
