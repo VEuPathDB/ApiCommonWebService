@@ -10,6 +10,8 @@ my @projects = (@ARGV);
 
 my $stupidHash = { PlasmoDB => ['Plasmodiumfalciparum3D7', 'Pfalciparum3D7',
 				'PlasmodiumvivaxSal-1', 'PvivaxSal1'],
+		   AmoebaDB => ['EntamoebahistolyticaHM-1:IMSS', 'EhistolyticaHM1IMSS'],
+		   CryptoDB => ['CryptosporidiumparvumIowaII', 'CparvumIowaII'],
 		   ToxoDB => ['ToxoplasmagondiiME49', 'TgondiiME49'],
 		   TriTrypDB => ['LeishmaniabraziliensisMHOMBR75M2904', 'LbraziliensisMHOMBR75M2904',
 				 'LeishmaniadonovaniBPK282A1', 'LdonovaniBPK282A1',
