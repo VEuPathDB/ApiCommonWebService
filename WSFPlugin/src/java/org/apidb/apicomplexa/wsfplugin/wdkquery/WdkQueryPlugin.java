@@ -289,7 +289,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Object obj = results.get(column);
         String val = null;
         if (obj == null)
-          val = "N/A";
+          val = ""; // use empty instead of N/A
         else if (obj instanceof String)
           val = (String) obj;
         else if (obj instanceof char[])
