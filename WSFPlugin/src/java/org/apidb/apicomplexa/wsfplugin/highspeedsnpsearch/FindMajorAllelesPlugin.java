@@ -15,11 +15,11 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST_A = "htsSnp_strain_meta_a";
+  public static final String PARAM_STRAIN_LIST_A = "ngsSnp_strain_meta_a";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "htsSnp_strain_meta_m";
+  public static final String PARAM_STRAIN_LIST_B = "ngsSnp_strain_meta_m";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
