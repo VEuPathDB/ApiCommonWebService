@@ -13,6 +13,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
@@ -31,6 +32,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  * @created Nov 16, 2008
  */
 public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
+
+  private static final Logger logger = Logger.getLogger(KeywordSearchPlugin.class);
 
   // required parameter definition
   public static final String PARAM_ORGANISMS = "text_search_organism";

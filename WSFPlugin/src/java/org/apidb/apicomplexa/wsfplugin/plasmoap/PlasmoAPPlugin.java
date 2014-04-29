@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
@@ -18,6 +19,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  */
 public class PlasmoAPPlugin extends AbstractPlugin {
 
+    private static final Logger logger = Logger.getLogger(PlasmoAPPlugin.class);
+  
     private static final String PROPERTY_FILE = "plasmoAP-config.xml";
 
     public static final String PARAM_SEQUENCE = "Sequence";
@@ -125,7 +128,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
             response.setMessage(output);
             response.setSignal(signal);
         } catch (IOException ex) {
-            logger.error(ex);
+            logger.error("Error running PlasmoAPPlugin...", ex);
             throw new WsfPluginException(ex);
         }
     }

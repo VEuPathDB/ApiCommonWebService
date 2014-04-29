@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
@@ -23,6 +24,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  * 
  */
 public class ProfileSimilarityPlugin extends AbstractPlugin {
+
+    private static final Logger logger = Logger.getLogger(ProfileSimilarityPlugin.class);
 
     private static final String PROPERTY_FILE = "profileSimilarity-config.xml";
 

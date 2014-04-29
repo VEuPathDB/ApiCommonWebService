@@ -39,7 +39,7 @@ import org.xml.sax.SAXException;
  */
 public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
-  private static final Logger LOG = Logger.getLogger(HighSpeedSnpSearchAbstractPlugin.class);
+  private static final Logger logger = Logger.getLogger(HighSpeedSnpSearchAbstractPlugin.class);
 
   private static final String PROPERTY_FILE = "highSpeedSnpSearch-config.xml";
 
@@ -78,7 +78,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     super.initialize(context);
 
     // jobs dir
-    LOG.debug(properties);
+    logger.debug(properties);
     String jobsDirName = getProperty(PROPERTY_JOBS_DIR);
     if (jobsDirName == null)
         throw new WsfPluginException(PROPERTY_JOBS_DIR
@@ -344,7 +344,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       if (jobDir.isDirectory() && jobsDir.canWrite() 
           && jobDir.getPath().contains(jobsDirPrefix)
           && (todayLong - (jobDir.lastModified())) > 500000000) {
-        if (jobDir.listFiles() == null) LOG.warn("was null: " + jobDir.getPath());
+        if (jobDir.listFiles() == null) logger.warn("was null: " + jobDir.getPath());
         for (File tmpFile : jobDir.listFiles()) tmpFile.delete();
         logger.info("Job dir to be deleted: " + jobDir.getAbsolutePath() + "\n");
         jobDir.delete();

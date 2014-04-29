@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
@@ -26,6 +27,8 @@ import org.xml.sax.SAXException;
  */
 public class ApiFedPlugin extends AbstractPlugin {
 
+  private static final Logger logger = Logger.getLogger(ApiFedPlugin.class);
+  
   public static final String VERSION = "3.0";
 
   public static final String PARAM_SET_NAME = "VQ";

@@ -113,7 +113,6 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 	    bw.write(seqId + "\t" + start + "\t" + end + "\t" + geneId);
 	    bw.newLine();
 	  }
-	  logger.info("finished fetching rows");
 
 	} catch (Exception ex) {
 	  throw new WsfPluginException(ex);
