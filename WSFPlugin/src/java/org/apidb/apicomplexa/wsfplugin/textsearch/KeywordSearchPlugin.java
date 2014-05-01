@@ -13,6 +13,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
@@ -31,6 +32,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  * @created Nov 16, 2008
  */
 public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
+
+  private static final Logger logger = Logger.getLogger(KeywordSearchPlugin.class);
 
   // required parameter definition
   public static final String PARAM_ORGANISMS = "text_search_organism";
@@ -106,54 +109,58 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     String projectId = request.getProjectId();
     String sql;
     if (searchComments) {
-      PreparedStatement ps = null;
-      try {
-	  sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
-	  Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
-	  ps = dbConnection.prepareStatement(sql);
-	  ps.setString(1, oracleTextExpression);
-	  BufferedResultContainer commentContainer = new BufferedResultContainer();
-	  textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
-	  commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
-	  // logger.debug("after validation commentMatches = "
-	  // + commentMatches.toString());
-      } catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	  throw new WsfPluginException(ex);
-      } finally {
-	  SqlUtils.closeStatement(ps);
-      }
+        logger.debug("searching comment instance\n");
+	PreparedStatement ps = null;
+	try {
+	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
+	    Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
+	    ps = dbConnection.prepareStatement(sql);
+	    ps.setString(1, oracleTextExpression);
+	    BufferedResultContainer commentContainer = new BufferedResultContainer();
+	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
+	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
+	    // logger.debug("after validation commentMatches = "
+	    // + commentMatches.toString());
+	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
+	    throw new WsfPluginException(ex);
+	} finally {
+	    SqlUtils.closeStatement(ps);
+	}
     }
+
+    // merge the result from component with the ones from comments
+    MergeResultContainer componentContainer
+	= new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
 
     // search component database
     if (searchComponent) {
-      PreparedStatement ps = null;
-      try {
-        sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString());
+        logger.debug("searching component instance\n");
+	PreparedStatement ps = null;
+	try {
+	    sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString());
 
-	if (maxPvalue == null || maxPvalue.equals("")) {
-	    maxPvalue = "0";
+	    if (maxPvalue == null || maxPvalue.equals("")) {
+		maxPvalue = "0";
+	    }
+
+	    Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
+	    ps = dbConnection.prepareStatement(sql);
+	    ps.setString(1, oracleTextExpression);
+	    ps.setFloat(2, Float.valueOf(maxPvalue));
+	    ps.setString(3, oracleTextExpression);
+	    ps.setString(4, oracleTextExpression);
+	    ps.setString(5, oracleTextExpression);
+
+	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
+	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
+	    throw new WsfPluginException(ex);
+	} finally {
+	    SqlUtils.closeStatement(ps);
 	}
-
-	Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
-	ps = dbConnection.prepareStatement(sql);
-	ps.setString(1, oracleTextExpression);
-	ps.setFloat(2, Float.valueOf(maxPvalue));
-	ps.setString(3, oracleTextExpression);
-	ps.setString(4, oracleTextExpression);
-	ps.setString(5, oracleTextExpression);
-
-        // merge the result from component with the ones from comments
-        MergeResultContainer componentContainer = new MergeResultContainer(
-            response, request.getOrderedColumns(), commentResults);
-	textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
-        // process the remaining ones from comments, but not found in component
-        componentContainer.processRemainingResults();
-      } catch (SQLException | WdkModelException | EuPathServiceException ex) {
-        throw new WsfPluginException(ex);
-      } finally {
-        SqlUtils.closeStatement(ps);
-      }
     }
+
+    // process the remaining ones from comments, but not found in component
+    componentContainer.processRemainingResults();
   }
 
   private String cleanOrgs(String orgs) {

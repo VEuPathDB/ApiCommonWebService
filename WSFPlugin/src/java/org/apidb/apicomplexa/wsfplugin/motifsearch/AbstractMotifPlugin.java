@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModelException;
@@ -32,6 +33,8 @@ import org.xml.sax.SAXException;
 // geneID could be an ORF or a genomic sequence deending on who uses the plugin
 public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
+  private static final Logger logger = Logger.getLogger(AbstractMotifPlugin.class);
+  
   protected class Match {
 
     public String sourceId;

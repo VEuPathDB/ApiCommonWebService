@@ -86,7 +86,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 	    bw.write(sourceId + "\t" + start + "\t" + end);
 	    bw.newLine();
 	  }
-	  logger.info("finished fetching rows");
 
 	} catch (Exception ex) {
 	  throw new WsfPluginException(ex);

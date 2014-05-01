@@ -14,6 +14,7 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.wdk.controller.CConstants;
@@ -29,6 +30,8 @@ import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
+
+  private static final Logger logger = Logger.getLogger(SpanCompositionPlugin.class);
 
   private static class Feature {
 
