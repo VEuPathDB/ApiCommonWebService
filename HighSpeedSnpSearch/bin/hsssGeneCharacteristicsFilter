@@ -21,10 +21,10 @@ chomp $geneLocationLine;
 my ($filterContigId, $filterStart, $filterEnd, $filterGeneId) = split(/\t/, $geneLocationLine);
 
 my $withinFilter = 0;
-my $snpsCount;
-my $codingCount;
-my $nonsenseCount;
-my $nonSynCount;
+my $snpsCount = 0;
+my $codingCount = 0;
+my $nonsenseCount = 0;
+my $nonSynCount = 0;
 
 
 while(<STDIN>) {
