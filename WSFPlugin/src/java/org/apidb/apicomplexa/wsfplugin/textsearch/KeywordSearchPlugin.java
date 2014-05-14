@@ -26,7 +26,7 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.apidb.apicommon.model.CommentFactory;
+
 
 /**
  * @author John I
@@ -196,8 +196,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           + "'\n";
     }
 
-    CommentFactory commentFactory = (CommentFactory) this.context.get(CTX_CONTAINER_COMMENT);
-    String commentSchema = commentFactory.getCommentConfig().getCommentSchema();
+    WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
+    String commentSchema = wdkModelBean.getModel().getModelConfig().getUserDB().getUserSchema();
 
     String sql = "SELECT source_id, project_id, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
