@@ -27,6 +27,7 @@ import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
+
 /**
  * @author John I
  * @created Nov 16, 2008
@@ -195,6 +196,9 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           + "'\n";
     }
 
+    WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
+    String commentSchema = wdkModelBean.getModel().getModelConfig().getUserDB().getUserSchema();
+
     String sql = "SELECT source_id, project_id, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "       fields_matched \n"
@@ -205,7 +209,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "                     as scoring, \n"
         + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
-        + "            FROM apidb.TextSearchableComment tsc, comments2.Comments c \n"
+        + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
         + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
         + "              AND tsc.comment_id = c.comment_id\n"
         + "              AND c.is_visible = 1\n"
