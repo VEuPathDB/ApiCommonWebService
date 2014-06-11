@@ -14,8 +14,6 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
-import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -23,8 +21,6 @@ import org.gusdb.wsf.plugin.WsfPluginException;
  * @author steve
  */
 public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
-
-  private static final String CTX_CONTAINER_APP = "wdkModel";
 
   private static final Set<String> legalParams = 
     new HashSet<String>(Arrays.asList(new String[] {"coding","nonsynonymous","synonymous","nonsense", "all", "coding"} ));
@@ -66,8 +62,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
   @Override
-  public void validateParameters(PluginRequest request)
-    throws WsfPluginException {
+  public void validateParameters(PluginRequest request) {
   }
 
   @Override
@@ -86,8 +81,6 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 	  bw.newLine();
 	}
       } else {
-	WdkModelBean wdkModelBean = (WdkModelBean)context.get(CTX_CONTAINER_APP);
-	WdkModel wdkModel = wdkModelBean.getModel();
 	DataSource dataSource = wdkModel.getAppDb().getDataSource();
 	String newline = System.lineSeparator();
 

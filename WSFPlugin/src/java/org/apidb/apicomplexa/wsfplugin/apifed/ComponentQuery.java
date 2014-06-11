@@ -1,16 +1,19 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
-import java.net.URL;
+import java.net.URI;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin;
-import org.gusdb.wsf.client.WsfResponse;
-import org.gusdb.wsf.client.WsfService;
-import org.gusdb.wsf.client.WsfServiceServiceLocator;
+import org.gusdb.wsf.client.WsfClient;
+import org.gusdb.wsf.client.WsfClientBuilder;
+import org.gusdb.wsf.client.WsfResponseListener;
 import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.service.WsfRequest;
 
-public class ComponentQuery extends Thread {
+public class ComponentQuery extends Thread implements WsfResponseListener {
+
+  private static final long REQUEST_TOKEN_INTERVAL = 500;
 
   private static final Logger logger = Logger.getLogger(ComponentResult.class);
 
@@ -22,12 +25,12 @@ public class ComponentQuery extends Thread {
   private boolean running;
   private boolean stopRequested;
 
-  public ComponentQuery(String projectId, String url,
-      PluginRequest pluginRequest, ComponentResult result) {
+  public ComponentQuery(String projectId, String url, PluginRequest pluginRequest, ComponentResult result) {
     this.projectId = projectId;
     this.url = url;
     this.request = new WsfRequest(pluginRequest);
     this.request.setPluginClass(WdkQueryPlugin.class.getName());
+    this.request.setProjectId(projectId);
     this.result = result;
     this.running = false;
     this.stopRequested = false;
@@ -36,72 +39,84 @@ public class ComponentQuery extends Thread {
   public void requestStop() {
     stopRequested = true;
   }
-  
+
   public boolean isRunning() {
     return running;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void run() {
     running = true;
     String errorMessage = "Thread ran and exited Correctly";
     logger.info("The Thread is running.................." + url);
-    WsfServiceServiceLocator locator = new WsfServiceServiceLocator();
 
     try {
-      WsfService service = locator.getWsfService(new URL(url));
       long start = System.currentTimeMillis();
-      
-      
+
+      WsfClient client = WsfClientBuilder.newClient(this, new URI(url));
 
       // invoke the web service, and get response
-      WsfResponse wsfResponse = service.invoke(request.toString());
-      int invokeId = wsfResponse.getInvokeId();
-      int pages = wsfResponse.getPageCount();
-
-      // wait for the token to be available
-      while (!result.requestToken(projectId)) {
-        Thread.sleep(500);
-      }
-
-      // set the additional info from the first response; those info might not
-      // be present in the subsequent responses.
-      result.setMessage(projectId, wsfResponse.getMessage());
-      result.setSignal(wsfResponse.getSignal());
-      result.addAttachments(wsfResponse.getAttachments());
-
-      int pageId = 0;
-      while (!stopRequested) {
-        String[][] resultArray = wsfResponse.getResult();
-
-        logger.debug("caching page " + pageId + "/" + pages + ", " + resultArray.length + " rows...");
-
-        for (int i = 0; i < resultArray.length; i++) {
-          result.addRow(projectId, resultArray[i]);
+      int signal = client.invoke(request);
+      if (!stopRequested) {
+        while (!result.addSignal(projectId, signal)) {
+          Thread.sleep(REQUEST_TOKEN_INTERVAL);
         }
-        // advance to the next page.
-        pageId++;
-        if (pageId >= pages)
-          break;
-        wsfResponse = service.requestResult(invokeId, pageId);
       }
 
       long end = System.currentTimeMillis();
-      logger.info("Thread (" + url + ") has returned results in "
-          + ((end - start) / 1000.0) + " seconds.");
-    } catch (Exception ex) {
+      logger.info("Thread (" + url + ") has returned results in " + ((end - start) / 1000.0) + " seconds.");
+    }
+    catch (Exception ex) {
       logger.error("Error occurred related to " + url, ex);
-      errorMessage = ex.getMessage() + " Occured : Thread exited"
-          + ex.getCause();
-      result.setMessage(projectId,
-          Integer.toString(WdkQueryPlugin.STATUS_ERROR_SERVICE_UNAVAILABLE));
-    } finally {
+      errorMessage = ex.getMessage() + " Occured : Thread exited" + ex.getCause();
+      try {
+        result.addMessage(projectId, Integer.toString(WdkQueryPlugin.STATUS_ERROR_SERVICE_UNAVAILABLE));
+      }
+      catch (WsfException ex1) {
+        throw new RuntimeException(ex1);
+      }
+    }
+    finally {
       result.releaseToken(projectId);
-      logger.debug("The Thread is stopped(" + url
-          + ").................. : by request: " + stopRequested
-          + "  Error Message = " + errorMessage);
+      logger.debug("The Thread is stopped(" + url + ").................. : by request: " + stopRequested +
+          "  Error Message = " + errorMessage);
       running = false;
+    }
+  }
+
+  @Override
+  public void onRowReceived(String[] row) throws WsfException {
+    if (stopRequested)
+      return;
+    while (!result.addRow(projectId, row)) { // cannot add row, wait for token;
+      try {
+        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+      }
+      catch (InterruptedException ex) {}
+    }
+  }
+
+  @Override
+  public void onAttachmentReceived(String key, String content) throws WsfException {
+    if (stopRequested)
+      return;
+    while (!result.addAttachment(projectId, key, content)) { // cannot add attachment, wait for token
+      try {
+        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+      }
+      catch (InterruptedException ex) {}
+    }
+  }
+
+  @Override
+  public void onMessageReceived(String message) throws WsfException {
+    if (stopRequested)
+      return;
+    while (!result.addMessage(projectId, message)) { // cannot add message, wait for token
+      try {
+        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+      }
+      catch (InterruptedException ex) {}
     }
   }
 }

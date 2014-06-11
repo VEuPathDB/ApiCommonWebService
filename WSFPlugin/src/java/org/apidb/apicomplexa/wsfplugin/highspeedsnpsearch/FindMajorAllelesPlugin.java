@@ -8,6 +8,7 @@ import java.util.Map;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.WsfUserException;
 
 /**
  * @author steve
@@ -71,7 +72,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public void validateParameters(PluginRequest request)
-    throws WsfPluginException {
+    throws WsfUserException {
   }
 
   @Override

@@ -1,9 +1,9 @@
 /**
- *Version 2.0.0 --
- * Updated to work with the new Wdk Model.  The loading subroutine was updated to call parse() correctly for the new code in teh WDK
- * 2/27/2008 -- Removed valiadtion of the columns and inserted code to insert "N/A" into the result is a column does not exists on a component site
- * 6/2/2010  -- if a querySet such as SharedVQ is received, and not found, the site will check sharedParams paramSet.
- *              This will allow to access enums from a flatvocab in portal (only way to access a site) --cris
+ * Version 2.0.0 -- Updated to work with the new Wdk Model. The loading subroutine was updated to call parse()
+ * correctly for the new code in teh WDK 2/27/2008 -- Removed valiadtion of the columns and inserted code to
+ * insert "N/A" into the result is a column does not exists on a component site 6/2/2010 -- if a querySet such
+ * as SharedVQ is received, and not found, the site will check sharedParams paramSet. This will allow to
+ * access enums from a flatvocab in portal (only way to access a site) --cris
  */
 package org.apidb.apicomplexa.wsfplugin.wdkquery;
 
@@ -12,15 +12,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.InstanceManager;
 import org.gusdb.fgputil.FormatUtil;
-import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
@@ -32,20 +31,20 @@ import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author Cary Pennington
  * @created Dec 20, 2006
  * 
- *          2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three
- *          number versioning... not that many changes -- Added support for
- *          accessing Enum Parameters on the componet Sites
+ *          2.0.0 -- Worked with ApiFedPlugin 2.0.0 2.1 -- Ditched the three number versioning... not that
+ *          many changes -- Added support for accessing Enum Parameters on the componet Sites
  */
 public class WdkQueryPlugin extends AbstractPlugin {
 
   private static final Logger logger = Logger.getLogger(WdkQueryPlugin.class);
-  
+
   // Propert values
 
   public static final String VERSION = "3.0";
@@ -62,24 +61,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
   public WdkQueryPlugin() {
     super();
-  }
-
-  // load properties
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-   */
-  @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
-
-    WdkModelBean wdkModelBean = (WdkModelBean)context.get(CConstants.WDK_MODEL_KEY);
-    wdkModel = wdkModelBean.getModel();
-
-    // logger.info("------------Plugin Initialized-----------------");
   }
 
   /*
@@ -108,8 +89,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
   @Override
-  public void validateParameters(PluginRequest request)
-      throws WsfPluginException {
+  public void validateParameters(PluginRequest request) {
     // do nothing in this plugin
   }
 
@@ -119,10 +99,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public void execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response) throws WsfException {
 
     logger.info("WdkQueryPlugin Version : " + WdkQueryPlugin.VERSION);
+
     // logger.info("Invoking WdkQueryPlugin......");
     int resultSize = 0;
     ResultList resultList = null;
@@ -147,19 +127,20 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // Map<String,Object>SOParams = convertParams(params);
     // logger.info("Parameters were processed");
 
-    logger.debug("context question: '" + questionName + "', param: '"
-        + paramName + "', query: '" + queryName + "', SiteModel=" + wdkModel.getProjectId());
-
-    // Variable to maintain the order of columns in the result... maintains
-    // order given by Federation Plugin
-    String[] orderedColumns = request.getOrderedColumns();
-    Map<String, Integer> columnOrders = new LinkedHashMap<>(
-        orderedColumns.length);
-    for (int i = 0; i < orderedColumns.length; i++) {
-      columnOrders.put(orderedColumns[i], i);
-    }
-
     try {
+      logger.debug("context question: '" + questionName + "', param: '" + paramName + "', query: '" +
+          queryName + "', SiteModel=" + wdkModel.getProjectId());
+
+      // Variable to maintain the order of columns in the result... maintains
+      // order given by Federation Plugin
+      String[] orderedColumns = request.getOrderedColumns();
+      Map<String, Integer> columnOrders = new LinkedHashMap<>(orderedColumns.length);
+      for (int i = 0; i < orderedColumns.length; i++) {
+        columnOrders.put(orderedColumns[i], i);
+      }
+
+      wdkModel = InstanceManager.getWdkModel(request.getProjectId());
+
       // get the user
       String userSignature = context.get(Utilities.QUERY_CTX_USER);
       User user = wdkModel.getUserFactory().getUser(userSignature);
@@ -167,10 +148,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // web service call to get param values
       if (paramName != null) {
-        resultSize = writeParamResult(response, userBean, paramValues, columnOrders,
-            questionName, paramName);
+        resultSize = writeParamResult(response, userBean, paramValues, columnOrders, questionName, paramName);
         logger.info("Param results have been processed.... " + resultSize);
-        return;
+        return resultSize;
       }
 
       // check if question is set
@@ -178,26 +158,26 @@ public class WdkQueryPlugin extends AbstractPlugin {
       if (questionName != null) {
         Question question = wdkModel.getQuestion(questionName);
         query = question.getQuery();
-      } else {
+      }
+      else {
         query = (Query) wdkModel.resolveReference(queryName);
       }
 
       // converting from internal values to dependent values
-      Map<String, String> SOParams = convertParams(userBean, paramValues,
-          query.getParamMap());// getParamsFromQuery(q));
+      Map<String, String> SOParams = convertParams(userBean, paramValues, query.getParamMap());// getParamsFromQuery(q));
 
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance queryInstance = query.makeInstance(user, SOParams, true, 0,
-          context);
+      QueryInstance queryInstance = query.makeInstance(user, SOParams, true, 0, context);
       resultList = queryInstance.getResults();
       logger.info("Results set was filled");
 
       resultSize = writeQueryResults(response, resultList, columnOrders);
       logger.info("Query results have been processed.... " + resultSize);
 
-    } catch (WdkModelException ex) {
+    }
+    catch (WdkModelException ex) {
       logger.info("WdkMODELexception in execute()" + ex.toString());
       // String msg = ex.toString();
       String msg = ex.formatErrors();
@@ -205,42 +185,50 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // if(msg.matches("Invalid value"){}
       if (msg.indexOf("Please choose value(s) for parameter") != -1) {
         resultSize = 0;
-      } else if (msg.contains("No value supplied for param")) {
+      }
+      else if (msg.contains("No value supplied for param")) {
         resultSize = 0;
         // isolate query on crypto/plasmo with only param values for
         // plasmo
-      } else if (msg.contains("does not exist")) {
+      }
+      else if (msg.contains("does not exist")) {
         resultSize = 0;
-      } else if (msg.indexOf("does not contain") != -1) {
+      }
+      else if (msg.indexOf("does not contain") != -1) {
         resultSize = -2; // query set or query doesn't exist
         // } else if (msg.indexOf("encountered an invalid term") != -1) {
         // resultSize = 0; // parameter value relates to a different comp site
-      } else if (msg.indexOf("does not include") != -1) {
+      }
+      else if (msg.indexOf("does not include") != -1) {
         resultSize = -2; // query set or query doesn't exist
-      } else if (msg.contains("datasets value '' has an error: Missing the value")) {
+      }
+      else if (msg.contains("datasets value '' has an error: Missing the value")) {
         resultSize = 0;
-      } else if (msg.contains("Invalid term")) {
+      }
+      else if (msg.contains("Invalid term")) {
         resultSize = 0;
-			} else if (msg.contains("Some of the input parameters are invalid")) {
-					resultSize = 0;
-      } else {
+      }
+      else if (msg.contains("Some of the input parameters are invalid")) {
+        resultSize = 0;
+      }
+      else {
         logger.error("WdkModelException: " + ex);
         resultSize = -1; // actual error, can't handle
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       logger.error("OTHERexception IN execute()", ex);
 
       resultSize = -1;
     }
 
     response.setMessage(Integer.toString(resultSize));
-    response.setSignal(resultSize);
+    return resultSize;
   }
 
-  private int writeParamResult(PluginResponse response, UserBean userBean,
-      Map<String, String> paramValues, Map<String, Integer> columnOrders,
-      String questionName, String paramName) throws WdkModelException,
-      WsfPluginException {
+  private int writeParamResult(PluginResponse response, UserBean userBean, Map<String, String> paramValues,
+      Map<String, Integer> columnOrders, String questionName, String paramName) throws WdkModelException,
+      WsfException {
     // get param
     Param param;
     if (questionName != null) {
@@ -256,9 +244,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // it from model.
       if (param == null)
         // param = (Param) wdkModel.resolveReference(paramName);
-        throw new WdkModelException("parameter " + paramName
-            + " does not exist in question " + questionName);
-    } else {
+        throw new WdkModelException("parameter " + paramName + " does not exist in question " + questionName);
+    }
+    else {
       logger.debug("got param from model.");
 
       // context question is not defined, get original param from
@@ -267,20 +255,18 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
     logger.debug("Parameter found : " + param.getFullName());
     if (param instanceof FlatVocabParam)
-      logger.debug("param query: "
-          + ((FlatVocabParam) param).getQuery().getFullName());
+      logger.debug("param query: " + ((FlatVocabParam) param).getQuery().getFullName());
 
     // only process the result if it's an enum param
     if (param instanceof AbstractEnumParam) {
-      return handleVocabParams(response, userBean, (AbstractEnumParam) param,
-          paramValues, columnOrders);
-    } else
+      return handleVocabParams(response, userBean, (AbstractEnumParam) param, paramValues, columnOrders);
+    }
+    else
       return 0;
   }
 
-  private int writeQueryResults(PluginResponse response, ResultList results,
-      Map<String, Integer> columnOrders) throws WdkModelException,
-      WsfPluginException {
+  private int writeQueryResults(PluginResponse response, ResultList results, Map<String, Integer> columnOrders)
+      throws WdkModelException, WsfException {
     int resultSize = 0;
     while (results.next()) {
       String[] row = new String[columnOrders.size()];
@@ -311,9 +297,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return resultSize;
   }
 
-  private Map<String, String> convertParams(UserBean userBean,
-      Map<String, String> paramValues, Map<String, Param> params)
-      throws WdkModelException {
+  private Map<String, String> convertParams(UserBean userBean, Map<String, String> paramValues,
+      Map<String, Param> params) throws WdkModelException {
     Map<String, String> ret = new HashMap<String, String>();
     for (String key : paramValues.keySet()) {
       String value = paramValues.get(key);
@@ -332,11 +317,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
             }
             abParamBean.setDependedValues(dependedValues);
           }
-          if ((param instanceof FlatVocabParam || param.isAllowEmpty())
-              && valList.length() == 0) {
+          if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
             try {
               valList = abParamBean.getDefault();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
               logger.info("error using default value.");
             }
           }
@@ -353,7 +338,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
           Boolean multipick = abParamBean.getMultiPick();
           if (multipick) {
             vals = valList.split(",");
-          } else {
+          }
+          else {
             vals = new String[1];
             vals[0] = valList;
           }
@@ -362,18 +348,19 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // unescape each individual term.
             mystring = unescapeValue(mystring, abParamBean.getQuote());
             try {
-              logger.info("ParamName = " + param.getName() + " ------ Value = "
-                  + mystring);
+              logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
               if (validateSingleValues(abParamBean, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
-                logger.info("validated-------------\n ParamName = "
-                    + param.getName() + " ------ Value = " + mystring);
-              } else {
-                logger.warn("param validation failed: " + "param="
-                    + param.getName() + ", value='" + mystring + "'");
+                logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
+                    mystring);
               }
-            } catch (Exception e) {
+              else {
+                logger.warn("param validation failed: " + "param=" + param.getName() + ", value='" +
+                    mystring + "'");
+              }
+            }
+            catch (Exception e) {
               logger.info(e);
             }
           }
@@ -384,7 +371,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
             newVals = "\u0000";
           logger.info("validated values string -------------" + newVals);
           value = newVals;
-        } else { // other types, unescape the whole thing
+        }
+        else { // other types, unescape the whole thing
           boolean quoted = true;
           if (param instanceof StringParam)
             quoted = !((StringParam) param).isNumber();
@@ -410,12 +398,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return false;
   }
 
-  private int handleVocabParams(PluginResponse response, UserBean userBean,
-      AbstractEnumParam vocabParam, Map<String, String> ps,
-      Map<String, Integer> columnOrders) throws WdkModelException,
-      WsfPluginException {
-    logger.debug("Function to Handle a vocab param in WdkQueryPlugin: "
-        + vocabParam.getFullName());
+  private int handleVocabParams(PluginResponse response, UserBean userBean, AbstractEnumParam vocabParam,
+      Map<String, String> ps, Map<String, Integer> columnOrders) throws WdkModelException, WsfException {
+    logger.debug("Function to Handle a vocab param in WdkQueryPlugin: " + vocabParam.getFullName());
     EnumParamBean paramBean = new EnumParamBean(vocabParam);
     paramBean.setUser(userBean);
     // set depended value if needed
@@ -440,15 +425,19 @@ public class WdkQueryPlugin extends AbstractPlugin {
         if (column.equals(FlatVocabParam.COLUMN_TERM)) {
           row[index] = term;
           hasTerm = true;
-        } else if (column.equals(FlatVocabParam.COLUMN_DISPLAY)) {
+        }
+        else if (column.equals(FlatVocabParam.COLUMN_DISPLAY)) {
           row[index] = displayMap.get(term);
-        } else if (column.equals(FlatVocabParam.COLUMN_INTERNAL)) {
+        }
+        else if (column.equals(FlatVocabParam.COLUMN_INTERNAL)) {
           // always return term as internal in this plugin.
           row[index] = term;
           hasInternal = true;
-        } else if (column.equals(FlatVocabParam.COLUMN_PARENT_TERM)) {
+        }
+        else if (column.equals(FlatVocabParam.COLUMN_PARENT_TERM)) {
           row[index] = parentMap.get(term);
-        } else {
+        }
+        else {
           throw new WsfPluginException("Unsupported column: " + column);
         }
       }
@@ -458,15 +447,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // term & internal has to exist
     if (!hasTerm || !hasInternal)
-      throw new WdkModelException("The wsf call for param "
-          + paramBean.getFullName()
-          + " doesn't specify term & internal columns.");
+      throw new WdkModelException("The wsf call for param " + paramBean.getFullName() +
+          " doesn't specify term & internal columns.");
     return count;
-  }
-
-  @Override
-  protected String[] defineContextKeys() {
-    return new String[]{CConstants.WDK_MODEL_KEY};
   }
 
   private String unescapeValue(String value, boolean quoted) {

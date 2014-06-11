@@ -1,16 +1,17 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
-import java.util.Map;
-
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.WsfException;
 
 public class ComponentResult {
+  
+  public static final String SIGNAL_SUFFIX = "-signal";
 
   protected final PluginResponse response;
-  private final String[] tokens;
 
-  private int tokenIndex = 0;
+  private String message = "";
+  private int signal = 0;
+  private String token = null;
 
   /**
    * create a result container without tokens.
@@ -18,56 +19,62 @@ public class ComponentResult {
    * @param response
    */
   protected ComponentResult(PluginResponse response) {
-    this(response, null);
-  }
-
-  /**
-   * Create a result container with tokens. the ComponentQuery has to obtain the
-   * correct token in order to write rows. After a ComponentQuery is done, it
-   * should call releaseToekn() in order for other ComponentQueries to write.
-   * 
-   * @param response
-   * @param tokens
-   */
-  protected ComponentResult(PluginResponse response, String[] tokens) {
     this.response = response;
-    this.tokens = tokens;
-    this.tokenIndex = 0;
+  }
+  
+  public int getSignal() {
+    return signal;
   }
 
-  public boolean requestToken(String token) {
-    if (tokens == null) return true;
-    if (tokenIndex >= tokens.length) return false;
-    return tokens[tokenIndex].equals(token);
-  }
-
-  public void releaseToken(String token) {
-    if (tokens != null && tokenIndex < tokens.length) {
-      if (tokens[tokenIndex].equals(token)) tokenIndex++;
+  private synchronized boolean requestToken(String projectId) {
+    if (this.token == null) { // no token set, set the token
+      this.token = projectId;
+      return true;
     }
+    else
+      // toke already set, check if the token is the same as the stored one.
+      return this.token.equals(projectId);
   }
 
-  public boolean addRow(String token, String[] row) throws WsfPluginException {
-    if (requestToken(token)) {
+  public synchronized void releaseToken(String projectId) {
+    // only release it if it's the same token
+    if (this.token != null && this.token.equals(projectId))
+      this.token = null;
+  }
+
+  public boolean addRow(String projectId, String[] row) throws WsfException {
+    if (requestToken(projectId)) {
       response.addRow(row);
+      return true;
+    }
+    else
+      return false;
+  }
+
+  public boolean addMessage(String projectId, String message) throws WsfException {
+    if (requestToken(projectId)) {
+      if (this.message.length() > 0)
+        this.message += ",";
+      this.message += projectId + ":" + message;
+      response.setMessage(this.message);
+      return true;
+    }
+    else
+      return false;
+  }
+
+  public boolean addAttachment(String projectId, String key, String content) throws WsfException {
+    if (requestToken(projectId)) {
+      response.addAttachment(key, content);
       return true;
     } else return false;
   }
-
-  public synchronized void setMessage(String projectId, String message) {
-    String previous = response.getMessage();
-    if (previous != null && previous.length() > 0) {
-      previous = previous + ",";
-    } else previous = "";
-    message = previous + projectId + ":" + message;
-    response.setMessage(message);
-  }
-
-  public void addAttachments(Map<String, String> attachments) {
-    response.addAttachments(attachments);
-  }
-
-  public void setSignal(int signal) {
-    response.setSignal(signal);
+  
+  public boolean addSignal(String projectId, int signal) throws WsfException {
+    if (requestToken(projectId)) {
+      response.addAttachment(projectId + SIGNAL_SUFFIX, Integer.toString(signal));
+      if (signal != 0) this.signal = signal;
+      return true;
+    } else return false;
   }
 }

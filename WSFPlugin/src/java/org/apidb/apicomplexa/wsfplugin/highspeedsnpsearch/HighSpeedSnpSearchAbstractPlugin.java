@@ -19,6 +19,7 @@ import java.util.Scanner;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.db.SqlUtils;
@@ -31,6 +32,7 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 import org.xml.sax.SAXException;
 
@@ -53,6 +55,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   public static final String PROPERTY_JOBS_DIR = "jobsDir";
 
   private File jobsDir;
+  protected WdkModel wdkModel;
   private ProjectMapper projectMapper;
   private String organismNameForFiles_forTesting = null;
 
@@ -74,8 +77,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
    */
   @Override
-  public void initialize(Map<String, Object> context) throws WsfPluginException {
-    super.initialize(context);
+  public void initialize() throws WsfPluginException {
+    super.initialize();
 
     // jobs dir
     logger.debug(properties);
@@ -87,17 +90,6 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     if (!jobsDir.exists())
         throw new WsfPluginException(PROPERTY_JOBS_DIR
                 + " " + jobsDirName + " does not exist");
-
-    // BEWARE:  this try THROWS an exception in the unit testing context, which is ignored.
-    // don't put any code after it
-    // create project mapper
-    WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
-    try {
-      projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
-    } catch (WdkModelException | SAXException | IOException
-        | ParserConfigurationException ex) {
-      throw new WsfPluginException(ex);
-    }
   }
 
   /*
@@ -107,8 +99,16 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
    * java.lang.String[])
    */
   @Override
-    public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
-
+    public int execute(PluginRequest request, PluginResponse response) throws WsfException {
+    String projectId = request.getProjectId();
+    try {
+      this.wdkModel = InstanceManager.getWdkModel(projectId);
+      this.projectMapper = ProjectMapper.getMapper(wdkModel);
+    }
+    catch (WdkModelException ex) {
+      throw new WsfPluginException(ex);
+    }
+    
     String jobsDirPrefix = getJobsDirPrefix();
 
     Map<String, String> params = request.getParams();
@@ -121,7 +121,6 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     logger.info("Invoking " + commandName + " plugin execute() for job " + jobDir.getPath());
 
-    String projectId = getProjectId(params);
     File organismDir = findOrganismDir(params, projectId);
 
     // create bash script
@@ -130,12 +129,13 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
+    int signal = 0;
     try {
       StringBuffer output = new StringBuffer();
 
       String[] cmds = { jobDir.getPath() + "/" + commandName };
       String[] env = { "PATH=" + GusHome.getGusHome() + "/bin:" + System.getenv("PATH"), "GUS_HOME=" + GusHome.getGusHome() };
-      int signal = invokeCommand(cmds, output, 2 * 60, env);
+      signal = invokeCommand(cmds, output, 2 * 60, env);
       long invoke_end = System.currentTimeMillis();
       logger.info("Running " + commandName + " bash took: " + ((invoke_end - start) / 1000.0)
           + " seconds");
@@ -147,8 +147,6 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       // prepare the result
       prepareResult(response, projectId, jobDir.getPath() + "/" + getResultsFileBaseName(),
                     request.getOrderedColumns());
-
-      response.setSignal(signal);
     } catch (IOException ex) {
       long end = System.currentTimeMillis();
       logger.info("Invocation took: " + ((end - start) / 1000.0)
@@ -159,6 +157,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       cleanup(jobsDirPrefix);
     }
     logger.info("Done " + commandName + " plugin execute...");
+    return signal;
   }
 
   protected abstract String getJobsDirPrefix();
@@ -268,8 +267,9 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   /**
    * unpack result from result file and pack it into rows needed by wsf framework
+   * @throws WsfException 
    */
-  protected void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws WsfPluginException, IOException {
+  protected void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws IOException, WsfException {
     // create a map of <column/position>
     Map<String, Integer> columns = new HashMap<String, Integer>(orderedColumns.length);
     for (int i = 0; i < orderedColumns.length; i++) {
@@ -291,11 +291,6 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   protected abstract String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException;
 
-  @Override
-    protected String[] defineContextKeys() {
-    return new String[] { CConstants.WDK_MODEL_KEY };
-  }
-  
   public void setOrganismNameForFiles(String name) {
     organismNameForFiles_forTesting = name;
   }
@@ -328,13 +323,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   private Connection getDbConnection()
       throws SQLException, WsfPluginException, WdkModelException {
-    ConnectionContainer container = (ConnectionContainer) context.get(CConstants.WDK_MODEL_KEY);
-    if (container == null)
-      throw new WsfPluginException("The container cannot be found in the "
-          + "context with key: " + WdkModel.CONNECTION_APP + ". Please check if the "
-          + "container is declared in the context.");
-
-    return container.getConnection(WdkModel.CONNECTION_APP);
+    return wdkModel.getConnection(WdkModel.CONNECTION_APP);
   }
 
   private void cleanup(String jobsDirPrefix) {
