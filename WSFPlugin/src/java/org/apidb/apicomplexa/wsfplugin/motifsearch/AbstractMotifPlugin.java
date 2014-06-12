@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
+import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -171,7 +171,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
     String projectId = request.getProjectId();
     try {
-      WdkModel wdkModel = InstanceManager.getWdkModel(projectId);
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
       projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {

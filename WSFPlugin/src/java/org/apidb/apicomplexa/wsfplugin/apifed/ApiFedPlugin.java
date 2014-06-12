@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
+import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
@@ -80,7 +80,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     String projectId = request.getProjectId();
     try {
-      WdkModel wdkModel = InstanceManager.getWdkModel(projectId);
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
       projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {

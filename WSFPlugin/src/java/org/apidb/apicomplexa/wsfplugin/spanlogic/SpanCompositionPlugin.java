@@ -15,7 +15,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
+import org.eupathdb.common.model.InstanceManager;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.wdk.model.Utilities;
@@ -243,7 +243,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     String tempA = null, tempB = null;
     try {
-      WdkModel wdkModel = InstanceManager.getWdkModel(request.getProjectId());
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
       String signature = request.getContext().get(Utilities.QUERY_CTX_USER);
       User user = wdkModel.getUserFactory().getUser(signature);

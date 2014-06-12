@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
+import org.eupathdb.common.model.InstanceManager;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
@@ -139,7 +139,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         columnOrders.put(orderedColumns[i], i);
       }
 
-      wdkModel = InstanceManager.getWdkModel(request.getProjectId());
+      wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
 
       // get the user
       String userSignature = context.get(Utilities.QUERY_CTX_USER);

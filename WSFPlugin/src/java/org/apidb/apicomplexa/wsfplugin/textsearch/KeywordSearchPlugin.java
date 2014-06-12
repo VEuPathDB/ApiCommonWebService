@@ -14,9 +14,8 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
 import org.apidb.apicommon.model.comment.CommentFactory;
-import org.apidb.apicommon.model.comment.CommentModelException;
+import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
@@ -112,7 +111,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	try {
 	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
 	    
-	    CommentFactory commentFactory = InstanceManager.getCommentFactory(projectId);
+	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
 	    Connection dbConnection = commentFactory.getConnection(null);
 	    ps = dbConnection.prepareStatement(sql);
 	    ps.setString(1, oracleTextExpression);
@@ -121,7 +120,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
 	    // logger.debug("after validation commentMatches = "
 	    // + commentMatches.toString());
-	} catch (SQLException | WdkModelException | EuPathServiceException | CommentModelException ex) {
+	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
 	    throw new WsfPluginException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
@@ -143,7 +142,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 		maxPvalue = "0";
 	    }
 
-	    WdkModel wdkModel = InstanceManager.getWdkModel(projectId);
+	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    Connection dbConnection = wdkModel.getConnection(WdkModel.CONNECTION_APP);
 	    ps = dbConnection.prepareStatement(sql);
 	    ps.setString(1, oracleTextExpression);
@@ -198,7 +197,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           + "'\n";
     }
 
-    WdkModel wdkModel = InstanceManager.getWdkModel(projectId);
+    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
     String sql = "SELECT source_id, project_id, \n"
@@ -326,7 +325,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + "  and attrs.project_id = ? \n" + "  and attrs.taxon_id in ("
               + organisms + ")");
 
-      WdkModel wdkModel = InstanceManager.getWdkModel(projectId);
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
       DatabaseInstance platform = wdkModel.getAppDb();
       DataSource dataSource = platform.getDataSource();
 

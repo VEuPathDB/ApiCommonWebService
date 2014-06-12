@@ -16,25 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.InstanceManager;
+import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
-import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.dbms.ConnectionContainer;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.xml.sax.SAXException;
 
 /**
  * @author steve
@@ -102,7 +96,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     public int execute(PluginRequest request, PluginResponse response) throws WsfException {
     String projectId = request.getProjectId();
     try {
-      this.wdkModel = InstanceManager.getWdkModel(projectId);
+      this.wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
       this.projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {
