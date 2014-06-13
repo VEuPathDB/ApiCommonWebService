@@ -39,8 +39,7 @@
 
   <target name="ApiCommonWebService-Installation" depends="ApiCommonWebsite-Installation,
                                                            ApiCommonWebService/WSFPlugin-Installation,
-                                                           ApiCommonWebService/HighSpeedSnpSearch-Installation,
-                                                           ApiCommonWebService/Test-Installation">
+                                                           ApiCommonWebService/HighSpeedSnpSearch-Installation">
 
     <ant target="defaultProjectInstall">
       <property name="project" value="ApiCommonWebService"/>
