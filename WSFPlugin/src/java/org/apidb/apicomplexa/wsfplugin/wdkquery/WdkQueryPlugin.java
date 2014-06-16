@@ -129,7 +129,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     try {
       logger.debug("context question: '" + questionName + "', param: '" + paramName + "', query: '" +
-          queryName + "', SiteModel=" + wdkModel.getProjectId());
+          queryName + "', SiteModel=" + request.getProjectId());
 
       // Variable to maintain the order of columns in the result... maintains
       // order given by Federation Plugin
