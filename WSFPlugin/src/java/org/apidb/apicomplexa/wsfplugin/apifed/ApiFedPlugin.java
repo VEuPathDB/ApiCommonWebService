@@ -144,7 +144,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     catch (SQLException ex) {
       throw new WsfPluginException(ex);
     }
-    logger.info("ApiFedPlugin finished.");
+    logger.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
     return componentResult.getSignal();
   }
 

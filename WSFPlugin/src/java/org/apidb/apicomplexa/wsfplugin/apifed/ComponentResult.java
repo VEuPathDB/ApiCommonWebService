@@ -12,6 +12,7 @@ public class ComponentResult {
   private String message = "";
   private int signal = 0;
   private String token = null;
+  private int rowCount = 0;
 
   /**
    * create a result container without tokens.
@@ -45,10 +46,15 @@ public class ComponentResult {
   public boolean addRow(String projectId, String[] row) throws WsfException {
     if (requestToken(projectId)) {
       response.addRow(row);
+      rowCount++;
       return true;
     }
     else
       return false;
+  }
+
+  public int getRowCount() {
+    return rowCount;
   }
 
   public boolean addMessage(String projectId, String message) throws WsfException {
