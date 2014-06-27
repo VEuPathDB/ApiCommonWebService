@@ -20,8 +20,12 @@ public class UniqueComponentResult extends ComponentResult {
     // only store unique rows, and ignore the duplicated ones
     String key = getKey(row);
     if (!rows.contains(key)) {
-      super.addRow(token, row);
-      return rows.add(key);
+      if (super.addRow(token, row)) {
+        rows.add(key);
+        return true;
+      } else {
+        return false;
+      }
     }
     return true;
   }
