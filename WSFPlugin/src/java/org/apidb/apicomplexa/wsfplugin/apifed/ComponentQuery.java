@@ -25,6 +25,9 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   private boolean running;
   private boolean stopRequested;
 
+  private int rowCount = 0;
+  private int attachmentCount = 0;
+
   public ComponentQuery(String projectId, String url, PluginRequest pluginRequest, ComponentResult result) {
     this.projectId = projectId;
     this.url = url;
@@ -64,7 +67,8 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
       }
 
       long end = System.currentTimeMillis();
-      logger.info("Thread (" + url + ") has returned results in " + ((end - start) / 1000.0) + " seconds.");
+      logger.info("Thread (" + url + ") has returned " + rowCount + " results, " + attachmentCount +
+          " attachments, in " + ((end - start) / 1000.0) + " seconds.");
     }
     catch (Exception ex) {
       logger.error("Error occurred related to " + url, ex);
@@ -93,6 +97,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
         Thread.sleep(REQUEST_TOKEN_INTERVAL);
       }
       catch (InterruptedException ex) {}
+      rowCount++;
     }
   }
 
@@ -105,6 +110,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
         Thread.sleep(REQUEST_TOKEN_INTERVAL);
       }
       catch (InterruptedException ex) {}
+      attachmentCount++;
     }
   }
 
