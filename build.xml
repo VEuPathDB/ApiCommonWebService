@@ -81,8 +81,7 @@
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebsite-WebInstallation,
-                                                              ApiCommonWebService-Installation">
+  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation">
 
   </target>
 
