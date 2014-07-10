@@ -1,26 +1,22 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-
-import javax.xml.parsers.ParserConfigurationException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
-import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.Utilities;
+import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.xml.sax.SAXException;
 
 /**
  * @author Jerric Gao
@@ -28,7 +24,7 @@ import org.xml.sax.SAXException;
 public class ApiFedPlugin extends AbstractPlugin {
 
   private static final Logger logger = Logger.getLogger(ApiFedPlugin.class);
-  
+
   public static final String VERSION = "3.0";
 
   public static final String PARAM_SET_NAME = "VQ";
@@ -41,29 +37,6 @@ public class ApiFedPlugin extends AbstractPlugin {
 
   // Member Variable
   private ProjectMapper projectMapper;
-
-  @Override
-  protected String[] defineContextKeys() {
-    return new String[] { CConstants.WDK_MODEL_KEY };
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-   */
-  @Override
-  public void initialize(Map<String, Object> context) throws WsfPluginException {
-    super.initialize(context);
-
-    WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
-    try {
-      projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
-    } catch (WdkModelException | SAXException | IOException
-        | ParserConfigurationException ex) {
-      throw new WsfPluginException(ex);
-    }
-  }
 
   /*
    * (non-Javadoc)
@@ -92,8 +65,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
    */
   @Override
-  public void validateParameters(PluginRequest request)
-      throws WsfPluginException {
+  public void validateParameters(PluginRequest request) {
     // Do Nothing in this plugin
   }
 
@@ -103,9 +75,17 @@ public class ApiFedPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public void execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
     logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
+
+    String projectId = request.getProjectId();
+    try {
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+      projectMapper = ProjectMapper.getMapper(wdkModel);
+    }
+    catch (WdkModelException ex) {
+      throw new WsfPluginException(ex);
+    }
 
     // Splitting the QueryName up for Mapping
     Map<String, String> context = request.getContext();
@@ -115,23 +95,19 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     Map<String, String> params = request.getParams();
 
-    String[] tokens = projectMapper.getAllProjects().toArray(new String[0]);
-
     // Determine if the Query is a Parameter Query. if it's a param query, we
     // need to combine the result and remove duplicated values; for other type,
     // we just cache the result as we get them.
 
     // we will use tokens for param queries, so that the order of the terms are
     // preserved in each component.
-    ComponentResult componentResult = (paramName != null)
-        ? new UniqueComponentResult(response, tokens) : new ComponentResult(
-            response);
+    ComponentResult componentResult = (paramName != null) ? new UniqueComponentResult(response)
+        : new ComponentResult(response);
 
     // determine components that we will call
     try {
       Set<String> projects = getProjects(params, (paramName != null));
-      List<ComponentQuery> queries = getComponents(request, projects,
-          componentResult);
+      List<ComponentQuery> queries = getComponents(request, projects, componentResult);
       for (ComponentQuery query : queries) {
         query.start();
       }
@@ -144,7 +120,8 @@ public class ApiFedPlugin extends AbstractPlugin {
       // wait for a bit to make sure all queries are running
       try {
         Thread.sleep(500);
-      } catch (InterruptedException ex) {}
+      }
+      catch (InterruptedException ex) {}
 
       // this flag is to make sure we only request timeout stop once.
       boolean timedOut = false;
@@ -154,28 +131,32 @@ public class ApiFedPlugin extends AbstractPlugin {
           // timeout reached, force all queries to stop
           timedOut = true;
           for (ComponentQuery query : queries) {
-            if (query.isRunning()) query.requestStop();
+            if (query.isRunning())
+              query.requestStop();
           }
         }
         try {
           Thread.sleep(500);
-        } catch (InterruptedException ex) {}
+        }
+        catch (InterruptedException ex) {}
       }
-    } catch (SQLException ex) {
+    }
+    catch (SQLException ex) {
       throw new WsfPluginException(ex);
     }
-    logger.info("ApiFedPlugin finished.");
+    logger.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
+    return componentResult.getSignal();
   }
 
   private boolean isAllStopped(List<ComponentQuery> queries) {
     for (ComponentQuery query : queries) {
-      if (query.isRunning()) return false;
+      if (query.isRunning())
+        return false;
     }
     return true;
   }
 
-  private Set<String> getProjects(Map<String, String> params, boolean all)
-      throws SQLException {
+  private Set<String> getProjects(Map<String, String> params, boolean all) throws SQLException {
     Set<String> projects = new LinkedHashSet<>();
     if (all) {
       projects.addAll(projectMapper.getAllProjects());
@@ -197,14 +178,15 @@ public class ApiFedPlugin extends AbstractPlugin {
         String projectId = projectMapper.getProjectByOrganism(organism);
         projects.add(projectId);
       }
-    } else { // organism doesn't exist, call all projects
+    }
+    else { // organism doesn't exist, call all projects
       projects.addAll(projectMapper.getAllProjects());
     }
     return projects;
   }
 
-  private List<ComponentQuery> getComponents(PluginRequest request,
-      Set<String> projects, ComponentResult result) {
+  private List<ComponentQuery> getComponents(PluginRequest request, Set<String> projects,
+      ComponentResult result) {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
       String url = projectMapper.getWebServiceUrl(projectId);

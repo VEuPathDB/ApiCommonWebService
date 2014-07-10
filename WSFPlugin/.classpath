@@ -3,15 +3,12 @@
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
-	<classpathentry kind="lib" path="/WSF Service/lib/java/jaxrpc-1.4.jar"/>
-	<classpathentry kind="lib" path="/WSF Service/lib/java/axis-1.4.jar" sourcepath="D:/Develop/Apache/apache-maven-repo/org/apache/axis/axis/1.4/axis-1.4-sources.jar"/>
 	<classpathentry kind="var" path="GUS_HOME/lib/java/db_driver/ojdbc6.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Shared Model"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/EuPath Common WS"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WDK Model"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WSF Plugin"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WDK Controller"/>
-	<classpathentry kind="var" path="GUS_HOME/lib/java/WSF-Client.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/log4j-1.2.17.jar"/>
@@ -19,5 +16,7 @@
 	<classpathentry kind="lib" path="/WSF Plugin/lib/java/org.json-chargebee-1.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WSF Service"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/EuPath Common Model"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/WSF Client"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web Model"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

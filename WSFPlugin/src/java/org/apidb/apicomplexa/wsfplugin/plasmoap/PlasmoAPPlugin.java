@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
@@ -46,9 +47,9 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
      */
     @Override
-    public void initialize(Map<String, Object> context)
+    public void initialize()
             throws WsfPluginException {
-        super.initialize(context);
+        super.initialize();
 
         // load properties
         perlExe = getProperty(FIELD_PERL_EXE);
@@ -86,7 +87,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      */
     @Override
     public void validateParameters(PluginRequest request)
-            throws WsfPluginException {
+            {
     // do nothing in this plugin
     }
 
@@ -96,7 +97,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
      */
     @Override
-    public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
+    public int execute(PluginRequest request, PluginResponse response) throws WsfException {
         logger.info("Invoking PlasmoAPPlugin...");
 
         try {
@@ -126,7 +127,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
             }
             response.addRow(row);
             response.setMessage(output);
-            response.setSignal(signal);
+            return signal;
         } catch (IOException ex) {
             logger.error("Error running PlasmoAPPlugin...", ex);
             throw new WsfPluginException(ex);
@@ -162,10 +163,5 @@ public class PlasmoAPPlugin extends AbstractPlugin {
         if (temp.equalsIgnoreCase("does not")) signal = "false";
         else signal = "true";
         return signal;
-    }
-
-    @Override
-    protected String[] defineContextKeys() {
-        return null;
     }
 }

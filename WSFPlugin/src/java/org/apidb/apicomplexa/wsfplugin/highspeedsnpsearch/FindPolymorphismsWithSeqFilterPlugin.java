@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.WsfUserException;
 
 /**
  * @author steve
@@ -35,7 +36,7 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
    */
   @Override
   public void validateParameters(PluginRequest request)
-    throws WsfPluginException {
+    throws WsfUserException {
   }
 
   @Override
