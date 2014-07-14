@@ -28,10 +28,10 @@ import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.User;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**

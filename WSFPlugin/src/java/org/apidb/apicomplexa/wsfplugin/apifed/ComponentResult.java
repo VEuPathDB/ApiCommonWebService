@@ -1,7 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
+import org.gusdb.wsf.common.WsfException;
 
 public class ComponentResult {
   

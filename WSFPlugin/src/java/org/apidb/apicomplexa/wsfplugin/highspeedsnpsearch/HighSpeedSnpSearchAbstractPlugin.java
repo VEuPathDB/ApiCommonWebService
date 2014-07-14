@@ -24,10 +24,10 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
@@ -316,7 +316,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   }
 
   private Connection getDbConnection()
-      throws SQLException, WsfPluginException, WdkModelException {
+      throws SQLException, WdkModelException {
     return wdkModel.getConnection(WdkModel.CONNECTION_APP);
   }
 

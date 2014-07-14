@@ -16,12 +16,13 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -118,7 +119,7 @@ public class MotifSearchTest {
 
     // print results
     String[][] results = response.getPage(0);
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(2, results.length);
   }
@@ -151,7 +152,7 @@ public class MotifSearchTest {
     String[][] results = response.getPage(0);
 
     // print results
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(3, results.length);
   }
@@ -170,7 +171,7 @@ public class MotifSearchTest {
         AbstractMotifPlugin.COLUMN_LOCATIONS,
         AbstractMotifPlugin.COLUMN_SEQUENCE };
 
-    PluginRequest request = new PluginRequest();
+    WsfRequest request = new WsfRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());

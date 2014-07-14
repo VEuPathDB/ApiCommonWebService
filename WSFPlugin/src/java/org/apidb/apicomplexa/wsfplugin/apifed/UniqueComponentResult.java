@@ -3,8 +3,8 @@ package org.apidb.apicomplexa.wsfplugin.apifed;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 import org.json.JSONArray;
 
 public class UniqueComponentResult extends ComponentResult {

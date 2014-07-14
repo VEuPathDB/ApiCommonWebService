@@ -5,18 +5,26 @@ import java.net.URI;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin;
 import org.gusdb.wsf.client.WsfClient;
-import org.gusdb.wsf.client.WsfClientBuilder;
+import org.gusdb.wsf.client.WsfClientFactory;
 import org.gusdb.wsf.client.WsfResponseListener;
-import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.WsfException;
-import org.gusdb.wsf.service.WsfRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.common.WsfRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableLoadTimeWeaving;
 
+@Configuration
+@EnableLoadTimeWeaving
 public class ComponentQuery extends Thread implements WsfResponseListener {
 
   private static final long REQUEST_TOKEN_INTERVAL = 500;
 
   private static final Logger logger = Logger.getLogger(ComponentResult.class);
 
+  @Autowired
+  private WsfClientFactory _wsfClientFactory;
+  
   private final String projectId;
   private final String url;
   private final WsfRequest request;
@@ -56,7 +64,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
     try {
       long start = System.currentTimeMillis();
 
-      WsfClient client = WsfClientBuilder.newClient(this, new URI(url));
+      WsfClient client = _wsfClientFactory.newClient(this, new URI(url));
 
       // invoke the web service, and get response
       int signal = client.invoke(request);
