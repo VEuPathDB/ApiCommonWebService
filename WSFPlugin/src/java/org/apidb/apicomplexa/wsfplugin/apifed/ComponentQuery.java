@@ -4,26 +4,21 @@ import java.net.URI;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin;
+import org.gusdb.wdk.model.ServiceResolver;
 import org.gusdb.wsf.client.WsfClient;
 import org.gusdb.wsf.client.WsfClientFactory;
 import org.gusdb.wsf.client.WsfResponseListener;
 import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.common.WsfRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableLoadTimeWeaving;
 
-@Configuration
-@EnableLoadTimeWeaving
 public class ComponentQuery extends Thread implements WsfResponseListener {
 
   private static final long REQUEST_TOKEN_INTERVAL = 500;
 
   private static final Logger logger = Logger.getLogger(ComponentResult.class);
 
-  @Autowired
-  private WsfClientFactory _wsfClientFactory;
+  private static WsfClientFactory _wsfClientFactory = ServiceResolver.resolve(WsfClientFactory.class);
   
   private final String projectId;
   private final String url;
