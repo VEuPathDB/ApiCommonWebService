@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -43,12 +44,6 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   }
 
   @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
-  }
-
-  @Override
   protected Map<Character, String> getSymbols() {
     Map<Character, String> symbols = new HashMap<Character, String>();
     symbols.put('0', "DE");
@@ -70,7 +65,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   @Override
   protected void findMatches(PluginResponse response,
       Map<String, Integer> orders, String headline, Pattern searchPattern,
-      String sequence) throws WsfPluginException {
+      String sequence) throws WsfException {
     MotifConfig config = getConfig();
 
     // parse the headline
