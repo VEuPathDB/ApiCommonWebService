@@ -5,8 +5,8 @@ import java.util.Map;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResponseResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 
 public class MergeResultContainer extends ResponseResultContainer implements
     ResultContainer {

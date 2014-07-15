@@ -5,10 +5,11 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,7 +64,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
 
     // print results
     String[][] results = response.getPage(0);
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(getExpectedResultCount(), results.length);
   }
@@ -77,7 +78,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
       FindPolymorphismsPlugin.COLUMN_PERCENT_OF_KNOWNS,
       FindPolymorphismsPlugin.COLUMN_PHENOTYPE };
 
-    PluginRequest request = new PluginRequest();
+    WsfRequest request = new WsfRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());

@@ -24,12 +24,12 @@ import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.user.User;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.plugin.WsfUserException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 

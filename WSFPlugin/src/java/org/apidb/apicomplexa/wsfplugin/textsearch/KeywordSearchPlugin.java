@@ -23,9 +23,9 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 

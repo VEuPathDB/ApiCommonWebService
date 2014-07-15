@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.plugin.WsfUserException;
 
 /**
  * @author steve

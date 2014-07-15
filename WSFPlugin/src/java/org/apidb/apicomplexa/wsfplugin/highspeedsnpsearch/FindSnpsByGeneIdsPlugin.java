@@ -11,7 +11,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**

@@ -7,9 +7,9 @@ import java.util.Map;
 
 import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.runtime.GusHome;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.plugin.WsfUserException;
 
 /**
  * @author steve

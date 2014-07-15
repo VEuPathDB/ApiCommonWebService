@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
@@ -38,10 +39,10 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -83,9 +84,9 @@ public class SpanCompositionTest {
       if (!testCase.success) {
         logger.warn("Test #" + testCase.id + " FAILED: " + testCase.description);
         logger.warn("============= EXPECT: "
-            + Formatter.printArray(testCase.expectedOutput));
+            + FormatUtil.printArray(testCase.expectedOutput));
         logger.warn("============= ACTUAL: "
-            + Formatter.printArray(testCase.actualOutput));
+            + FormatUtil.printArray(testCase.actualOutput));
         success = false;
         count++;
       }
@@ -156,7 +157,7 @@ public class SpanCompositionTest {
     Map<String, String> context = new HashMap<String, String>();
     context.put(Utilities.QUERY_CTX_USER, user.getSignature());
 
-    PluginRequest request = new PluginRequest();
+    WsfRequest request = new WsfRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(context);
@@ -165,7 +166,7 @@ public class SpanCompositionTest {
   }
 
   private String createGeneStep(String[] input) throws WdkModelException, WdkUserException {
-    String key = Formatter.printArray(input).intern();
+    String key = FormatUtil.printArray(input).intern();
     if (steps.containsKey(key))
       return steps.get(key);
 
