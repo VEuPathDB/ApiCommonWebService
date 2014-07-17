@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -251,11 +252,15 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       Process process = builder.start();
       process.waitFor();
       if (process.exitValue() != 0) {
-        Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
-        String errMsg = (s.hasNext() ? s.next() : "");
-        throw new PluginModelException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+        try (InputStream errorStream = process.getErrorStream();
+             Scanner s = new Scanner(errorStream)) {
+          s.useDelimiter("\\A");
+          String errMsg = (s.hasNext() ? s.next() : "");
+          throw new PluginModelException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+        }
       }
-    } catch (IOException|InterruptedException e) {
+    }
+    catch (IOException | InterruptedException e) {
       throw new PluginModelException("Exception running " + FormatUtil.arrayToString(array, " ") + e, e);
     }
   }
