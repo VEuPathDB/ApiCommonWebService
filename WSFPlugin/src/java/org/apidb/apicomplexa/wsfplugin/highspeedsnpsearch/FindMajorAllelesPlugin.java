@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.gusdb.fgputil.runtime.GusHome;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfUserException;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author steve
@@ -72,7 +72,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public void validateParameters(PluginRequest request)
-    throws WsfUserException {
+     {
   }
 
   @Override
@@ -85,17 +85,17 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   protected String getResultsFileBaseName() { return "results"; }
     
   @Override
-  protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
+  protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginUserException, PluginModelException  {
     List<String> command = new ArrayList<String>();
     String gusBin = GusHome.getGusHome() + "/bin";
 
     // set A
     String strainsA = params.get(PARAM_STRAIN_LIST_A);
-    if (strainsA == null) throw new WsfPluginException("Strains param is empty");
+    if (strainsA == null) throw new PluginUserException("Strains param is empty");
     int strainsCountA = writeStrainsFile(jobDir, strainsA, "strainsA");
     String readFreqPercentA = params.get(PARAM_READ_FREQ_PERCENT_A);
     File readFreqDirA = new File(organismDir, "readFreq" + readFreqPercentA);
-    if (!readFreqDirA.exists()) throw new WsfPluginException("StrainsA dir for readFreq ' " + readFreqPercentA
+    if (!readFreqDirA.exists()) throw new PluginModelException("StrainsA dir for readFreq ' " + readFreqPercentA
                                 + "' does not exist:\n" + readFreqDirA);
     int percentMajorAllelesA = Integer.parseInt(params.get(PARAM_MIN_PERCENT_MAJOR_ALLELES_A));
     int percentUnknownsA = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_A));
@@ -104,11 +104,11 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
     // set B
     String strainsB = params.get(PARAM_STRAIN_LIST_B);
-    if (strainsB == null) throw new WsfPluginException("Strains param is empty");
+    if (strainsB == null) throw new PluginUserException("Strains param is empty");
     int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsB");
     String readFreqPercentB = params.get(PARAM_READ_FREQ_PERCENT_B);
     File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);
-    if (!readFreqDirB.exists()) throw new WsfPluginException("StrainsB dir for readFreq ' " + readFreqPercentB
+    if (!readFreqDirB.exists()) throw new PluginModelException("StrainsB dir for readFreq ' " + readFreqPercentB
                                 + "' does not exist:\n" + readFreqDirB);
     int percentMajorAllelesB = Integer.parseInt(params.get(PARAM_MIN_PERCENT_MAJOR_ALLELES_B));
     int percentUnknownsB = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_B));
@@ -133,9 +133,9 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   }
 
   @Override
-  protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException {
+  protected String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws PluginModelException {
       if (parts.length != 11)
-        throw new WsfPluginException("Wrong number of columns in results file.  Expected 11, found " + parts.length);
+        throw new PluginModelException("Wrong number of columns in results file.  Expected 11, found " + parts.length);
 
     String[] row = new String[12];
     row[columns.get(COLUMN_SNP_SOURCE_ID)] = parts[0];
