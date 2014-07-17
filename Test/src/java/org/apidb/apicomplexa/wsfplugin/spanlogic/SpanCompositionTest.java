@@ -39,10 +39,10 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.common.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,8 +63,7 @@ public class SpanCompositionTest {
   }
 
   @Test
-  public void testSpanLogic() throws URISyntaxException, IOException,
-      WsfPluginException, WdkModelException, WdkUserException {
+  public void testSpanLogic() throws Exception {
     List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
     for (SpanCompositionTestCase testCase : testCases) {
@@ -103,7 +102,7 @@ public class SpanCompositionTest {
   }
 
   private List<SpanCompositionTestCase> loadTestCases(String resourceName)
-      throws URISyntaxException, IOException, WsfPluginException {
+      throws URISyntaxException, IOException, PluginUserException {
     List<SpanCompositionTestCase> testCases = new ArrayList<SpanCompositionTestCase>();
     URL url = SpanCompositionTest.class.getResource(resourceName);
     if (url != null) {
@@ -157,7 +156,7 @@ public class SpanCompositionTest {
     Map<String, String> context = new HashMap<String, String>();
     context.put(Utilities.QUERY_CTX_USER, user.getSignature());
 
-    WsfRequest request = new WsfRequest();
+    PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(context);
@@ -218,7 +217,7 @@ public class SpanCompositionTest {
     testCase.success = true;
   }
 
-  private SpanCompositionPlugin createPlugin() throws WsfPluginException {
+  private SpanCompositionPlugin createPlugin() {
     SpanCompositionPlugin plugin = new SpanCompositionPlugin();
 
     Map<String, Object> context = new HashMap<String, Object>();

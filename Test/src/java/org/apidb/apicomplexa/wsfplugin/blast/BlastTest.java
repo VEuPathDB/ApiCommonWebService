@@ -20,7 +20,6 @@ import org.eupathdb.websvccommon.wsfplugin.blast.BlastConfig;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
 import org.eupathdb.websvccommon.wsfplugin.blast.ResultFormatter;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +35,7 @@ public class BlastTest {
 
   private final String projectHome;
 
-  private Properties properties;
+  private Properties _properties;
 
   public BlastTest() throws Exception {
     projectHome = System.getProperty(SYS_PROJECT_HOME);
@@ -50,13 +49,13 @@ public class BlastTest {
       FileNotFoundException, IOException {
 
     // prepare the config file
-    properties = new Properties();
+    _properties = new Properties();
 
     // read the sample config file with default values
     String sampleFile = projectHome
         + "/ApiCommonWebService/WSFPlugin/config/blast-config.xml.sample";
     InputStream inStream = new FileInputStream(sampleFile);
-    properties.loadFromXML(inStream);
+    _properties.loadFromXML(inStream);
     inStream.close();
   }
 
@@ -64,7 +63,7 @@ public class BlastTest {
    * test if the all the fields are populated correctly from the config file;
    */
   @Test
-  public void testLoadAllFields() throws WsfPluginException {
+  public void testLoadAllFields() throws Exception {
     // populate all fields with random values
     Random random = new Random();
 
@@ -104,7 +103,7 @@ public class BlastTest {
    * test if the defaults are used if an optional field is not specified.
    */
   @Test
-  public void testUseDefaultFields() throws WsfPluginException {
+  public void testUseDefaultFields() throws Exception {
     // populate all fields with random values
     Random random = new Random();
 
@@ -113,7 +112,7 @@ public class BlastTest {
     properties.setProperty(BlastConfig.FIELD_BLAST_PATH, blastPath);
 
     BlastConfig config = new BlastConfig(properties);
-    BlastConfig defaultConfig = new BlastConfig(this.properties);
+    BlastConfig defaultConfig = new BlastConfig(_properties);
 
     Assert.assertEquals(blastPath, config.getBlastPath());
     Assert.assertEquals(defaultConfig.getTempDir().getAbsolutePath(),
@@ -128,8 +127,7 @@ public class BlastTest {
   }
 
   @Test
-  public void testFormatNcbiResultsWithHits() throws URISyntaxException,
-      WsfPluginException, IOException {
+  public void testFormatNcbiResultsWithHits() throws URISyntaxException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-hits.out", message);
@@ -144,8 +142,7 @@ public class BlastTest {
   }
 
   @Test
-  public void testFormatNcbiResultsWithoutHits() throws
-      WsfPluginException, URISyntaxException, IOException {
+  public void testFormatNcbiResultsWithoutHits() throws URISyntaxException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-no-hits.out", message);
@@ -155,8 +152,7 @@ public class BlastTest {
   }
 
   @Test
-  public void testFormatNcbiResultsWithError() throws 
-      WsfPluginException, URISyntaxException, IOException {
+  public void testFormatNcbiResultsWithError() throws URISyntaxException, IOException {
     StringBuffer message = new StringBuffer();
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-err.out", message);
@@ -207,8 +203,8 @@ public class BlastTest {
   // }
 
   private String[][] format(ResultFormatter formatter, String fileName,
-      StringBuffer message) throws WsfPluginException, URISyntaxException, IOException {
-    BlastConfig config = new BlastConfig(properties);
+      StringBuffer message) throws URISyntaxException, IOException {
+    BlastConfig config = new BlastConfig(_properties);
     ProjectMapper projectMapper = new MockProjectMapper();
     formatter.setConfig(config);
     formatter.setProjectMapper(projectMapper);

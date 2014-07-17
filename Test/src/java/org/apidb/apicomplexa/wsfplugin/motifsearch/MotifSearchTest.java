@@ -18,11 +18,10 @@ import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.model.Utilities;
-import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.common.WsfRequest;
+import org.gusdb.wsf.plugin.Plugin;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,11 +60,12 @@ public class MotifSearchTest {
     // read the sample config file with default values
     String sampleFile = projectHome
         + "/ApiCommonWebService/WSFPlugin/config/motifSearch-config.xml.sample";
-    InputStream inStream = new FileInputStream(sampleFile);
-    properties.loadFromXML(inStream);
-    inStream.close();
-    properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
 
+    try (InputStream inStream = new FileInputStream(sampleFile)) {
+      properties.loadFromXML(inStream);
+    }
+    
+    properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
   }
 
   @Test
@@ -96,8 +96,7 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testDnaMotifSearch() throws WsfPluginException,
-      URISyntaxException, IOException {
+  public void testDnaMotifSearch() throws URISyntaxException, IOException {
     AbstractMotifPlugin search = new DnaMotifPlugin();
     try {
       search.initialize(getContext());
@@ -125,8 +124,7 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testProteinMotifSearch() throws WsfPluginException,
-      URISyntaxException, IOException {
+  public void testProteinMotifSearch() throws URISyntaxException, IOException {
     AbstractMotifPlugin search = new ProteinMotifPlugin();
 
     // ignore the exceptions here, use a mock project mapper
@@ -171,7 +169,7 @@ public class MotifSearchTest {
         AbstractMotifPlugin.COLUMN_LOCATIONS,
         AbstractMotifPlugin.COLUMN_SEQUENCE };
 
-    WsfRequest request = new WsfRequest();
+    PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());
