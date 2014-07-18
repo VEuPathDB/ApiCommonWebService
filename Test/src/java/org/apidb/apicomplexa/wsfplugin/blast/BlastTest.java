@@ -11,7 +11,7 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 import java.util.Random;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.eupathdb.common.model.ProjectMapper;
