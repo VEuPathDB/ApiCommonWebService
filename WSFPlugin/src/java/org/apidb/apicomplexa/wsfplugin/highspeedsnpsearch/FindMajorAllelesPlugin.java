@@ -100,7 +100,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     int percentMajorAllelesA = Integer.parseInt(params.get(PARAM_MIN_PERCENT_MAJOR_ALLELES_A));
     int percentUnknownsA = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS_A));
     int unknownsThresholdA = (int)Math.floor(strainsCountA * percentUnknownsA / 100.0);  // round down
-    if (unknownsThresholdA > (strainsCountA - 2)) unknownsThresholdA = strainsCountA - 2;  // must be at least 2 known
+    if (unknownsThresholdA > (strainsCountA - 1)) unknownsThresholdA = strainsCountA - 1;  // must be at least 1 known
 
     // set B
     String strainsB = params.get(PARAM_STRAIN_LIST_B);

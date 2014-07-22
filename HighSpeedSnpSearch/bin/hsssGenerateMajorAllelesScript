@@ -124,11 +124,11 @@ sub printMakeConsensus {
       my $allMerged = shift(@$mergeQueue);
 
       # if there was only one file input, then the merged stream needs a strain id column
-      if (scalar(@mergeQueueOriginal) == 1) {
+      if ($strainsCount == 1) {
 	my $singleInputFile = $allMerged;
 	my $strainId = basename($singleInputFile);
 	$fifoCursor++;
-	print $fh "hsssAddStrainId $strainId < $singleInputFile | $fifoPrefix$fifoCursor\n";
+	print O "hsssAddStrainId $strainId < $singleInputFile > $fifoPrefix$fifoCursor &\n";
 	$allMerged = "$fifoPrefix$fifoCursor";
       }
 
