@@ -122,6 +122,16 @@ sub printMakeConsensus {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@$mergeQueue);
+
+      # if there was only one file input, then the merged stream needs a strain id column
+      if (scalar(@mergeQueueOriginal) == 1) {
+	my $singleInputFile = $allMerged;
+	my $strainId = basename($singleInputFile);
+	$fifoCursor++;
+	print $fh "hsssAddStrainId $strainId < $singleInputFile | $fifoPrefix$fifoCursor\n";
+	$allMerged = "$fifoPrefix$fifoCursor";
+      }
+
       print O "hsssMergedToConsensus $allMerged $strainFilesDirA/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFifo &\n";
       last;
     }
