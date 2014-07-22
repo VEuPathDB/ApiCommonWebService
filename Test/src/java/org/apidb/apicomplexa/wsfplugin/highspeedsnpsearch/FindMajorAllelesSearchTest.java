@@ -6,10 +6,9 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
-import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.common.WsfRequest;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,7 +22,7 @@ public class FindMajorAllelesSearchTest extends HsssTest {
   }
 
   @Test
-  public void testSearch() throws WsfPluginException {
+  public void testSearch() throws Exception {
     FindMajorAllelesPlugin search = new FindMajorAllelesPlugin();
     search.setOrganismNameForFiles("Hsapiens123");
     System.err.println("first" + properties);
@@ -80,7 +79,7 @@ public class FindMajorAllelesSearchTest extends HsssTest {
       FindMajorAllelesPlugin.COLUMN_MAJOR_PRODUCT_VARIABLE_B,
     };
 
-    WsfRequest request = new WsfRequest();
+    PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(new HashMap<String, String>());

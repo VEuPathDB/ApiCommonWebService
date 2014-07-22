@@ -3,8 +3,9 @@ package org.apidb.apicomplexa.wsfplugin.apifed;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.PluginUserException;
 import org.json.JSONArray;
 
 public class UniqueComponentResult extends ComponentResult {
@@ -16,7 +17,7 @@ public class UniqueComponentResult extends ComponentResult {
   }
 
   @Override
-  public synchronized boolean addRow(String token, String[] row) throws WsfException {
+  public synchronized boolean addRow(String token, String[] row) throws PluginModelException, PluginUserException  {
     // only store unique rows, and ignore the duplicated ones
     String key = getKey(row);
     if (!rows.contains(key)) {

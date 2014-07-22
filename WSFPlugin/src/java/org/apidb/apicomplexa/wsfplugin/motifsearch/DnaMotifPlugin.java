@@ -10,9 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -53,7 +53,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   protected void findMatches(PluginResponse response, Map<String, Integer> orders, String headline,
-      Pattern searchPattern, String sequence) throws WsfException {
+      Pattern searchPattern, String sequence) throws PluginModelException, PluginUserException  {
     // parse the headline
     MotifConfig config = getConfig();
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
@@ -71,7 +71,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
     try {
       projectId = getProjectId(organism).intern();
     } catch (SQLException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
 
     int length = sequence.length();

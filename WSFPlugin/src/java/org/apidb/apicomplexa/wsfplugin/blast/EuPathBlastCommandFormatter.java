@@ -6,15 +6,15 @@ import java.util.regex.Matcher;
 
 import org.apache.log4j.Logger;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastCommandFormatter;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginModelException;
 
 public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
 
   private static final Logger logger = Logger.getLogger(EuPathBlastCommandFormatter.class);
 
   @Override
-  public String getBlastDatabase(Map<String, String> params)
-      throws WsfPluginException {
+  public String getBlastDatabase(Map<String, String> params) throws PluginModelException
+       {
     String dbType = params.get(EuPathBlastPlugin.PARAM_DATA_TYPE);
 
     // the dborgs is a multipick value, containing several organisms,
@@ -42,7 +42,7 @@ public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
       // check if database file exists
       File blastnFile = new File(path + ".nin"), blastpFile = new File(path + ".pin");
       if (!blastnFile.exists() && !blastpFile.exists())
-        throw new WsfPluginException("The blast database doesn't exist: "
+        throw new PluginModelException("The blast database doesn't exist: "
             + path);
 
       sb.append(path + " ");

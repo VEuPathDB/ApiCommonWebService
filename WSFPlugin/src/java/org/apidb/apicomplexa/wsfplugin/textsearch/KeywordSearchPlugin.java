@@ -23,10 +23,10 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 
 /**
@@ -49,8 +49,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public int execute(PluginRequest request, PluginResponse response)
-      throws WsfException {
+  public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException
+      {
     logger.info("Invoking KeywordSearchPlugin...");
 
     // get parameters
@@ -121,7 +121,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    // logger.debug("after validation commentMatches = "
 	    // + commentMatches.toString());
 	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
+	    throw new PluginModelException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
 	}
@@ -153,7 +153,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
 	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
+	    throw new PluginModelException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
 	}
@@ -306,8 +306,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // }
 
   private Map<String, SearchResult> validateRecords(String projectId,
-      Map<String, SearchResult> commentResults, String organisms)
-      throws WsfPluginException, WdkModelException {
+      Map<String, SearchResult> commentResults, String organisms) throws PluginModelException
+       {
 
     Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
     newCommentResults.putAll(commentResults);
@@ -325,13 +325,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + "  and attrs.project_id = ? \n" + "  and attrs.taxon_id in ("
               + organisms + ")");
 
-      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-      DatabaseInstance platform = wdkModel.getAppDb();
-      DataSource dataSource = platform.getDataSource();
-
       ResultSet rs = null;
-
       try {
+        WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+        DatabaseInstance platform = wdkModel.getAppDb();
+        DataSource dataSource = platform.getDataSource();
+
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
         for (String sourceId : commentResults.keySet()) {
@@ -363,9 +362,9 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           }
 	  SqlUtils.closeResultSetOnly(rs);
         }
-      } catch (SQLException ex) {
+      } catch (SQLException | WdkModelException ex) {
         logger.error("caught SQLException " + ex.getMessage());
-        throw new WsfPluginException(ex);
+        throw new PluginModelException(ex);
       } finally {
         // try {
         // rs.close();

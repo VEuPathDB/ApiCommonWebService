@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfUserException;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author steve
@@ -36,11 +36,11 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
    */
   @Override
   public void validateParameters(PluginRequest request)
-    throws WsfUserException {
+     {
   }
 
   @Override
-  protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException {
+  protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginModelException, PluginUserException  {
     String chromosome = params.get(PARAM_CHROMOSOME);
     String seq = params.get(PARAM_SEQUENCE);
     if (seq.equals("")) seq = chromosome;
