@@ -10,11 +10,13 @@ import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
+import org.apache.log4j.Logger;
 
 /**
  * @author steve
  */
 public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
+  private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
   // required parameter definition
   public static final String PARAM_STRAIN_LIST = "ngsSnp_strain_meta";

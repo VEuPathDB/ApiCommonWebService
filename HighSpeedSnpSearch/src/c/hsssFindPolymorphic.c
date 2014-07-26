@@ -185,8 +185,8 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 		// write it out if has enough polymorphisms
 		int polymorphisms = alleleCount - *majorCount;
-		int polymorphismsPercent = (polymorphisms * 100) / alleleCount;
-		int knownPercent = (strainCount - U_count) * 100 / strainCount;
+		float polymorphismsPercent = ((float)polymorphisms * 100) / alleleCount;
+		float knownPercent = (float)(strainCount - U_count) * 100 / strainCount;
 		
 		int productClass = -1;  // noncoding
 		if (nonsense) productClass = 2;
@@ -194,7 +194,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		else if (refProduct > 0) productClass = 0; //coding
 
 		if (polymorphismsPercent >= minPolymorphismPct && polymorphisms > 0) {
-			printf("%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, productClass);
+			printf("%i\t%i\t%.1f\t%.1f\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, productClass);
 		}
 	}
 
