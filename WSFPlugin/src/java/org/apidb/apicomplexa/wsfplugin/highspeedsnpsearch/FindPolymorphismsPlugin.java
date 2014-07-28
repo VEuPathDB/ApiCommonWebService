@@ -16,6 +16,8 @@ import org.apache.log4j.Logger;
  * @author steve
  */
 public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
+
+  @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
   // required parameter definition
