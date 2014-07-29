@@ -10,11 +10,15 @@ import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
+import org.apache.log4j.Logger;
 
 /**
  * @author steve
  */
 public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
+
+  @SuppressWarnings("unused")
+  private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
   // required parameter definition
   public static final String PARAM_STRAIN_LIST = "ngsSnp_strain_meta";
@@ -111,8 +115,8 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
     int percentPolymorphisms = Integer.parseInt(params.get(PARAM_MIN_PERCENT_POLYMORPHISMS));
     int percentUnknowns = 100 - Integer.parseInt(params.get(PARAM_MIN_PERCENT_KNOWNS));
     int unknownsThreshold = (int) Math.floor(strainsCount * percentUnknowns / 100.0); // round down
-    if (unknownsThreshold > (strainsCount - 2))
-      unknownsThreshold = strainsCount - 2; // must be at least 2 known
+    if (unknownsThreshold > (strainsCount - 1))
+      unknownsThreshold = strainsCount - 1; // must be at least 1 known
 
     // hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold
     // strains_list_file 1 output_file result_file

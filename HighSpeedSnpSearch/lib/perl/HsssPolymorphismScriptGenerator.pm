@@ -59,7 +59,7 @@ sub writeMainScriptBody {
 	my $singleInputFile = $allMerged;
 	my $strainId = basename($singleInputFile);
 	$fifoCursor++;
-	print $fh "hsssAddStrainId $strainId < $singleInputFile | $fifoPrefix$fifoCursor\n";
+	print $fh "hsssAddStrainId $strainId < $singleInputFile > $fifoPrefix$fifoCursor &\n";
 	$allMerged = "$fifoPrefix$fifoCursor";
       }
 
