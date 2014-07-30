@@ -138,7 +138,7 @@ static inline updateCounts() {
 
 static inline writeRecord(int16_t prevSeq, int32_t prevLoc, char majorAllele, char majorProduct, char majorProductIsVariable, char minorAllele, char minorProduct, char minorProductIsVariable, int16_t majorAllelePerTenThou, int16_t minorAllelePerTenThou, char isTriallelic) {
 
-	//			fprintf(stderr, "%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, majorAllele, majorProduct, majorProductIsVariable, minorAllele, minorProduct, minorProductIsVariable, majorAllelePerTenThou, minorAllelePerTenThou, minorProductIsVariable);
+	//		fprintf(stderr, "%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n", prevSeq, prevLoc, majorAllele, majorProduct, majorProductIsVariable, minorAllele, minorProduct, minorProductIsVariable, majorAllelePerTenThou, minorAllelePerTenThou, minorProductIsVariable);
 			fwriteCheck(stdoutStr, &prevSeq, 2, 1, stdout);
 			fwriteCheck(stdoutStr, &prevLoc, 4, 1, stdout);
 			fwriteCheck(stdoutStr, &majorAllele, 1, 1, stdout);
@@ -162,6 +162,11 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 		freadCheck(filename, &refLoc, 4, 1, refFile);  
 		freadCheck(filename, &refAllele, 1, 1, refFile); 
 		int bytes = freadCheck(filename, &refProduct, 1, 1, refFile);
+
+		if (refAllele == 0) {
+			fprintf(stderr, "Reference allele zero at SNP: %i %i\n", seq, loc);
+			exit(-1);
+		}
 
 		if (bytes == 0 || (refSeq == seq && refLoc== loc)) break;
 
