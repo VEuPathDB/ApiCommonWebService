@@ -55,18 +55,16 @@ static inline void initProductArrays(int prodArray[4][28]) {
 // also see if there is more than one with non-zero count (isVariable)
 static inline void findMaxProduct(int allele, char *product, char *isVariable) {
 	int max = 0;
-	int i;
-	int index = allele - 1;
 
-	for (i=0; i<27; i++) {
-		int prodCount = products[index][i];
+	for (int i=0; i<27; i++) {
+		int prodCount = products[allele-1][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
 			max = prodCount;
-			*product = i + 64;
+			*product = i + 64;   // 0th element of products is no product; 1st element is A
 		}
 	}
-	if (products[index][27] > max) {
+	if (products[allele-1][27] > max) {  // 27th element is nonsense (stop codon)
 		*product = '*';
 	}
 }
@@ -153,7 +151,7 @@ static inline writeRecord(int16_t prevSeq, int32_t prevLoc, char majorAllele, ch
 }
 
 // read a row from the ref genome file. it is a strain file containing one row per SNP, showing the ref genome's values
-static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
+static inline char getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 
 	// advance through reference SNPs to the one that corresponds to the input SNP we are processing
 	while(1) {
@@ -168,8 +166,11 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 		// along the way, write out a record for SNPs that completely agree w/ reference 
 		// (ie, that are not in our input SNPs)
 		// refAllele of 0 is an ambiguous base pair (eg, a Y).  we discard these.
-		if (refAllele != 0) writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
+		if (refAllele != 0) {
+			writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
+		}
 	}
+	return refAllele;
 }
 
 main(int argc, char *argv[]) {
@@ -231,12 +232,10 @@ main(int argc, char *argv[]) {
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
-	// get reference genome allele and product for this SNP and add to counts
-	getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 	// only consider SNPs that are under or equal to unknowns threshold
 	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
-	if (alleles[0] <= unknownsThreshold && refAllele != 0) {
+	if (alleles[0] <= unknownsThreshold && getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc)) {
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 		alleleCount += ref_count;
@@ -253,7 +252,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		findMaxAllele(&majorAllele, &majorCount);
 
 		// find major product
-		char majorProduct = 63;   // 63 = ascii(A) - 1 which will be converted to '-' hsssFindMajorAlleles.c
+		char majorProduct = 0;  // ie, no product
 		char majorProductIsVariable = 0;
 		findMaxProduct(majorAllele, &majorProduct, &majorProductIsVariable);
 
@@ -264,7 +263,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		char isTriallelic = findMaxAllele(&minorAllele, &minorCount);
 
 		// find minor product
-		char minorProduct = 63;  // 63 = ascii(A) - 1 which will be converted to '-' hsssFindMajorAlleles.c
+		char minorProduct = 0;  // ie, no product
 		char minorProductIsVariable = 0;
 		findMaxProduct(minorAllele, &minorProduct, &minorProductIsVariable);
 
