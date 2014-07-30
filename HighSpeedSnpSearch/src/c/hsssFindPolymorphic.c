@@ -153,11 +153,12 @@ main(int argc, char *argv[]) {
  */
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
-	// only consider SNPs that are under or equal to unknowns threshold, and that pass seq filter, if we have one
-	if (U_count <= unknownsThreshold) {
+	// get reference genome allele and product for this SNP
+	getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
-		// get reference genome allele and product for this SNP
-	  getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
+	// only consider SNPs that are under or equal to unknowns threshold, and that pass seq filter, if we have one
+	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
+	if (U_count <= unknownsThreshold && refAllele != 0) {
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 

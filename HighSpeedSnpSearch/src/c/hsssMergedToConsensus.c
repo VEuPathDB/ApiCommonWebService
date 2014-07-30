@@ -163,16 +163,12 @@ static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 		freadCheck(filename, &refAllele, 1, 1, refFile); 
 		int bytes = freadCheck(filename, &refProduct, 1, 1, refFile);
 
-		if (refAllele == 0) {
-			fprintf(stderr, "Reference allele zero at SNP: %i %i\n", seq, loc);
-			exit(-1);
-		}
-
 		if (bytes == 0 || (refSeq == seq && refLoc== loc)) break;
 
 		// along the way, write out a record for SNPs that completely agree w/ reference 
 		// (ie, that are not in our input SNPs)
-		writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
+		// refAllele of 0 is an ambiguous base pair (eg, a Y).  we discard these.
+		if (refAllele != 0) writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
 	}
 }
 
@@ -235,11 +231,12 @@ main(int argc, char *argv[]) {
  * As part of this, read the refGenome file to convert absent variants to ref genome values.
  */
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
-	// only consider SNPs that are under or equal to unknowns threshold
-	if (alleles[0] <= unknownsThreshold) {
+	// get reference genome allele and product for this SNP and add to counts
+	getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
-		// get reference genome allele and product for this SNP and add to counts
-		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
+	// only consider SNPs that are under or equal to unknowns threshold
+	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
+	if (alleles[0] <= unknownsThreshold && refAllele != 0) {
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 		alleleCount += ref_count;
