@@ -153,24 +153,26 @@ main(int argc, char *argv[]) {
  */
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
-	// get reference genome allele and product for this SNP
-	getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
-
 	// only consider SNPs that are under or equal to unknowns threshold, and that pass seq filter, if we have one
 	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
-	if (U_count <= unknownsThreshold && refAllele != 0) {
+	if (U_count <= unknownsThreshold ) {
+
+		// get reference genome allele and product for this SNP
+		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 
 		alleleCount += ref_count;
 
-		if (ref_count > 0 && refProduct != prevProduct && refProduct > 0 && prevProduct > 0) {
+		// (refAllele can be 0, indicating an ambiguous base pair, yet still have a product.  consider it unknown)
+		if (ref_count > 0 && refAllele != 0 && refProduct > 0 && refProduct != prevProduct && prevProduct > 0) {
 			nonSyn = 1;  // we saw some ref alleles, might have a second product
 			if (refProduct == '*' || prevProduct == '*') nonsense = 1;			
 		}
 
 		// add in ref allele
-		if (refAllele == 1) a_count += ref_count;
+		if (refAllele == 0) U_count += ref_count;
+		else if (refAllele == 1) a_count += ref_count;
 		else if (refAllele == 2) c_count += ref_count;
 		else if (refAllele == 3) g_count += ref_count;
 		else if (refAllele == 4) t_count += ref_count;

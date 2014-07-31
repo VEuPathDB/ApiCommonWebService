@@ -56,7 +56,8 @@ static inline void initProductArrays(int prodArray[4][28]) {
 static inline void findMaxProduct(int allele, char *product, char *isVariable) {
 	int max = 0;
 
-	for (int i=0; i<27; i++) {
+	// i of 0 means unknown.  i of 1 is an A
+	int i; for (i=0; i<27; i++) {
 		int prodCount = products[allele-1][i];
 		if (prodCount > max) {
 			if (max != 0) *isVariable = 1;
@@ -127,7 +128,7 @@ static inline updateCounts() {
 		alleles[allele]++;
 		if (product != 0) {
 			if (product == '*') products[allele-1][27]++;
-			else products[allele-1][product-64]++;  // normalize for ascii A.  we want A to be a 1
+			else products[allele-1][product-64]++;  // normalize for ascii A(65).  we want A to index as 1 (0=unk)
 		}
 		alleleCount++;
 		if (strain != prevStrain) nonRefStrainsCount++;
@@ -151,7 +152,7 @@ static inline writeRecord(int16_t prevSeq, int32_t prevLoc, char majorAllele, ch
 }
 
 // read a row from the ref genome file. it is a strain file containing one row per SNP, showing the ref genome's values
-static inline char getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
+static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 
 	// advance through reference SNPs to the one that corresponds to the input SNP we are processing
 	while(1) {
@@ -170,7 +171,6 @@ static inline char getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 			writeRecord(refSeq, refLoc, refAllele, refProduct, 0, 0, 0, 0, 10000, 0, 0);
 		}
 	}
-	return refAllele;
 }
 
 main(int argc, char *argv[]) {
@@ -234,16 +234,17 @@ main(int argc, char *argv[]) {
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 	// only consider SNPs that are under or equal to unknowns threshold
-	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
-	if (alleles[0] <= unknownsThreshold && getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc)) {
+	if (alleles[0] <= unknownsThreshold) {
+
+		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 		alleleCount += ref_count;
 		alleles[refAllele] += ref_count;
 
-		if (refProduct != 0) {
+		if (refAllele != 0 && refProduct != 0) {   // refAllele can be 0 (ambiguous base pair) but still have a product)
 			if (refProduct == '*') products[refAllele-1][27] += ref_count;
-			else products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1
+			else products[refAllele-1][refProduct-64] += ref_count;  // subtract 64 to make A=1 (0=unk)
 		}
 
 		// find major allele
