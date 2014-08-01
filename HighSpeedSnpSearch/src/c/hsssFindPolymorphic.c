@@ -13,8 +13,8 @@ int alleleCount;
 char *sourceIdPrefix;
 
 // input strains
-int16_t seq = -1;
-int32_t loc = -1;
+int16_t seq = 0;  // must be initialized to 0 to signal that we have not read a seq
+int32_t loc = 0;  // similar for loc
 char allele = -1;  
 char product = -1;  
 int8_t strain = -1;  
@@ -38,8 +38,8 @@ int prevStrain = -1;
 int nonSyn = 0;
 int coding = 0;
 int nonsense = 0;
-int16_t prevSeq;
-int32_t prevLoc;
+int16_t prevSeq = 0;   // must be initialized to 0 to match initialization of seq
+int32_t prevLoc = 0;   // similar for loc
 
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
@@ -140,7 +140,7 @@ main(int argc, char *argv[]) {
 		// read next variant
 		strainFileGot = readStrainRow(argv[1]);
 	}	
-	processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp
+	if (prevSeq != 0) processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp, unless we had empty input file
 
 	fclose(strainFile);
 	fclose(refFile);
