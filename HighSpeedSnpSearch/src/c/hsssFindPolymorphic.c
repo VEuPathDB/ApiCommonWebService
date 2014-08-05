@@ -13,8 +13,8 @@ int alleleCount;
 char *sourceIdPrefix;
 
 // input strains
-int16_t seq = -1;
-int32_t loc = -1;
+int16_t seq = 0;  // must be initialized to 0 to signal that we have not read a seq
+int32_t loc = 0;  // similar for loc
 char allele = -1;  
 char product = -1;  
 int8_t strain = -1;  
@@ -38,8 +38,8 @@ int prevStrain = -1;
 int nonSyn = 0;
 int coding = 0;
 int nonsense = 0;
-int16_t prevSeq;
-int32_t prevLoc;
+int16_t prevSeq = 0;   // must be initialized to 0 to match initialization of seq
+int32_t prevLoc = 0;   // similar for loc
 
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
@@ -140,7 +140,7 @@ main(int argc, char *argv[]) {
 		// read next variant
 		strainFileGot = readStrainRow(argv[1]);
 	}	
-	processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp
+	if (prevSeq != 0) processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp, unless we had empty input file
 
 	fclose(strainFile);
 	fclose(refFile);
@@ -154,22 +154,25 @@ main(int argc, char *argv[]) {
 processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 
 	// only consider SNPs that are under or equal to unknowns threshold, and that pass seq filter, if we have one
-	if (U_count <= unknownsThreshold) {
+	// if refAlle is 0, then the reference allele is an ambiguous base pair (eg Y).  we skip these.
+	if (U_count <= unknownsThreshold ) {
 
 		// get reference genome allele and product for this SNP
-	  getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
+		getRefGenomeInfo(refGenomeFileName, prevSeq, prevLoc);
 
 		int ref_count = strainCount - nonRefStrainsCount; // nonRefStrainsCount includes unknowns; diploid strains are only counted once
 
 		alleleCount += ref_count;
 
-		if (ref_count > 0 && refProduct != prevProduct && refProduct > 0 && prevProduct > 0) {
+		// (refAllele can be 0, indicating an ambiguous base pair, yet still have a product.  consider it unknown)
+		if (ref_count > 0 && refAllele != 0 && refProduct > 0 && refProduct != prevProduct && prevProduct > 0) {
 			nonSyn = 1;  // we saw some ref alleles, might have a second product
 			if (refProduct == '*' || prevProduct == '*') nonsense = 1;			
 		}
 
 		// add in ref allele
-		if (refAllele == 1) a_count += ref_count;
+		if (refAllele == 0) U_count += ref_count;
+		else if (refAllele == 1) a_count += ref_count;
 		else if (refAllele == 2) c_count += ref_count;
 		else if (refAllele == 3) g_count += ref_count;
 		else if (refAllele == 4) t_count += ref_count;

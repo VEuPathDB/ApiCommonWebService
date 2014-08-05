@@ -43,7 +43,8 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginModelException, PluginUserException  {
     String chromosome = params.get(PARAM_CHROMOSOME);
     String seq = params.get(PARAM_SEQUENCE);
-    if (seq.equals("")) seq = chromosome;
+    //if (seq.equals("")) seq = chromosome;
+    if (seq.contains("No Match")) seq = chromosome;
     String start = params.get(PARAM_START_POINT);
     int end = Integer.parseInt(params.get(PARAM_END_POINT));
     if (end == 0) end = 1000000000;
