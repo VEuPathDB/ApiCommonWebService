@@ -217,6 +217,7 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 	// reset prev for new snp
 	prevProduct = -1;
 	prevStrain = -1;
+  product = -1;   // so that updateCounts recognizes the boundary between SNPs, avoiding false non-syn calls
 }
 
 
