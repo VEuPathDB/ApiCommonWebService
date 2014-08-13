@@ -61,6 +61,7 @@ static inline int readStrainRow(char *filename) {
 	freadCheck(filename, &loc, 4, 1, strainFile);  
 	freadCheck(filename, &allele, 1, 1, strainFile); 
 	freadCheck(filename, &product, 1, 1, strainFile);
+	if (product == 'X') product = prevProduct;   // X is an unknown product.  ignore these.
 	return freadCheck(filename, &strain, 2, 1, strainFile);
 }
 
