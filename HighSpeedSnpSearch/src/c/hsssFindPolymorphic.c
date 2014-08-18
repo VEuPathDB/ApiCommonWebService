@@ -61,6 +61,7 @@ static inline int readStrainRow(char *filename) {
 	freadCheck(filename, &loc, 4, 1, strainFile);  
 	freadCheck(filename, &allele, 1, 1, strainFile); 
 	freadCheck(filename, &product, 1, 1, strainFile);
+	if (product == 'X') product = prevProduct;   // X is an unknown product.  ignore these.
 	return freadCheck(filename, &strain, 2, 1, strainFile);
 }
 
@@ -191,10 +192,11 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		float polymorphismsPercent = ((float)polymorphisms * 100) / alleleCount;
 		float knownPercent = (float)(strainCount - U_count) * 100 / strainCount;
 		
-		int productClass = -1;  // noncoding
-		if (nonsense) productClass = 2;
-		else if (nonSyn) productClass = 1;
-		else if (refProduct > 0) productClass = 0; //coding
+		int productClass = 0;  // noncoding
+		if (nonSyn) productClass = 2;
+		else if (refProduct > 0) productClass = 1; // syn
+		if (nonsense) productClass *= -1;
+
 
 		if (polymorphismsPercent >= minPolymorphismPct && polymorphisms > 0) {
 			printf("%i\t%i\t%.1f\t%.1f\t%i\n", prevSeq, prevLoc, knownPercent, polymorphismsPercent, productClass);
