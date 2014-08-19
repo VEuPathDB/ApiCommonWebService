@@ -67,7 +67,7 @@ These streams are produced as an HSSS search executes.
    - location.  same as in strain files
    - knownPercent.  a float, to one decimal point. The % of strains having reads at this location.
    - polymorphismsPercent. a float, to one decimal point.  The % of known alleles that are not the major allele.
-   - productClass. -1=noncoding 0=synonymous 1=nonsynonymous 2=nonsense.  (Product is classed as nonsense if any allele has a nonsense product)
+   - productClass. 0=noncoding 1=synonymous 2=nonsynonymous negative=nonsense.  (Product is classed as nonsense if any allele has a nonsense product)
 
 (4) SNPs streams (two groups search).  Produced by hsssFindMajorAlleles. Represents the SNPs found across two groups of sequences.  Each group (A and B) has been reduced to a consensus. This output shows details of each of those consensuses at SNP locations where they differ from each other.  Tab delimited text, with these columns:
    - group A seq id.  HSSS seq ID.
