@@ -25,6 +25,7 @@ my $snpsCount = 0;
 my $codingCount = 0;
 my $nonsenseCount = 0;
 my $nonSynCount = 0;
+my $synCount = 0;
 
 
 while(<STDIN>) {
@@ -42,18 +43,19 @@ while(<STDIN>) {
   # gather stats for this SNP if within current gene
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $snpsCount++;
-    $codingCount++ if $productClass >= 0;
-    $nonSynCount++ if $productClass == 1;
-    $nonsenseCount++ if $productClass == 2;
+    $codingCount++ if $productClass != 0;
+    $synCount++ if $productClass == 1;
+    $nonSynCount++ if $productClass == 2;
+    $nonsenseCount++ if $productClass < 0;
   }
 
   # read next gene if beyond current gene
   else {
     # process current gene before reading next
-    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
+    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) if $snpsCount;
 
     # zero counts
-    $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = 0;
+    $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = $synCount = 0;
 
     # find next gene that is not behind us
     while ($contigSourceId gt $filterContigId || ($contigSourceId eq $filterContigId && $location > $filterEnd)) {
@@ -66,23 +68,22 @@ while(<STDIN>) {
     # if this SNP is inside the next gene, update counts
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
       $snpsCount++;
-      $codingCount++ if $productClass >= 0;
-      $nonSynCount++ if $productClass == 1;
-      $nonsenseCount++ if $productClass == 2;
+      $codingCount++ if $productClass != 0;
+      $synCount++ if $productClass == 1;
+      $nonSynCount++ if $productClass == 2;
+      $nonsenseCount++ if $productClass < 0;
     }
   }
 }
-processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
+processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) if $snpsCount;
 
 sub processGene {
-  my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) = @_;
+  my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) = @_;
 
   return unless $snpsCount;
 
-  my $totNonSyn = $nonSynCount + $nonsenseCount;
-  my $synCount = $codingCount - $totNonSyn;
   my $nonCodingCount = $snpsCount - $codingCount;
-  my $dnds = $synCount? $totNonSyn / $synCount : $totNonSyn;
+  my $dnds = $synCount? $nonSynCount / $synCount : $nonSynCount;
   my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
   if ($snpClass && ($snpsMin || $snpsMax != -1)) {
@@ -102,7 +103,7 @@ sub processGene {
   }
 
   if ($dndsMin || $dndsMax != -1) {
-    if ($synCount == 0 && $totNonSyn != 0) {
+    if ($synCount == 0 && $nonSynCount != 0) {
       return 0 unless $dndsMax == -1;
     } else {
       return 0 if $dnds < $dndsMin || ($dndsMax != -1 && $dnds > $dndsMax);
