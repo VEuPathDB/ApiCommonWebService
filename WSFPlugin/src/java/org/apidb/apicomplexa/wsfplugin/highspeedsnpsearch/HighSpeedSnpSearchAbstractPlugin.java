@@ -18,11 +18,11 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
-import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -325,7 +325,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   private Connection getDbConnection()
       throws SQLException, WdkModelException {
-    return wdkModel.getConnection(WdkModel.CONNECTION_APP);
+    return wdkModel.getConnection(WdkModel.DB_INSTANCE_APP);
   }
 
   private void cleanup(String jobsDirPrefix) {

@@ -3,7 +3,6 @@
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,14 +14,13 @@ import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicommon.model.comment.CommentFactory;
-import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
@@ -112,15 +110,14 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
-	    Connection dbConnection = commentFactory.getConnection(null);
-	    ps = dbConnection.prepareStatement(sql);
+	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
 	    // logger.debug("after validation commentMatches = "
 	    // + commentMatches.toString());
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
+	} catch (SQLException | EuPathServiceException ex) {
 	    throw new PluginModelException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
@@ -128,8 +125,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     }
 
     // merge the result from component with the ones from comments
-    MergeResultContainer componentContainer
-	= new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
+    MergeResultContainer componentContainer =
+        new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
 
     // search component database
     if (searchComponent) {
@@ -143,8 +140,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    }
 
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-	    Connection dbConnection = wdkModel.getConnection(WdkModel.CONNECTION_APP);
-	    ps = dbConnection.prepareStatement(sql);
+	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    ps.setFloat(2, Float.valueOf(maxPvalue));
 	    ps.setString(3, oracleTextExpression);
@@ -152,9 +148,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    ps.setString(5, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
+	}
+	catch (SQLException | EuPathServiceException ex) {
 	    throw new PluginModelException(ex);
-	} finally {
+	}
+	finally {
 	    SqlUtils.closeStatement(ps);
 	}
     }
@@ -185,7 +183,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   }
 
   private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
-				 boolean communityAnnotationRecords) throws WdkModelException {
+				 boolean communityAnnotationRecords) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -362,7 +360,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           }
 	  SqlUtils.closeResultSetOnly(rs);
         }
-      } catch (SQLException | WdkModelException ex) {
+      } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
         throw new PluginModelException(ex);
       } finally {
