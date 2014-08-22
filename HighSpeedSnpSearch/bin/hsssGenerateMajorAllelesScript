@@ -104,6 +104,8 @@ sub getStrainNum {
 sub printMakeConsensus {
   my ($mergeQueue, $outputFifo, $strainsCount, $polymorphismThreshold, $unknownThreshold) = @_;
 
+  die "Error: '$strainFilesDirA/referenceGenome.dat' does not exist or is empty " unless -s "$strainFilesDirA/referenceGenome.dat";
+
   # print out merge commands and then the find polymorphic command
   my $output = $outputDataFile? ">$outputDataFile" : "";
   while (1) {
