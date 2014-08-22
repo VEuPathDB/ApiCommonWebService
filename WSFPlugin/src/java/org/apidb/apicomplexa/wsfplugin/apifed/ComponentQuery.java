@@ -62,7 +62,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   public void run() {
     running = true;
     String errorMessage = "Thread ran and exited Correctly";
-    logger.info("The Thread is running.................." + url);
+    logger.info("The Thread is running for project " + projectId + ", querying URL " + url);
 
     try {
       long start = System.currentTimeMillis();
