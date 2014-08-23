@@ -34,7 +34,7 @@ sub writeMainScriptBody {
   print $fh "\" EXIT TERM\n";
 
   # print out merge commands and then the find polymorphic command
-  my $output = $outputDataFile? ">$outputDataFile" : "";
+ my $output = $outputDataFile? ">$outputDataFile" : "";
   my $finalCommand = $self->getFinalCommandString();
 
   while (1) {
@@ -53,6 +53,16 @@ sub writeMainScriptBody {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@mergeQueue);
+
+      # if there was only one file input, then the merged stream needs a strain id column
+      if (scalar(@mergeQueueOriginal) == 1) {
+	my $singleInputFile = $allMerged;
+	my $strainId = basename($singleInputFile);
+	$fifoCursor++;
+	print $fh "hsssAddStrainId $strainId < $singleInputFile > $fifoPrefix$fifoCursor &\n";
+	$allMerged = "$fifoPrefix$fifoCursor";
+      }
+
       print $fh "hsssFindPolymorphic $allMerged $self->{strainFilesDir}/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $finalCommand $output\n";
       last;
     }

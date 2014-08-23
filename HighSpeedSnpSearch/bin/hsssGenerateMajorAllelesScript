@@ -104,6 +104,8 @@ sub getStrainNum {
 sub printMakeConsensus {
   my ($mergeQueue, $outputFifo, $strainsCount, $polymorphismThreshold, $unknownThreshold) = @_;
 
+  die "Error: '$strainFilesDirA/referenceGenome.dat' does not exist or is empty " unless -s "$strainFilesDirA/referenceGenome.dat";
+
   # print out merge commands and then the find polymorphic command
   my $output = $outputDataFile? ">$outputDataFile" : "";
   while (1) {
@@ -122,6 +124,16 @@ sub printMakeConsensus {
     # if only one stream in the queue, it is the result of all the merging.  print find polymorphism command
     else {
       my $allMerged = shift(@$mergeQueue);
+
+      # if there was only one file input, then the merged stream needs a strain id column
+      if ($strainsCount == 1) {
+	my $singleInputFile = $allMerged;
+	my $strainId = basename($singleInputFile);
+	$fifoCursor++;
+	print O "hsssAddStrainId $strainId < $singleInputFile > $fifoPrefix$fifoCursor &\n";
+	$allMerged = "$fifoPrefix$fifoCursor";
+      }
+
       print O "hsssMergedToConsensus $allMerged $strainFilesDirA/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold > $outputFifo &\n";
       last;
     }

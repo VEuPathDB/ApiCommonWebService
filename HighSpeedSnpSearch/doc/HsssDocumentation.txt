@@ -1,0 +1,101 @@
+This documentation describes the High Speed SNP Search (HSSS) system.
+
+== Basics ==
+The HSSS system supports a number of searches.  They divide into two types:  (1) given one group of strains (of a single species) and some parameters, find SNPs among that group; (2) given two groups of strains (of a single species) find SNPs that differentiate the groups.  The first of those comes in different varieties based on some filters applied to resulting SNPS (genomic location or gene location).
+
+The input to the searches are files that describe the alleles of each strain at all known SNP locations for the species.  The user chooses the input strains (either one group or two groups, depending on the search).  The C code processes the selected input files, merging pairs of files in parallel, and passing those to a next parallel tier of merging.  Because the files are sorted by SNP location merging is efficient.  At the end of the merging the output has information for all involved strains in one stream, collated into SNP locations.  In the one group searches this stream is passed to filters to find SNPs that have the desired level of polymorphism, as well as other filters like gene locations.  In the two group search each group is reduced to one of those streams.  Each of those is passed to a program that collapses each to a consensus allele for each SNP.  Then those to consensi are compared to find SNPs between them.
+
+All processing is acheived with unix streams.  The only disk i/o is reading the initial input files and writing the final result.  That is key to the speed of the system.  Most steps in the processing take in two streams and emit one.  Stdin does not work for that, as it is only a single stream.  Instead we use unix fifos.  These are simply named streams that appear to the consuming program like a file handle.
+
+The strain files are encoded in the most economical fashion, to keep the very large files as small as possible.  This reduces I/O which is the main expense in processing this kind of data.  The files are binary.  Strain names and sequence source_ids are encoded as simple integer IDs (a mapping of these IDs are stored in separate files).
+
+The ultimate mapping of SNPs found by an HSSS search to SNP source_ids is based on the computability of SNP source_ids.  A SNP source_id is constructed as follows:  NGS. + sequence_source_id + location.
+
+== Data files ==
+
+The workflow creates a set of data files for use by HSSS.  They are stored in the webservices directory and are organized into a directory structure something like this:
+
+PlasmoDB/
+  Pfalciparum3D7/
+    readFrequency20/
+    readFrequency40/
+    readFrequency60/
+    readFrequency80/
+  PvivaxBlah/
+  ...
+  
+The readFrequency directories contain the data files.  The files are created with a particular read frequency cutoff as per the directory name.  The files in these directories are:
+
+(1) strain files.  Each file represents a single strain at a particular read frequency threshold.  (Alleles that are not represented by that percentage of the reads at that location are excluded).   The file is named with the "HSSS strain ID", which an integer that has been mapped to the strain name.  The files describe the alleles of a given strain for each SNP location.  They are binary.  The rows are sorted by seq_id, location.  It is permitted for a SNP to have more than one row, which means that this strain had more than one allele at that location at this read frequency threshold.  This can only happen at read frequency thresholds <= 50%, and represents either heterozygosity (diploid organisms), unpure strains or sequencing errors.  
+
+The files are binary with 4 columns:
+   - seq_id. 2 bytes. the HSSS seq ide, an integer mapped to the sequence source id.  (They start at 1.)
+   - location.  4 bytes.  the location on the sequence of SNP
+   - allele.  1 byte.  1=A, 2=C, 3=G, 4=T, 0=unknown (alleles with other IUPAC codes, eg, Y, are set to 0, ie, ignored)
+   - product. 1 byte. the ascii encoding of the upper case product, eg, A=65. *=42 (stop codon) 0=non-coding.
+
+If an allele is "like reference," ie, the same as the reference genome (that genome to which all the strain sequences were mapped), then that allele is not included in the strain file.  This is a form of compression.  (The gamble is that there are fewer unknown locations than like-reference, and that is increasingly true as there are more strains causing more SNP locations, given that coverage is usually pretty good in NGS resequencing).  If a strain has more than one allele at a location then both are included in the file even if one is like-reference. If the reference has an IUPAC code for an ambiguous base and the strain has that same code, then the strain is considered like-reference, and no row is included in the file.
+
+(2) reference genome file. Same columns as strain files.  This file describes the alleles in the reference genome.  (The genome to which all the strains were aligned.)  Every known SNP for the organism has a row in this file.  The only alleles with value 0, ie, unknown, are those where the allele in the genome is an IUPAC ambiguous base pair code.
+
+(3) strain IDs file.  Maps integer strain IDs to strain names. The IDs start with 1.
+
+(4) sequence IDs file.  Maps integer sequence IDs to sequence source_ids.  The IDs start with 1.
+
+
+== Runtime streams ==
+
+These streams are produced as an HSSS search executes.  
+
+(1) merged strain streams.  Produced by hsssMergeStrains.  These files represent the merging of 0, 1 or more strain files.  Like strain files they are binary and sorted by seq_id and location.  For a particular SNP, all alleles from a given strain are in contiguous rows but otherwise the strains are not ordered.  The files have five columns.  The first four are the same as in a strain file; the fifth is the strain_id (2 bytes).  These files introduce a form of compression not used in the strain files.  If a given SNP has more than one unknown the multiple unknowns may be compressed into a single row.  That row will have a -1 in the product column and a count of unknowns in the strain_id column.  A SNP may have 0, 1 or more than 1 such compressed rows.
+
+(2) consenensus streams.  Produced by hsssMergedToConsensus. These files represent the consensus of a set of strains.  For each SNP, the set of alleles among all the strains at that SNP is reduced to a major and minor allele, where the former is the most popular and the latter the second most popular.  If there are ties the choices are arbitrary.  A SNP is not reported in this file if not enough strains have reads at that location (as specified by the unknowns threshold parameter to hsssMergedToConsensus). The columns are:
+   - seq_id. same as in strain files
+   - location.  same as in strain files
+   - major_allele. 1 byte.  same encoding as strains file (except never 0).
+   - major_allele_product.  1 byte.  same encoding as strains file.
+   - major_allele_product_is_variable. 1 byte.  0=all major alleles have the same product.  1=they do not.
+   - minor_allele. 
+   - minor_allele_product. 
+   - minor_allele_product_is_variable.
+   - major_allele_per_ten_thousand. 2 bytes.  percent of alleles that are the major allele, times 100 for precision
+   - minor_allele_per_ten_thousand.
+   - is_triallelic. 1 byte.  1=is triallelic, ie, has more than two alleles.
+
+(3) SNPs streams (one group searches).  Produced by hsssFindPolymorphic.  Represents the SNPs found in a single group search.  It is tab delimited text, with these columns:
+   - seq_id. same as in strain files
+   - location.  same as in strain files
+   - knownPercent.  a float, to one decimal point. The % of strains having reads at this location.
+   - polymorphismsPercent. a float, to one decimal point.  The % of known alleles that are not the major allele.
+   - productClass. 0=noncoding 1=synonymous 2=nonsynonymous negative=nonsense.  (Product is classed as nonsense if any allele has a nonsense product)
+
+(4) SNPs streams (two groups search).  Produced by hsssFindMajorAlleles. Represents the SNPs found across two groups of sequences.  Each group (A and B) has been reduced to a consensus. This output shows details of each of those consensuses at SNP locations where they differ from each other.  Tab delimited text, with these columns:
+   - group A seq id.  HSSS seq ID.
+   - group A location.
+   - group A major allele
+   - group A major allele percent.  The percent of alleles in the consensus that are the major allele.
+
+
+== Final output files ==
+
+The final output of a search is written to a directory accessed by the WSF plugin.  The plugin passes the rows to the WSF framework, unmodified.  The final output files contain the values the user sees.
+
+(1) SNPs found among a single set of strains. This is output by searches that take as input a single set of strain files.  Some of these searches have additional filters.  This file has the same information as 
+
+== Types of searches ==
+
+== How a search works  ==
+
+== Test suite ==
+
+== Debugging ==
+
+
+set -e
+set -x
+cd /var/www/Common/tmp/highSpeedSnpSearch/hsssFindPolymorphisms.1406829738062
+mkfifo fifo1 
+trap "rm fifo1 " EXIT TERM
+hsssAddStrainId 1 < /var/www/Common/apiSiteFilesMirror/webServices/TriTrypDB/build-22/TbruceiTREU927/highSpeedSnpSearch/readFreq40/1 > fifo1 &
+hsssFindPolymorphic fifo1 /var/www/Common/apiSiteFilesMirror/webServices/TriTrypDB/build-22/TbruceiTREU927/highSpeedSnpSearch/readFreq40/referenceGenome.dat 1 0 0 | hsssReconstructSnpId /var/www/Common/apiSiteFilesMirror/webServices/TriTrypDB/build-22/TbruceiTREU927/highSpeedSnpSearch/readFreq40/contigIdToSourceId.dat 1    >/var/www/Common/tmp/highSpeedSnpSearch/hsssFindPolymorphisms.1406829738062/results
+exit

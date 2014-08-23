@@ -3,7 +3,6 @@
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,18 +14,17 @@ import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicommon.model.comment.CommentFactory;
-import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 
 /**
@@ -49,8 +47,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public int execute(PluginRequest request, PluginResponse response)
-      throws WsfException {
+  public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException
+      {
     logger.info("Invoking KeywordSearchPlugin...");
 
     // get parameters
@@ -112,24 +110,23 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
-	    Connection dbConnection = commentFactory.getConnection(null);
-	    ps = dbConnection.prepareStatement(sql);
+	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
 	    // logger.debug("after validation commentMatches = "
 	    // + commentMatches.toString());
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
+	} catch (SQLException | EuPathServiceException ex) {
+	    throw new PluginModelException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
 	}
     }
 
     // merge the result from component with the ones from comments
-    MergeResultContainer componentContainer
-	= new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
+    MergeResultContainer componentContainer =
+        new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
 
     // search component database
     if (searchComponent) {
@@ -143,8 +140,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    }
 
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-	    Connection dbConnection = wdkModel.getConnection(WdkModel.CONNECTION_APP);
-	    ps = dbConnection.prepareStatement(sql);
+	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    ps.setFloat(2, Float.valueOf(maxPvalue));
 	    ps.setString(3, oracleTextExpression);
@@ -152,9 +148,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    ps.setString(5, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
-	} finally {
+	}
+	catch (SQLException | EuPathServiceException ex) {
+	    throw new PluginModelException(ex);
+	}
+	finally {
 	    SqlUtils.closeStatement(ps);
 	}
     }
@@ -185,7 +183,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   }
 
   private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
-				 boolean communityAnnotationRecords) throws WdkModelException {
+				 boolean communityAnnotationRecords) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -306,8 +304,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // }
 
   private Map<String, SearchResult> validateRecords(String projectId,
-      Map<String, SearchResult> commentResults, String organisms)
-      throws WsfPluginException, WdkModelException {
+      Map<String, SearchResult> commentResults, String organisms) throws PluginModelException
+       {
 
     Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
     newCommentResults.putAll(commentResults);
@@ -325,13 +323,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + "  and attrs.project_id = ? \n" + "  and attrs.taxon_id in ("
               + organisms + ")");
 
-      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-      DatabaseInstance platform = wdkModel.getAppDb();
-      DataSource dataSource = platform.getDataSource();
-
       ResultSet rs = null;
-
       try {
+        WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+        DatabaseInstance platform = wdkModel.getAppDb();
+        DataSource dataSource = platform.getDataSource();
+
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
         for (String sourceId : commentResults.keySet()) {
@@ -365,7 +362,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
-        throw new WsfPluginException(ex);
+        throw new PluginModelException(ex);
       } finally {
         // try {
         // rs.close();

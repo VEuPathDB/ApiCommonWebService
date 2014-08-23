@@ -5,12 +5,15 @@ import java.net.URI;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin;
 import org.gusdb.wdk.model.ServiceResolver;
+import org.gusdb.wsf.client.ClientModelException;
+import org.gusdb.wsf.client.ClientRequest;
+import org.gusdb.wsf.client.ClientUserException;
 import org.gusdb.wsf.client.WsfClient;
 import org.gusdb.wsf.client.WsfClientFactory;
 import org.gusdb.wsf.client.WsfResponseListener;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfException;
-import org.gusdb.wsf.common.WsfRequest;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 public class ComponentQuery extends Thread implements WsfResponseListener {
 
@@ -19,10 +22,10 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   private static final Logger logger = Logger.getLogger(ComponentResult.class);
 
   private static WsfClientFactory _wsfClientFactory = ServiceResolver.resolve(WsfClientFactory.class);
-  
+
   private final String projectId;
   private final String url;
-  private final WsfRequest request;
+  private final ClientRequest request;
   private final ComponentResult result;
 
   private boolean running;
@@ -34,9 +37,14 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   public ComponentQuery(String projectId, String url, PluginRequest pluginRequest, ComponentResult result) {
     this.projectId = projectId;
     this.url = url;
-    this.request = new WsfRequest(pluginRequest);
+
+    this.request = new ClientRequest();
     this.request.setPluginClass(WdkQueryPlugin.class.getName());
     this.request.setProjectId(projectId);
+    this.request.setParams(pluginRequest.getParams());
+    this.request.setOrderedColumns(pluginRequest.getOrderedColumns());
+    this.request.setContext(pluginRequest.getContext());
+
     this.result = result;
     this.running = false;
     this.stopRequested = false;
@@ -54,7 +62,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   public void run() {
     running = true;
     String errorMessage = "Thread ran and exited Correctly";
-    logger.info("The Thread is running.................." + url);
+    logger.info("The Thread is running for project " + projectId + ", querying URL " + url);
 
     try {
       long start = System.currentTimeMillis();
@@ -79,7 +87,7 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
       try {
         result.addMessage(projectId, Integer.toString(WdkQueryPlugin.STATUS_ERROR_SERVICE_UNAVAILABLE));
       }
-      catch (WsfException ex1) {
+      catch (Exception ex1) {
         throw new RuntimeException(ex1);
       }
     }
@@ -92,40 +100,65 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
   }
 
   @Override
-  public void onRowReceived(String[] row) throws WsfException {
+  public void onRowReceived(String[] row) throws ClientModelException, ClientUserException {
     if (stopRequested)
       return;
-    while (!result.addRow(projectId, row)) { // cannot add row, wait for token;
-      try {
-        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+    try {
+      while (!result.addRow(projectId, row)) { // cannot add row, wait for token;
+        try {
+          Thread.sleep(REQUEST_TOKEN_INTERVAL);
+        }
+        catch (InterruptedException ex) {}
+        rowCount++;
       }
-      catch (InterruptedException ex) {}
-      rowCount++;
+    }
+    catch (PluginModelException ex) {
+      throw new ClientModelException(ex);
+    }
+    catch (PluginUserException ex) {
+      throw new ClientUserException(ex);
     }
   }
 
   @Override
-  public void onAttachmentReceived(String key, String content) throws WsfException {
+  public void onAttachmentReceived(String key, String content) throws ClientModelException,
+      ClientUserException {
     if (stopRequested)
       return;
-    while (!result.addAttachment(projectId, key, content)) { // cannot add attachment, wait for token
-      try {
-        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+    try {
+      while (!result.addAttachment(projectId, key, content)) { // cannot add attachment, wait for token
+        try {
+          Thread.sleep(REQUEST_TOKEN_INTERVAL);
+        }
+        catch (InterruptedException ex) {}
+        attachmentCount++;
       }
-      catch (InterruptedException ex) {}
-      attachmentCount++;
+    }
+    catch (PluginModelException ex) {
+      throw new ClientModelException(ex);
+    }
+    catch (PluginUserException ex) {
+      throw new ClientUserException(ex);
     }
   }
 
   @Override
-  public void onMessageReceived(String message) throws WsfException {
+  public void onMessageReceived(String message) throws ClientModelException, ClientUserException {
     if (stopRequested)
       return;
-    while (!result.addMessage(projectId, message)) { // cannot add message, wait for token
-      try {
-        Thread.sleep(REQUEST_TOKEN_INTERVAL);
+    try {
+      while (!result.addMessage(projectId, message)) { // cannot add message, wait for token
+        try {
+          Thread.sleep(REQUEST_TOKEN_INTERVAL);
+        }
+        catch (InterruptedException ex) {}
       }
-      catch (InterruptedException ex) {}
+    }
+    catch (PluginModelException ex) {
+      throw new ClientModelException(ex);
+    }
+    catch (PluginUserException ex) {
+      throw new ClientUserException(ex);
     }
   }
 }

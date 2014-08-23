@@ -15,21 +15,20 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.eupathdb.common.model.InstanceManager;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfException;
-import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -132,7 +131,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public void validateParameters(PluginRequest request)
-      throws WsfUserException {
+      throws PluginUserException {
     Map<String, String> params = request.getParams();
     Set<String> operators = new HashSet<String>(Arrays.asList(
         PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B, PARAM_VALUE_B_CONTAIN_A));
@@ -150,21 +149,21 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     if (params.containsKey(PARAM_OPERATION)) {
       String op = params.get(PARAM_OPERATION);
       if (!operators.contains(op))
-        throw new WsfUserException("Invalid " + PARAM_OPERATION + ": " + op);
+        throw new PluginUserException("Invalid " + PARAM_OPERATION + ": " + op);
     }
 
     // validate output choice
     if (params.containsKey(PARAM_OUTPUT)) {
       String out = params.get(PARAM_OUTPUT);
       if (!outputs.contains(out))
-        throw new WsfUserException("Invalid " + PARAM_OUTPUT + ": " + out);
+        throw new PluginUserException("Invalid " + PARAM_OUTPUT + ": " + out);
     }
 
     // validate strand
     if (params.containsKey(PARAM_STRAND)) {
       String strand = params.get(PARAM_STRAND);
       if (!strands.contains(strand))
-        throw new WsfUserException("Invalid " + PARAM_STRAND + ": " + strand);
+        throw new PluginUserException("Invalid " + PARAM_STRAND + ": " + strand);
     }
 
     // validate begin a
@@ -193,31 +192,31 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private void validateAnchorParams(Map<String, String> params,
-      Set<String> anchors, String param) throws WsfUserException {
+      Set<String> anchors, String param) throws PluginUserException {
     if (params.containsKey(param)) {
       String anchor = params.get(param).intern();
       if (!anchors.contains(anchor))
-        throw new WsfUserException("Invalid " + param + ": " + anchor);
+        throw new PluginUserException("Invalid " + param + ": " + anchor);
     }
   }
 
   private void validateDirectionParams(Map<String, String> params,
-      Set<String> directions, String param) throws WsfUserException {
+      Set<String> directions, String param) throws PluginUserException {
     if (params.containsKey(param)) {
       String direction = params.get(param).intern();
       if (!directions.contains(direction))
-        throw new WsfUserException("Invalid " + param + ": " + direction);
+        throw new PluginUserException("Invalid " + param + ": " + direction);
     }
   }
 
   private void validateOffsetParams(Map<String, String> params, String param)
-      throws WsfUserException {
+      throws PluginUserException {
     if (params.containsKey(param)) {
       String offset = params.get(param);
       try {
         Integer.parseInt(offset);
       } catch (NumberFormatException ex) {
-        throw new WsfUserException("Invalid " + param
+        throw new PluginUserException("Invalid " + param
             + " (expected number): " + offset);
       }
     }
@@ -225,7 +224,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public int execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+      throws PluginModelException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
 
@@ -272,7 +271,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       
       return 0;
     } catch (Exception ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     } finally {
       // dropTempTables(wdkModel, tempA, tempB);
     }
@@ -450,8 +449,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private void prepareResult(WdkModel wdkModel, PluginResponse response,
-      String sql, String[] orderedColumns, String output) throws SQLException,
-      WsfException {
+      String sql, String[] orderedColumns, String output) throws SQLException, PluginModelException, PluginUserException
+       {
     // prepare column order
     Map<String, Integer> columnOrders = new LinkedHashMap<>(
         orderedColumns.length);
@@ -494,8 +493,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private void writeFeature(PluginResponse response,
-      Map<String, Integer> columnOrders, Feature feature)
-      throws WsfException {
+      Map<String, Integer> columnOrders, Feature feature) throws PluginModelException, PluginUserException
+       {
     // format the matched regions
     StringBuilder builder = new StringBuilder();
     for (Feature fr : feature.matched) {

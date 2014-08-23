@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,18 +18,18 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
-import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wsf.common.PluginRequest;
-import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author steve
@@ -71,18 +72,18 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
    */
   @Override
-  public void initialize() throws WsfPluginException {
+  public void initialize() throws PluginModelException  {
     super.initialize();
 
     // jobs dir
     logger.debug(properties);
     String jobsDirName = getProperty(PROPERTY_JOBS_DIR);
     if (jobsDirName == null)
-        throw new WsfPluginException(PROPERTY_JOBS_DIR
+        throw new PluginModelException(PROPERTY_JOBS_DIR
                 + " is missing from the configuration file");
     jobsDir = new File(jobsDirName);
     if (!jobsDir.exists())
-        throw new WsfPluginException(PROPERTY_JOBS_DIR
+        throw new PluginModelException(PROPERTY_JOBS_DIR
                 + " " + jobsDirName + " does not exist");
   }
 
@@ -93,14 +94,14 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
    * java.lang.String[])
    */
   @Override
-    public int execute(PluginRequest request, PluginResponse response) throws WsfException {
+    public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
     String projectId = request.getProjectId();
     try {
       this.wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
       this.projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
     
     String jobsDirPrefix = getJobsDirPrefix();
@@ -135,7 +136,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
           + " seconds");
 
       if (signal != 0)
-          throw new WsfPluginException("The " + commandName+ " job in jobDir " +
+          throw new PluginModelException("The " + commandName+ " job in jobDir " +
                   jobDir + " failed: " + output);
 
       // prepare the result
@@ -146,7 +147,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       logger.info("Invocation took: " + ((end - start) / 1000.0)
           + " seconds");
 
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     } finally {
       cleanup(jobsDirPrefix);
     }
@@ -164,13 +165,13 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   protected abstract String getResultsFileBaseName();
 
-  protected String getProjectId(Map<String, String> params) throws WsfPluginException {
+  protected String getProjectId(Map<String, String> params) throws PluginModelException {
     String organism = removeSingleQuotes(params.get(PARAM_ORGANISM));
     
     try {
       return projectMapper.getProjectByOrganism(organism);
     } catch (SQLException e) {
-      throw new WsfPluginException("Failed getting projectId for organism " + organism, e);
+      throw new PluginModelException("Failed getting projectId for organism " + organism, e);
     }
   }
 
@@ -183,7 +184,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     return text;
   }
 
-  File findOrganismDir(Map<String, String> params, String projectId) throws WsfPluginException {
+  File findOrganismDir(Map<String, String> params, String projectId) throws PluginModelException, PluginUserException {
 
     // find organism's strain dir
     String organism = removeSingleQuotes(params.get(PARAM_ORGANISM));
@@ -194,14 +195,15 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     String organismDirStr = webSvcPathRaw.replaceAll("PROJECT_GOES_HERE", projectId) + "/" + organismNameForFiles + "/highSpeedSnpSearch";
 
     File organismDir = new File(organismDirStr);
-    if (!organismDir.exists()) throw new WsfPluginException("Organism dir does not exist:\n" + organismDirStr); 
+    if (!organismDir.exists()) throw new PluginModelException("Organism dir does not exist:\n" + organismDirStr); 
     return organismDir;
   }
 
   /**
    * Write the strains user provided in a parameter to a strains file
+   * @throws PluginModelException 
    */
-  protected int writeStrainsFile(File jobDir, String strains, String strainsFileName) throws WsfPluginException {
+  protected int writeStrainsFile(File jobDir, String strains, String strainsFileName) throws PluginModelException  {
 
     File strainsFile = new File(jobDir, strainsFileName);
 
@@ -220,20 +222,20 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 	count++;
       }
     } catch (IOException e) {
-      throw new WsfPluginException("Failed writing to strains file", e);
+      throw new PluginModelException("Failed writing to strains file", e);
     } finally {
       try {
         if (bw != null) bw.close();
       } catch (IOException e) {
-        throw new WsfPluginException("Failed closing strains file", e);
+        throw new PluginModelException("Failed closing strains file", e);
       }
     }
     return count;
   }
     
-  protected abstract List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws WsfPluginException;
+  protected abstract List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginUserException, PluginModelException ;
 
-  protected void runCommandToCreateBashScript( List<String> command, String bashScriptFileName) throws WsfPluginException {
+  protected void runCommandToCreateBashScript( List<String> command, String bashScriptFileName) throws PluginModelException  {
     String gusBin = GusHome.getGusHome() + "/bin";
 
     String[] array = new String[command.size()];
@@ -250,20 +252,26 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       Process process = builder.start();
       process.waitFor();
       if (process.exitValue() != 0) {
-        Scanner s = new Scanner(process.getErrorStream()).useDelimiter("\\A");
-        String errMsg = (s.hasNext() ? s.next() : "");
-        throw new WsfPluginException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+        try (InputStream errorStream = process.getErrorStream();
+             Scanner s = new Scanner(errorStream)) {
+          s.useDelimiter("\\A");
+          String errMsg = (s.hasNext() ? s.next() : "");
+          throw new PluginModelException("Failed running " + FormatUtil.arrayToString(array, " ") + ": " + errMsg);
+        }
       }
-    } catch (IOException|InterruptedException e) {
-      throw new WsfPluginException("Exception running " + FormatUtil.arrayToString(array, " ") + e, e);
+    }
+    catch (IOException | InterruptedException e) {
+      throw new PluginModelException("Exception running " + FormatUtil.arrayToString(array, " ") + e, e);
     }
   }
 
   /**
    * unpack result from result file and pack it into rows needed by wsf framework
+   * @throws PluginUserException 
+   * @throws PluginModelException 
    * @throws WsfException 
    */
-  protected void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws IOException, WsfException {
+  protected void prepareResult(PluginResponse response, String projectId, String resultFileName, String[] orderedColumns) throws IOException, PluginModelException, PluginUserException {
     // create a map of <column/position>
     Map<String, Integer> columns = new HashMap<String, Integer>(orderedColumns.length);
     for (int i = 0; i < orderedColumns.length; i++) {
@@ -283,13 +291,13 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     in.close();
   }
 
-  protected abstract String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws WsfPluginException;
+  protected abstract String[] makeResultRow(String [] parts, Map<String, Integer> columns, String projectId) throws PluginUserException, PluginModelException ;
 
   public void setOrganismNameForFiles(String name) {
     organismNameForFiles_forTesting = name;
   }
 
-  private String getOrganismNameForFiles(String organism) throws WsfPluginException {
+  private String getOrganismNameForFiles(String organism) throws PluginModelException, PluginUserException {
     if (organismNameForFiles_forTesting != null) return organismNameForFiles_forTesting;
 
     String sql = "select distinct o.name_for_filenames from apidb.organism o, apidbtuning.snpstrains s where s.organism = ? and s.taxon_id = o.taxon_id";
@@ -304,11 +312,11 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
       if (rs.next()) {
         return rs.getString(1);
       }
-      throw new WsfPluginException("Unable to find file organism name for param '" + organism + "'.");
+      throw new PluginUserException("Unable to find file organism name for param '" + organism + "'.");
     }
     catch (SQLException | WdkModelException e) {
       logger.error("caught SQLException or WdkModelException " + e.getMessage());
-      throw new WsfPluginException(e);
+      throw new PluginModelException(e);
     }
     finally {
       SqlUtils.closeQuietly(rs, stmt, conn);
@@ -317,7 +325,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   private Connection getDbConnection()
       throws SQLException, WdkModelException {
-    return wdkModel.getConnection(WdkModel.CONNECTION_APP);
+    return wdkModel.getConnection(WdkModel.DB_INSTANCE_APP);
   }
 
   private void cleanup(String jobsDirPrefix) {

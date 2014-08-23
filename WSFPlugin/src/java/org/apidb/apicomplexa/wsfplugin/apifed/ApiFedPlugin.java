@@ -8,15 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.eupathdb.common.model.InstanceManager;
 import org.eupathdb.common.model.ProjectMapper;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
  * @author Jerric Gao
@@ -75,7 +75,7 @@ public class ApiFedPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public int execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
     logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
 
     String projectId = request.getProjectId();
@@ -84,7 +84,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
 
     // Splitting the QueryName up for Mapping
@@ -142,7 +142,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       }
     }
     catch (SQLException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
     logger.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
     return componentResult.getSignal();

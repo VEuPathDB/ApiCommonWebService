@@ -1,7 +1,8 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 public class ComponentResult {
   
@@ -43,7 +44,7 @@ public class ComponentResult {
       this.token = null;
   }
 
-  public boolean addRow(String projectId, String[] row) throws WsfException {
+  public boolean addRow(String projectId, String[] row) throws PluginModelException, PluginUserException {
     if (requestToken(projectId)) {
       response.addRow(row);
       rowCount++;
@@ -57,7 +58,7 @@ public class ComponentResult {
     return rowCount;
   }
 
-  public boolean addMessage(String projectId, String message) throws WsfException {
+  public boolean addMessage(String projectId, String message) throws PluginModelException, PluginUserException  {
     if (requestToken(projectId)) {
       if (this.message.length() > 0)
         this.message += ",";
@@ -69,14 +70,14 @@ public class ComponentResult {
       return false;
   }
 
-  public boolean addAttachment(String projectId, String key, String content) throws WsfException {
+  public boolean addAttachment(String projectId, String key, String content) throws PluginModelException, PluginUserException  {
     if (requestToken(projectId)) {
       response.addAttachment(key, content);
       return true;
     } else return false;
   }
   
-  public boolean addSignal(String projectId, int signal) throws WsfException {
+  public boolean addSignal(String projectId, int signal) throws PluginModelException, PluginUserException  {
     if (requestToken(projectId)) {
       response.addAttachment(projectId + SIGNAL_SUFFIX, Integer.toString(signal));
       if (signal != 0) this.signal = signal;

@@ -5,8 +5,9 @@ import java.util.Map;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResponseResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
-import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 public class MergeResultContainer extends ResponseResultContainer implements
     ResultContainer {
@@ -20,7 +21,7 @@ public class MergeResultContainer extends ResponseResultContainer implements
   }
 
   @Override
-  public void addResult(SearchResult result) throws WsfException {
+  public void addResult(SearchResult result) throws PluginModelException, PluginUserException {
     String sourceId = result.getSourceId();
     // merge the result if it also exists in comment results
     if (commentResults.containsKey(sourceId)) {
@@ -33,7 +34,7 @@ public class MergeResultContainer extends ResponseResultContainer implements
     super.addResult(result);
   }
 
-  public void processRemainingResults() throws WsfException {
+  public void processRemainingResults() throws PluginModelException, PluginUserException  {
     // process the unprocessed results
     for (String sourceId : commentResults.keySet()) {
       super.addResult(commentResults.get(sourceId));
