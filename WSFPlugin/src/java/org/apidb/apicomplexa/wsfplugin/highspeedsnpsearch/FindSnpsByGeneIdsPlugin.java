@@ -11,9 +11,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
-import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
@@ -25,8 +23,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
   public static final String PARAM_GENES_DATASET = "ds_gene_ids";
 
   public static final String genomicLocationsFileName = "genomicLocations.txt";
-
-  private static final String CTX_CONTAINER_APP = "wdkModel";
 
   /*
    * (non-Javadoc)
@@ -45,7 +41,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
    */
   @Override
   public void validateParameters(PluginRequest request)
-    throws WsfPluginException {
+     {
   }
 
   @Override
@@ -64,8 +60,6 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 	  bw.newLine();
 	}
       } else {
-	WdkModelBean wdkModelBean = (WdkModelBean)context.get(CTX_CONTAINER_APP);
-	WdkModel wdkModel = wdkModelBean.getModel();
 	DataSource dataSource = wdkModel.getAppDb().getDataSource();
 	String newline = System.lineSeparator();
 	String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +

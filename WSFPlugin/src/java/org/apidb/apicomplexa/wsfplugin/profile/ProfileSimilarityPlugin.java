@@ -14,8 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfException;
+import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -75,9 +77,9 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
      */
     @Override
-    public void initialize(Map<String, Object> context)
+    public void initialize()
             throws WsfPluginException {
-        super.initialize(context);
+        super.initialize();
 
         // load properties
         perlExec = getProperty(FIELD_PERL_EXECUTABLE);
@@ -139,13 +141,13 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      */
     @Override
     public void validateParameters(PluginRequest request)
-            throws WsfPluginException {
+            throws WsfUserException {
         // validate distance method
         Map<String, String> params = request.getParams();
         String distanceMethod = params.get(PARAM_DISTANCE_METHOD);
         if (!distanceMethod.equalsIgnoreCase("pearson_correlation")
                 && !distanceMethod.equalsIgnoreCase("euclidean_distance"))
-            throw new WsfPluginException("Invalid distance method: "
+            throw new WsfUserException("Invalid distance method: "
                     + distanceMethod + ". Should be either "
                     + "\"pearson_correlation\" or \"euclidean_distance\"");
         params.put(PARAM_DISTANCE_METHOD, distanceMethod.toLowerCase());
@@ -155,14 +157,14 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         try {
             numReturn = Integer.parseInt(params.get(PARAM_NUM_RETURN));
         } catch (NumberFormatException e) {
-            throw new WsfPluginException("Invalid size of the result: "
+            throw new WsfUserException("Invalid size of the result: "
                     + numReturn + ", a number is expected.");
         }
         // validate search goal
         String searchGoal = params.get(PARAM_SEARCH_GOAL);
         if (!searchGoal.equalsIgnoreCase("similar")
                 && !searchGoal.equalsIgnoreCase("dissimilar"))
-            throw new WsfPluginException("Invalid search goal: " + searchGoal
+            throw new WsfUserException("Invalid search goal: " + searchGoal
                     + ". Should be either \"similar\" or \"dissimilar\"");
         params.put(PARAM_SEARCH_GOAL, searchGoal.toLowerCase());
 
@@ -179,10 +181,10 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         try {
             timeShift = Integer.parseInt(params.get(PARAM_TIME_SHIFT));
             if (timeShift < -24 || timeShift > 24)
-                throw new WsfPluginException(
+                throw new WsfUserException(
                         "The timeShift should be within the range of [-24 - 24]");
         } catch (NumberFormatException ex) {
-            throw new WsfPluginException("Invalid time shift value: " + timeShift
+            throw new WsfUserException("Invalid time shift value: " + timeShift
                     + ", a number is expected.");
         }
     }
@@ -194,7 +196,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * java.lang.String[])
      */
     @Override
-    public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
+    public int execute(PluginRequest request, PluginResponse response) throws WsfException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
         // prepare the command
@@ -221,7 +223,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             prepareResult(response, output.toString(),
                     request.getOrderedColumns(), queryGeneId);
 
-            response.setSignal(signal);
+            return signal;
         } catch (IOException ex) {
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
@@ -263,7 +265,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     }
 
     private void prepareResult(PluginResponse response, String content, String[] orderedColumns,
-            String queryGeneId) throws WsfPluginException, IOException {
+            String queryGeneId) throws IOException, WsfException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -308,10 +310,5 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             response.addRow(row);
         }
         in.close();
-    }
-
-    @Override
-    protected String[] defineContextKeys() {
-        return null;
     }
 }

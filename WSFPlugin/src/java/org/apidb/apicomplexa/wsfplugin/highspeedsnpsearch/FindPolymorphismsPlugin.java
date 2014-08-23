@@ -7,7 +7,8 @@ import java.util.Map;
 
 import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.runtime.GusHome;
-import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.common.PluginRequest;
+import org.gusdb.wsf.common.WsfUserException;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 /**
@@ -66,7 +67,7 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public void validateParameters(PluginRequest request)
-    throws WsfPluginException {
+    throws WsfUserException {
   }
 
   @Override

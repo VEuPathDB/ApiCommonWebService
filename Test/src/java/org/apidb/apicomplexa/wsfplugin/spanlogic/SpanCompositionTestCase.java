@@ -1,6 +1,5 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-
 import org.gusdb.wsf.plugin.WsfPluginException;
 
 public class SpanCompositionTestCase {

@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.common.WsfException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.WsfPluginException;
 
@@ -33,12 +34,6 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
   }
 
   @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
-  }
-
-  @Override
   protected Map<Character, String> getSymbols() {
     Map<Character, String> symbols = new HashMap<Character, String>();
     symbols.put('R', "AG");
@@ -58,7 +53,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   protected void findMatches(PluginResponse response, Map<String, Integer> orders, String headline,
-      Pattern searchPattern, String sequence) throws WsfPluginException {
+      Pattern searchPattern, String sequence) throws WsfException {
     // parse the headline
     MotifConfig config = getConfig();
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
