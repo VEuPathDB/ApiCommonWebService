@@ -348,11 +348,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
             // unescape each individual term.
             mystring = unescapeValue(mystring, abParamBean.getQuote());
             try {
-              logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
+              logger.debug("ParamName = " + param.getName() + " ------ Value = " + mystring);
               if (validateSingleValues(abParamBean, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
-                logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
+                logger.debug("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
                     mystring);
               }
               else {
@@ -361,7 +361,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
               }
             }
             catch (Exception e) {
-              logger.info(e);
+              logger.error("error occurred.", e);
             }
           }
 
@@ -369,7 +369,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             newVals = newVals.substring(1);
           else
             newVals = "\u0000";
-          logger.info("validated values string -------------" + newVals);
+          logger.debug("validated values string -------------" + newVals);
           value = newVals;
         }
         else { // other types, unescape the whole thing
@@ -386,12 +386,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
   private boolean validateSingleValues(EnumParamBean p, String value) {
     String[] conVocab = p.getVocab();
-    logger.info("conVocab.length = " + conVocab.length);
+    logger.debug("conVocab.length = " + conVocab.length);
     if (p.isSkipValidation())
       return true;
     // initVocabMap();
     for (String v : conVocab) {
-      logger.info("value: " + value + " | vocabTerm: " + v);
       if (value.equalsIgnoreCase(v))
         return true;
     }
