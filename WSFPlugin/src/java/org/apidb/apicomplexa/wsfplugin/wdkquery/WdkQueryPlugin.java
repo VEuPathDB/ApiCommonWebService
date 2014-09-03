@@ -24,6 +24,7 @@ import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
+import org.gusdb.wdk.model.query.param.FilterParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
@@ -305,7 +306,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
       String value = paramValues.get(key);
       if (params.containsKey(key)) {
         Param param = params.get(key);
-        if (param instanceof AbstractEnumParam) {
+        if (param instanceof FilterParam) {
+          // do nothing, will use the value as is.
+        } else if (param instanceof AbstractEnumParam) {
           String valList = value;
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamBean abParamBean = new EnumParamBean(abParam);
