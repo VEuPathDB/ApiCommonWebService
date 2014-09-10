@@ -61,7 +61,8 @@ static inline int readStrainRow(char *filename) {
 	freadCheck(filename, &loc, 4, 1, strainFile);  
 	freadCheck(filename, &allele, 1, 1, strainFile); 
 	freadCheck(filename, &product, 1, 1, strainFile);
-	if (product == 'X') product = prevProduct;   // X is an unknown product.  ignore these.
+	if (product == 'X') product = -1;   // X is an unknown product.  ignore these.
+
 	return freadCheck(filename, &strain, 2, 1, strainFile);
 }
 
@@ -92,8 +93,8 @@ static inline updateCounts() {
 	}
 	if (product != prevProduct && product > 0 && prevProduct > 0) {
 		nonSyn = 1;
-		if (product == '*' || prevProduct == '*') nonsense = 1;
 	}
+	if (product == '*') nonsense = 1;
 }
 
 main(int argc, char *argv[]) {
@@ -168,8 +169,9 @@ processPreviousSnp(int32_t prevSeq, int32_t prevLoc, char *refGenomeFileName) {
 		// (refAllele can be 0, indicating an ambiguous base pair, yet still have a product.  consider it unknown)
 		if (ref_count > 0 && refAllele != 0 && refProduct > 0 && refProduct != prevProduct && prevProduct > 0) {
 			nonSyn = 1;  // we saw some ref alleles, might have a second product
-			if (refProduct == '*' || prevProduct == '*') nonsense = 1;			
 		}
+
+		if (refProduct == '*') nonsense = 1;			
 
 		// add in ref allele
 		if (refAllele == 0) U_count += ref_count;

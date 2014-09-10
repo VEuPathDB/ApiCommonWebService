@@ -84,6 +84,8 @@ sub writeMainScript {
   print $o "set -x\n";
   print $o "cd $self->{jobDir}\n";
 
+  die "Error: '$self->{strainFilesDir}/referenceGenome.dat' does not exist or is empty " unless -s "$self->{strainFilesDir}/referenceGenome.dat";
+
   $self->writeMainScriptBody($o, $self->{outputDataFile});
 
   # print final stuff and clean up

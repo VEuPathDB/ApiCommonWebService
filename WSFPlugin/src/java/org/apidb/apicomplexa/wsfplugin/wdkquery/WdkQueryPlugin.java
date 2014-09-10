@@ -12,17 +12,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.eupathdb.common.model.InstanceManager;
 import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
+import org.gusdb.wdk.model.jspwrap.FilterParamBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
+import org.gusdb.wdk.model.query.param.FilterParam;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
@@ -304,7 +306,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
       String value = paramValues.get(key);
       if (params.containsKey(key)) {
         Param param = params.get(key);
-        if (param instanceof AbstractEnumParam) {
+        if (param instanceof FilterParam) {
+          // do nothing, will use the value as is.
+        } else if (param instanceof AbstractEnumParam) {
           String valList = value;
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamBean abParamBean = new EnumParamBean(abParam);
@@ -334,25 +338,17 @@ public class WdkQueryPlugin extends AbstractPlugin {
             valList = "rnor";
           // end workaround
 
-          String[] vals;
-          Boolean multipick = abParamBean.getMultiPick();
-          if (multipick) {
-            vals = valList.split(",");
-          }
-          else {
-            vals = new String[1];
-            vals[0] = valList;
-          }
+          String[] vals = abParamBean.getTerms(valList);
           String newVals = "";
           for (String mystring : vals) {
             // unescape each individual term.
             mystring = unescapeValue(mystring, abParamBean.getQuote());
             try {
-              logger.info("ParamName = " + param.getName() + " ------ Value = " + mystring);
+              logger.debug("ParamName = " + param.getName() + " ------ Value = " + mystring);
               if (validateSingleValues(abParamBean, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
-                logger.info("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
+                logger.debug("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
                     mystring);
               }
               else {
@@ -361,7 +357,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
               }
             }
             catch (Exception e) {
-              logger.info(e);
+              logger.error("error occurred.", e);
             }
           }
 
@@ -369,7 +365,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             newVals = newVals.substring(1);
           else
             newVals = "\u0000";
-          logger.info("validated values string -------------" + newVals);
+          logger.debug("validated values string -------------" + newVals);
           value = newVals;
         }
         else { // other types, unescape the whole thing
@@ -386,12 +382,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
   private boolean validateSingleValues(EnumParamBean p, String value) {
     String[] conVocab = p.getVocab();
-    logger.info("conVocab.length = " + conVocab.length);
+    logger.debug("conVocab.length = " + conVocab.length);
     if (p.isSkipValidation())
       return true;
     // initVocabMap();
     for (String v : conVocab) {
-      logger.info("value: " + value + " | vocabTerm: " + v);
       if (value.equalsIgnoreCase(v))
         return true;
     }
