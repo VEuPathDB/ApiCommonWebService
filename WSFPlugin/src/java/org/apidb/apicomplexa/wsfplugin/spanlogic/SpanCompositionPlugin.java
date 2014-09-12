@@ -403,7 +403,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     else if (rcName.equals("SnpRecordClasses.SnpRecordClass")) {
       flag.hasSnp = true;
       String projectId = wdkModel.getProjectId();
-      locTable = "(SELECT sn.source_id AS feature_source_id, " + projectId + " AS project_id, " +
+      locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
           "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
           "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
           " FROM Apidb.Snp sn, ApidbTuning.SequenceAttributes sa " +
