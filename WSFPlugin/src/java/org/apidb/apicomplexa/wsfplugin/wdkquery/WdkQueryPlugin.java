@@ -19,7 +19,6 @@ import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
-import org.gusdb.wdk.model.jspwrap.FilterParamBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
