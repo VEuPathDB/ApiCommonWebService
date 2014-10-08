@@ -318,7 +318,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
               String dependedParamValue = paramValues.get(dependedParam.getName());
               dependedValues.put(dependedParam.getName(), dependedParamValue);
             }
-            abParamBean.setDependedValues(dependedValues);
+            abParamBean.setContextValues(dependedValues);
           }
           if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
             try {
@@ -406,7 +406,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
         dependedValues.put(dependedParam.getName(), dependedValue);
         logger.debug(dependedParam.getName() + " ==== " + dependedValue);
       }
-      paramBean.setDependedValues(dependedValues);
+      paramBean.setContextValues(dependedValues);
     }
     Map<String, String> displayMap = paramBean.getDisplayMap();
     Map<String, String> parentMap = paramBean.getParentMap();
