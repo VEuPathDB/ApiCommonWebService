@@ -170,7 +170,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance queryInstance = query.makeInstance(user, SOParams, true, 0, context);
+      QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, true, 0, context);
       resultList = queryInstance.getResults();
       logger.info("Results set was filled");
 
