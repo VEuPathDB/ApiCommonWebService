@@ -25,7 +25,6 @@ public class FindPolymorphismsPlugin extends HighSpeedSnpSearchAbstractPlugin {
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
-  public static final String PARAM_WEBSVCPATH = "WebServicesPath";
 
   // required result column definition
   public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";

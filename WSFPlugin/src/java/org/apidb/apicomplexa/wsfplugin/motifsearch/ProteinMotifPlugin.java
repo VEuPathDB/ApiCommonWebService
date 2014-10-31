@@ -23,7 +23,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
 public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   // let's store files in same directory
-  public static final String FIELD_REGEX = "ProteinDeflineRegex";
+  private static final String FIELD_REGEX = "ProteinDeflineRegex";
   private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s_]+)";
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);

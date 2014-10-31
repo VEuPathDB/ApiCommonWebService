@@ -159,7 +159,7 @@ public class ApiFedPlugin extends AbstractPlugin {
   private Set<String> getProjects(Map<String, String> params, boolean all) throws SQLException {
     Set<String> projects = new LinkedHashSet<>();
     if (all) {
-      projects.addAll(projectMapper.getAllProjects());
+      projects.addAll(projectMapper.getFederatedProjects());
       return projects;
     }
 
@@ -180,7 +180,7 @@ public class ApiFedPlugin extends AbstractPlugin {
       }
     }
     else { // organism doesn't exist, call all projects
-      projects.addAll(projectMapper.getAllProjects());
+      projects.addAll(projectMapper.getFederatedProjects());
     }
     return projects;
   }

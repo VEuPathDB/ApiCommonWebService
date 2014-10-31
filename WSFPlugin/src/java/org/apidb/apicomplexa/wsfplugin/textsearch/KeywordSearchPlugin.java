@@ -38,7 +38,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // required parameter definition
   public static final String PARAM_ORGANISMS = "text_search_organism";
   public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
-  public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
   public static final String PARAM_MAX_PVALUE = "max_pvalue";
   
   /*
