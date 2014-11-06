@@ -119,15 +119,13 @@ sub processGene {
 
 sub usage {
   die "
-Replace the first and second columns of a stream with a SNP ID, given a file with a mapping, and filter the SNPs based on a set of
-gene locations, provided in input file, and snp characteristics, provided on command line.  Only SNPs within those spans and with
-those characteristics are returned.
+Read a stream of SNPs (sorted by location), and output Genes that have SNPs that meet specified characteristics.  Do so by gathering up all the info from SNPs within a gene's boundaries (as specified in the gene locations filter file), and analyzing those SNPs alleles and products to see if they meet the characteristics criteria.  If so, output the gene ID as well as summary statistics of its SNPs.
 
 Usage: hsssGeneCharacteristicsFilter contig_id_file gene_locations_filter_file snp_class snps_min snps_max dnds_min dnds_max density_min density_max < snp_search_result
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
-  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location
+  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location.
   - snp_class:  all, coding, noncoding, synonymous, nonsynonymous, nonsense
   - snps_min: min percent of SNPs in the gene that belong to the specified class
   - snps_min: max percent of SNPs in the gene that belong to the specified class
@@ -140,6 +138,6 @@ Where:
 
 Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
 
-Outputs these columns (tab delim): filterGeneId density dndsRatio synCount nonSynCount nonCodingCount nonsenseCount snpsCount
+Outputs these columns (tab delim): geneId density dndsRatio synCount nonSynCount nonCodingCount nonsenseCount snpsCount
 ";
 }
