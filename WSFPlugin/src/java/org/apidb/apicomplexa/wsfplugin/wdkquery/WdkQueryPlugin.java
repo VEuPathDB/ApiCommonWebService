@@ -17,6 +17,7 @@ import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
@@ -178,8 +179,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
       logger.info("Query results have been processed.... " + resultSize);
 
     }
-    catch (WdkModelException ex) {
-      logger.info("WdkMODELexception in execute()" + ex.toString());
+    catch (WdkUserException ex) {
+      logger.info("WdkUserException in execute()" + ex.toString());
       // String msg = ex.toString();
       String msg = ex.formatErrors();
       logger.info("Message = " + msg);
@@ -213,12 +214,12 @@ public class WdkQueryPlugin extends AbstractPlugin {
         resultSize = 0;
       }
       else {
-        logger.error("WdkModelException: " + ex);
+        logger.error("WdkUserException: " + ex);
         resultSize = -1; // actual error, can't handle
       }
     }
     catch (Exception ex) {
-      logger.error("OTHERexception IN execute()", ex);
+      logger.error("OTHER exception IN execute()", ex);
 
       resultSize = -1;
     }
