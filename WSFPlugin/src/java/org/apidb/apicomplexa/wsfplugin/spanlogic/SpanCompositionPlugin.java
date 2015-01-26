@@ -510,7 +510,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     }
     String matched = builder.toString();
     if (matched.length() > 4000)
-      matched = matched.substring(0, 3998) + "...";
+      matched = matched.substring(0, 3997) + "...";
 
     // construct row by column orders
     String[] row = new String[columnOrders.size()];
