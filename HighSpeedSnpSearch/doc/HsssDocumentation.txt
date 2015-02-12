@@ -1,5 +1,6 @@
 This documentation describes the High Speed SNP Search (HSSS) system.
 
+Author's note:  when we get a chance, for clarity, we should rename these commands:
 hsssFindPolymorphic --> hsssFindSnpsInOneSetofStrains
 hsssFindMajorAlleles --> hsssFindSnpsInTwoSetsOfStrains
 
