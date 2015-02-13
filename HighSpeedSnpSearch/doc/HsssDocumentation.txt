@@ -168,7 +168,7 @@ The following is a sample script generated to run a specific search, with specif
 
 set -e
 set -x
-cd $HSSS_WORKING_DIRS/hsssFindSnpsInOneSet.1408730457121
+cd $HSSS_WORKING_DIRS/hsssPolymorphisms.1408730457121
 mkfifo fifo1 fifo2 fifo3 fifo4 fifo5 fifo6 fifo7 fifo8 fifo9 
 trap "rm fifo1 fifo2 fifo3 fifo4 fifo5 fifo6 fifo7 fifo8 fifo9 " EXIT TERM
 hsssMergeStrainsWrapper fifo1 $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/13 13 $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/21 21  &
@@ -179,7 +179,7 @@ hsssMergeStrainsWrapper fifo5 $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/8 8 fif
 hsssMergeStrainsWrapper fifo6 fifo2 0 fifo3 0  &
 hsssMergeStrainsWrapper fifo7 fifo4 0 fifo5 0  &
 hsssMergeStrainsWrapper fifo8 fifo6 0 fifo7 0  &
-hsssFindSnpsInOneSet fifo8 $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/referenceGenome.dat 9 0 8 | hsssGeneCharacteristicsFilter $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/contigIdToSourceId.dat geneLocations.txt all 8 -1 0 -1 0 100011 > $HSSS_WORKING_DIRS/hsssFindSnpsInOneSet.1408730457121/results
+hsssFindPolymorphisms fifo8 $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/referenceGenome.dat 9 0 8 | hsssGeneCharacteristicsFilter $HSSS_FILES/EhistolyticaHM1IMSS/readFreq20/contigIdToSourceId.dat geneLocations.txt all 8 -1 0 -1 0 100011 > $HSSS_WORKING_DIRS/hsssFindPolymorphisms.1408730457121/results
 exit
 
 
@@ -189,7 +189,55 @@ exit
 
 == Debugging ==
 
+In wdk.log4j, find a line like this for the search you just ran:
 
+173432257 [INFO ] [12/Feb/2015:14:25:52] 128.91.68.248 - org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch.HighSpeedSnpSearchAbstractPlugin:117 - Invoking findPolymorphisms plugin execute() for job /var/www/Common/tmp/highSpeedSnpSearch/hsssFindPolymorphisms.1423769152120$ 
+
+It shows you the job directory.  Go to that directory.  There you will find something like this:
+
+$ ls |m
+findPolymorphisms*
+findPolymorphisms.bash*
+results
+strains
+
+Where: 
+  findPolymorphisms:       a small wrapper that does some tricks to fool unix into proper killing of jobs
+  findPolymorphisms.bash:  the generated script that runs the job.  
+  results:                 the results
+  strains:                 the input strains
+
+Typically, to debug, you need to examine all the intermediate data.  During the run, these were all transient streams that feed into the final step.  You need to make each one be a saved file.  To do so:
+
+1) copy the job dir to a place in your home, or any place you easily have permission to write files to:
+  cp -r /var/www/Common/tmp/highSpeedSnpSearch/hsssFindPolymorphisms.1423769152120$ ~/junk
+
+2) cd to that dir.  
+
+3) edit findPolymorphisms.bash to make it write the streams to files:
+
+  a) remove the lines that look like this:
+cd /var/www/Common/tmp/highSpeedSnpSearch/hsssFindPolymorphisms.1423769152120
+mkfifo fifo1 fifo2 fifo3 fifo4 fifo5 
+trap "rm fifo1 fifo2 fifo3 fifo4 fifo5 " EXIT TERM
+
+  b) replace fifo with tmp.  now all the stuff that was streamed to/from fifos will be written to and read from files
+
+  c) remove the &'s so that nothing runs in bgd
+
+  d) the last line of the script might include some pipes.  change it so that each piece writes to a file, and the next piece reads from that file.
+
+  e) the final step writes to a results file.  remove the path, so that results is local to your current dir
+
+4) now you can run findPolymorphisms.bash, and it will put all its files into your local dir.
+
+5) some of the files are binary.  For each type of binary file, there is a command that dumps that file.  To find the dumpers, use UNIX auto complete:
+  
+  $hsssDump
+hsssDumpConsensusFile  hsssDumpRefStrain      hsssDumpStrains  
+
+
+========================================
 
 set -e
 set -x
