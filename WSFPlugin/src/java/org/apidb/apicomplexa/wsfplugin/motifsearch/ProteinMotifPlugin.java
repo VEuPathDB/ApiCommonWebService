@@ -94,28 +94,49 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     int contextLength = config.getContextLength();
 
     Matcher matcher = searchPattern.matcher(sequence);
+    boolean longLoc = false, longSeq = false;
     while (matcher.find()) {
-      String location = getLocation(0, matcher.start(), matcher.end() - 1,
-          false);
-
-      // add locations
-      if (sbLoc.length() != 0) sbLoc.append(", ");
-      sbLoc.append('(' + location + ')');
-
-      // obtain the context sequence
-      if ((matcher.start() - prev) <= (contextLength * 2)) {
-        // no need to trim
-        sbSeq.append(sequence.substring(prev, matcher.start()));
-      } else { // need to trim some
-        if (prev != 0)
-          sbSeq.append(sequence.substring(prev, prev + contextLength));
-        sbSeq.append("... ");
-        sbSeq.append(sequence.substring(matcher.start() - contextLength,
-            matcher.start()));
+      // add locations only while we have room.
+      if (!longLoc) {
+        String location = getLocation(0, matcher.start(), matcher.end() - 1,
+            false);
+        location = "(" + location + ")";
+        if (sbLoc.length() + location.length() >= 3997) {
+          sbLoc.append("...");
+          longLoc = true;
+        } else {
+          if (sbLoc.length() != 0) sbLoc.append(", ");
+          sbLoc.append(location);
+        }
       }
-      sbSeq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
-      sbSeq.append(sequence.substring(matcher.start(), matcher.end()));
-      sbSeq.append("</span>");
+
+      // add sequences only while we have room.
+      if (!longSeq) {
+        StringBuilder seq = new StringBuilder();
+        // obtain the context sequence
+        if ((matcher.start() - prev) <= (contextLength * 2)) {
+          // no need to trim
+          seq.append(sequence.substring(prev, matcher.start()));
+        } else { // need to trim some
+          if (prev != 0)
+            seq.append(sequence.substring(prev, prev + contextLength));
+          seq.append("... ");
+          seq.append(sequence.substring(matcher.start() - contextLength,
+              matcher.start()));
+        }
+        seq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
+        seq.append(sequence.substring(matcher.start(), matcher.end()));
+        seq.append("</span>");
+
+        // determine if we have enough space for the new sequence
+        if (sbSeq.length() + seq.length() >= 3997) {
+          sbSeq.append("...");
+          longSeq = true;
+	} else {
+          sbSeq.append(seq);
+        }
+      }
+
       prev = matcher.end();
       match.matchCount++;
     }
