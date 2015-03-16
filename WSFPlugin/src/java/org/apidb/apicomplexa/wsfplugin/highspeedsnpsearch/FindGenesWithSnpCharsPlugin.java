@@ -94,8 +94,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
         // can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
         String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + newline +
             "from apidbtuning.geneattributes g " + newline + "where g.source_id is not null" + newline +
-            " and g.organism = '" + organism + "'" + newline +
-            "order by g.sequence_id, g.start_min, g.end_max";
+            " and g.organism = '" + organism + "'";
 
         ResultSet rs = null;
 
@@ -125,11 +124,21 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     }
     finally {
       try {
-        if (bw != null)
+        if (bw != null) {
           bw.close();
+	  // run Unix sort on newly-created file, so it's ordered like the SNP files
+          ProcessBuilder builder
+	      = new ProcessBuilder("sort", "-k", "1,1", "-k", "2,2n", "-o",
+				   jobDir.getPath() + "/" + geneLocationsFileName,
+				   jobDir.getPath() + "/" + geneLocationsFileName);
+	  builder.start().waitFor();
+	}
       }
       catch (IOException e) {
         throw new PluginModelException("Failed closing file" + filtersFile, e);
+      }
+      catch (InterruptedException e) {
+        throw new PluginModelException("Failed sorting file" + filtersFile, e);
       }
     }
   }
