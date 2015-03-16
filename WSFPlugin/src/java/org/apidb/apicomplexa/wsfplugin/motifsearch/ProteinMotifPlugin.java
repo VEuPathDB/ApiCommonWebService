@@ -143,11 +143,12 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     if (match.matchCount == 0) return;
 
     // grab the last context
-    if ((prev + contextLength) < sequence.length()) {
-      sbSeq.append(sequence.substring(prev, prev + contextLength));
-      sbSeq.append("... ");
-    } else {
-      sbSeq.append(sequence.substring(prev));
+    if (!longSeq) {
+      String remain = ((prev + contextLength) < sequence.length()) 
+          ? sequence.substring(prev, prev + contextLength) + "..."
+          : sequence.substring(prev);
+      if (remain.length() + sbSeq.length() < 4000)
+        sbSeq.append(remain);
     }
     match.locations = sbLoc.toString();
     match.sequence = sbSeq.toString();
