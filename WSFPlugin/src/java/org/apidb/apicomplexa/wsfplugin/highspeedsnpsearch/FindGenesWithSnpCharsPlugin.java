@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
@@ -127,8 +128,9 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
         if (bw != null) {
           bw.close();
 	  // run Unix sort on newly-created file, so it's ordered like the SNP files
+	  String gusBin = GusHome.getGusHome() + "/bin";
           ProcessBuilder builder
-	      = new ProcessBuilder("sort", "-k", "1,1", "-k", "2,2n", "-o",
+	      = new ProcessBuilder(gusBin + "/apiSortNoLocale", "-k", "1,1", "-k", "2,2n", "-o",
 				   jobDir.getPath() + "/" + geneLocationsFileName,
 				   jobDir.getPath() + "/" + geneLocationsFileName);
 	  builder.start().waitFor();
