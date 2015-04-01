@@ -10,8 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -22,8 +23,8 @@ import org.gusdb.wsf.plugin.WsfPluginException;
 public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   // let's store files in same directory
-  public static final String FIELD_REGEX = "ProteinDeflineRegex";
-  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s_]+)";
+  private static final String FIELD_REGEX = "ProteinDeflineRegex";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s]+)";
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
 
@@ -40,12 +41,6 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
    */
   public ProteinMotifPlugin(String regexField, String defaultRegex) {
     super(regexField, defaultRegex);
-  }
-
-  @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
   }
 
   @Override
@@ -70,7 +65,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   @Override
   protected void findMatches(PluginResponse response,
       Map<String, Integer> orders, String headline, Pattern searchPattern,
-      String sequence) throws WsfPluginException {
+      String sequence) throws PluginModelException, PluginUserException {
     MotifConfig config = getConfig();
 
     // parse the headline
@@ -81,16 +76,16 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
       return;
     }
     // the gene source id has to be in group(1),
-    // organsim has to be in group(2),
+    // organism has to be in group(2),
     String sourceId = deflineMatcher.group(1);
-    String organism = deflineMatcher.group(2);
+    String organism = deflineMatcher.group(2).replace('_', ' ');
 
     Match match = new Match();
     match.sourceId = sourceId;
     try {
       match.projectId = getProjectId(organism);
     } catch (SQLException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
 
     StringBuffer sbLoc = new StringBuffer();
@@ -99,39 +94,61 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     int contextLength = config.getContextLength();
 
     Matcher matcher = searchPattern.matcher(sequence);
+    boolean longLoc = false, longSeq = false;
     while (matcher.find()) {
-      String location = getLocation(0, matcher.start(), matcher.end() - 1,
-          false);
-
-      // add locations
-      if (sbLoc.length() != 0) sbLoc.append(", ");
-      sbLoc.append('(' + location + ')');
-
-      // obtain the context sequence
-      if ((matcher.start() - prev) <= (contextLength * 2)) {
-        // no need to trim
-        sbSeq.append(sequence.substring(prev, matcher.start()));
-      } else { // need to trim some
-        if (prev != 0)
-          sbSeq.append(sequence.substring(prev, prev + contextLength));
-        sbSeq.append("... ");
-        sbSeq.append(sequence.substring(matcher.start() - contextLength,
-            matcher.start()));
+      // add locations only while we have room.
+      if (!longLoc) {
+        String location = getLocation(0, matcher.start(), matcher.end() - 1,
+            false);
+        location = "(" + location + ")";
+        if (sbLoc.length() + location.length() >= 3997) {
+          sbLoc.append("...");
+          longLoc = true;
+        } else {
+          if (sbLoc.length() != 0) sbLoc.append(", ");
+          sbLoc.append(location);
+        }
       }
-      sbSeq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
-      sbSeq.append(sequence.substring(matcher.start(), matcher.end()));
-      sbSeq.append("</span>");
+
+      // add sequences only while we have room.
+      if (!longSeq) {
+        StringBuilder seq = new StringBuilder();
+        // obtain the context sequence
+        if ((matcher.start() - prev) <= (contextLength * 2)) {
+          // no need to trim
+          seq.append(sequence.substring(prev, matcher.start()));
+        } else { // need to trim some
+          if (prev != 0)
+            seq.append(sequence.substring(prev, prev + contextLength));
+          seq.append("... ");
+          seq.append(sequence.substring(matcher.start() - contextLength,
+              matcher.start()));
+        }
+        seq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
+        seq.append(sequence.substring(matcher.start(), matcher.end()));
+        seq.append("</span>");
+
+        // determine if we have enough space for the new sequence
+        if (sbSeq.length() + seq.length() >= 3997) {
+          sbSeq.append("...");
+          longSeq = true;
+	} else {
+          sbSeq.append(seq);
+        }
+      }
+
       prev = matcher.end();
       match.matchCount++;
     }
     if (match.matchCount == 0) return;
 
     // grab the last context
-    if ((prev + contextLength) < sequence.length()) {
-      sbSeq.append(sequence.substring(prev, prev + contextLength));
-      sbSeq.append("... ");
-    } else {
-      sbSeq.append(sequence.substring(prev));
+    if (!longSeq) {
+      String remain = ((prev + contextLength) < sequence.length()) 
+          ? sequence.substring(prev, prev + contextLength) + "..."
+          : sequence.substring(prev);
+      if (remain.length() + sbSeq.length() < 4000)
+        sbSeq.append(remain);
     }
     match.locations = sbLoc.toString();
     match.sequence = sbSeq.toString();

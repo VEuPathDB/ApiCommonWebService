@@ -3,7 +3,6 @@
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,18 +13,18 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.comment.CommentFactory;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.AbstractOracleTextSearchPlugin;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
-import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 
 /**
@@ -39,22 +38,16 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // required parameter definition
   public static final String PARAM_ORGANISMS = "text_search_organism";
   public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
-  public static final String PARAM_WDK_RECORD_TYPE = "wdk_record_type";
   public static final String PARAM_MAX_PVALUE = "max_pvalue";
-
-  private static final String CTX_CONTAINER_APP = "wdkModel";
-  private static final String CTX_CONTAINER_COMMENT = "comment-factory";
-
-  private static final String CONNECTION_APP = WdkModel.CONNECTION_APP;
-
+  
   /*
    * (non-Javadoc)
    * 
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public void execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException
+      {
     logger.info("Invoking KeywordSearchPlugin...");
 
     // get parameters
@@ -114,24 +107,25 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	PreparedStatement ps = null;
 	try {
 	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
-	    Connection dbConnection = getDbConnection(CTX_CONTAINER_COMMENT, null);
-	    ps = dbConnection.prepareStatement(sql);
+	    
+	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
+	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
 	    // logger.debug("after validation commentMatches = "
 	    // + commentMatches.toString());
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
+	} catch (SQLException | EuPathServiceException ex) {
+	    throw new PluginModelException(ex);
 	} finally {
 	    SqlUtils.closeStatement(ps);
 	}
     }
 
     // merge the result from component with the ones from comments
-    MergeResultContainer componentContainer
-	= new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
+    MergeResultContainer componentContainer =
+        new MergeResultContainer(response, request.getOrderedColumns(), commentResults);
 
     // search component database
     if (searchComponent) {
@@ -144,8 +138,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 		maxPvalue = "0";
 	    }
 
-	    Connection dbConnection = getDbConnection(CTX_CONTAINER_APP, CONNECTION_APP);
-	    ps = dbConnection.prepareStatement(sql);
+	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
 	    ps.setFloat(2, Float.valueOf(maxPvalue));
 	    ps.setString(3, oracleTextExpression);
@@ -153,15 +147,19 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    ps.setString(5, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
-	} catch (SQLException | WdkModelException | EuPathServiceException ex) {
-	    throw new WsfPluginException(ex);
-	} finally {
+	}
+	catch (SQLException | EuPathServiceException ex) {
+	    throw new PluginModelException(ex);
+	}
+	finally {
 	    SqlUtils.closeStatement(ps);
 	}
     }
 
     // process the remaining ones from comments, but not found in component
     componentContainer.processRemainingResults();
+    
+    return 0;
   }
 
   private String cleanOrgs(String orgs) {
@@ -196,8 +194,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           + "'\n";
     }
 
-    WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
-    String commentSchema = wdkModelBean.getModel().getModelConfig().getUserDB().getUserSchema();
+    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+    String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
     String sql = "SELECT source_id, project_id, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
@@ -305,8 +303,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   // }
 
   private Map<String, SearchResult> validateRecords(String projectId,
-      Map<String, SearchResult> commentResults, String organisms)
-      throws WsfPluginException {
+      Map<String, SearchResult> commentResults, String organisms) throws PluginModelException
+       {
 
     Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
     newCommentResults.putAll(commentResults);
@@ -324,13 +322,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
               + "  and attrs.project_id = ? \n" + "  and attrs.taxon_id in ("
               + organisms + ")");
 
-      WdkModelBean wdkModel = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
-      DatabaseInstance platform = wdkModel.getModel().getAppDb();
-      DataSource dataSource = platform.getDataSource();
-
       ResultSet rs = null;
-
       try {
+        WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+        DatabaseInstance platform = wdkModel.getAppDb();
+        DataSource dataSource = platform.getDataSource();
+
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
         for (String sourceId : commentResults.keySet()) {
@@ -364,7 +361,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
-        throw new WsfPluginException(ex);
+        throw new PluginModelException(ex);
       } finally {
         // try {
         // rs.close();
@@ -379,10 +376,5 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
     // SearchResult>();
     return newCommentResults;
-  }
-
-  @Override
-  protected String[] defineContextKeys() {
-    return new String[] { CTX_CONTAINER_APP, CTX_CONTAINER_COMMENT };
   }
 }

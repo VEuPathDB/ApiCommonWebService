@@ -17,17 +17,18 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
-import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 public class SpanCompositionPlugin extends AbstractPlugin {
 
@@ -69,6 +70,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       return buffer.toString();
     }
 
+  }
+
+  private static class Flag {
+    private boolean hasSnp = false;
   }
 
   public static final String COLUMN_SOURCE_ID = "source_id";
@@ -117,113 +122,100 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public String[] getColumns() {
-    return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID,
-        COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION, COLUMN_MATCHED_COUNT,
-        COLUMN_MATCHED_REGIONS };
+    return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
+        COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS };
   }
 
   @Override
   public String[] getRequiredParameterNames() {
-    return new String[] { PARAM_OPERATION, PARAM_SPAN_PREFIX + "a",
-        PARAM_SPAN_PREFIX + "b" };
+    return new String[] { PARAM_OPERATION, PARAM_SPAN_PREFIX + "a", PARAM_SPAN_PREFIX + "b" };
   }
 
   @Override
-  public void validateParameters(PluginRequest request)
-      throws WsfPluginException {
+  public void validateParameters(PluginRequest request) throws PluginUserException {
     Map<String, String> params = request.getParams();
-    Set<String> operators = new HashSet<String>(Arrays.asList(
-        PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B, PARAM_VALUE_B_CONTAIN_A));
-    Set<String> outputs = new HashSet<String>(Arrays.asList(
-        PARAM_VALUE_OUTPUT_A, PARAM_VALUE_OUTPUT_B));
-    Set<String> strands = new HashSet<String>(Arrays.asList(
-        PARAM_VALUE_BOTH_STRANDS, PARAM_VALUE_SAME_STRAND,
-        PARAM_VALUE_OPPOSITE_STRANDS));
-    Set<String> anchors = new HashSet<String>(Arrays.asList(PARAM_VALUE_START,
-        PARAM_VALUE_STOP));
-    Set<String> directions = new HashSet<String>(Arrays.asList(
-        PARAM_VALUE_DOWNSTREAM, PARAM_VALUE_UPSTREAM));
+    Set<String> operators = new HashSet<String>(Arrays.asList(PARAM_VALUE_OVERLAP, PARAM_VALUE_A_CONTAIN_B,
+        PARAM_VALUE_B_CONTAIN_A));
+    Set<String> outputs = new HashSet<String>(Arrays.asList(PARAM_VALUE_OUTPUT_A, PARAM_VALUE_OUTPUT_B));
+    Set<String> strands = new HashSet<String>(Arrays.asList(PARAM_VALUE_BOTH_STRANDS,
+        PARAM_VALUE_SAME_STRAND, PARAM_VALUE_OPPOSITE_STRANDS));
+    Set<String> anchors = new HashSet<String>(Arrays.asList(PARAM_VALUE_START, PARAM_VALUE_STOP));
+    Set<String> directions = new HashSet<String>(Arrays.asList(PARAM_VALUE_DOWNSTREAM, PARAM_VALUE_UPSTREAM));
 
     // validate operator
     if (params.containsKey(PARAM_OPERATION)) {
       String op = params.get(PARAM_OPERATION);
       if (!operators.contains(op))
-        throw new WsfPluginException("Invalid " + PARAM_OPERATION + ": " + op);
+        throw new PluginUserException("Invalid " + PARAM_OPERATION + ": " + op);
     }
 
     // validate output choice
     if (params.containsKey(PARAM_OUTPUT)) {
       String out = params.get(PARAM_OUTPUT);
       if (!outputs.contains(out))
-        throw new WsfPluginException("Invalid " + PARAM_OUTPUT + ": " + out);
+        throw new PluginUserException("Invalid " + PARAM_OUTPUT + ": " + out);
     }
 
     // validate strand
     if (params.containsKey(PARAM_STRAND)) {
       String strand = params.get(PARAM_STRAND);
       if (!strands.contains(strand))
-        throw new WsfPluginException("Invalid " + PARAM_STRAND + ": " + strand);
+        throw new PluginUserException("Invalid " + PARAM_STRAND + ": " + strand);
     }
 
     // validate begin a
     validateAnchorParams(params, anchors, PARAM_BEGIN_PREFIX + "a");
-    validateDirectionParams(params, directions, PARAM_BEGIN_DIRECTION_PREFIX
-        + "a");
+    validateDirectionParams(params, directions, PARAM_BEGIN_DIRECTION_PREFIX + "a");
     validateOffsetParams(params, PARAM_BEGIN_OFFSET_PREFIX + "a");
 
     // validate end a
     validateAnchorParams(params, anchors, PARAM_END_PREFIX + "a");
-    validateDirectionParams(params, directions, PARAM_END_DIRECTION_PREFIX
-        + "a");
+    validateDirectionParams(params, directions, PARAM_END_DIRECTION_PREFIX + "a");
     validateOffsetParams(params, PARAM_END_OFFSET_PREFIX + "a");
 
     // validate begin b
     validateAnchorParams(params, anchors, PARAM_BEGIN_PREFIX + "b");
-    validateDirectionParams(params, directions, PARAM_BEGIN_DIRECTION_PREFIX
-        + "b");
+    validateDirectionParams(params, directions, PARAM_BEGIN_DIRECTION_PREFIX + "b");
     validateOffsetParams(params, PARAM_BEGIN_OFFSET_PREFIX + "b");
 
     // validate end b
     validateAnchorParams(params, anchors, PARAM_END_PREFIX + "b");
-    validateDirectionParams(params, directions, PARAM_END_DIRECTION_PREFIX
-        + "a");
+    validateDirectionParams(params, directions, PARAM_END_DIRECTION_PREFIX + "a");
     validateOffsetParams(params, PARAM_END_OFFSET_PREFIX + "b");
   }
 
-  private void validateAnchorParams(Map<String, String> params,
-      Set<String> anchors, String param) throws WsfPluginException {
+  private void validateAnchorParams(Map<String, String> params, Set<String> anchors, String param)
+      throws PluginUserException {
     if (params.containsKey(param)) {
       String anchor = params.get(param).intern();
       if (!anchors.contains(anchor))
-        throw new WsfPluginException("Invalid " + param + ": " + anchor);
+        throw new PluginUserException("Invalid " + param + ": " + anchor);
     }
   }
 
-  private void validateDirectionParams(Map<String, String> params,
-      Set<String> directions, String param) throws WsfPluginException {
+  private void validateDirectionParams(Map<String, String> params, Set<String> directions, String param)
+      throws PluginUserException {
     if (params.containsKey(param)) {
       String direction = params.get(param).intern();
       if (!directions.contains(direction))
-        throw new WsfPluginException("Invalid " + param + ": " + direction);
+        throw new PluginUserException("Invalid " + param + ": " + direction);
     }
   }
 
-  private void validateOffsetParams(Map<String, String> params, String param)
-      throws WsfPluginException {
+  private void validateOffsetParams(Map<String, String> params, String param) throws PluginUserException {
     if (params.containsKey(param)) {
       String offset = params.get(param);
       try {
         Integer.parseInt(offset);
-      } catch (NumberFormatException ex) {
-        throw new WsfPluginException("Invalid " + param
-            + " (expected number): " + offset);
+      }
+      catch (NumberFormatException ex) {
+        throw new PluginUserException("Invalid " + param + " (expected number): " + offset);
       }
     }
   }
 
   @Override
-  public void execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
     Map<String, String> params = request.getParams();
     String operation = params.get(PARAM_OPERATION);
 
@@ -239,28 +231,26 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     String[] startStopA = getStartStop(params, "a");
     String[] startStopB = getStartStop(params, "b");
 
-    WdkModelBean wdkModelBean = (WdkModelBean) this.context.get(CConstants.WDK_MODEL_KEY);
-    WdkModel wdkModel = wdkModelBean.getModel();
     String tempA = null, tempB = null;
     try {
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
       String signature = request.getContext().get(Utilities.QUERY_CTX_USER);
       User user = wdkModel.getUserFactory().getUser(signature);
 
       // create temp tables from caches
-      tempA = getSpanSql(wdkModel, user, params, startStopA, "a");
-      tempB = getSpanSql(wdkModel, user, params, startStopB, "b");
+      Flag flag = new Flag();
+      tempA = getSpanSql(wdkModel, user, params, startStopA, "a", flag);
+      tempB = getSpanSql(wdkModel, user, params, startStopB, "b", flag);
 
       // compose the final sql by comparing two regions with span
       // operation.
-      String sql = composeSql(request.getProjectId(), operation, tempA, tempB,
-          strand, output);
+      String sql = composeSql(request.getProjectId(), operation, tempA, tempB, strand, output, flag);
 
       logger.debug("SPAN LOGIC SQL:\n" + sql);
 
       // execute the final sql, and fetch the result for the output.
-      prepareResult(wdkModel, response, sql, request.getOrderedColumns(),
-          output);
+      prepareResult(wdkModel, response, sql, request.getOrderedColumns(), output);
 
       // drop the cache tables
       DBPlatform platform = wdkModel.getAppDb().getPlatform();
@@ -268,9 +258,13 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       String schema = wdkModel.getAppDb().getDefaultSchema();
       platform.dropTable(dataSource, schema, tempA, true);
       platform.dropTable(dataSource, schema, tempB, true);
-    } catch (Exception ex) {
-      throw new WsfPluginException(ex);
-    } finally {
+
+      return 0;
+    }
+    catch (Exception ex) {
+      throw new PluginModelException(ex);
+    }
+    finally {
       // dropTempTables(wdkModel, tempA, tempB);
     }
   }
@@ -332,8 +326,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return new String[] { start, stop };
   }
 
-  private String composeSql(String projectId, String operation,
-      String tempTableA, String tempTableB, String strand, String output) {
+  private String composeSql(String projectId, String operation, String tempTableA, String tempTableB,
+      String strand, String output, Flag flag) {
     StringBuilder builder = new StringBuilder();
 
     // determine the output type
@@ -357,20 +351,25 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("  AND fb.begin <= fb.end ");
 
     // check the strand choice
-    if (strand.equalsIgnoreCase(PARAM_VALUE_SAME_STRAND)) {
-      builder.append("  AND fa.is_reversed = fb.is_reversed ");
-    } else if (strand.equalsIgnoreCase(PARAM_VALUE_OPPOSITE_STRANDS)) {
-      builder.append("  AND fa.is_reversed != fb.is_reversed ");
+    if (!flag.hasSnp) {
+      if (strand.equalsIgnoreCase(PARAM_VALUE_SAME_STRAND)) {
+        builder.append("  AND fa.is_reversed = fb.is_reversed ");
+      }
+      else if (strand.equalsIgnoreCase(PARAM_VALUE_OPPOSITE_STRANDS)) {
+        builder.append("  AND fa.is_reversed != fb.is_reversed ");
+      }
     }
 
     // apply span operation.
     if (operation.equals(PARAM_VALUE_OVERLAP)) {
       builder.append("  AND fa.begin <= fb.end ");
       builder.append("  AND fa.end >= fb.begin ");
-    } else if (operation.equals(PARAM_VALUE_A_CONTAIN_B)) {
+    }
+    else if (operation.equals(PARAM_VALUE_A_CONTAIN_B)) {
       builder.append("  AND fa.begin <= fb.begin ");
       builder.append("  AND fa.end >= fb.end ");
-    } else { // b_contain_a
+    }
+    else { // b_contain_a
       builder.append("  AND fa.begin >= fb.begin ");
       builder.append("  AND fa.end <= fb.end ");
     }
@@ -382,9 +381,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return builder.toString();
   }
 
-  private String getSpanSql(WdkModel wdkModel, User user,
-      Map<String, String> params, String[] region, String suffix)
-      throws WdkModelException {
+  private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
+      String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
     AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
 
@@ -395,14 +393,23 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     String rcName = answerValue.getQuestion().getRecordClass().getFullName();
     String locTable;
     if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
-      locTable = "(SELECT source_id AS feature_source_id, project_id, "
-          + "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, "
-          + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, "
-          + "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, "
-          + "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, "
-          + "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type "
-          + "  FROM " + cacheSql + ")";
-    } else {
+      locTable = "(SELECT source_id AS feature_source_id, project_id, " +
+          "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
+          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, " +
+          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, " +
+          "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, " +
+          "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type " + "  FROM " + cacheSql + ")";
+    }
+    else if (rcName.equals("SnpRecordClasses.SnpRecordClass")) {
+      flag.hasSnp = true;
+      String projectId = wdkModel.getProjectId();
+      locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
+          "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
+          "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
+          " FROM Apidb.Snp sn, ApidbTuning.SequenceAttributes sa " +
+          " WHERE sn.na_sequence_id = sa.na_sequence_id)";
+    }
+    else {
       locTable = "ApidbTuning.FeatureLocation";
     }
 
@@ -441,17 +448,16 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       SqlUtils.executeUpdate(dataSource, sql, "span-logic-child");
 
       return tableName;
-    } catch (SQLException ex) {
+    }
+    catch (SQLException ex) {
       throw new WdkModelException(ex);
     }
   }
 
-  private void prepareResult(WdkModel wdkModel, PluginResponse response,
-      String sql, String[] orderedColumns, String output) throws SQLException,
-      WsfPluginException {
+  private void prepareResult(WdkModel wdkModel, PluginResponse response, String sql, String[] orderedColumns,
+      String output) throws SQLException, PluginModelException, PluginUserException {
     // prepare column order
-    Map<String, Integer> columnOrders = new LinkedHashMap<>(
-        orderedColumns.length);
+    Map<String, Integer> columnOrders = new LinkedHashMap<>(orderedColumns.length);
     for (int i = 0; i < orderedColumns.length; i++) {
       columnOrders.put(orderedColumns[i], i);
     }
@@ -469,7 +475,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         if (feature == null) {
           // reading the first line
           feature = new Feature();
-        } else if (!feature.sourceId.equals(sourceId)) {
+        }
+        else if (!feature.sourceId.equals(sourceId)) {
           // start on a new record, output the previous feature
           writeFeature(response, columnOrders, feature);
           feature = new Feature();
@@ -485,25 +492,25 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       if (feature != null) { // write the last feature
         writeFeature(response, columnOrders, feature);
       }
-    } finally {
+    }
+    finally {
       SqlUtils.closeResultSetAndStatement(resultSet);
     }
   }
 
-  private void writeFeature(PluginResponse response,
-      Map<String, Integer> columnOrders, Feature feature)
-      throws WsfPluginException {
+  private void writeFeature(PluginResponse response, Map<String, Integer> columnOrders, Feature feature)
+      throws PluginModelException, PluginUserException {
     // format the matched regions
     StringBuilder builder = new StringBuilder();
     for (Feature fr : feature.matched) {
       if (builder.length() > 0)
         builder.append("; ");
-      builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;"
-          + fr.getEnd() + "&nbsp;(" + fr.getReversed() + ")");
+      builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;(" +
+          fr.getReversed() + ")");
     }
     String matched = builder.toString();
     if (matched.length() > 4000)
-      matched = matched.substring(0, 3998) + "...";
+      matched = matched.substring(0, 3997) + "...";
 
     // construct row by column orders
     String[] row = new String[columnOrders.size()];
@@ -518,18 +525,12 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     response.addRow(row);
   }
 
-  private void readFeature(ResultSet resultSet, Feature feature, String suffix)
-      throws SQLException {
+  private void readFeature(ResultSet resultSet, Feature feature, String suffix) throws SQLException {
     feature.sourceId = resultSet.getString("source_id_" + suffix);
     feature.projectId = resultSet.getString("project_id_" + suffix);
     feature.begin = resultSet.getInt("begin_" + suffix);
     feature.end = resultSet.getInt("end_" + suffix);
     feature.weight = resultSet.getInt("wdk_weight_" + suffix);
     feature.reversed = resultSet.getBoolean("is_reversed_" + suffix);
-  }
-
-  @Override
-  protected String[] defineContextKeys() {
-    return new String[] { CConstants.WDK_MODEL_KEY };
   }
 }

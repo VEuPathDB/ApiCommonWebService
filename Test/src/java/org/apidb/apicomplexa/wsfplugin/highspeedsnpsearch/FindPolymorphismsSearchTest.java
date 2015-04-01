@@ -5,10 +5,10 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
+import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
   public int getExpectedResultCount() { return 8; }
 
   @Test
-  public void testSearch() throws WsfPluginException {
+  public void testSearch() throws Exception {
     FindPolymorphismsPlugin search = getPlugin();
     search.setOrganismNameForFiles("Hsapiens123");
     System.err.println("first" + properties);
@@ -63,7 +63,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
 
     // print results
     String[][] results = response.getPage(0);
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(getExpectedResultCount(), results.length);
   }

@@ -8,10 +8,12 @@ usage() unless scalar(@ARGV) == 9;
 
 open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
 my %contigHash;
+my %contigIdToIndex;
 while (<C>) {
   chomp;
   my ($contigIndex, $contigSourceId) = split(/\t/);
   $contigHash{$contigIndex} = $contigSourceId;
+  $contigIdToIndex{$contigSourceId} = $contigIndex;
 }
 close(C);
 
@@ -25,6 +27,7 @@ my $snpsCount = 0;
 my $codingCount = 0;
 my $nonsenseCount = 0;
 my $nonSynCount = 0;
+my $synCount = 0;
 
 
 while(<STDIN>) {
@@ -42,47 +45,48 @@ while(<STDIN>) {
   # gather stats for this SNP if within current gene
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $snpsCount++;
-    $codingCount++ if $productClass >= 0;
-    $nonSynCount++ if $productClass == 1;
-    $nonsenseCount++ if $productClass == 2;
+    $codingCount++ if $productClass != 0;
+    $synCount++ if $productClass == 1;
+    $nonSynCount++ if $productClass == 2;
+    $nonsenseCount++ if $productClass < 0;
   }
 
-  # read next gene if beyond current gene
+  # read next gene if our SNP is beyond current gene
   else {
     # process current gene before reading next
-    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
+    processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) if $snpsCount;
 
     # zero counts
-    $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = 0;
+    $snpsCount = $codingCount = $nonsenseCount = $nonSynCount = $synCount = 0;
 
-    # find next gene that is not behind us
-    while ($contigSourceId gt $filterContigId || ($contigSourceId eq $filterContigId && $location > $filterEnd)) {
+    # skip past genes that are behind us
+    # if gene's sequence source id does not have an index, then it has no snps. skip it.
+    while (!$contigIdToIndex{$filterContigId} || ($contigIdToIndex{$contigSourceId} > $contigIdToIndex{$filterContigId} || ($contigSourceId eq $filterContigId && $location > $filterEnd))) {
       $geneLocationLine = <F>;
       chomp $geneLocationLine;
       last unless $geneLocationLine;
       ($filterContigId, $filterStart, $filterEnd, $filterGeneId) = split(/\t/, $geneLocationLine);
-    }
+   }
 
     # if this SNP is inside the next gene, update counts
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
       $snpsCount++;
-      $codingCount++ if $productClass >= 0;
-      $nonSynCount++ if $productClass == 1;
-      $nonsenseCount++ if $productClass == 2;
+      $codingCount++ if $productClass != 0;
+      $synCount++ if $productClass == 1;
+      $nonSynCount++ if $productClass == 2;
+      $nonsenseCount++ if $productClass < 0;
     }
   }
 }
-processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) if $snpsCount;
+processGene($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) if $snpsCount;
 
 sub processGene {
-  my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount) = @_;
+  my ($snpsCount, $codingCount, $nonsenseCount, $nonSynCount, $synCount) = @_;
 
   return unless $snpsCount;
 
-  my $totNonSyn = $nonSynCount + $nonsenseCount;
-  my $synCount = $codingCount - $totNonSyn;
   my $nonCodingCount = $snpsCount - $codingCount;
-  my $dnds = $synCount? $totNonSyn / $synCount : $totNonSyn;
+  my $dnds = $synCount? $nonSynCount / $synCount : $nonSynCount;
   my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
   if ($snpClass && ($snpsMin || $snpsMax != -1)) {
@@ -102,7 +106,7 @@ sub processGene {
   }
 
   if ($dndsMin || $dndsMax != -1) {
-    if ($synCount == 0 && $totNonSyn != 0) {
+    if ($synCount == 0 && $nonSynCount != 0) {
       return 0 unless $dndsMax == -1;
     } else {
       return 0 if $dnds < $dndsMin || ($dndsMax != -1 && $dnds > $dndsMax);
@@ -118,15 +122,13 @@ sub processGene {
 
 sub usage {
   die "
-Replace the first and second columns of a stream with a SNP ID, given a file with a mapping, and filter the SNPs based on a set of
-gene locations, provided in input file, and snp characteristics, provided on command line.  Only SNPs within those spans and with
-those characteristics are returned.
+Read a stream of SNPs (sorted by location), and output Genes that have SNPs that meet specified characteristics.  Do so by gathering up all the info from SNPs within a gene's boundaries (as specified in the gene locations filter file), and analyzing those SNPs alleles and products to see if they meet the characteristics criteria.  If so, output the gene ID as well as summary statistics of its SNPs.
 
 Usage: hsssGeneCharacteristicsFilter contig_id_file gene_locations_filter_file snp_class snps_min snps_max dnds_min dnds_max density_min density_max < snp_search_result
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
-  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location
+  - gene_locations_filter_file: tab delimited:  contig_source_id, start, end, gene_source_id.   Must be sorted by location.
   - snp_class:  all, coding, noncoding, synonymous, nonsynonymous, nonsense
   - snps_min: min percent of SNPs in the gene that belong to the specified class
   - snps_min: max percent of SNPs in the gene that belong to the specified class
@@ -139,6 +141,6 @@ Where:
 
 Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
 
-Outputs these columns (tab delim): filterGeneId density dndsRatio synCount nonSynCount nonCodingCount nonsenseCount snpsCount
+Outputs these columns (tab delim): geneId density dndsRatio synCount nonSynCount nonCodingCount nonsenseCount snpsCount
 ";
 }

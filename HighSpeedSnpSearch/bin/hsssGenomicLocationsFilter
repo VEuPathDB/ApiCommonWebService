@@ -26,12 +26,13 @@ while(<STDIN>) {
   chomp;
   my @fields = split(/\t/);
 
-  # -1=noncoding 0=coding 1=nonsyn 2=nonsense    convert nonysn and nonsense to a 'y'
-  if ($fields[4] == -1) { $fields[4] = 'non-coding'; }
-  elsif ($fields[4] == 0) { $fields[4] = 'syn'; }
-  elsif ($fields[4] == 1) { $fields[4] = 'non-syn'; }
-  elsif ($fields[4] == 2) { $fields[4] = 'nonsense'; }
+  if ($fields[4] == 0) { $fields[4] = 'non-coding'; }
+  elsif ($fields[4] == 1) { $fields[4] = 'syn'; }
+  elsif ($fields[4] == 2) { $fields[4] = 'non-syn'; }
+  elsif ($fields[4] == -1) { $fields[4] = 'has stop codon'; }
+  elsif ($fields[4] == -2) { $fields[4] = 'has stop codon'; }
   else { die "invalid coding class: '$fields[4]'\n"; }
+
 
   my $contigIndex = shift(@fields);
   my $location = shift(@fields);

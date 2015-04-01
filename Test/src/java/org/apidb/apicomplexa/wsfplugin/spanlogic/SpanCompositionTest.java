@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
@@ -38,10 +39,10 @@ import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
+import org.gusdb.wsf.plugin.PluginUserException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,8 +63,7 @@ public class SpanCompositionTest {
   }
 
   @Test
-  public void testSpanLogic() throws URISyntaxException, IOException,
-      WsfPluginException, WdkModelException, WdkUserException {
+  public void testSpanLogic() throws Exception {
     List<SpanCompositionTestCase> testCases = loadTestCases("span-composition.test");
 
     for (SpanCompositionTestCase testCase : testCases) {
@@ -83,9 +83,9 @@ public class SpanCompositionTest {
       if (!testCase.success) {
         logger.warn("Test #" + testCase.id + " FAILED: " + testCase.description);
         logger.warn("============= EXPECT: "
-            + Formatter.printArray(testCase.expectedOutput));
+            + FormatUtil.printArray(testCase.expectedOutput));
         logger.warn("============= ACTUAL: "
-            + Formatter.printArray(testCase.actualOutput));
+            + FormatUtil.printArray(testCase.actualOutput));
         success = false;
         count++;
       }
@@ -102,7 +102,7 @@ public class SpanCompositionTest {
   }
 
   private List<SpanCompositionTestCase> loadTestCases(String resourceName)
-      throws URISyntaxException, IOException, WsfPluginException {
+      throws URISyntaxException, IOException, PluginUserException {
     List<SpanCompositionTestCase> testCases = new ArrayList<SpanCompositionTestCase>();
     URL url = SpanCompositionTest.class.getResource(resourceName);
     if (url != null) {
@@ -165,7 +165,7 @@ public class SpanCompositionTest {
   }
 
   private String createGeneStep(String[] input) throws WdkModelException, WdkUserException {
-    String key = Formatter.printArray(input).intern();
+    String key = FormatUtil.printArray(input).intern();
     if (steps.containsKey(key))
       return steps.get(key);
 
@@ -217,7 +217,7 @@ public class SpanCompositionTest {
     testCase.success = true;
   }
 
-  private SpanCompositionPlugin createPlugin() throws WsfPluginException {
+  private SpanCompositionPlugin createPlugin() {
     SpanCompositionPlugin plugin = new SpanCompositionPlugin();
 
     Map<String, Object> context = new HashMap<String, Object>();

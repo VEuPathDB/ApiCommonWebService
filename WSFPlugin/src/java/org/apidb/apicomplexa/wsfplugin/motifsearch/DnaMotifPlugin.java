@@ -10,8 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -24,18 +25,12 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
   // The property file for dna motif search
   public static final String FIELD_REGEX = "DnaDeflineRegex";
 
-  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|_\\s]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|\\s]+)";
 
   private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
   public DnaMotifPlugin() {
     super(FIELD_REGEX, DEFAULT_REGEX);
-  }
-
-  @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
   }
 
   @Override
@@ -58,7 +53,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   protected void findMatches(PluginResponse response, Map<String, Integer> orders, String headline,
-      Pattern searchPattern, String sequence) throws WsfPluginException {
+      Pattern searchPattern, String sequence) throws PluginModelException, PluginUserException  {
     // parse the headline
     MotifConfig config = getConfig();
     Matcher deflineMatcher = config.getDeflinePattern().matcher(headline);
@@ -68,15 +63,15 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
     }
     // the sequence id has to be in group(1),
     // strand info has to be in group(2)
-    // organsim has to be in group(3),
+    // organism has to be in group(3),
     String sequenceId = deflineMatcher.group(1).intern();
     String strand = deflineMatcher.group(2).intern();
-    String organism = deflineMatcher.group(3).intern();
+    String organism = deflineMatcher.group(3).replace('_', ' ').intern();
     String projectId;
     try {
       projectId = getProjectId(organism).intern();
     } catch (SQLException ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
 
     int length = sequence.length();

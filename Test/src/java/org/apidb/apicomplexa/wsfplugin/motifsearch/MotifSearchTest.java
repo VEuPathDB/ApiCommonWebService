@@ -16,12 +16,12 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.model.Utilities;
+import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
-import org.gusdb.wsf.util.Formatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,11 +60,12 @@ public class MotifSearchTest {
     // read the sample config file with default values
     String sampleFile = projectHome
         + "/ApiCommonWebService/WSFPlugin/config/motifSearch-config.xml.sample";
-    InputStream inStream = new FileInputStream(sampleFile);
-    properties.loadFromXML(inStream);
-    inStream.close();
-    properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
 
+    try (InputStream inStream = new FileInputStream(sampleFile)) {
+      properties.loadFromXML(inStream);
+    }
+    
+    properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
   }
 
   @Test
@@ -95,8 +96,7 @@ public class MotifSearchTest {
   }
 
   @Test
-  public void testDnaMotifSearch() throws WsfPluginException,
-      URISyntaxException, IOException {
+  public void testDnaMotifSearch() throws URISyntaxException, IOException {
     AbstractMotifPlugin search = new DnaMotifPlugin();
     try {
       search.initialize(getContext());
@@ -118,14 +118,13 @@ public class MotifSearchTest {
 
     // print results
     String[][] results = response.getPage(0);
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(2, results.length);
   }
 
   @Test
-  public void testProteinMotifSearch() throws WsfPluginException,
-      URISyntaxException, IOException {
+  public void testProteinMotifSearch() throws URISyntaxException, IOException {
     AbstractMotifPlugin search = new ProteinMotifPlugin();
 
     // ignore the exceptions here, use a mock project mapper
@@ -151,7 +150,7 @@ public class MotifSearchTest {
     String[][] results = response.getPage(0);
 
     // print results
-    System.out.println(Formatter.printArray(results));
+    System.out.println(FormatUtil.printArray(results));
 
     Assert.assertEquals(3, results.length);
   }

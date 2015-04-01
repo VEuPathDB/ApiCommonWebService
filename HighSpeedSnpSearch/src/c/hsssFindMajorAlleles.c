@@ -20,7 +20,6 @@ typedef struct {
 static char *stdoutStr = "STDOUT";
 
 static char alleles[5] = {0, 'A', 'C', 'G', 'T'};
-static char products[27] = {'-', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 
 static inline int freadCheck (char *filename, void *ptr, size_t size, size_t count, FILE *stream) {
 	int bytes = fread(ptr, size, count,stream);
@@ -48,7 +47,10 @@ static inline int readSnp(FILE *stream, snp *snp, char *filename) {
 }
 
 static inline void reportSnp(snp snp1, snp snp2) {
-	printf("%i\t%i\t%c\t%.2f\t%i\t%c\t%i\t%c\t%.2f\t%i\t%c\t%i\n", snp1.seq, snp1.loc, alleles[snp1.majorAllele], (float)snp1.majorAllelePerTenThou/100, snp1.isTriallelic, products[snp1.majorProduct-63], snp1.majorProductIsVariable, alleles[snp2.majorAllele], (float)snp2.majorAllelePerTenThou/100, snp2.isTriallelic, products[snp2.majorProduct-63], snp2.majorProductIsVariable);
+	char snp1MajorProductDisplay = snp1.majorProduct == 0? '-' : snp1.majorProduct; // display a '-' if no product
+	char snp2MajorProductDisplay = snp2.majorProduct == 0? '-' : snp2.majorProduct;
+
+	printf("%i\t%i\t%c\t%.2f\t%i\t%c\t%i\t%c\t%.2f\t%i\t%c\t%i\n", snp1.seq, snp1.loc, alleles[snp1.majorAllele], (float)snp1.majorAllelePerTenThou/100, snp1.isTriallelic, snp1MajorProductDisplay, snp1.majorProductIsVariable, alleles[snp2.majorAllele], (float)snp2.majorAllelePerTenThou/100, snp2.isTriallelic, snp2MajorProductDisplay, snp2.majorProductIsVariable);
 }
 
 main(int argc, char *argv[]) {

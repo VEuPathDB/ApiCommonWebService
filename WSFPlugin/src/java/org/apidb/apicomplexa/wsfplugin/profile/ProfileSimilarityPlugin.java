@@ -15,9 +15,10 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author xingao
@@ -75,9 +76,9 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
      */
     @Override
-    public void initialize(Map<String, Object> context)
-            throws WsfPluginException {
-        super.initialize(context);
+    public void initialize()
+            throws PluginModelException {
+        super.initialize();
 
         // load properties
         perlExec = getProperty(FIELD_PERL_EXECUTABLE);
@@ -88,22 +89,22 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         projectId = getProperty(FIELD_PROJECT_ID);
 
         if (perlExec == null)
-            throw new WsfPluginException("The " + FIELD_PERL_EXECUTABLE
+            throw new PluginModelException("The " + FIELD_PERL_EXECUTABLE
                     + " field is missing from the configuration file.");
         if (perlScript == null)
-            throw new WsfPluginException("The " + FIELD_PERL_SCRIPT
+            throw new PluginModelException("The " + FIELD_PERL_SCRIPT
                     + "field is missing from the configuration file");
         if (dbConnection == null)
-            throw new WsfPluginException("The " + FIELD_DB_CONNECTION
+            throw new PluginModelException("The " + FIELD_DB_CONNECTION
                     + "field is missing from the configuration file");
         if (dbLogin == null)
-            throw new WsfPluginException("The " + FIELD_DB_LOGIN
+            throw new PluginModelException("The " + FIELD_DB_LOGIN
                     + "field is missing from the configuration file");
         if (dbPassword == null)
-            throw new WsfPluginException("The " + FIELD_DB_PASSWORD
+            throw new PluginModelException("The " + FIELD_DB_PASSWORD
                     + "field is missing from the configuration file");
         if (projectId == null)
-            throw new WsfPluginException("The " + FIELD_PROJECT_ID
+            throw new PluginModelException("The " + FIELD_PROJECT_ID
                     + "field is missing from the configuration file");
     }
 
@@ -139,13 +140,13 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      */
     @Override
     public void validateParameters(PluginRequest request)
-            throws WsfPluginException {
+            throws PluginUserException {
         // validate distance method
         Map<String, String> params = request.getParams();
         String distanceMethod = params.get(PARAM_DISTANCE_METHOD);
         if (!distanceMethod.equalsIgnoreCase("pearson_correlation")
                 && !distanceMethod.equalsIgnoreCase("euclidean_distance"))
-            throw new WsfPluginException("Invalid distance method: "
+            throw new PluginUserException("Invalid distance method: "
                     + distanceMethod + ". Should be either "
                     + "\"pearson_correlation\" or \"euclidean_distance\"");
         params.put(PARAM_DISTANCE_METHOD, distanceMethod.toLowerCase());
@@ -155,14 +156,14 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         try {
             numReturn = Integer.parseInt(params.get(PARAM_NUM_RETURN));
         } catch (NumberFormatException e) {
-            throw new WsfPluginException("Invalid size of the result: "
+            throw new PluginUserException("Invalid size of the result: "
                     + numReturn + ", a number is expected.");
         }
         // validate search goal
         String searchGoal = params.get(PARAM_SEARCH_GOAL);
         if (!searchGoal.equalsIgnoreCase("similar")
                 && !searchGoal.equalsIgnoreCase("dissimilar"))
-            throw new WsfPluginException("Invalid search goal: " + searchGoal
+            throw new PluginUserException("Invalid search goal: " + searchGoal
                     + ". Should be either \"similar\" or \"dissimilar\"");
         params.put(PARAM_SEARCH_GOAL, searchGoal.toLowerCase());
 
@@ -179,10 +180,10 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
         try {
             timeShift = Integer.parseInt(params.get(PARAM_TIME_SHIFT));
             if (timeShift < -24 || timeShift > 24)
-                throw new WsfPluginException(
+                throw new PluginUserException(
                         "The timeShift should be within the range of [-24 - 24]");
         } catch (NumberFormatException ex) {
-            throw new WsfPluginException("Invalid time shift value: " + timeShift
+            throw new PluginUserException("Invalid time shift value: " + timeShift
                     + ", a number is expected.");
         }
     }
@@ -194,7 +195,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      * java.lang.String[])
      */
     @Override
-    public void execute(PluginRequest request, PluginResponse response) throws WsfPluginException {
+    public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
         logger.info("Invoking ProfileSimilarity Plugin...");
 
         // prepare the command
@@ -213,7 +214,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
                     + " seconds");
 
             if (signal != 0)
-                throw new WsfPluginException("The invocation is failed: "
+                throw new PluginModelException("The invocation is failed: "
                         + output);
 
             // prepare the result
@@ -221,13 +222,13 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             prepareResult(response, output.toString(),
                     request.getOrderedColumns(), queryGeneId);
 
-            response.setSignal(signal);
+            return signal;
         } catch (IOException ex) {
             long end = System.currentTimeMillis();
             logger.info("Invocation takes: " + ((end - start) / 1000.0)
                     + " seconds");
 
-            throw new WsfPluginException(ex);
+            throw new PluginModelException(ex);
         }
 
     }
@@ -263,7 +264,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     }
 
     private void prepareResult(PluginResponse response, String content, String[] orderedColumns,
-            String queryGeneId) throws WsfPluginException, IOException {
+            String queryGeneId) throws IOException, PluginModelException, PluginUserException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -273,7 +274,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 
         // check if the output contains error message
         if (content.indexOf("ERROR:") >= 0)
-            throw new WsfPluginException(content);
+            throw new PluginModelException(content);
 
         // read from the buffered stream
         BufferedReader in = new BufferedReader(new InputStreamReader(
@@ -290,7 +291,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             String[] parts = line.split("\t");
 
             if (parts.length != 3)
-                throw new WsfPluginException("Invalid output format:\n"
+                throw new PluginModelException("Invalid output format:\n"
                         + content);
 
             String geneId = parts[0].trim();
@@ -308,10 +309,5 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             response.addRow(row);
         }
         in.close();
-    }
-
-    @Override
-    protected String[] defineContextKeys() {
-        return null;
     }
 }

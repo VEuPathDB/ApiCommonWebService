@@ -12,18 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
-import org.gusdb.wdk.controller.CConstants;
+import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.jspwrap.WdkModelBean;
 import org.gusdb.wsf.plugin.AbstractPlugin;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.gusdb.wsf.plugin.WsfPluginException;
-import org.xml.sax.SAXException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author Jerric, modified by Cristina 2010 to add DNA motif
@@ -92,7 +90,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   protected abstract void findMatches(PluginResponse response,
       Map<String, Integer> orders, String headline, Pattern searchPattern,
-      String sequence) throws WsfPluginException;
+      String sequence) throws PluginModelException, PluginUserException ;
 
   protected AbstractMotifPlugin(String regexField, String defaultRegex) {
     super(PROPERTY_FILE);
@@ -122,20 +120,11 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
    */
   @Override
-  public void initialize(Map<String, Object> context)
-      throws WsfPluginException {
-    super.initialize(context);
+  public void initialize()
+      throws PluginModelException {
+    super.initialize();
 
     config = new MotifConfig(properties, regexField, defaultRegex);
-
-    // create project mapper
-    WdkModelBean wdkModel = (WdkModelBean) context.get(CConstants.WDK_MODEL_KEY);
-    try {
-      projectMapper = ProjectMapper.getMapper(wdkModel.getModel());
-    } catch (WdkModelException | SAXException | IOException
-        | ParserConfigurationException ex) {
-      throw new WsfPluginException(ex);
-    }
   }
 
   /*
@@ -166,7 +155,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    */
   @Override
   public void validateParameters(PluginRequest request)
-      throws WsfPluginException {
+       {
     // do nothing in this plugin
   }
 
@@ -176,10 +165,19 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
    */
   @Override
-  public void execute(PluginRequest request, PluginResponse response)
-      throws WsfPluginException {
+  public int execute(PluginRequest request, PluginResponse response)
+      throws PluginModelException {
     logger.info("Invoking MotifSearchPlugin...");
 
+    String projectId = request.getProjectId();
+    try {
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+      projectMapper = ProjectMapper.getMapper(wdkModel);
+    }
+    catch (WdkModelException ex) {
+      throw new PluginModelException(ex);
+    }
+    
     Map<String, String> params = request.getParams();
     // create a column order map
     String[] orderedColumns = request.getOrderedColumns();
@@ -214,8 +212,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
         findMatches(response, dsId.trim(), searchPattern,
             config.getContextLength(), orders);
       }
+      return 0;
     } catch (Exception ex) {
-      throw new WsfPluginException(ex);
+      throw new PluginModelException(ex);
     }
   }
 
@@ -262,7 +261,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   private void findMatches(PluginResponse response, String datasetID,
       Pattern searchPattern, int contextLength, 
-      Map<String, Integer> orders) throws IOException, WsfPluginException {
+      Map<String, Integer> orders) throws IOException, PluginModelException, PluginUserException {
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 
@@ -301,7 +300,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   }
 
   protected void addMatch(PluginResponse response, Match match,
-      Map<String, Integer> orders) throws WsfPluginException {
+      Map<String, Integer> orders) throws PluginModelException, PluginUserException  {
     String[] result = new String[orders.size()];
     result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
@@ -314,11 +313,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   protected String getProjectId(String organism) throws SQLException {
     return projectMapper.getProjectByOrganism(organism);
-  }
-
-  @Override
-  protected String[] defineContextKeys() {
-    return new String[] { CConstants.WDK_MODEL_KEY };
   }
 
   protected String getLocation(int length, int start, int stop, boolean reversed) {
