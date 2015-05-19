@@ -406,7 +406,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
           "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
           "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
-          " FROM Apidb.Snp sn, ApidbTuning.SequenceAttributes sa " +
+          " FROM Apidb.Snp sn, ApidbTuning.GenomicSequenceAttributes sa " +
           " WHERE sn.na_sequence_id = sa.na_sequence_id)";
     }
     else {
