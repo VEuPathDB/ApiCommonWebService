@@ -96,6 +96,8 @@ main(int argc, char *argv[]) {
 			f2got = readSnp(f2, &snp2, argv[2]);
 		}
 	}
+        while (f1got != 0) f1got = readSnp(f1, &snp1, argv[1]);
+	while (f2got != 0) f2got = readSnp(f2, &snp2, argv[2]);
 	fclose(f1);
 	fclose(f2);
 	return 0;
