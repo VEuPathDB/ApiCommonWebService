@@ -2,7 +2,7 @@
 
 use strict;
 
-my ($contigIdFile, $numGroups, $seqFilter, $minLoc, $maxLoc) = @ARGV;
+my ($contigIdFile, $numGroups, $prefix, $suffix, $seqFilter, $minLoc, $maxLoc) = @ARGV;
 
 usage() unless $contigIdFile && ($numGroups == 1 || $numGroups == 2);
 
@@ -37,7 +37,10 @@ while(<STDIN>) {
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
-  print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
+  $prefix =  $prefix=~/^NULL$/ ? '' : $prefix;
+  $suffix = $suffix =~/^NULL$/ ? '' : $suffix;
+  print STDERR join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n" ;
+  print STDOUT join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
 }
 
 sub usage {

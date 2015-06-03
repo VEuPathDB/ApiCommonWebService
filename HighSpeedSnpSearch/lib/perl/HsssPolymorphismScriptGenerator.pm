@@ -72,17 +72,18 @@ sub writeMainScriptBody {
 sub getFinalCommandString {
   my ($self) = @_;
 
-  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
-
-  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat 1 $seqFilter $minLoc $maxLoc";
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile,$idPrefix,$idSuffix, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
+  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat 1 $idPrefix $idSuffix $seqFilter $minLoc $maxLoc";
 }
 
 sub getPolymorphismArgsUsage{
-  return "polymorphism_threshold unknown_threshold strains_list_file";
+  return "polymorphism_threshold unknown_threshold strains_list_file idPrefix idSuffix";
 }
 
 sub getPolymorphismArgsHelp {
-  return "  - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
+  return "   - idPrefix: required param that provides string to prepend to snp id. this is defined in the config file. if no string should be prepended, the string literal NULL is passed instead
+  - idSufffix: required param that provides string to postpend to snp id. this is defined as a param (i.e. for snpChips, this is the assay type param. if no string should be postpended, the string literal NULL is passed instead
+  - polymorphism_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - unknown_threshold: see the hsssFindPolymorphism program for documentation on this argument
   - strains_list_file: a list of strain files.  Each must have an integer as a name (an ID for that strain).
 "

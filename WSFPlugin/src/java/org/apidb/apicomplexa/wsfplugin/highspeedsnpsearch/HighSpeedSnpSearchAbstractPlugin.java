@@ -48,14 +48,21 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   // property definition
   public static final String PROPERTY_JOBS_DIR = "jobsDir";
+  public static final String PROPERTY_PREFIX = "idPrefix";
 
   private File jobsDir;
   protected WdkModel wdkModel;
   private ProjectMapper projectMapper;
   private String organismNameForFiles_forTesting = null;
-
+    
+  private String prefix = getIdPrefix();
+    
   public HighSpeedSnpSearchAbstractPlugin() {
     super(PROPERTY_FILE);
+  }
+
+  public HighSpeedSnpSearchAbstractPlugin(String propertyFile) {
+    super(propertyFile);
   }
 
   public ProjectMapper getProjectMapper() {
@@ -85,6 +92,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     if (!jobsDir.exists())
         throw new PluginModelException(PROPERTY_JOBS_DIR
                 + " " + jobsDirName + " does not exist");
+
   }
 
   /*
@@ -105,8 +113,9 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     }
     
     String jobsDirPrefix = getJobsDirPrefix();
+    String idPrefix = getIdPrefix();
 
-    Map<String, String> params = request.getParams();
+    Map<String, String> params =request.getParams();
 
     // make job dir
     File jobDir = new File(jobsDir, jobsDirPrefix + getTimeStamp());
@@ -120,6 +129,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     // create bash script
     List<String> command = makeCommandToCreateBashScript(jobDir, params, organismDir);
+    String[] array = new String[command.size()];
+    logger.info("running command " + command.toString() + "with commandName" + commandName);
     runCommandToCreateBashScript(command, commandName);
 
     // invoke the command, and set default 2 min as timeout limit
@@ -157,6 +168,16 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   protected abstract String getJobsDirPrefix();
 
+  protected String getIdPrefix()
+    {
+        String idPrefix = getProperty(PROPERTY_PREFIX);
+        if (idPrefix == null) {
+            idPrefix = "NULL";
+        }
+        logger.info("my idPrefix " + idPrefix);
+        return idPrefix;
+    }
+
   synchronized String getTimeStamp() {
     return new Long(new Date().getTime()).toString();
   }
@@ -184,6 +205,10 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     return text;
   }
 
+    protected String getSearchDir() {
+        return  "/highSpeedSnpSearch";
+    }
+
   File findOrganismDir(Map<String, String> params, String projectId) throws PluginModelException, PluginUserException {
 
     // find organism's strain dir
@@ -192,7 +217,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     String organismNameForFiles = getOrganismNameForFiles(organism);
 
     String webSvcPathRaw = params.get(PARAM_WEBSVCPATH);
-    String organismDirStr = webSvcPathRaw.replaceAll("PROJECT_GOES_HERE", projectId) + "/" + organismNameForFiles + "/highSpeedSnpSearch";
+    String searchDir = getSearchDir();
+    String organismDirStr = webSvcPathRaw.replaceAll("PROJECT_GOES_HERE", projectId) + "/" + organismNameForFiles + searchDir;
 
     File organismDir = new File(organismDirStr);
     if (!organismDir.exists()) throw new PluginModelException("Organism dir does not exist:\n" + organismDirStr); 
@@ -222,7 +248,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 	count++;
       }
     } catch (IOException e) {
-      throw new PluginModelException("Failed writing to strains file", e);
+      throw new PluginModelException("Failed writing to strains file " + jobDir + "/" +strainsFileName, e);
     } finally {
       try {
         if (bw != null) bw.close();
