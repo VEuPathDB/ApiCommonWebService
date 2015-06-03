@@ -40,7 +40,7 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
   }
 
   @Override
-  protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginModelException, PluginUserException  {
+      protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginModelException, PluginUserException  {
     String chromosome = params.get(PARAM_CHROMOSOME);
     String seq = params.get(PARAM_SEQUENCE);
     //if (seq.equals("")) seq = chromosome;

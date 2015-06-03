@@ -112,8 +112,8 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params,
-      File organismDir) throws PluginModelException, PluginUserException {
-    List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);
+                                                       File organismDir) throws PluginModelException, PluginUserException {
+      List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);
     command.add(genomicLocationsFileName);
     return command;
   }

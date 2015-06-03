@@ -158,7 +158,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params,
-      File organismDir) throws PluginUserException, PluginModelException {
+                                                       File organismDir) throws PluginUserException, PluginModelException {
     String snpClass = params.get(PARAM_SNP_CLASS);
     if (snpClass.equals("unit test"))
       snpClass = "coding";
@@ -183,6 +183,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     command.add(density_min);
     command.add(density_max);
     return command;
+
   }
 
   @Override
