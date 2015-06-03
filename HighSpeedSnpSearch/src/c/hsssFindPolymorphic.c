@@ -69,12 +69,17 @@ static inline int readStrainRow(char *filename) {
 static inline getRefGenomeInfo(char *filename, int16_t seq, int32_t loc) {
 	// refGenome file is a strain file: one row per SNP, showing the ref genomes values
 	// advance through SNPs to our current one
-	//	fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
+                //fprintf(stderr, "getRef %i %i %i %i\n", seq, loc, refSeq, refLoc);
 		while(!(refSeq == seq && refLoc== loc)) {
 		freadCheck(filename, &refSeq, 2, 1, refFile);  
 		freadCheck(filename, &refLoc, 4, 1, refFile);  
 		freadCheck(filename, &refAllele, 1, 1, refFile); 
-		freadCheck(filename, &refProduct, 1, 1, refFile);
+		int bytes = freadCheck(filename, &refProduct, 1, 1, refFile);
+		if (bytes == 0) {
+		  fprintf(stderr, "Could not find SNP %i %i in reference genome file\n", seq, loc );
+		  exit(-1);
+		}
+
 		//fprintf(stderr,"%i %i\n" ,refSeq, refLoc);
 	}
 }
@@ -141,7 +146,9 @@ main(int argc, char *argv[]) {
 
 		// read next variant
 		strainFileGot = readStrainRow(argv[1]);
+
 	}	
+
 	if (prevSeq != 0) processPreviousSnp(prevSeq, prevLoc, argv[2]); // process final snp, unless we had empty input file
 
 	fclose(strainFile);

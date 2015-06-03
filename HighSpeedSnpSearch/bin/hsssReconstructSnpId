@@ -44,7 +44,7 @@ sub usage {
   die "
 Replace the first and second columns of a stream with a SNP ID, given a file with a mapping.
 
-Usage: hsssReconstructSnpId num_groups contig_id_file [seq_id min_loc max_loc] < snp_search_result
+Usage: hsssReconstructSnpId contig_id_file num_groups [seq_id min_loc max_loc] < snp_search_result
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
