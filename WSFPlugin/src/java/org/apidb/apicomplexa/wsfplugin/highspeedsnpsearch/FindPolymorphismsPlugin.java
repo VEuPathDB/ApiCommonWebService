@@ -1,16 +1,12 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.fgputil.ArrayUtil;
-import org.gusdb.fgputil.runtime.GusHome;
-import org.gusdb.wsf.plugin.PluginModelException;
-import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.PluginUserException;
 import org.apache.log4j.Logger;
+import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginUserException;
 
 /**
  * @author steve
