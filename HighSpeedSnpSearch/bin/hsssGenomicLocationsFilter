@@ -2,7 +2,7 @@
 
 use strict;
 
-my ($contigIdFile, $genomicLocationsFile) = @ARGV;
+my ($contigIdFile, $genomicLocationsFile,$idPrefix,$idSuffix) = @ARGV;
 
 usage() unless $contigIdFile && $genomicLocationsFile;
 
@@ -46,7 +46,9 @@ while(<STDIN>) {
 
   # print this SNP if within current filter
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
-    print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
+    $idPrefix =  $idPrefix=~/^NULL$/ ? '' : $idPrefix;
+    $idSuffix = $idSuffix =~/^NULL$/ ? '' : $idSuffix;
+    print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
   }
 
   # read next filter if beyond current filter, and print if within that next filter
@@ -60,7 +62,7 @@ while(<STDIN>) {
     }
 
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
-      print STDOUT join("\t", "NGS_SNP.$contigSourceId.$location", @fields) . "\n";
+      print STDOUT join("\t", "$idPrefix,$contigSourceId.$location,$idSuffix", @fields) . "\n";
     }
   }
 }
