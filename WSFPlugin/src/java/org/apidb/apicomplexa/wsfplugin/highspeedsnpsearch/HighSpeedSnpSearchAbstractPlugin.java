@@ -55,7 +55,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   private ProjectMapper projectMapper;
   private String organismNameForFiles_forTesting = null;
     
-  private String prefix = getIdPrefix();
+  //private String prefix = getIdPrefix();
     
   public HighSpeedSnpSearchAbstractPlugin() {
     super(PROPERTY_FILE);
@@ -113,7 +113,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     }
     
     String jobsDirPrefix = getJobsDirPrefix();
-    String idPrefix = getIdPrefix();
+    //String idPrefix = getIdPrefix();
 
     Map<String, String> params =request.getParams();
 
@@ -129,7 +129,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     // create bash script
     List<String> command = makeCommandToCreateBashScript(jobDir, params, organismDir);
-    String[] array = new String[command.size()];
+    //String[] array = new String[command.size()];
     logger.info("running command " + command.toString() + "with commandName" + commandName);
     runCommandToCreateBashScript(command, commandName);
 

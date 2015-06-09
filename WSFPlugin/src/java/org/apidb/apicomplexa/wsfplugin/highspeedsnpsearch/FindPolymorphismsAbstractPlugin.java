@@ -32,9 +32,9 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
 
   // required result column definition
-  public static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
-  public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
-  public static final String COLUMN_PHENOTYPE = "Phenotype";
+  private static final String COLUMN_PERCENT_OF_POLYMORPHISMS = "PercentMinorAlleles";
+  private static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
+  private static final String COLUMN_PHENOTYPE = "Phenotype";
 
   public FindPolymorphismsAbstractPlugin(String propertyFile) {
     super(propertyFile);
