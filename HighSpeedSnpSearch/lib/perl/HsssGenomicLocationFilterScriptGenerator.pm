@@ -11,7 +11,7 @@ sub getFinalCommandString {
 
   my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $idPrefix, $idSuffix, $genomicLocationsFilterFile) = $self->extractArgs();
 
-  return "hsssGenomicLocationsFilter $self->{strainFilesDir}/contigIdToSourceId.dat $genomicLocationsFilterFile";
+  return "hsssGenomicLocationsFilter $self->{strainFilesDir}/contigIdToSourceId.dat $genomicLocationsFilterFile $idPrefix $idSuffix";
 }
 
 # abstract method
