@@ -83,6 +83,11 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
   }
 
   @Override
+   protected String getReconstructCmdName() {
+     return "hsssReconstructSnpId";
+  }
+
+  @Override
   protected String getJobsDirPrefix() {
     return "hsssFindPolymorphisms.";
   }
@@ -122,7 +127,7 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
     int unknownsThreshold = (int) Math.floor(strainsCount * percentUnknowns / 100.0); // round down
     if (unknownsThreshold > (strainsCount - 1))
       unknownsThreshold = strainsCount - 1; // must be at least 1 known
-    
+    String reconstructNameCmd = getReconstructCmdName();
     String prefix = super.getIdPrefix();
     // hsssGeneratePolymorphismScript strain_files_dir tmp_dir polymorphism_threshold unknown_threshold
     // strains_list_file 1 output_file result_file
@@ -135,6 +140,7 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
     command.add(new Integer(percentPolymorphisms).toString());
     command.add(new Integer(unknownsThreshold).toString());
     command.add(jobDir.getPath() + "/strains");
+    command.add(reconstructNameCmd);
     command.add(prefix);
     return command;
   }

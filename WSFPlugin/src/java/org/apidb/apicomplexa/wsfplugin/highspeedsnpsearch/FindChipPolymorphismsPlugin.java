@@ -50,6 +50,11 @@ public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin
       return "snpchip_strain_meta";
   }
 
+  @Override
+  protected String getReconstructCmdName() {
+     return "hsssReconstructChipSnpId";
+  }
+
     @Override
         protected String getJobsDirPrefix() {
         return "hsssChipFindPolymorphisms.";

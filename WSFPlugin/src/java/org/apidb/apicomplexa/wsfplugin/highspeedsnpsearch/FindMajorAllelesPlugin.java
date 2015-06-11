@@ -80,6 +80,9 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   protected String getCommandName() { return "findMajorAlleles"; }
 
   @Override
+   protected String getReconstructCmdName() { return "hsssReconstructSnpId"; }
+
+  @Override
   protected String getJobsDirPrefix() { return "hsssFindMajorAlleles."; }
     
   @Override
@@ -119,6 +122,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
     String suffix = "NULL";
     String prefix = super.getIdPrefix();
+    String reconstructCmdName = getReconstructCmdName();
     // hsssGenerateMajorAllelesScript tmp_dir strain_files_dir_a  set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file strain_files_dir_a set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
     command.add(jobDir.getPath());
@@ -132,6 +136,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
+    command.add(reconstructCmdName);
     command.add(prefix);
     command.add(suffix);
     command.add(jobDir.getPath() + "/" + getResultsFileBaseName());
