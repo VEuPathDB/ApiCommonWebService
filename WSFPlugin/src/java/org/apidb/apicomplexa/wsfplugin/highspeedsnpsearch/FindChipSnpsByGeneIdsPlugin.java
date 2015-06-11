@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
  */
 public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
 
-  @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(FindChipSnpsByGeneIdsPlugin.class);
 
   // required parameter definition
