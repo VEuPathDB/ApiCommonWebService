@@ -72,8 +72,8 @@ sub writeMainScriptBody {
 sub getFinalCommandString {
   my ($self) = @_;
 
-  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile,$idPrefix,$idSuffix, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
-  return "hsssReconstructSnpId $self->{strainFilesDir}/contigIdToSourceId.dat 1 $idPrefix $idSuffix $seqFilter $minLoc $maxLoc";
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile,$reconstructCmdName, $idPrefix,$idSuffix, $seqFilter, $minLoc, $maxLoc) = $self->extractArgs();
+  return "$reconstructCmdName $self->{strainFilesDir}/contigIdToSourceId.dat 1 $idPrefix $idSuffix $seqFilter $minLoc $maxLoc";
 }
 
 sub getPolymorphismArgsUsage{

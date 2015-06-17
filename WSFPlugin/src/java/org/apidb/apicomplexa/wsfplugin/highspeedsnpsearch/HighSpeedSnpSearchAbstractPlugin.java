@@ -184,6 +184,8 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   protected abstract String getCommandName();
 
+  protected abstract String getReconstructCmdName();
+
   protected abstract String getResultsFileBaseName();
 
   protected String getProjectId(Map<String, String> params) throws PluginModelException {

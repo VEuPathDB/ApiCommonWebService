@@ -1,0 +1,81 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Basename;
+
+my ($contigFile ,$numGroups, $prefix, $dataType, $seqFilter, $minLoc, $maxLoc) = @ARGV;
+
+my $sourceIdDir = dirname($contigFile);
+my $sourceIdFile = $sourceIdDir.'/locationToSourceId.dat';
+
+$dataType =~ s/\./Broad_/;
+usage() unless $contigFile && ($numGroups == 1 || $numGroups == 2);
+
+open(C, $contigFile) || die "Can't open contig ID file '$contigFile'\n";
+my %contigHash;
+while (<C>) {
+  chomp;
+  my ($contigIndex, $contigSourceId) = split(/\t/);
+  $contigHash{$contigIndex} = $contigSourceId;
+}
+close(C);
+
+open(S, $sourceIdFile) || die "Can't open source ID file '$sourceIdFile'\n";
+my %source_id_hash;
+while (<S>) {
+  chomp;
+  my ($sourceId, $contigSourceId, $location, $datatype) = split(/\t/);
+  $source_id_hash{$contigSourceId}{$datatype}{$location} = $sourceId;
+}
+close(S);
+
+while(<STDIN>) {
+  chomp;
+  my @fields = split(/\t/);
+
+  if ($numGroups == 1) {
+    if ($fields[4] == 0) { $fields[4] = 'non-coding'; }
+    elsif ($fields[4] == 1) { $fields[4] = 'syn'; }
+    elsif ($fields[4] == 2) { $fields[4] = 'non-syn'; }
+    elsif ($fields[4] == -1) { $fields[4] = 'has stop codon'; }
+    elsif ($fields[4] == -2) { $fields[4] = 'has stop codon'; }
+    else { die "invalid coding class: '$fields[4]'\n"; }
+  } else {
+    $fields[4] = $fields[4]? 'yes' : 'no';
+    $fields[6] = $fields[6]? 'yes' : 'no';
+    $fields[9] = $fields[9]? 'yes' : 'no';
+    $fields[11] = $fields[11]? 'yes' : 'no';
+  }
+
+  my $contigIndex = shift(@fields);
+  my $location = shift(@fields);
+  my $contigSourceId = $contigHash{$contigIndex};
+  die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
+  print STDERR "contigSourceId : $contigSourceId dataType : $dataType location : $location";
+  my $sourceId = $source_id_hash{$contigSourceId}{$dataType}{$location};
+  die "contigSourceId : $contigSourceId dataType : $dataType location : $location source id not found" unless $sourceId;
+  $prefix =  $prefix=~/^NULL$/ ? '' : $prefix;
+  print STDERR join("\t", $sourceId, @fields) . "\n" ;
+  print STDOUT join("\t", $sourceId, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
+}
+
+sub usage {
+  die "
+Replace the first and second columns of a stream with a SNP ID, given a file with a mapping.
+
+Usage: hsssReconstructSnpId contig_id_file num_groups [seq_id min_loc max_loc] < snp_search_result
+
+Where:
+  - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
+  - num_groups: either 1 or 2.   If 1, then reformat phenotype column; if 2 reformat triallelic and prod variable columns
+  - seq_source_id:  optional  sequence source id.  if present, return only SNPs on this sequence.
+  - min_loc: required if seq_id provided.  return only SNPs at this location or larger
+  - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
+
+  - snp_search_result: tab_delimited with columns contig_index, genomic_location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense).
+
+Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
+
+Also reformats some columns from numerals to words.
+";
+}

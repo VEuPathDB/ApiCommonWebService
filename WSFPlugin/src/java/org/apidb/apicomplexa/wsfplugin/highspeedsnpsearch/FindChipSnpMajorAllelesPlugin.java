@@ -90,6 +90,9 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
 
   @Override
   protected String getCommandName() { return "findMajorAlleles"; }
+  
+  @Override
+  protected String getReconstructCmdName() { return "hsssReconstructChipSnpId"; }
 
   @Override
   protected String getJobsDirPrefix() { return "hsssFindChipSnpMajorAlleles."; }
@@ -131,6 +134,7 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
     String type = params.get(PARAM_ASSAY_TYPE);
     String prefix = super.getIdPrefix();
     String suffix = type.replace("Broad_",".");
+    String reconstructCmdName = getReconstructCmdName();
     // hsssGenerateMajorAllelesScript tmp_dir strain_files_dir_a  set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file strain_files_dir_a set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
     command.add(jobDir.getPath());
@@ -144,6 +148,7 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
     command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
+    command.add(reconstructCmdName);
     command.add(prefix);
     command.add(suffix);
     command.add(jobDir.getPath() + "/" + getResultsFileBaseName());
