@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
@@ -94,8 +95,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
         // can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
         String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + newline +
             "from apidbtuning.geneattributes g " + newline + "where g.source_id is not null" + newline +
-            " and g.organism = '" + organism + "'" + newline +
-            "order by g.sequence_id, g.start_min, g.end_max";
+            " and g.organism = '" + organism + "'";
 
         ResultSet rs = null;
 
@@ -125,11 +125,22 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     }
     finally {
       try {
-        if (bw != null)
+        if (bw != null) {
           bw.close();
+	  // run Unix sort on newly-created file, so it's ordered like the SNP files
+	  String gusBin = GusHome.getGusHome() + "/bin";
+          ProcessBuilder builder
+	      = new ProcessBuilder(gusBin + "/apiSortNoLocale", "-k", "1,1", "-k", "2,2n", "-o",
+				   jobDir.getPath() + "/" + geneLocationsFileName,
+				   jobDir.getPath() + "/" + geneLocationsFileName);
+	  builder.start().waitFor();
+	}
       }
       catch (IOException e) {
         throw new PluginModelException("Failed closing file" + filtersFile, e);
+      }
+      catch (InterruptedException e) {
+        throw new PluginModelException("Failed sorting file" + filtersFile, e);
       }
     }
   }
@@ -147,7 +158,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params,
-      File organismDir) throws PluginUserException, PluginModelException {
+                                                       File organismDir) throws PluginUserException, PluginModelException {
     String snpClass = params.get(PARAM_SNP_CLASS);
     if (snpClass.equals("unit test"))
       snpClass = "coding";
@@ -172,6 +183,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
     command.add(density_min);
     command.add(density_max);
     return command;
+
   }
 
   @Override

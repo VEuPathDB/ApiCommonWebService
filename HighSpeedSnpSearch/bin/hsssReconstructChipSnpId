@@ -1,12 +1,17 @@
 #!/usr/bin/perl
 
 use strict;
+use File::Basename;
 
-my ($contigIdFile, $numGroups, $prefix, $suffix, $seqFilter, $minLoc, $maxLoc) = @ARGV;
+my ($contigFile ,$numGroups, $prefix, $dataType, $seqFilter, $minLoc, $maxLoc) = @ARGV;
 
-usage() unless $contigIdFile && ($numGroups == 1 || $numGroups == 2);
+my $sourceIdDir = dirname($contigFile);
+my $sourceIdFile = $sourceIdDir.'/locationToSourceId.dat';
 
-open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
+$dataType =~ s/\./Broad_/;
+usage() unless $contigFile && ($numGroups == 1 || $numGroups == 2);
+
+open(C, $contigFile) || die "Can't open contig ID file '$contigFile'\n";
 my %contigHash;
 while (<C>) {
   chomp;
@@ -14,6 +19,15 @@ while (<C>) {
   $contigHash{$contigIndex} = $contigSourceId;
 }
 close(C);
+
+open(S, $sourceIdFile) || die "Can't open source ID file '$sourceIdFile'\n";
+my %source_id_hash;
+while (<S>) {
+  chomp;
+  my ($sourceId, $contigSourceId, $location, $datatype) = split(/\t/);
+  $source_id_hash{$contigSourceId}{$datatype}{$location} = $sourceId;
+}
+close(S);
 
 while(<STDIN>) {
   chomp;
@@ -37,10 +51,12 @@ while(<STDIN>) {
   my $location = shift(@fields);
   my $contigSourceId = $contigHash{$contigIndex};
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
+  print STDERR "contigSourceId : $contigSourceId dataType : $dataType location : $location";
+  my $sourceId = $source_id_hash{$contigSourceId}{$dataType}{$location};
+  die "contigSourceId : $contigSourceId dataType : $dataType location : $location source id not found" unless $sourceId;
   $prefix =  $prefix=~/^NULL$/ ? '' : $prefix;
-  $suffix = $suffix =~/^NULL$/ ? '' : $suffix;
-  print STDERR join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n" ;
-  print STDOUT join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
+  print STDERR join("\t", $sourceId, @fields) . "\n" ;
+  print STDOUT join("\t", $sourceId, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
 }
 
 sub usage {

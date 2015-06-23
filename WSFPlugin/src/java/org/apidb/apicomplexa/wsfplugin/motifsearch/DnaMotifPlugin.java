@@ -25,7 +25,7 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
   // The property file for dna motif search
   public static final String FIELD_REGEX = "DnaDeflineRegex";
 
-  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|_\\s]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*strand=\\(([+\\-])\\)\\s*\\|\\s*organism=([^|\\s]+)";
 
   private static final Logger logger = Logger.getLogger(DnaMotifPlugin.class);
 
@@ -63,10 +63,10 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
     }
     // the sequence id has to be in group(1),
     // strand info has to be in group(2)
-    // organsim has to be in group(3),
+    // organism has to be in group(3),
     String sequenceId = deflineMatcher.group(1).intern();
     String strand = deflineMatcher.group(2).intern();
-    String organism = deflineMatcher.group(3).intern();
+    String organism = deflineMatcher.group(3).replace('_', ' ').intern();
     String projectId;
     try {
       projectId = getProjectId(organism).intern();

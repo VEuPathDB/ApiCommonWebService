@@ -24,7 +24,7 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   // let's store files in same directory
   private static final String FIELD_REGEX = "ProteinDeflineRegex";
-  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s_]+)";
+  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s]+)";
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
 
@@ -76,9 +76,9 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
       return;
     }
     // the gene source id has to be in group(1),
-    // organsim has to be in group(2),
+    // organism has to be in group(2),
     String sourceId = deflineMatcher.group(1);
-    String organism = deflineMatcher.group(2);
+    String organism = deflineMatcher.group(2).replace('_', ' ');
 
     Match match = new Match();
     match.sourceId = sourceId;
@@ -143,11 +143,12 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     if (match.matchCount == 0) return;
 
     // grab the last context
-    if ((prev + contextLength) < sequence.length()) {
-      sbSeq.append(sequence.substring(prev, prev + contextLength));
-      sbSeq.append("... ");
-    } else {
-      sbSeq.append(sequence.substring(prev));
+    if (!longSeq) {
+      String remain = ((prev + contextLength) < sequence.length()) 
+          ? sequence.substring(prev, prev + contextLength) + "..."
+          : sequence.substring(prev);
+      if (remain.length() + sbSeq.length() < 4000)
+        sbSeq.append(remain);
     }
     match.locations = sbLoc.toString();
     match.sequence = sbSeq.toString();

@@ -14,11 +14,14 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
+import org.apache.log4j.Logger;
 
 /**
  * @author steve
  */
-public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
+public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
+
+  private static final Logger logger = Logger.getLogger(FindChipSnpsByGeneIdsPlugin.class);
 
   // required parameter definition
   public static final String PARAM_GENES_DATASET = "ds_gene_ids";
@@ -115,6 +118,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
                                                        File organismDir) throws PluginModelException, PluginUserException {
       List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);
     command.add(genomicLocationsFileName);
+    logger.info(command);
     return command;
   }
 

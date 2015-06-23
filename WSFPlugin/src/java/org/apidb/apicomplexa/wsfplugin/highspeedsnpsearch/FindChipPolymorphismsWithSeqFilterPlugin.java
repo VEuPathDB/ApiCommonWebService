@@ -11,10 +11,10 @@ import org.gusdb.wsf.plugin.PluginUserException;
 /**
  * @author steve
  */
-public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugin {
+public class FindChipPolymorphismsWithSeqFilterPlugin extends FindChipPolymorphismsPlugin {
 
   // required parameter definition
-  public static final String PARAM_CHROMOSOME = "chromosomeOptionalForNgsSnps";
+  public static final String PARAM_CHROMOSOME = "chromosomeOptional";
   public static final String PARAM_SEQUENCE = "sequenceId";
   public static final String PARAM_START_POINT = "start_point";
   public static final String PARAM_END_POINT = "end_point";
@@ -28,6 +28,7 @@ public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugi
   public String[] getExtraParamNames() {
     return new String[] {PARAM_CHROMOSOME, PARAM_SEQUENCE, PARAM_START_POINT, PARAM_END_POINT};
   }
+
 
   /*
    * (non-Javadoc)

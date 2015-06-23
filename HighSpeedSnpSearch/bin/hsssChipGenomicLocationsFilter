@@ -2,9 +2,11 @@
 
 use strict;
 
-my ($contigIdFile, $genomicLocationsFile,$idPrefix,$idSuffix) = @ARGV;
+my ($contigIdFile, $genomicLocationsFile,$idPrefix,$dataType) = @ARGV;
 
 usage() unless $contigIdFile && $genomicLocationsFile;
+
+my $dataType = 'Broad_'.$dataType;
 
 open(C, $contigIdFile) || die "Can't open contig ID file '$contigIdFile'\n";
 my %contigHash;
@@ -14,6 +16,15 @@ while (<C>) {
   $contigHash{$contigIndex} = $contigSourceId;
 }
 close(C);
+
+open(S, $sourceIdFile) || die "Can't open source ID file '$sourceIdFile'\n";
+my %source_id_hash;
+while (<S>) {
+  chomp;
+  my ($sourceId, $contigSourceId, $location, $datatype) = split(/\t/);
+  $source_id_hash{$contigSourceId}{$datatype}{$location} = $sourceId;
+}
+close(S);
 
 open(F, $genomicLocationsFile) || die "Can't open genomic locations file '$genomicLocationsFile'\n";
 my $genomicLocationLine = <F>;
@@ -47,8 +58,9 @@ while(<STDIN>) {
   # print this SNP if within current filter
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $idPrefix =  $idPrefix=~/^NULL$/ ? '' : $idPrefix;
+    my $sourceId = $source_id_hash{$contigSourceId}{$dataType}{$location};
     $idSuffix = $idSuffix =~/^NULL$/ ? '' : $idSuffix;
-    print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
+    print STDOUT join("\t", $sourceId, @fields) . "\n";
   }
 
   # read next filter if beyond current filter, and print if within that next filter
@@ -62,7 +74,7 @@ while(<STDIN>) {
     }
 
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
-      print STDOUT join("\t", "$idPrefix,$contigSourceId.$location,$idSuffix", @fields) . "\n";
+      print STDOUT join("\t", $sourceId, @fields) . "\n";
     }
   }
 }
