@@ -9,7 +9,7 @@ use strict;
 sub getFinalCommandString {
   my ($self) = @_;
 
-  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $geneLocationsFile, $snpClass, $snpsMin, $snpsMax, $dndsMin, $dndsMax, $densityMin, $densityMax) = $self->extractArgs();
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $reconstructCmdName, $idPrefix,$idSuffix, $geneLocationsFile, $snpClass, $snpsMin, $snpsMax, $dndsMin, $dndsMax, $densityMin, $densityMax) = $self->extractArgs();
 
   return "hsssGeneCharacteristicsFilter $self->{strainFilesDir}/contigIdToSourceId.dat $geneLocationsFile $snpClass $snpsMin $snpsMax $dndsMin $dndsMax $densityMin $densityMax";
 }
