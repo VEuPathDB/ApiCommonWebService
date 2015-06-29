@@ -31,7 +31,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
   private static final String geneLocationsFileName = "geneLocations.txt";
 
   // required parameter definition
-  public static final String PARAM_SNP_CLASS = "ngs_snp_class";
+  public static final String PARAM_SNP_CLASS = "snp_class";
   public static final String PARAM_OCCURENCES_LOWER = "occurrences_lower";
   public static final String PARAM_OCCURENCES_UPPER = "occurrences_upper";
   public static final String PARAM_DNDS_LOWER = "dn_ds_ratio_lower";
