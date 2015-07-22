@@ -13,14 +13,15 @@ import org.gusdb.wsf.plugin.PluginUserException;
 /**
  * @author steve
  */
-public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
+public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST_A = "ngsSnp_strain_meta_a";
+  public static final String PARAM_STRAIN_LIST_A = "snpchip_strain_meta_a";
+  public static final String PARAM_ASSAY_TYPE = "snp_assay_type";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "ngsSnp_strain_meta_m";
+  public static final String PARAM_STRAIN_LIST_B = "snpchip_strain_meta_b";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
@@ -39,8 +40,13 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
 
   @SuppressWarnings("unused")
-  private static final String JOBS_DIR_PREFIX = "hsssFindMajorAlleles.";
+  private static final String JOBS_DIR_PREFIX = "hsssFindChipSnpMajorAlleles.";
 
+  private static final String propertyFile = "highSpeedChipSnpSearch-config.xml";
+    
+  public FindChipSnpMajorAllelesPlugin() {
+    super(propertyFile);
+  }
 
   /*
    * (non-Javadoc)
@@ -49,7 +55,7 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
    */
   @Override
     public String[] getRequiredParameterNames() {
-    return new String[] { PARAM_ORGANISM,PARAM_WEBSVCPATH,
+      return new String[] { PARAM_ORGANISM,PARAM_WEBSVCPATH,PARAM_ASSAY_TYPE,
 			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
 			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
   }
@@ -76,14 +82,20 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
      {
   }
 
+
+  @Override
+        protected String getSearchDir() {
+        return  "/highSpeedChipSnpSearch";
+  }
+
   @Override
   protected String getCommandName() { return "findMajorAlleles"; }
+  
+  @Override
+  protected String getReconstructCmdName() { return "hsssReconstructChipSnpId"; }
 
   @Override
-   protected String getReconstructCmdName() { return "hsssReconstructSnpId"; }
-
-  @Override
-  protected String getJobsDirPrefix() { return "hsssFindMajorAlleles."; }
+  protected String getJobsDirPrefix() { return "hsssFindChipSnpMajorAlleles."; }
     
   @Override
   protected String getResultsFileBaseName() { return "results"; }
@@ -119,9 +131,9 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     int unknownsThresholdB = (int)Math.floor(strainsCountB * percentUnknownsB / 100.0);  // round down
   
     if (unknownsThresholdB > (strainsCountB - 1)) unknownsThresholdB = strainsCountB - 1;  // must be at least 1 known
-
-    String suffix = "NULL";
+    String type = params.get(PARAM_ASSAY_TYPE);
     String prefix = super.getIdPrefix();
+    String suffix = type.replace("Broad_",".");
     String reconstructCmdName = getReconstructCmdName();
     // hsssGenerateMajorAllelesScript tmp_dir strain_files_dir_a  set_a_major_alleles_threshold set_a_unknown_threshold set_a_strains_list_file strain_files_dir_a set_b_major_alleles_threshold set_b_unknown_threshold set_b_strains_list_file strains_are_names output_script_file [output_data_file]
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");

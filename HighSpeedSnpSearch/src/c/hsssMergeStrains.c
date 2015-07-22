@@ -44,12 +44,23 @@ inline static int readStrainRow(FILE *file, int16_t *seq_p, int32_t *loc_p, int8
 
 
 inline static int writeCompactedUnknowns() {
-	if (unknownCount != 0) { 
+	if (unknownCount != 0) {
+	  int16_t cnt = unknownCount;
+	  int oneTwentyFive = 125;  // use a variable because need a pointer (and i am not good at C)
+	  // the column we are printing to is only 8 bits, so write in batches if needed
+	  while (cnt > oneTwentyFive) {
 		fwrite(&prevSeq, 2, 1, stdout);  
 		fwrite(&prevLoc, 4, 1, stdout);  
 		fwrite(&zero, 1, 1, stdout); 
 		fwrite(&minusOne, 1, 1, stdout);
-		fwrite(&unknownCount, 2, 1, stdout);
+		fwrite(&oneTwentyFive, 2, 1, stdout);
+		cnt -= oneTwentyFive;
+	  }
+	  fwrite(&prevSeq, 2, 1, stdout);  
+	  fwrite(&prevLoc, 4, 1, stdout);  
+	  fwrite(&zero, 1, 1, stdout); 
+	  fwrite(&minusOne, 1, 1, stdout);
+	  fwrite(&cnt, 2, 1, stdout);
 	}
 }
 

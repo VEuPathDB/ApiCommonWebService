@@ -9,9 +9,9 @@ use strict;
 sub getFinalCommandString {
   my ($self) = @_;
 
-  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $genomicLocationsFilterFile) = $self->extractArgs();
+  my ($polymorphismThreshold, $unknownThreshold, $strainsListFile, $reconstructNameCmd, $idPrefix, $idSuffix, $genomicLocationsFilterFile) = $self->extractArgs();
 
-  return "hsssGenomicLocationsFilter $self->{strainFilesDir}/contigIdToSourceId.dat $genomicLocationsFilterFile";
+  return "hsssGenomicLocationsFilter $self->{strainFilesDir}/contigIdToSourceId.dat $genomicLocationsFilterFile $idPrefix $idSuffix";
 }
 
 # abstract method
