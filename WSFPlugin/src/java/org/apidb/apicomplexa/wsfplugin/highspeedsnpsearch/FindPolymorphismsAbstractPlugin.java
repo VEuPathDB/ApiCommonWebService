@@ -20,13 +20,13 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
   @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
-    protected String getPARAM_STRAIN_LIST() {
-        return this.PARAM_STRAIN_LIST;
-    }
+  protected String getPARAM_STRAIN_LIST() {
+    return this.PARAM_STRAIN_LIST;
+  }
   
   // required parameter definition
-
   private String PARAM_STRAIN_LIST = getPARAM_STRAIN_LIST();
+
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";

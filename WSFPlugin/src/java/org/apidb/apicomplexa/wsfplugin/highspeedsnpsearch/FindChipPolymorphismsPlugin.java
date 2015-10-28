@@ -13,7 +13,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
  */
 public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin {
 
-     private static final Logger logger = Logger.getLogger(FindChipPolymorphismsPlugin.class);
+    private static final Logger logger = Logger.getLogger(FindChipPolymorphismsPlugin.class);
     
     // required parameter definition
     public static final String PARAM_ASSAY_TYPE = "snp_assay_type";
@@ -23,10 +23,8 @@ public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin
     public static final String COLUMN_PERCENT_OF_KNOWNS = "PercentIsolateCalls";
     public static final String COLUMN_PHENOTYPE = "Phenotype";
 
-
-
     @SuppressWarnings("unused")
-        private static final String JOBS_DIR_PREFIX = "hsssFindChipPolymorphisms.";
+    private static final String JOBS_DIR_PREFIX = "hsssFindChipPolymorphisms.";
     
     /*
      * (non-Javadoc)
