@@ -111,6 +111,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
+	    ps.setString(2, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
@@ -141,10 +142,14 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
-	    ps.setFloat(2, Float.valueOf(maxPvalue));
-	    ps.setString(3, oracleTextExpression);
+	    ps.setString(2, oracleTextExpression);
+	    ps.setFloat(3, Float.valueOf(maxPvalue));
 	    ps.setString(4, oracleTextExpression);
 	    ps.setString(5, oracleTextExpression);
+	    ps.setString(6, oracleTextExpression);
+	    ps.setString(7, oracleTextExpression);
+	    ps.setString(8, oracleTextExpression);
+	    ps.setString(9, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
 	}
@@ -208,7 +213,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
         + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
-        + "            WHERE CONTAINS(tsc.content, ?, 1) > 0  \n"
+        + "            WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
         + "              AND tsc.comment_id = c.comment_id\n"
         + "              AND c.is_visible = 1\n"
         + "              AND c.review_status_id != 'task'\n"
@@ -229,7 +234,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
             + "from (   select distinct b.source_id, b.project_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
-            + "        WHERE CONTAINS(b.description, ?, 1) > 0  \n"
+            + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
             + "          AND 'Blastp' in ("
             + fields
             + ") \n"
@@ -243,7 +248,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT gts.source_id, gts.project_id, gts.field_name as table_name \n"
             + "        FROM ApidbTuning.GeneTextSearch gts \n"
-            + "        WHERE CONTAINS(gts.content, ?, 1) > 0 \n"
+            + "        WHERE (CONTAINS(gts.content, ?, 1) > 0 OR ? = '%')\n"
             + "                AND gts.field_name in ("
             + fields
             + ") \n"
@@ -256,7 +261,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT wit.source_id, wit.project_id, wit.field_name as table_name  \n"
             + "        FROM apidb.IsolateDetail wit \n"
-            + "        WHERE CONTAINS(content, ?, 1) > 0  \n"
+            + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
@@ -266,7 +271,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT wit.source_id, wit.project_id, wit.field_name as table_name  \n"
             + "        FROM apidb.CompoundDetail wit \n"
-            + "        WHERE CONTAINS(content, ?, 1) > 0  \n"
+            + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
