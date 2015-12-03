@@ -202,16 +202,16 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
-    String sql = "SELECT source_id, project_id, \n"
+    String sql = "SELECT source_id, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "       fields_matched \n"
-        + "FROM (SELECT source_id, project_id, MAX(scoring) as max_score, \n"
+        + "FROM (SELECT source_id, MAX(scoring) as max_score, \n"
         + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
         + "      FROM (SELECT SCORE(1) \n"
         + "                     as scoring, \n"
         + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
-        + "                   tsc.source_id, tsc.project_id, tsc.rowid as oracle_rowid \n"
+        + "                   tsc.source_id, tsc.rowid as oracle_rowid \n"
         + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
         + "            WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
         + "              AND tsc.comment_id = c.comment_id\n"
@@ -219,7 +219,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "              AND c.review_status_id != 'task'\n"
         + "              AND c.review_status_id != 'rejected'\n"
         + recordTypePredicate + "              AND project_id = '" + projectId
-        + "') \n" + "      GROUP BY source_id, project_id \n"
+        + "') \n" + "      GROUP BY source_id \n"
         + "      ORDER BY max_score desc \n" + "     )";
 
     logger.debug("comment SQL: " + sql);
@@ -230,9 +230,9 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   private String getComponentQuery(String projectId, String recordType, String organisms, String fields) {
 
     String sql = new String(
-        "select source_id, project_id, count(*) as max_score,  \n"
+        "select source_id, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (   select distinct b.source_id, b.project_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "from (   select distinct b.source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
             + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
             + "          AND 'Blastp' in ("
@@ -246,7 +246,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + organisms
             + ") \n"
             + "      UNION ALL  \n"
-            + "        SELECT gts.source_id, gts.project_id, gts.field_name as table_name \n"
+            + "        SELECT gts.source_id, gts.field_name as table_name \n"
             + "        FROM ApidbTuning.GeneTextSearch gts \n"
             + "        WHERE (CONTAINS(gts.content, ?, 1) > 0 OR ? = '%')\n"
             + "                AND gts.field_name in ("
@@ -259,7 +259,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + organisms
             + ") \n"
             + "      UNION ALL  \n"
-            + "        SELECT wit.source_id, wit.project_id, wit.field_name as table_name  \n"
+            + "        SELECT wit.source_id, wit.field_name as table_name  \n"
             + "        FROM apidb.IsolateDetail wit \n"
             + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
             + "                AND wit.field_name in ("
@@ -269,7 +269,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + recordType
             + "' = 'isolate' \n"
             + "      UNION ALL  \n"
-            + "        SELECT wit.source_id, wit.project_id, wit.field_name as table_name  \n"
+            + "        SELECT wit.source_id, wit.field_name as table_name  \n"
             + "        FROM apidb.CompoundDetail wit \n"
             + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
             + "                AND wit.field_name in ("
@@ -279,7 +279,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + recordType
             + "' = 'compound' \n"
             + "     )  \n"
-            + "GROUP BY source_id, project_id  \n"
+            + "GROUP BY source_id \n"
             + "      ORDER BY max_score desc, source_id \n");
     logger.debug("component SQL: " + sql);
 
@@ -319,12 +319,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     PreparedStatement validationQuery = null;
     try {
       String sql = new String(
-          "select attrs.source_id, attrs.project_id \n"
+          "select attrs.source_id \n"
               + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
               + "where alias.Id = ? \n"
               + "  and alias.gene = attrs.source_id \n"
               + "  and alias.unique_mapping = 1 \n"
-              + "  and attrs.project_id = ? \n" + "  and attrs.taxon_id in ("
+              + "  and attrs.taxon_id in ("
               + organisms + ")");
 
       ResultSet rs = null;
@@ -339,12 +339,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
-          validationQuery.setString(2, projectId);
           rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
           if (!rs.next()) {
             // no match; drop result
             logger.trace("dropping unrecognized ID \"" + sourceId
-                + "\" (project \"" + projectId + "\", organisms \"" + organisms
+                + "\" (organisms \"" + organisms
                 + "\") from comment-search result set.");
             newCommentResults.remove(sourceId);
           } else {
