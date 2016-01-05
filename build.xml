@@ -4,8 +4,10 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
+  <!-- Needed to remove this dependency.  Hacking this build as a post-process
+       into ApiCommonWebsite so configuration doesn't fail
   <import file="${projectsDir}/ApiCommonWebsite/build.xml" />
-
+  -->
  
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
@@ -15,6 +17,7 @@
     <antcall target="ApiCommonWebsite-Checkout"/>
   </target>
 
+  <!--
   <target name="ApiCommonWebsite-Checkout" unless="ApiCommonWebsite.present">
     <ant target="defaultProjectCheckout" inheritAll="false">
       <property name="svnurl" value="https://www.cbil.upenn.edu/svn/apidb/ApiCommonWebsite"/>
@@ -22,22 +25,23 @@
       <property name="version" value=""/>
     </ant>
   </target>
-
+  -->
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!--
   <target name="ApiCommonWebService-ChildUpdate">
     <ant target="defaultProjectUpdate">
       <property name="project" value="ApiCommonWebsite"/>
     </ant>
   </target>
-
+  -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-Installation" depends="ApiCommonWebsite-Installation,
+  <target name="ApiCommonWebService-Installation" depends="
                                                            ApiCommonWebService/WSFPlugin-Installation,
                                                            ApiCommonWebService/HighSpeedSnpSearch-Installation">
 
