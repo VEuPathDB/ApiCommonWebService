@@ -39,6 +39,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private static NumberFormat format = NumberFormat.getIntegerInstance();
 
     public String sourceId;
+    public String geneSourceId;
     public String projectId;
     public int begin;
     public int end;
@@ -83,6 +84,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   public static final String COLUMN_FEATURE_REGION = "feature_region";
   public static final String COLUMN_MATCHED_COUNT = "matched_count";
   public static final String COLUMN_MATCHED_REGIONS = "matched_regions";
+  public static final String COLUMN_MATCHED_RESULT = "matched_result";
 
   public static final String PARAM_OPERATION = "span_operation";
   public static final String PARAM_STRAND = "span_strand";
@@ -124,7 +126,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   @Override
   public String[] getColumns() {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
-        COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS };
+			  COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
   }
 
   @Override
@@ -480,7 +482,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("    FROM ApidbTuning.FeatureLocation fl, " + cacheSql + " ca");
     builder.append("    WHERE fl.feature_source_id = ca.gene_source_id");
     builder.append("      AND rownum = 1) ");
-
     return builder.toString();
     
   }
@@ -546,11 +547,13 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // construct row by column orders
     String[] row = new String[columnOrders.size()];
     row[columnOrders.get(COLUMN_SOURCE_ID)] = feature.sourceId;
+    row[columnOrders.get(COLUMN_GENE_SOURCE_ID)] = feature.geneSourceId;
     row[columnOrders.get(COLUMN_PROJECT_ID)] = feature.projectId;
     row[columnOrders.get(COLUMN_FEATURE_REGION)] = feature.getRegion();
     row[columnOrders.get(COLUMN_MATCHED_COUNT)] = Integer.toString(feature.matched.size());
     row[columnOrders.get(COLUMN_WDK_WEIGHT)] = Integer.toString(feature.weight);
     row[columnOrders.get(COLUMN_MATCHED_REGIONS)] = matched;
+    row[columnOrders.get(COLUMN_MATCHED_RESULT)] = "Y";
 
     // save the row
     response.addRow(row);
@@ -558,6 +561,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   private void readFeature(ResultSet resultSet, Feature feature, String suffix) throws SQLException {
     feature.sourceId = resultSet.getString("source_id_" + suffix);
+    feature.geneSourceId = resultSet.getString("gene_source_id_" + suffix);
     feature.projectId = resultSet.getString("project_id_" + suffix);
     feature.begin = resultSet.getInt("begin_" + suffix);
     feature.end = resultSet.getInt("end_" + suffix);
