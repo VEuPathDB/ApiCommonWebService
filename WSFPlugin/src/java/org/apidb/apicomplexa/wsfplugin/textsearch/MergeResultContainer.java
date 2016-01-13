@@ -1,6 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResponseResultContainer;
 import org.eupathdb.websvccommon.wsfplugin.textsearch.ResultContainer;
@@ -13,6 +14,7 @@ public class MergeResultContainer extends ResponseResultContainer implements
     ResultContainer {
 
   private final Map<String, SearchResult> commentResults;
+  private static final Logger logger = Logger.getLogger(TranscriptSearchPlugin.class);
 
   public MergeResultContainer(PluginResponse response, String[] orderedColumns,
       Map<String, SearchResult> commentResults) {
