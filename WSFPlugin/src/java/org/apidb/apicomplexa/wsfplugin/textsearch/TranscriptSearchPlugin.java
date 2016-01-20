@@ -278,36 +278,27 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
-	int recs = 0;
         for (String sourceId : commentResults.keySet()) {
           logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
           rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
-	  SearchResult result = commentResults.get(sourceId);
-	  // commentResults.remove(sourceId);
-	  while (rs.next()) {
-	      recs++;
-	      String returnedTranscript = rs.getString("source_id");
-	      SearchResult newResult = new SearchResult(returnedTranscript, result.getMaxScore(), result.getFieldsMatched());
-              newCommentResults.put(returnedTranscript, newResult);
+          SearchResult result = commentResults.get(sourceId);
+          // commentResults.remove(sourceId);
+          while (rs.next()) {
+            String returnedTranscript = rs.getString("source_id");
+            SearchResult newResult = new SearchResult(returnedTranscript, result.getMaxScore(), result.getFieldsMatched());
+            newCommentResults.put(returnedTranscript, newResult);
           }
-	  SqlUtils.closeResultSetOnly(rs);
+          SqlUtils.closeResultSetOnly(rs);
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
         throw new PluginModelException(ex);
-      } finally {
       }
-    } finally {
-      SqlUtils.closeStatement(validationQuery);
     }
-    // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
-    // SearchResult>();
-
-    int recs = 0;
-    for (String sourceId : newCommentResults.keySet()) {
-	recs++;
+    finally {
+      SqlUtils.closeStatement(validationQuery);
     }
 
     return newCommentResults;
