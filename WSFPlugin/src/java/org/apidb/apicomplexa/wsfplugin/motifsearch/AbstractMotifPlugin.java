@@ -73,7 +73,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   // column definitions for returnd results
   public static final String COLUMN_SOURCE_ID = "SourceID";
+  public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
   public static final String COLUMN_PROJECT_ID = "ProjectId";
+  public static final String COLUMN_MATCHED_RESULT = "matched_result";
   public static final String COLUMN_LOCATIONS = "Locations";
   public static final String COLUMN_MATCH_COUNT = "MatchCount";
   public static final String COLUMN_SEQUENCE = "Sequence";
@@ -144,8 +146,8 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    */
   @Override
   public String[] getColumns() {
-    return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+      return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
+			    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
   }
 
   /*
@@ -205,7 +207,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
         // parent organisms in a treeParam, we only need the leave nodes
         if (dsId.equals("-1") || dsId.length() <= 3) {
           logger.debug("organism value: (" + dsId
-              + ") not included, we only care for leave nodes\n");
+              + ") not included; we only care about leaf nodes\n");
           continue;
         }
 
@@ -262,6 +264,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   private void findMatches(PluginResponse response, String datasetID,
       Pattern searchPattern, int contextLength, 
       Map<String, Integer> orders) throws IOException, PluginModelException, PluginUserException {
+
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 
@@ -304,6 +307,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     String[] result = new String[orders.size()];
     result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
+    result[orders.get(COLUMN_MATCHED_RESULT)] = "Y";
     result[orders.get(COLUMN_LOCATIONS)] = match.locations;
     result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
     result[orders.get(COLUMN_SEQUENCE)] = match.sequence;

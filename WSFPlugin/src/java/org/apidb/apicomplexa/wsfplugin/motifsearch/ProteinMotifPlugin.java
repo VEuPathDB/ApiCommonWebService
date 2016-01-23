@@ -43,6 +43,17 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     super(regexField, defaultRegex);
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.gusdb.wsf.WsfPlugin#getColumns()
+   */
+    @Override
+	public String[] getColumns() {
+	return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
+			      COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+  }
+
   @Override
   protected Map<Character, String> getSymbols() {
     Map<Character, String> symbols = new HashMap<Character, String>();
@@ -63,6 +74,20 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
   }
 
   @Override
+  protected void addMatch(PluginResponse response, Match match,
+      Map<String, Integer> orders) throws PluginModelException, PluginUserException  {
+    String[] result = new String[orders.size()];
+    result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
+    result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
+    result[orders.get(COLUMN_GENE_SOURCE_ID)] = null;
+    result[orders.get(COLUMN_MATCHED_RESULT)] = "Y";
+    result[orders.get(COLUMN_LOCATIONS)] = match.locations;
+    result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
+    result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
+    response.addRow(result);
+  }
+
+  @Override
   protected void findMatches(PluginResponse response,
       Map<String, Integer> orders, String headline, Pattern searchPattern,
       String sequence) throws PluginModelException, PluginUserException {
@@ -79,6 +104,9 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
     // organism has to be in group(2),
     String sourceId = deflineMatcher.group(1);
     String organism = deflineMatcher.group(2).replace('_', ' ');
+
+    // workaround: trim "-p1" suffix to turn protein ID into transcript ID
+    sourceId = sourceId.replace("-p1", "");
 
     Match match = new Match();
     match.sourceId = sourceId;
