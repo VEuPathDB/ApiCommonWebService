@@ -60,7 +60,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     }
     String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
     logger.debug("fields = \"" + fields + "\"");
-    String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim().replace("*", "%");
+    String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
 
     String organisms = params.get(PARAM_ORGANISMS);
     logger.debug("organisms before cleaning = \"" + organisms + "\"");
