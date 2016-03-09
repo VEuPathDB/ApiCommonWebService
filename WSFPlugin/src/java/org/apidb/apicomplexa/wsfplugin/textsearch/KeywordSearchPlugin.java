@@ -96,6 +96,9 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       }
     }
 
+    // check for all-wildcard search
+    boolean pureWildcard = textExpression.equals("'%'");
+
     // search comments
     Map<String, SearchResult> commentResults = new LinkedHashMap<>();
     String oracleTextExpression = transformQueryString(textExpression);
@@ -106,12 +109,13 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching comment instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords);
+	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords, pureWildcard);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
-	    ps.setString(1, oracleTextExpression);
-	    ps.setString(2, oracleTextExpression);
+	    if (!pureWildcard) {
+		ps.setString(1, oracleTextExpression);
+	    }
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
@@ -133,7 +137,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching component instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString());
+	    sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString(), pureWildcard);
 
 	    if (maxPvalue == null || maxPvalue.equals("")) {
 		maxPvalue = "0";
@@ -141,15 +145,16 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
-	    ps.setString(1, oracleTextExpression);
-	    ps.setString(2, oracleTextExpression);
-	    ps.setFloat(3, Float.valueOf(maxPvalue));
-	    ps.setString(4, oracleTextExpression);
-	    ps.setString(5, oracleTextExpression);
-	    ps.setString(6, oracleTextExpression);
-	    ps.setString(7, oracleTextExpression);
-	    ps.setString(8, oracleTextExpression);
-	    ps.setString(9, oracleTextExpression);
+	    if (pureWildcard) {
+		// if the search string is just a wildcard, only set the p-value exponent
+		ps.setFloat(1, Float.valueOf(maxPvalue));
+	    } else {
+		ps.setString(1, oracleTextExpression);
+		ps.setFloat(2, Float.valueOf(maxPvalue));
+		ps.setString(3, oracleTextExpression);
+		ps.setString(4, oracleTextExpression);
+		ps.setString(5, oracleTextExpression);
+	    }
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
 	}
@@ -187,7 +192,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   }
 
   private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
-				 boolean communityAnnotationRecords) {
+				 boolean communityAnnotationRecords, boolean pureWildcard) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -208,12 +213,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "FROM (SELECT source_id, MAX(scoring) as max_score, \n"
         + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
-        + "      FROM (SELECT SCORE(1) \n"
+        + "      FROM (SELECT " + (pureWildcard ? " 1 " : " SCORE(1) ") + "\n"
         + "                     as scoring, \n"
         + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id, tsc.rowid as oracle_rowid \n"
         + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
-        + "            WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
+        + "            WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(tsc.content, ?, 1) > 0 ") + " \n"
         + "              AND tsc.comment_id = c.comment_id\n"
         + "              AND c.is_visible = 1\n"
         + "              AND c.review_status_id != 'task'\n"
@@ -227,14 +232,14 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sql;
   }
 
-  private String getComponentQuery(String projectId, String recordType, String organisms, String fields) {
+    private String getComponentQuery(String projectId, String recordType, String organisms, String fields, boolean pureWildcard) {
 
     String sql = new String(
         "select source_id, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
             + "from (   select distinct b.source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
-            + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
+	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(b.description, ?, 1) > 0 ") + " \n"
             + "          AND 'Blastp' in ("
             + fields
             + ") \n"
@@ -248,7 +253,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT gts.source_id, gts.field_name as table_name \n"
             + "        FROM ApidbTuning.GeneTextSearch gts \n"
-            + "        WHERE (CONTAINS(gts.content, ?, 1) > 0 OR ? = '%')\n"
+	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(gts.content, ?, 1) > 0 ") + " \n"
             + "                AND gts.field_name in ("
             + fields
             + ") \n"
@@ -261,7 +266,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT wit.source_id, wit.field_name as table_name  \n"
             + "        FROM apidb.IsolateDetail wit \n"
-            + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
+	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
@@ -271,7 +276,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT wit.source_id, wit.field_name as table_name  \n"
             + "        FROM apidb.CompoundDetail wit \n"
-            + "        WHERE (CONTAINS(content, ?, 1) > 0 OR ? = '%') \n"
+	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
