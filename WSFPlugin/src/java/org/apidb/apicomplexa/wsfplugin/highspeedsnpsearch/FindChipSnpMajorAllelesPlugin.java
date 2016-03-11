@@ -16,12 +16,12 @@ import org.gusdb.wsf.plugin.PluginUserException;
 public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST_A = "snpchip_strain_meta_a";
+  public static final String PARAM_STRAIN_LIST_A = "ref_samples_filter_metadata";
   public static final String PARAM_ASSAY_TYPE = "snp_assay_type";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "snpchip_strain_meta_b";
+  public static final String PARAM_STRAIN_LIST_B = "comp_samples_filter_metadata";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";

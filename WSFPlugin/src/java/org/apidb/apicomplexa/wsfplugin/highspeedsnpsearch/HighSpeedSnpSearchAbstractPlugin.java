@@ -328,7 +328,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   private String getOrganismNameForFiles(String organism) throws PluginModelException, PluginUserException {
     if (organismNameForFiles_forTesting != null) return organismNameForFiles_forTesting;
 
-    String sql = "select distinct o.name_for_filenames from apidb.organism o, apidbtuning.snpstrains s where s.organism = ? and s.taxon_id = o.taxon_id";
+    String sql = "select distinct o.name_for_filenames from apidb.organism o, sres.TaxonName tn where tn.name = ? and tn.taxon_id = o.taxon_id";
     Connection conn = null;
     PreparedStatement stmt = null;
     ResultSet rs = null;
