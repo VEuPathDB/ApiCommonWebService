@@ -117,7 +117,7 @@ $dbh->{LongReadLen} = 10000000;
 my $sql = <<EOSQL;
   select profile_as_string
   from apidbTuning.profile
-  where gene_source_id = '$gene_id'
+  where source_id = '$gene_id'
    and profile_set_name like '$profileSet'
    and profile_type = 'values'
 EOSQL
@@ -342,11 +342,11 @@ sub get_neighbors_perl {
 
     # get expression profiles of the profile set
     my $sql = <<EOSQL;
-      select gene_source_id || '\t' || max(profile_as_string)
+      select source_id || '\t' || max(profile_as_string)
       from apidbTuning.profile
       where profile_set_name like '$profileset'
         and profile_type = 'values'
-      group by gene_source_id
+      group by source_id
 EOSQL
 
     my $sth = $dbh->prepare($sql);
