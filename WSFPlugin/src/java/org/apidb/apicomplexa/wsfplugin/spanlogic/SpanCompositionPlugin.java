@@ -411,7 +411,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
           "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
           "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
-          " FROM Apidb.Snp sn, ApidbTuning.Genomicttributes sa " +
+          " FROM Apidb.Snp sn, ApidbTuning.GenomicSeqAttributes sa " +
           " WHERE sn.na_sequence_id = sa.na_sequence_id)";
     }
     else {
@@ -448,7 +448,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private String getStandardSpanSql(String tableName, String[] region, String locTable, String cacheSql ) {
     StringBuilder builder = new StringBuilder();
     builder.append("CREATE TABLE " + tableName + " AS ");
-    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, NULL as gene_source_id, ");
+    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, 'dontcare' as gene_source_id, ");
     builder.append("       fl.sequence_source_id, fl.feature_type, ");
     builder.append("       ca.wdk_weight, ca.project_id, ");
     builder.append("       NVL(fl.is_reversed, 0) AS is_reversed, ");
