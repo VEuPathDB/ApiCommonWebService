@@ -73,9 +73,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   // column definitions for returnd results
   public static final String COLUMN_SOURCE_ID = "SourceID";
-  public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
   public static final String COLUMN_PROJECT_ID = "ProjectId";
-  public static final String COLUMN_MATCHED_RESULT = "matched_result";
   public static final String COLUMN_LOCATIONS = "Locations";
   public static final String COLUMN_MATCH_COUNT = "MatchCount";
   public static final String COLUMN_SEQUENCE = "Sequence";
@@ -146,7 +144,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
    */
   @Override
   public String[] getColumns() {
-      return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
+    return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
 			    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
   }
 
@@ -307,7 +305,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     String[] result = new String[orders.size()];
     result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
-    result[orders.get(COLUMN_MATCHED_RESULT)] = "Y";
     result[orders.get(COLUMN_LOCATIONS)] = match.locations;
     result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
     result[orders.get(COLUMN_SEQUENCE)] = match.sequence;

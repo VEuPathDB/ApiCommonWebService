@@ -16,6 +16,10 @@ public class EuPathBlastCommandFormatter extends NcbiBlastCommandFormatter {
   public String getBlastDatabase(Map<String, String> params) throws PluginModelException
        {
     String dbType = params.get(EuPathBlastPlugin.PARAM_DATA_TYPE);
+    if (dbType.equals("PopSet")){
+	dbType = "Isolates";
+    }
+
 
     // the dborgs is a multipick value, containing several organisms,
     // separated by a comma

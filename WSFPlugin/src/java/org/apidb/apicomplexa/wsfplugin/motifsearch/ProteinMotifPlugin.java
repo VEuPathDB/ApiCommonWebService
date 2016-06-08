@@ -28,6 +28,9 @@ public class ProteinMotifPlugin extends AbstractMotifPlugin {
 
   private static final Logger logger = Logger.getLogger(ProteinMotifPlugin.class);
 
+	public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
+	public static final String COLUMN_MATCHED_RESULT = "matched_result";
+
   public ProteinMotifPlugin() {
     super(FIELD_REGEX, DEFAULT_REGEX);
   }
