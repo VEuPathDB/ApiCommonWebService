@@ -123,11 +123,17 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
   private String getIdUrl(String recordClass, String projectId,
 		                      String sourceId,  String geneSourceId) throws EuPathServiceException {
     try {
-    String url = "showRecord.do?name=" + recordClass + "&project_id="
+      if(sourceId.endsWith("-p1")) {
+        // until we handle proteins, trim "-p1" suffix to turn protein ID into transcript ID
+        // (cannot test until we generate deflines with gene information,
+        // until then the blast protein is breaking because it cannot find the gene ID)
+        sourceId = sourceId.replace("-p1", "");
+			}
+      String url = "showRecord.do?name=" + recordClass + "&project_id="
         + URLEncoder.encode(projectId, "UTF-8") + "&source_id="
 	  		+ URLEncoder.encode(sourceId, "UTF-8") + "&gene_source_id="
         + URLEncoder.encode(geneSourceId, "UTF-8");
-    return url;
+      return url;
     } catch (UnsupportedEncodingException ex) {
       throw new EuPathServiceException(ex);
     }
