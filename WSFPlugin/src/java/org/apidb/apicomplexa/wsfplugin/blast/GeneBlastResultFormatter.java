@@ -1,5 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -44,7 +46,7 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
       // get the source id in the alignment, and insert a link there
       int[] sourceIdLocation = findSourceId(alignment);
       String sourceId = getField(defline, sourceIdLocation);
-      String idUrl = getIdUrl(recordClass, projectId, sourceId);
+      String idUrl = getIdUrl(recordClass, projectId, sourceId, geneSourceId);
       alignment = insertUrl(alignment, sourceIdLocation, idUrl, sourceId);
 
       // get score and e-value from summary;
@@ -116,4 +118,20 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
     }
     return row;
   }
+
+
+  private String getIdUrl(String recordClass, String projectId,
+		                      String sourceId,  String geneSourceId) throws EuPathServiceException {
+    try {
+    String url = "showRecord.do?name=" + recordClass + "&project_id="
+        + URLEncoder.encode(projectId, "UTF-8") + "&source_id="
+	  		+ URLEncoder.encode(sourceId, "UTF-8") + "&gene_source_id="
+        + URLEncoder.encode(geneSourceId, "UTF-8");
+    return url;
+    } catch (UnsupportedEncodingException ex) {
+      throw new EuPathServiceException(ex);
+    }
+  }
+
+
 }
