@@ -7,13 +7,16 @@ import org.gusdb.fgputil.ArrayUtil;
 public class EuPathBlastPlugin extends AbstractBlastPlugin {
   
   public static final String PARAM_DATABASE_ORGANISM = "BlastDatabaseOrganism";
-  
   static final String BLAST_DB_NAME = "$$BlastDatabaseOrganism$$$$BlastDatabaseType$$";
 
   public EuPathBlastPlugin() {
     super(new EuPathBlastCommandFormatter(), new NcbiBlastResultFormatter());
   }
-
+  
+  public EuPathBlastPlugin(EuPathBlastCommandFormatter ebcf,NcbiBlastResultFormatter nbrf) {
+    super(ebcf,nbrf);
+  }
+  
   @Override
   public String[] getRequiredParameterNames() {
     return ArrayUtil.append(super.getRequiredParameterNames(), PARAM_DATABASE_ORGANISM);
