@@ -1,33 +1,20 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
-import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Paths;
+import java.net.URLEncoder;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
-import org.apache.log4j.Logger;
-import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
-import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
-import org.apidb.apicomplexa.wsfplugin.blast.GeneBlastPlugin;
-import org.eupathdb.common.model.view.BlastSummaryViewHandler;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
-import org.gusdb.fgputil.FormatUtil;
+import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
+import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 
 public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
- @Override
+  @Override
   public void processAlignment(PluginResponse response, String[] columns, String recordClass, String dbType,
       Map<String, String> summaries, String alignment) throws PluginUserException, PluginModelException {
     try {
@@ -107,10 +94,10 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
         row[i] = summary;
       }
       else if (columns[i].equals(GeneBlastPlugin.COLUMN_MATCHED_RESULT)) {
-	  row[i] = new String("Y");
+        row[i] = new String("Y");
       }
       else if (columns[i].equals(GeneBlastPlugin.COLUMN_GENE_SOURCE_ID)) {
-	  row[i] = geneSourceId;
+        row[i] = geneSourceId;
       }
       else {
         throw new EuPathServiceException("Unsupported blast result column: " + columns[i]);
@@ -121,17 +108,17 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
 
   private String getIdUrl(String recordClass, String projectId,
-		                      String sourceId,  String geneSourceId) throws EuPathServiceException {
+      String sourceId,  String geneSourceId) throws EuPathServiceException {
     try {
       if(sourceId.endsWith("-p1")) {
         // until we handle proteins, trim "-p1" suffix to turn protein ID into transcript ID
         // (cannot test until we generate deflines with gene information,
         // until then the blast protein is breaking because it cannot find the gene ID)
         sourceId = sourceId.replace("-p1", "");
-			}
+      }
       String url = "showRecord.do?name=" + recordClass + "&project_id="
         + URLEncoder.encode(projectId, "UTF-8") + "&source_id="
-	  		+ URLEncoder.encode(sourceId, "UTF-8") + "&gene_source_id="
+        + URLEncoder.encode(sourceId, "UTF-8") + "&gene_source_id="
         + URLEncoder.encode(geneSourceId, "UTF-8");
       return url;
     } catch (UnsupportedEncodingException ex) {
