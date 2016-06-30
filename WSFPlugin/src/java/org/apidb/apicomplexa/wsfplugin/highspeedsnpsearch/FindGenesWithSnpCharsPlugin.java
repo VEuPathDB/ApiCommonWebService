@@ -41,6 +41,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
   public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
   public static final String COLUMN_SOURCE_ID = "source_id";
+  @SuppressWarnings("hiding") /* this value is being changed from the parent class's version */
   public static final String COLUMN_PROJECT_ID = "project_id";
   public static final String COLUMN_MATCHED_RESULT = "matched_result";
   public static final String COLUMN_DENSITY = "cds_snp_density";
