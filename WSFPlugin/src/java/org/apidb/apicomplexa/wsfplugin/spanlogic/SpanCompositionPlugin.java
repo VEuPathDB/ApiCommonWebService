@@ -526,7 +526,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       }
     }
     finally {
-      SqlUtils.closeResultSetAndStatement(resultSet);
+      SqlUtils.closeResultSetAndStatement(resultSet, null);
     }
   }
 
