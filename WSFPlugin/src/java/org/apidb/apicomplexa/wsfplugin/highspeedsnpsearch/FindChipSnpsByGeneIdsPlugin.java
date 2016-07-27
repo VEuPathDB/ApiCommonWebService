@@ -90,7 +90,7 @@ public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
           throw new PluginModelException(ex);
         }
         finally {
-          SqlUtils.closeResultSetAndStatement(rs);
+          SqlUtils.closeResultSetAndStatement(rs, null);
         }
       }
     }

@@ -119,7 +119,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
           throw new PluginModelException(ex);
         }
         finally {
-          SqlUtils.closeResultSetAndStatement(rs);
+          SqlUtils.closeResultSetAndStatement(rs, null);
         }
       }
     }
