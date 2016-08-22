@@ -9,8 +9,7 @@ import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 
-public class MergeResultContainer extends ResponseResultContainer implements
-    ResultContainer {
+public class MergeResultContainer extends ResponseResultContainer implements ResultContainer {
 
   private final Map<String, SearchResult> commentResults;
 

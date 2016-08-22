@@ -145,7 +145,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   @Override
   public String[] getColumns() {
     return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+			    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
   }
 
   /*
@@ -205,7 +205,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
         // parent organisms in a treeParam, we only need the leave nodes
         if (dsId.equals("-1") || dsId.length() <= 3) {
           logger.debug("organism value: (" + dsId
-              + ") not included, we only care for leave nodes\n");
+              + ") not included; we only care about leaf nodes\n");
           continue;
         }
 
@@ -262,6 +262,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   private void findMatches(PluginResponse response, String datasetID,
       Pattern searchPattern, int contextLength, 
       Map<String, Integer> orders) throws IOException, PluginModelException, PluginUserException {
+
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
 

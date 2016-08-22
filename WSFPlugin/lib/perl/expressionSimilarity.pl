@@ -115,11 +115,11 @@ $dbh->{LongReadLen} = 10000000;
 
 # get the expression profile of the given gene
 my $sql = <<EOSQL;
-SELECT profile_as_string
-FROM apidb.profile pr, apidb.profileset ps
-WHERE ps.profile_set_id = pr.profile_set_id
-AND pr.source_id = '$gene_id'
-AND ps.name like '$profileSet'
+  select profile_as_string
+  from apidbTuning.profile
+  where source_id = '$gene_id'
+   and profile_set_name like '$profileSet'
+   and profile_type = 'values'
 EOSQL
 
 my $sth = $dbh->prepare($sql);
@@ -220,7 +220,7 @@ if (($dist_method->{name} =~ /pearson correlation/i) && $queryVectorConstant) {
 		 "query values or try using a different distance measure instead.\n");
     $inputValid = 0;
 }
-			     
+
 # See if there are any values left (!)
 #
 my $haveValues = 0;
@@ -327,7 +327,6 @@ sub get_neighbors_perl {
 
     my $vector_length = @$query_vector_ref;
 
-   
     # Keep track of number of values that appear in each line
     my $minDataWidth = undef;
     my $maxDataWidth = undef;
@@ -340,15 +339,16 @@ sub get_neighbors_perl {
 
     my $line;
     my $linenum = 0;
-     
-    # get the expression profile of the given gene
+
+    # get expression profiles of the profile set
     my $sql = <<EOSQL;
-SELECT source_id || '\t' || profile_as_string
-FROM apidb.profile pr, apidb.profileset ps
-WHERE ps.profile_set_id = pr.profile_set_id
-AND ps.name like '$profileset'
+      select source_id || '\t' || max(profile_as_string)
+      from apidbTuning.profile
+      where profile_set_name like '$profileset'
+        and profile_type = 'values'
+      group by source_id
 EOSQL
-    
+
     my $sth = $dbh->prepare($sql);
     $sth->execute();
     $sth->bind_columns(undef, \$line);

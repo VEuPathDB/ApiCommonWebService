@@ -45,7 +45,7 @@ public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin
 
   @Override
       protected String getPARAM_STRAIN_LIST() {
-      return "snpchip_strain_meta";
+      return "ref_samples_filter_metadata";
   }
 
   @Override
@@ -69,6 +69,7 @@ public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin
 
         List<String> command = super.makeCommandToCreateBashScript(jobDir, params,organismDir);
         String type = params.get(PARAM_ASSAY_TYPE);
+        logger.info("PARAM_ASSAY_TYPE = \"" + type + "\""); 
         String suffix = type.replace("Broad_",".");
         command.add(suffix);       
         logger.info("running command " + command.toString() + " from CHip Polymorph"); 

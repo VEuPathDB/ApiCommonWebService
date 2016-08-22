@@ -43,8 +43,10 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
     public static final String PARAM_MISSING_PTS_PERCENT = "ProfileMissingPtsPercent";
 
     // required result column definition
+    public static final String COLUMN_SOURCE_ID = "source_id";
     public static final String COLUMN_GENE_ID = "GeneID";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
+    public static final String COLUMN_MATCHED_RESULT = "matched_result";
     public static final String COLUMN_QUERY_GENE_ID = "QueryGeneId";
     public static final String COLUMN_DISTANCE = "Distance";
     public static final String COLUMN_SHIFT = "Shift";
@@ -129,8 +131,8 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getColumns() {
-        return new String[] { COLUMN_GENE_ID, COLUMN_PROJECT_ID,
-                COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
+        return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_ID, COLUMN_PROJECT_ID,
+			      COLUMN_MATCHED_RESULT, COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
     }
 
     /*
@@ -196,7 +198,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
      */
     @Override
     public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
-        logger.info("Invoking ProfileSimilarity Plugin...");
+        logger.debug("Invoking ProfileSimilarity Plugin...");
 
         // prepare the command
         Map<String, String> params = request.getParams();
@@ -210,7 +212,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 
             int signal = invokeCommand(cmds, output, 10 * 60);
             long end = System.currentTimeMillis();
-            logger.info("Invocation takes: " + ((end - start) / 1000.0)
+            logger.debug("Invocation takes: " + ((end - start) / 1000.0)
                     + " seconds");
 
             if (signal != 0)
@@ -225,7 +227,7 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             return signal;
         } catch (IOException ex) {
             long end = System.currentTimeMillis();
-            logger.info("Invocation takes: " + ((end - start) / 1000.0)
+            logger.debug("Invocation takes: " + ((end - start) / 1000.0)
                     + " seconds");
 
             throw new PluginModelException(ex);
@@ -300,9 +302,11 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
 
-            String[] row = new String[5];
+            String[] row = new String[7];
             row[columns.get(COLUMN_GENE_ID)] = geneId;
             row[columns.get(COLUMN_PROJECT_ID)] = projectId;
+            row[columns.get(COLUMN_MATCHED_RESULT)] = new String("Y");
+            row[columns.get(COLUMN_SOURCE_ID)] = null;
             row[columns.get(COLUMN_DISTANCE)] = format.format(distance);
             row[columns.get(COLUMN_SHIFT)] = parts[2];
             row[columns.get(COLUMN_QUERY_GENE_ID)] = queryGeneId;

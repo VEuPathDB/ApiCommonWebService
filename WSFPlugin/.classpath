@@ -7,7 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/EuPath Common WS"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry kind="lib" path="/ApiCommon Web Model/lib/java/jdom-1.0.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/EuPath Common Model"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ApiCommon Web Model"/>
 	<classpathentry kind="lib" path="lib/java/spring-context-4.0.6.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/java/spring-beans-4.0.6.RELEASE.jar"/>
@@ -16,5 +15,6 @@
 	<classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/wsf-client"/>
 	<classpathentry kind="var" path="M2_REPO/org/json/json/20140107/json-20140107.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/eupath-site-common-model"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

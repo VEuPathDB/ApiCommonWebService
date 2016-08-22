@@ -39,8 +39,11 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
   public static final String PARAM_DENSITY_LOWER = "snp_density_lower";
   public static final String PARAM_DENSITY_UPPER = "snp_density_upper";
 
-  public static final String COLUMN_GENE_SOURCE_ID = "source_id";
-  public static final String COLUMN_GENE_PROJECT_ID = "project_id";
+  public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
+  public static final String COLUMN_SOURCE_ID = "source_id";
+  @SuppressWarnings("hiding") /* this value is being changed from the parent class's version */
+  public static final String COLUMN_PROJECT_ID = "project_id";
+  public static final String COLUMN_MATCHED_RESULT = "matched_result";
   public static final String COLUMN_DENSITY = "cds_snp_density";
   public static final String COLUMN_DNDS = "ngs_dn_ds_ratio";
   public static final String COLUMN_SYN = "ngs_num_synonymous";
@@ -116,7 +119,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
           throw new PluginModelException(ex);
         }
         finally {
-          SqlUtils.closeResultSetAndStatement(rs);
+          SqlUtils.closeResultSetAndStatement(rs, null);
         }
       }
     }
@@ -152,7 +155,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
    */
   @Override
   public String[] getColumns() {
-    return new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_GENE_PROJECT_ID, COLUMN_DENSITY, COLUMN_DNDS,
+    return new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_DENSITY, COLUMN_DNDS,
         COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL };
   }
 
@@ -198,9 +201,11 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
       throw new PluginModelException("Wrong number of columns in results file.  Expected 8, found " +
           parts.length);
 
-    String[] row = new String[9];
+    String[] row = new String[11];
     row[columns.get(COLUMN_GENE_SOURCE_ID)] = parts[0];
-    row[columns.get(COLUMN_GENE_PROJECT_ID)] = projectId;
+    row[columns.get(COLUMN_SOURCE_ID)] = null;
+    row[columns.get(COLUMN_PROJECT_ID)] = projectId;
+    row[columns.get(COLUMN_MATCHED_RESULT)] = "Y";
     row[columns.get(COLUMN_DENSITY)] = parts[1];
     row[columns.get(COLUMN_DNDS)] = parts[2];
     row[columns.get(COLUMN_SYN)] = parts[3];

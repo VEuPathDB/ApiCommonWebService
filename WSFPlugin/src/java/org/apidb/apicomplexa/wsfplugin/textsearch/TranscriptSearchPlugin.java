@@ -1,5 +1,5 @@
 /**
- * KeywordSearchPlugin -- text search using Oracle Text
+ * TranscriptSearchPlugin -- text search using Oracle Text
  */
 package org.apidb.apicomplexa.wsfplugin.textsearch;
 
@@ -31,15 +31,20 @@ import org.gusdb.wsf.plugin.PluginUserException;
  * @author John I
  * @created Nov 16, 2008
  */
-public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
+public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 
-  private static final Logger logger = Logger.getLogger(KeywordSearchPlugin.class);
+  private static final Logger logger = Logger.getLogger(TranscriptSearchPlugin.class);
 
   // required parameter definition
   public static final String PARAM_ORGANISMS = "text_search_organism";
   public static final String PARAM_COMPONENT_INSTANCE = "component_instance";
   public static final String PARAM_MAX_PVALUE = "max_pvalue";
   
+  @Override
+  public String[] getColumns() {
+      return new String[] { COLUMN_RECORD_ID, COLUMN_GENE_SOURCE_ID, COLUMN_MATCHED_RESULT, COLUMN_MAX_SCORE };
+  }
+
   /*
    * (non-Javadoc)
    * 
@@ -48,26 +53,18 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException
       {
-    logger.info("Invoking KeywordSearchPlugin...");
+    logger.debug("Invoking TranscriptSearchPlugin...");
 
     // get parameters
-    String recordType;
     Map<String, String> params = request.getParams();
-    if (params.get(PARAM_WDK_RECORD_TYPE) == null) {
-      recordType = "gene";
-    } else {
-      recordType = params.get(PARAM_WDK_RECORD_TYPE).trim().replaceAll("'", "");
-    }
     String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
     logger.debug("fields = \"" + fields + "\"");
     String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
 
     String organisms = params.get(PARAM_ORGANISMS);
-    logger.debug("organisms before cleaning = \"" + organisms + "\"");
     // isolate and compound text search do not use this parameter
     if (organisms != null)
       organisms = cleanOrgs(organisms);
-    logger.debug("organisms after cleaning= \"" + organisms + "\"");
 
     String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
@@ -96,9 +93,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       }
     }
 
-    // check for all-wildcard search
-    boolean pureWildcard = textExpression.equals("'%'");
-
     // search comments
     Map<String, SearchResult> commentResults = new LinkedHashMap<>();
     String oracleTextExpression = transformQueryString(textExpression);
@@ -109,18 +103,15 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching comment instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getCommentQuery(projectId, recordType, commentRecords, communityAnnotationRecords, pureWildcard);
+	    sql = getCommentQuery(projectId, commentRecords, communityAnnotationRecords);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
-	    if (!pureWildcard) {
-		ps.setString(1, oracleTextExpression);
-	    }
+	    ps.setString(1, oracleTextExpression);
+	    ps.setString(2, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
-	    // logger.debug("after validation commentMatches = "
-	    // + commentMatches.toString());
 	} catch (SQLException | EuPathServiceException ex) {
 	    throw new PluginModelException(ex);
 	} finally {
@@ -137,7 +128,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching component instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString(), pureWildcard);
+	    sql = getComponentQuery(projectId, organisms, quotedFields.toString());
 
 	    if (maxPvalue == null || maxPvalue.equals("")) {
 		maxPvalue = "0";
@@ -145,16 +136,11 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
-	    if (pureWildcard) {
-		// if the search string is just a wildcard, only set the p-value exponent
-		ps.setFloat(1, Float.valueOf(maxPvalue));
-	    } else {
-		ps.setString(1, oracleTextExpression);
-		ps.setFloat(2, Float.valueOf(maxPvalue));
-		ps.setString(3, oracleTextExpression);
-		ps.setString(4, oracleTextExpression);
-		ps.setString(5, oracleTextExpression);
-	    }
+	    ps.setString(1, oracleTextExpression);
+	    ps.setString(2, oracleTextExpression);
+	    ps.setFloat(3, Float.valueOf(maxPvalue));
+	    ps.setString(4, oracleTextExpression);
+	    ps.setString(5, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
 	}
@@ -182,7 +168,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         sb.append(temp[i].trim() + ",");
       else
         logger.debug("organism value: (" + temp[i]
-            + ") not included, we only care for leave nodes\n");
+            + ") not included, we only care about leaf nodes\n");
     }
     int strLen = sb.toString().trim().length();
     if (strLen < 2) {
@@ -191,8 +177,8 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sb.toString().trim().substring(0, strLen - 1);
   }
 
-  private String getCommentQuery(String projectId, String recordType, boolean commentRecords,
-				 boolean communityAnnotationRecords, boolean pureWildcard) {
+  private String getCommentQuery(String projectId, boolean commentRecords,
+				 boolean communityAnnotationRecords) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -200,8 +186,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     } else if (!commentRecords && communityAnnotationRecords) {
       recordTypePredicate = new String(" and review_status_id = 'community' ");
     } else {
-      recordTypePredicate = " AND comment_target_id = '" + recordType
-          + "'\n";
+      recordTypePredicate = " AND comment_target_id = 'gene' \n";
     }
 
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
@@ -213,12 +198,12 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "FROM (SELECT source_id, MAX(scoring) as max_score, \n"
         + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
-        + "      FROM (SELECT " + (pureWildcard ? " 1 " : " SCORE(1) ") + "\n"
+        + "      FROM (SELECT SCORE(1) \n"
         + "                     as scoring, \n"
         + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id, tsc.rowid as oracle_rowid \n"
         + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
-        + "            WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(tsc.content, ?, 1) > 0 ") + " \n"
+        + "            WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
         + "              AND tsc.comment_id = c.comment_id\n"
         + "              AND c.is_visible = 1\n"
         + "              AND c.review_status_id != 'task'\n"
@@ -232,102 +217,55 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sql;
   }
 
-    private String getComponentQuery(String projectId, String recordType, String organisms, String fields, boolean pureWildcard) {
+  private String getComponentQuery(String projectId, String organisms, String fields) {
 
     String sql = new String(
-        "select source_id, count(*) as max_score,  \n"
+        "select source_id, gene_source_id, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (   select distinct b.source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "from (   select distinct b.source_id, b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(b.description, ?, 1) > 0 ") + " \n"
+            + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
             + "          AND 'Blastp' in ("
             + fields
             + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'gene' \n"
             + "          AND b.pvalue_exp < ? \n"
             + "                AND b.query_taxon_id in ("
             + organisms
             + ") \n"
             + "      UNION ALL  \n"
-            + "        SELECT gts.source_id, gts.field_name as table_name \n"
-            + "        FROM ApidbTuning.GeneTextSearch gts \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(gts.content, ?, 1) > 0 ") + " \n"
+            + "        SELECT gts.source_id, gts.gene_source_id, gts.field_name as table_name \n"
+            + "        FROM ApidbTuning.TranscriptTextSearch gts \n"
+            + "        WHERE (CONTAINS(gts.content, ?, 1) > 0 OR ? = '%')\n"
             + "                AND gts.field_name in ("
             + fields
             + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'gene' \n"
             + "                AND gts.taxon_id in ("
             + organisms
             + ") \n"
-            + "      UNION ALL  \n"
-            + "        SELECT wit.source_id, wit.field_name as table_name  \n"
-            + "        FROM apidb.IsolateDetail wit \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
-            + "                AND wit.field_name in ("
-            + fields
-            + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'isolate' \n"
-            + "      UNION ALL  \n"
-            + "        SELECT wit.source_id, wit.field_name as table_name  \n"
-            + "        FROM apidb.CompoundDetail wit \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
-            + "                AND wit.field_name in ("
-            + fields
-            + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'compound' \n"
             + "     )  \n"
-            + "GROUP BY source_id \n"
+            + "GROUP BY source_id, gene_source_id \n"
             + "      ORDER BY max_score desc, source_id \n");
     logger.debug("component SQL: " + sql);
 
     return sql;
   }
 
-  // private PreparedStatement getValidationQuery() throws WsfServiceException {
-  // String sql = new String("select attrs.source_id, attrs.project_id \n"
-  // + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
-  // + "where alias.Id = ? \n"
-  // + "  and alias.gene = attrs.source_id \n"
-  // + "  and alias.unique_mapping = 1 \n"
-  // + "  and attrs.project_id = ? \n"
-  // + "  and ? like '%' || attrs.organism || '%'");
-  //
-  // WdkModelBean wdkModel = (WdkModelBean) this.context
-  // .get(CConstants.WDK_MODEL_KEY);
-  // DBPlatform platform = wdkModel.getModel().getQueryPlatform();
-  // DataSource dataSource = platform.getDataSource();
-  //
-  // try {
-  // return SqlUtils.getPreparedStatement(dataSource, sql);
-  // } catch (SQLException ex) {
-  // throw new WsfServiceException(ex);
-  // }
-  // }
 
   private Map<String, SearchResult> validateRecords(String projectId,
       Map<String, SearchResult> commentResults, String organisms) throws PluginModelException
        {
 
     Map<String, SearchResult> newCommentResults = new HashMap<String, SearchResult>();
-    newCommentResults.putAll(commentResults);
 
     logger.debug("organisms = \"" + organisms + "\"");
 
     PreparedStatement validationQuery = null;
     try {
       String sql = new String(
-          "select attrs.source_id \n"
-              + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
+          "select attrs.source_id\n"
+              + "from ApidbTuning.GeneId alias, ApidbTuning.TranscriptAttributes attrs \n"
               + "where alias.Id = ? \n"
-              + "  and alias.gene = attrs.source_id \n"
+              + "  and alias.gene = attrs.gene_source_id \n"
               + "  and alias.unique_mapping = 1 \n"
               + "  and attrs.taxon_id in ("
               + organisms + ")");
@@ -345,45 +283,24 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           rs = null;
           validationQuery.setString(1, sourceId);
           rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
-          if (!rs.next()) {
-            // no match; drop result
-            logger.trace("dropping unrecognized ID \"" + sourceId
-                + "\" (organisms \"" + organisms
-                + "\") from comment-search result set.");
-            newCommentResults.remove(sourceId);
-          } else {
-            String returnedSourceId = rs.getString("source_id");
-            // logger.debug("validation query returned \"" + returnedSourceId
-            // + "\"");
-            if (!returnedSourceId.equals(sourceId)) {
-              // ID changed; substitute returned value
-              logger.trace("Substituting valid ID \"" + returnedSourceId
-                  + "\" for ID \"" + sourceId
-                  + "\" returned from comment-search result set.");
-              SearchResult result = newCommentResults.get(sourceId);
-              result.setSourceId(returnedSourceId);
-              newCommentResults.remove(sourceId);
-              newCommentResults.put(returnedSourceId, result);
-            }
+          SearchResult result = commentResults.get(sourceId);
+          // commentResults.remove(sourceId);
+          while (rs.next()) {
+            String returnedTranscript = rs.getString("source_id");
+            SearchResult newResult = new SearchResult(returnedTranscript, result.getMaxScore(), result.getFieldsMatched());
+            newCommentResults.put(returnedTranscript, newResult);
           }
-	  SqlUtils.closeResultSetOnly(rs);
+          SqlUtils.closeResultSetOnly(rs);
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
         throw new PluginModelException(ex);
-      } finally {
-        // try {
-        // rs.close();
-        // } catch (SQLException ex) {
-        // logger.info("caught SQLException " + ex.getMessage());
-        // throw new WsfServiceException(ex);
-        // }
       }
-    } finally {
+    }
+    finally {
       SqlUtils.closeStatement(validationQuery);
     }
-    // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
-    // SearchResult>();
+
     return newCommentResults;
   }
 }
