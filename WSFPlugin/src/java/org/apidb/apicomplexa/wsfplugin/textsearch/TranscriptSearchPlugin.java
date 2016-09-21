@@ -192,10 +192,10 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
-    String sql = "SELECT source_id, \n"
+    String sql = "SELECT null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "       fields_matched \n"
-        + "FROM (SELECT source_id, MAX(scoring) as max_score, \n"
+        + "FROM (SELECT source_id as gene_source_id, MAX(scoring) as max_score, \n"
         + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
         + "      FROM (SELECT SCORE(1) \n"
@@ -220,9 +220,9 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
   private String getComponentQuery(String projectId, String organisms, String fields) {
 
     String sql = new String(
-        "select source_id, gene_source_id, count(*) as max_score,  \n"
+        "select null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (   select distinct b.source_id, b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "from (   select distinct b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
             + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
             + "          AND 'Blastp' in ("
@@ -233,18 +233,19 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
             + organisms
             + ") \n"
             + "      UNION ALL  \n"
-            + "        SELECT gts.source_id, gts.gene_source_id, gts.field_name as table_name \n"
-            + "        FROM ApidbTuning.TranscriptTextSearch gts \n"
-            + "        WHERE (CONTAINS(gts.content, ?, 1) > 0 OR ? = '%')\n"
-            + "                AND gts.field_name in ("
+            + "        SELECT null as source_id, gd.source_id as gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
+            +          "gd.field_name as table_name \n"
+            + "        FROM Apidb.GeneDetail gd\n"
+            + "        WHERE (CONTAINS(gd.content, ?, 1) > 0 OR ? = '%')\n"
+            + "                AND gd.field_name in ("
             + fields
             + ") \n"
-            + "                AND gts.taxon_id in ("
+            + "                AND gd.taxon_id in ("
             + organisms
             + ") \n"
             + "     )  \n"
-            + "GROUP BY source_id, gene_source_id \n"
-            + "      ORDER BY max_score desc, source_id \n");
+            + "GROUP BY source_id, gene_source_id, project_id, matched_result \n"
+            + "      ORDER BY max_score desc, gene_source_id \n");
     logger.debug("component SQL: " + sql);
 
     return sql;
