@@ -192,25 +192,30 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
-    String sql = "SELECT null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
+    String sql = "SELECT source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
-        + "       fields_matched \n"
-        + "FROM (SELECT source_id as gene_source_id, MAX(scoring) as max_score, \n"
-        + "             apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
-        + "             max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
-        + "      FROM (SELECT SCORE(1) \n"
-        + "                     as scoring, \n"
-        + "             DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
-        + "                   tsc.source_id, tsc.rowid as oracle_rowid \n"
-        + "            FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
-        + "            WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
-        + "              AND tsc.comment_id = c.comment_id\n"
-        + "              AND c.is_visible = 1\n"
-        + "              AND c.review_status_id != 'task'\n"
-        + "              AND c.review_status_id != 'rejected'\n"
-        + recordTypePredicate + "              AND project_id = '" + projectId
-        + "') \n" + "      GROUP BY source_id \n"
-        + "      ORDER BY max_score desc \n" + "     )";
+        + "           fields_matched \n"
+        + "       FROM (" +
+        "            SELECT source_id, gene_source_id, MAX(scoring) as max_score, \n"
+        + "                apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
+        + "                max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
+        + "           FROM ("
+        + "              SELECT SCORE(1) as scoring, \n"
+        + "                   DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
+        + "                   min(trans.source_id), tsc.source_id as gene_source_id, tsc.rowid as oracle_rowid \n"
+        + "              FROM apidb.TextSearchableComment tsc, apidbtuning.transcriptattributes trans " + commentSchema + "Comments c \n"
+        + "              WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
+        + "               AND tsc.comment_id = c.comment_id\n"
+        + "               AND c.is_visible = 1\n"
+        + "               AND c.review_status_id != 'task'\n"
+        + "               AND c.review_status_id != 'rejected'\n"
+        +                 recordTypePredicate
+        + "               AND project_id = '" + projectId + "'"
+        + "               AND trans.gene_source_id = tsc.source_id \n"
+        + "           ) \n" 
+        + "          GROUP BY source_id \n"
+        + "          ORDER BY max_score desc \n"
+        + "       )";
 
     logger.debug("comment SQL: " + sql);
 
@@ -222,30 +227,24 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     String sql = new String(
         "select null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (   select distinct b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
-            + "        FROM ApidbTuning.Blastp b  \n"
+            + "from (  SELECT distinct min(trans.source_id), b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "        FROM ApidbTuning.Blastp b, ApidbTuning.TranscriptAttributes trans  \n"
             + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
-            + "          AND 'Blastp' in ("
-            + fields
-            + ") \n"
+            + "          AND 'Blastp' in (" + fields + ") \n"
             + "          AND b.pvalue_exp < ? \n"
-            + "                AND b.query_taxon_id in ("
-            + organisms
-            + ") \n"
+            + "          AND b.query_taxon_id in (" + organisms + ") \n"
+            + "          AND trans.gene_source_id = b.gene_source_id \n"
             + "      UNION ALL  \n"
-            + "        SELECT null as source_id, gd.source_id as gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
-            +          "gd.field_name as table_name \n"
-            + "        FROM Apidb.GeneDetail gd\n"
+            + "        SELECT min(trans.source_id) as source_id, gd.source_id as gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
+            +                "gd.field_name as table_name \n"
+            + "        FROM Apidb.GeneDetail gd, apidbtuning.transcriptattributes trans\n"
             + "        WHERE (CONTAINS(gd.content, ?, 1) > 0 OR ? = '%')\n"
-            + "                AND gd.field_name in ("
-            + fields
-            + ") \n"
-            + "                AND gd.taxon_id in ("
-            + organisms
-            + ") \n"
+            + "         AND gd.field_name in (" + fields + ") \n"
+            + "         AND gd.taxon_id in (" + organisms + ") \n"
+            + "         AND trans.gene_source_id = gd.gene_source_id \n"
             + "     )  \n"
             + "GROUP BY source_id, gene_source_id, project_id, matched_result \n"
-            + "      ORDER BY max_score desc, gene_source_id \n");
+            + "ORDER BY max_score desc, gene_source_id \n");
     logger.debug("component SQL: " + sql);
 
     return sql;
