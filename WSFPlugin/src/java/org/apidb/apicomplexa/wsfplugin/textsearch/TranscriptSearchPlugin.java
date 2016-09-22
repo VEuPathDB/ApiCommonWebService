@@ -82,7 +82,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
       quotedFields.append("'" + field + "'");
       notFirst = true;
 
-      if (field.equals("Comments")) {
+      if (field.equals("UserComments")) {
         searchComments = true;
         commentRecords = true;
       } else if (field.equals("CommunityAnnotation")) {
@@ -192,18 +192,19 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
-    String sql = "SELECT source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
+    // this query has to run on the comment db, because dblinks don't support the clob operations we are doing
+    String sql = "SELECT null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "           fields_matched \n"
         + "       FROM (" +
-        "            SELECT source_id, gene_source_id, MAX(scoring) as max_score, \n"
+        "            SELECT gene_source_id, MAX(scoring) as max_score, \n"
         + "                apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "                max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
         + "           FROM ("
         + "              SELECT SCORE(1) as scoring, \n"
         + "                   DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
-        + "                   min(trans.source_id), tsc.source_id as gene_source_id, tsc.rowid as oracle_rowid \n"
-        + "              FROM apidb.TextSearchableComment tsc, apidbtuning.transcriptattributes trans " + commentSchema + "Comments c \n"
+        + "                   tsc.source_id as gene_source_id, tsc.rowid as oracle_rowid \n"
+        + "              FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
         + "              WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
         + "               AND tsc.comment_id = c.comment_id\n"
         + "               AND c.is_visible = 1\n"
@@ -211,13 +212,12 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "               AND c.review_status_id != 'rejected'\n"
         +                 recordTypePredicate
         + "               AND project_id = '" + projectId + "'"
-        + "               AND trans.gene_source_id = tsc.source_id \n"
         + "           ) \n" 
-        + "          GROUP BY source_id \n"
+        + "          GROUP BY gene_source_id \n"
         + "          ORDER BY max_score desc \n"
         + "       )";
 
-    logger.debug("comment SQL: " + sql);
+    logger.info("comment SQL: " + sql);
 
     return sql;
   }
@@ -225,25 +225,26 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
   private String getComponentQuery(String projectId, String organisms, String fields) {
 
     String sql = new String(
-        "select null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result count(*) as max_score,  \n"
+        "select source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (  SELECT distinct min(trans.source_id), b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "from (  SELECT distinct min(trans.source_id) as source_id, b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b, ApidbTuning.TranscriptAttributes trans  \n"
             + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
             + "          AND 'Blastp' in (" + fields + ") \n"
             + "          AND b.pvalue_exp < ? \n"
             + "          AND b.query_taxon_id in (" + organisms + ") \n"
             + "          AND trans.gene_source_id = b.gene_source_id \n"
+            + "          GROUP BY b.gene_source_id, external_database_name \n"
             + "      UNION ALL  \n"
-            + "        SELECT min(trans.source_id) as source_id, gd.source_id as gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result\n"
-            +                "gd.field_name as table_name \n"
+            + "        SELECT min(trans.source_id) as source_id, gd.source_id as gene_source_id, gd.field_name as table_name \n"
             + "        FROM Apidb.GeneDetail gd, apidbtuning.transcriptattributes trans\n"
             + "        WHERE (CONTAINS(gd.content, ?, 1) > 0 OR ? = '%')\n"
             + "         AND gd.field_name in (" + fields + ") \n"
-            + "         AND gd.taxon_id in (" + organisms + ") \n"
-            + "         AND trans.gene_source_id = gd.gene_source_id \n"
+            + "         AND trans.taxon_id in (" + organisms + ") \n"
+            + "         AND trans.gene_source_id = gd.source_id \n"
+            + "         GROUP BY gd.source_id, gd.field_name \n"
             + "     )  \n"
-            + "GROUP BY source_id, gene_source_id, project_id, matched_result \n"
+            + "GROUP BY source_id, gene_source_id \n"
             + "ORDER BY max_score desc, gene_source_id \n");
     logger.debug("component SQL: " + sql);
 
