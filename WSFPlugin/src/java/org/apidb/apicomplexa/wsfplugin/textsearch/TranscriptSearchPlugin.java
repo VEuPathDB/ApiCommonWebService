@@ -110,7 +110,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    ps.setString(1, oracleTextExpression);
 	    ps.setString(2, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
-	    textSearch(commentContainer, ps, "source_id", sql, "commentTextSearch");
+	    textSearch(commentContainer, ps, "gene_source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
 	} catch (SQLException | EuPathServiceException ex) {
 	    throw new PluginModelException(ex);
@@ -142,7 +142,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 	    ps.setString(4, oracleTextExpression);
 	    ps.setString(5, oracleTextExpression);
 
-	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
+	    textSearch(componentContainer, ps, "gene_source_id", sql, "componentTextSearch");
 	}
 	catch (SQLException | EuPathServiceException ex) {
 	    throw new PluginModelException(ex);
@@ -193,6 +193,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
     // this query has to run on the comment db, because dblinks don't support the clob operations we are doing
+    // source_id is transcript source id.  we don't know it, so it is null.  
     String sql = "SELECT null as source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "           fields_matched \n"
@@ -263,8 +264,8 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     PreparedStatement validationQuery = null;
     try {
       String sql = new String(
-          "select attrs.source_id\n"
-              + "from ApidbTuning.GeneId alias, ApidbTuning.TranscriptAttributes attrs \n"
+          "select attrs.source_id as gene_source_id\n"
+              + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
               + "where alias.Id = ? \n"
               + "  and alias.gene = attrs.gene_source_id \n"
               + "  and alias.unique_mapping = 1 \n"
@@ -279,17 +280,17 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 
         validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
 
-        for (String sourceId : commentResults.keySet()) {
-          logger.debug("validating sourceId \"" + sourceId + "\"");
+        for (String geneSourceId : commentResults.keySet()) {
+          logger.debug("validating sourceId \"" + geneSourceId + "\"");
           rs = null;
-          validationQuery.setString(1, sourceId);
+          validationQuery.setString(1, geneSourceId);
           rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
-          SearchResult result = commentResults.get(sourceId);
+          SearchResult result = commentResults.get(geneSourceId);
           // commentResults.remove(sourceId);
           while (rs.next()) {
-            String returnedTranscript = rs.getString("source_id");
-            SearchResult newResult = new SearchResult(returnedTranscript, result.getMaxScore(), result.getFieldsMatched());
-            newCommentResults.put(returnedTranscript, newResult);
+            String returnedGene = rs.getString("gene_source_id");
+            TranscriptSearchResult newResult = new TranscriptSearchResult(returnedGene, result.getSourceId(), result.getMaxScore(), result.getFieldsMatched());
+            newCommentResults.put(returnedGene, newResult);
           }
           SqlUtils.closeResultSetOnly(rs);
         }
@@ -304,4 +305,14 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 
     return newCommentResults;
   }
+  
+  /**
+   * primaryId is a gene source id;  source_id is trans source_id along for the ride
+   */
+  @Override
+  protected SearchResult getSearchResults(ResultSet rs, String primaryId) throws SQLException {
+    return new TranscriptSearchResult(primaryId, rs.getString("source_id"), rs.getFloat("max_score"),
+        rs.getString("fields_matched"));
+  }
+
 }
