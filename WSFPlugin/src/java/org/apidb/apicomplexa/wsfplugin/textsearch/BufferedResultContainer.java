@@ -12,7 +12,7 @@ public class BufferedResultContainer implements ResultContainer {
   
   @Override
   public void addResult(SearchResult result) {
-    results.put(result.getSourceId(), result);
+    results.put(result.getPrimaryId(), result);
   }
 
   public Map<String, SearchResult> getResults() {
@@ -20,7 +20,7 @@ public class BufferedResultContainer implements ResultContainer {
   }
 
   @Override
-  public boolean hasResult(String sourceId) {
-    return results.containsKey(sourceId);
+  public boolean hasResult(String primaryId) {
+    return results.containsKey(primaryId);
   }
 }

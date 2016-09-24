@@ -6,14 +6,22 @@ public class TranscriptSearchResult extends SearchResult {
   
   private String geneSourceId;
   
-  public TranscriptSearchResult(String geneSourceId, String transcriptSourceId, float maxScore, String fieldsMatched) {
+  public TranscriptSearchResult(String geneSourceId, String transcriptSourceId, float maxScore, String fieldsMatched, String projectId) {
     super(transcriptSourceId, maxScore, fieldsMatched);
     this.geneSourceId = geneSourceId;
+    setProjectId(projectId);
   }
 
   public String getGeneSourceId() {
     return geneSourceId;
     }
+
+  @Override
+  public String getPrimaryId() {
+    return geneSourceId;
+  }
+
+
 
   @Override
   public void combine(SearchResult other) {

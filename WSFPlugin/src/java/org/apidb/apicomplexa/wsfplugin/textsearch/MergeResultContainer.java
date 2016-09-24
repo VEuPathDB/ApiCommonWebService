@@ -8,10 +8,13 @@ import org.eupathdb.websvccommon.wsfplugin.textsearch.SearchResult;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
+//import org.apache.log4j.Logger;
+
 
 public class MergeResultContainer extends ResponseResultContainer implements ResultContainer {
 
   private final Map<String, SearchResult> commentResults;
+  // private static final Logger logger = Logger.getLogger(MergeResultContainer.class);
 
   public MergeResultContainer(PluginResponse response, String[] orderedColumns,
       Map<String, SearchResult> commentResults) {
@@ -21,12 +24,12 @@ public class MergeResultContainer extends ResponseResultContainer implements Res
 
   @Override
   public void addResult(SearchResult result) throws PluginModelException, PluginUserException {
-    String sourceId = result.getSourceId();
+    String primaryId = result.getPrimaryId();
     // merge the result if it also exists in comment results
-    if (commentResults.containsKey(sourceId)) {
-      result.combine(commentResults.get(sourceId));
+    if (commentResults.containsKey(primaryId)) {
+      result.combine(commentResults.get(primaryId));
       // remove from cached
-      commentResults.remove(sourceId);
+      commentResults.remove(primaryId);
     }
 
     // then send the result for the super class to process
@@ -35,8 +38,8 @@ public class MergeResultContainer extends ResponseResultContainer implements Res
 
   public void processRemainingResults() throws PluginModelException, PluginUserException  {
     // process the unprocessed results
-    for (String sourceId : commentResults.keySet()) {
-      super.addResult(commentResults.get(sourceId));
+    for (String primaryId : commentResults.keySet()) {
+      super.addResult(commentResults.get(primaryId));
     }
     commentResults.clear();
   }
