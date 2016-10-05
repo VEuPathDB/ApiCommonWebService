@@ -252,7 +252,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + ") \n"
             + "      UNION ALL  \n"
             + "        SELECT gts.source_id, gts.field_name as table_name \n"
-            + "        FROM ApidbTuning.GeneTextSearch gts \n"
+            + "        FROM ApidbTuning.TranscriptTextSearch gts \n"
 	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(gts.content, ?, 1) > 0 ") + " \n"
             + "                AND gts.field_name in ("
             + fields
