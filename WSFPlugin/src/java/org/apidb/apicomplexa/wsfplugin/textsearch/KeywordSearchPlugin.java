@@ -207,7 +207,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
-    String sql = "SELECT source_id, \n"
+    String sql = "SELECT source_id, '" + projectId + "' as project_id, \n"
         + "           max_score as max_score, -- should be weighted using component TableWeight \n"
         + "       fields_matched \n"
         + "FROM (SELECT source_id, MAX(scoring) as max_score, \n"
@@ -235,7 +235,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     private String getComponentQuery(String projectId, String recordType, String organisms, String fields, boolean pureWildcard) {
 
     String sql = new String(
-        "select source_id, count(*) as max_score,  \n"
+        "select source_id, '" + projectId + "' as project_id, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
             + "from (   select distinct b.source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b  \n"
@@ -362,6 +362,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
                   + "\" returned from comment-search result set.");
               SearchResult result = newCommentResults.get(sourceId);
               result.setSourceId(returnedSourceId);
+              result.setProjectId(projectId);
               newCommentResults.remove(sourceId);
               newCommentResults.put(returnedSourceId, result);
             }
