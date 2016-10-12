@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.TranscriptUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.runtime.InstanceManager;
@@ -430,7 +431,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           break;
       }
 
-      String sql = rcName.equals("TranscriptRecordClasses.TranscriptRecordClass")
+      String sql = rcName.equals(TranscriptUtil.TRANSCRIPT_RECORDCLASS)
           ? getTranscriptSpanSql(tableName, region, cacheSql)
           : getStandardSpanSql(tableName, region, locTable, cacheSql);
       logger.debug("SPAN SQL: " + sql);
