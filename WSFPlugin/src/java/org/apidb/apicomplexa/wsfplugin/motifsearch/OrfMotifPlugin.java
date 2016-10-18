@@ -9,7 +9,7 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
  */
 
 // geneID could be an ORF or a genomic sequence deending on who uses the plugin
-public class OrfMotifPlugin extends ProteinMotifPlugin {
+public class OrfMotifPlugin extends AAMotifPlugin {
 
   // let's store files in same directory
   private static final String FIELD_REGEX = "OrfDeflineRegex";
