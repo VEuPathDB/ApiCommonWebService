@@ -15,7 +15,6 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.apidb.apicommon.model.TranscriptUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.runtime.InstanceManager;
@@ -30,17 +29,35 @@ import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
+/**
 
+Approach: there are two input answervalues. One is considered the "output" and the other the "reference."
+The output av is the one whose records we output --those that match the spans of the reference.
+For both avs, we make a temp table that has columns for the genomic locations.  We then join the tables,
+using the user's choice of operation, to produce a set of match rows. These are sorted by the output source_id.
+
+To produce output, we scan the joined result, and accumulate into Feature datastructure all the matches belonging
+to each output record. We print that record when the cursor moves to the next record.
+
+There are a few hacks to accomodate alt splice.  We force the temp tables to have a gene_source_id, regardless of
+record type.  For transcript records, this value is correctly set.   For all others, it is set to "dontcare".  Also, the
+temp table for transcripts is expanded to include all transcripts of the genes found.  Each has an identical span
+location, that of the gene.
+
+If the reference av is transcripts, then we only accumulate one match per gene, and print the gene_source_id as the match's ID,
+rather than the usual source_id.
+
+ */
 public class SpanCompositionPlugin extends AbstractPlugin {
 
   private static final Logger logger = Logger.getLogger(SpanCompositionPlugin.class);
 
-  private static class Feature {
+  protected static class Feature {
 
     private static NumberFormat format = NumberFormat.getIntegerInstance();
 
     public String sourceId;
-    public String geneSourceId;
+    public String geneSourceId;  // for transcript subclass.  ok, a hack, but so what
     public String projectId;
     public int begin;
     public int end;
@@ -79,7 +96,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   public static final String COLUMN_SOURCE_ID = "source_id";
-  public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
   public static final String COLUMN_PROJECT_ID = "project_id";
   public static final String COLUMN_WDK_WEIGHT = "wdk_weight";
   public static final String COLUMN_FEATURE_REGION = "feature_region";
@@ -126,7 +142,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   @Override
   public String[] getColumns() {
-    return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
+    return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
 			  COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
   }
 
@@ -431,7 +447,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           break;
       }
 
-      String sql = rcName.equals(TranscriptUtil.TRANSCRIPT_RECORDCLASS)
+      String sql = rcName.equals("TranscriptRecordClasses.TranscriptRecordClass")
           ? getTranscriptSpanSql(tableName, region, cacheSql)
           : getStandardSpanSql(tableName, region, locTable, cacheSql);
       logger.debug("SPAN SQL: " + sql);
@@ -478,15 +494,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("FROM ApidbTuning.FeatureLocation fl, " + cacheSql + " ca ");
     builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
     builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = (");
-    builder.append("    SELECT fl.feature_type ");
-    builder.append("    FROM ApidbTuning.FeatureLocation fl, " + cacheSql + " ca");
-    builder.append("    WHERE fl.feature_source_id = ca.gene_source_id");
-    builder.append("      AND rownum = 1) ");
+    builder.append("  AND fl.feature_type = 'GeneFeature'");
     return builder.toString();
     
   }
-  
+
   private void prepareResult(WdkModel wdkModel, PluginResponse response, String sql, String[] orderedColumns,
       String output) throws SQLException, PluginModelException, PluginUserException {
     // prepare column order
@@ -498,6 +510,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // read results
     DataSource dataSource = wdkModel.getAppDb().getDataSource();
     ResultSet resultSet = null;
+    Feature prevFeature = null;
+    Feature prevReference = null;
     try {
       resultSet = SqlUtils.executeQuery(dataSource, sql, "span-logic-cached");
       Feature feature = null;
@@ -508,19 +522,24 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         if (feature == null) {
           // reading the first line
           feature = new Feature();
+	  readFeature(resultSet, feature, output);
         }
         else if (!feature.sourceId.equals(sourceId)) {
           // start on a new record, output the previous feature
           writeFeature(response, columnOrders, feature);
           feature = new Feature();
+	  readFeature(resultSet, feature, output);
         }
-        // store info into feature
-        readFeature(resultSet, feature, output);
 
         // read the reference
         Feature reference = new Feature();
         readFeature(resultSet, reference, ref);
-        feature.matched.add(reference);
+	
+	// if refs are genes, only add one match per gene.  (non-gene refs have dontcare as gene_source_id)
+	if (feature != prevFeature || reference.geneSourceId.equals("dontcare") || prevReference == null || !reference.geneSourceId.equals(prevReference.geneSourceId))
+	  feature.matched.add(reference);
+	prevFeature = feature;
+	prevReference = reference;
       }
       if (feature != null) { // write the last feature
         writeFeature(response, columnOrders, feature);
@@ -536,9 +555,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // format the matched regions
     StringBuilder builder = new StringBuilder();
     for (Feature fr : feature.matched) {
-      if (builder.length() > 0)
-        builder.append("; ");
-      builder.append(fr.sourceId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;(" +
+      if (builder.length() > 0) builder.append("; ");
+      String srcId = fr.geneSourceId.equals("dontcare")? fr.sourceId : fr.geneSourceId;
+      builder.append(srcId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;(" +
           fr.getReversed() + ")");
     }
     String matched = builder.toString();
@@ -546,21 +565,25 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       matched = matched.substring(0, 3997) + "...";
 
     // construct row by column orders
+    String[] row = makeRow(columnOrders, feature, matched);
+    
+    // save the row
+    response.addRow(row);
+  }
+  
+  protected String[] makeRow(Map<String, Integer> columnOrders, Feature feature, String matched) {
     String[] row = new String[columnOrders.size()];
     row[columnOrders.get(COLUMN_SOURCE_ID)] = feature.sourceId;
-    row[columnOrders.get(COLUMN_GENE_SOURCE_ID)] = feature.geneSourceId;
     row[columnOrders.get(COLUMN_PROJECT_ID)] = feature.projectId;
     row[columnOrders.get(COLUMN_FEATURE_REGION)] = feature.getRegion();
     row[columnOrders.get(COLUMN_MATCHED_COUNT)] = Integer.toString(feature.matched.size());
     row[columnOrders.get(COLUMN_WDK_WEIGHT)] = Integer.toString(feature.weight);
     row[columnOrders.get(COLUMN_MATCHED_REGIONS)] = matched;
     row[columnOrders.get(COLUMN_MATCHED_RESULT)] = "Y";
-
-    // save the row
-    response.addRow(row);
+    return row;
   }
 
-  private void readFeature(ResultSet resultSet, Feature feature, String suffix) throws SQLException {
+  protected void readFeature(ResultSet resultSet, Feature feature, String suffix) throws SQLException {
     feature.sourceId = resultSet.getString("source_id_" + suffix);
     feature.geneSourceId = resultSet.getString("gene_source_id_" + suffix);
     feature.projectId = resultSet.getString("project_id_" + suffix);
