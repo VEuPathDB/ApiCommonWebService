@@ -103,12 +103,11 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching comment instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getCommentQuery(projectId, commentRecords, communityAnnotationRecords);
+	  sql = getCommentQuery(projectId, commentRecords, communityAnnotationRecords, oracleTextExpression);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
-	    ps.setString(2, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "gene_source_id", sql, "commentTextSearch");
 	    commentResults = validateRecords(projectId, commentContainer.getResults(), organisms);
@@ -128,19 +127,16 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         logger.debug("searching component instance\n");
 	PreparedStatement ps = null;
 	try {
-	    sql = getComponentQuery(projectId, organisms, quotedFields.toString());
+	  sql = getComponentQuery(projectId, organisms, quotedFields.toString(), oracleTextExpression);
 
 	    if (maxPvalue == null || maxPvalue.equals("")) {
 		maxPvalue = "0";
 	    }
-
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
 	    ps.setString(1, oracleTextExpression);
-	    ps.setString(2, oracleTextExpression);
-	    ps.setFloat(3, Float.valueOf(maxPvalue));
-	    ps.setString(4, oracleTextExpression);
-	    ps.setString(5, oracleTextExpression);
+	    ps.setFloat(2, Float.valueOf(maxPvalue));
+	    ps.setString(3, oracleTextExpression);
 
 	    textSearch(componentContainer, ps, "gene_source_id", sql, "componentTextSearch");
 	}
@@ -178,7 +174,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
   }
 
   private String getCommentQuery(String projectId, boolean commentRecords,
-				 boolean communityAnnotationRecords) {
+				 boolean communityAnnotationRecords, String textExpression) {
 
     String recordTypePredicate;
     if (commentRecords && !communityAnnotationRecords) {
@@ -189,6 +185,9 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
       recordTypePredicate = " AND comment_target_id = 'gene' \n";
     }
 
+    String wildcardExpr = "1 = " + (textExpression.equals("%")? "1" : "0");
+    String score = textExpression.equals("%")? "1" : "score(1)";
+  
     WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
     String commentSchema = wdkModel.getModelConfig().getUserDB().getUserSchema();
 
@@ -202,11 +201,11 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "                apidb.tab_to_string(set(CAST(COLLECT(table_name) AS apidb.varchartab)), ', ') as fields_matched, "
         + "                max(oracle_rowid) keep (dense_rank first order by scoring desc) as best_rowid \n"
         + "           FROM ("
-        + "              SELECT SCORE(1) as scoring, \n"
+        + "              SELECT " + score + " as scoring, \n"
         + "                   DECODE(c.review_status_id, 'community', 'Community Annotation', 'User Comments') as table_name, \n"
         + "                   tsc.source_id as gene_source_id, tsc.rowid as oracle_rowid \n"
         + "              FROM apidb.TextSearchableComment tsc, " + commentSchema + "Comments c \n"
-        + "              WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (? = '%') )  \n"
+        + "              WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
         + "               AND tsc.comment_id = c.comment_id\n"
         + "               AND c.is_visible = 1\n"
         + "               AND c.review_status_id != 'task'\n"
@@ -223,15 +222,17 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sql;
   }
 
-  private String getComponentQuery(String projectId, String organisms, String fields) {
+  private String getComponentQuery(String projectId, String organisms, String fields, String textExpression) {
+
+    String wildcardExpr = "1 = " + (textExpression.equals("%")? "1" : "0");
 
     String sql = new String(
         "select source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
             + "from (  SELECT distinct min(trans.source_id) as source_id, b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b, ApidbTuning.TranscriptAttributes trans  \n"
-            + "        WHERE (CONTAINS(b.description, ?, 1) > 0 OR ? = '%') \n"
-            + "          AND 'Blastp' in (" + fields + ") \n"
+            + "        WHERE ((CONTAINS(b.description, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
+             + "          AND 'Blastp' in (" + fields + ") \n"
             + "          AND b.pvalue_exp < ? \n"
             + "          AND b.query_taxon_id in (" + organisms + ") \n"
             + "          AND trans.gene_source_id = b.gene_source_id \n"
@@ -239,7 +240,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "      UNION ALL  \n"
             + "        SELECT min(trans.source_id) as source_id, gd.source_id as gene_source_id, gd.field_name as table_name \n"
             + "        FROM Apidb.GeneDetail gd, apidbtuning.transcriptattributes trans\n"
-            + "        WHERE (CONTAINS(gd.content, ?, 1) > 0 OR ? = '%')\n"
+            + "        WHERE ((CONTAINS(gd.content, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
             + "         AND gd.field_name in (" + fields + ") \n"
             + "         AND trans.taxon_id in (" + organisms + ") \n"
             + "         AND trans.gene_source_id = gd.source_id \n"
