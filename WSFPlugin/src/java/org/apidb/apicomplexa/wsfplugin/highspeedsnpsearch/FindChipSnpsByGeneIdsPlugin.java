@@ -69,7 +69,7 @@ public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
         String newline = System.lineSeparator();
         String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +
             "from apidbtuning.geneattributes g, " + newline + "(" + gene_list_dataset + ") user_genes" +
-            newline + "where g.source_id = user_genes.source_id" + newline +
+            newline + "where g.source_id = user_genes.gene_source_id" + newline +
             "order by g.sequence_id, g.start_min, g.end_max";
 
         ResultSet rs = null;
