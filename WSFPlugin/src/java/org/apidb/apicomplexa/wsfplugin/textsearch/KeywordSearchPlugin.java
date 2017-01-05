@@ -69,7 +69,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
       organisms = cleanOrgs(organisms);
     logger.debug("organisms after cleaning= \"" + organisms + "\"");
 
-    String maxPvalue = params.get(PARAM_MAX_PVALUE);
+    //String maxPvalue = params.get(PARAM_MAX_PVALUE);
 
     boolean searchComments = false;
     boolean searchComponent = false;
@@ -139,22 +139,17 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
 	try {
 	    sql = getComponentQuery(projectId, recordType, organisms, quotedFields.toString(), pureWildcard);
 
-	    if (maxPvalue == null || maxPvalue.equals("")) {
-		maxPvalue = "0";
-	    }
+	    //if (maxPvalue == null || maxPvalue.equals("")) {
+		//maxPvalue = "0";
+	    //}
 
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
-	    if (pureWildcard) {
-		// if the search string is just a wildcard, only set the p-value exponent
-		ps.setFloat(1, Float.valueOf(maxPvalue));
-	    } else {
-		ps.setString(1, oracleTextExpression);
-		ps.setFloat(2, Float.valueOf(maxPvalue));
-		ps.setString(3, oracleTextExpression);
-		ps.setString(4, oracleTextExpression);
-		ps.setString(5, oracleTextExpression);
-	    }
+        if (!pureWildcard) {
+            ps.setString(1, oracleTextExpression);
+            ps.setString(2, oracleTextExpression);
+        }
+	    
 
 	    textSearch(componentContainer, ps, "source_id", sql, "componentTextSearch");
 	}
@@ -237,36 +232,10 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     String sql = new String(
         "select source_id, '" + projectId + "' as project_id, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (   select distinct b.source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
-            + "        FROM ApidbTuning.Blastp b  \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(b.description, ?, 1) > 0 ") + " \n"
-            + "          AND 'Blastp' in ("
-            + fields
-            + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'gene' \n"
-            + "          AND b.pvalue_exp < ? \n"
-            + "                AND b.query_taxon_id in ("
-            + organisms
-            + ") \n"
-            + "      UNION ALL  \n"
-            + "        SELECT gts.source_id, gts.field_name as table_name \n"
-            + "        FROM ApidbTuning.TranscriptTextSearch gts \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(gts.content, ?, 1) > 0 ") + " \n"
-            + "                AND gts.field_name in ("
-            + fields
-            + ") \n"
-            + "                AND '"
-            + recordType
-            + "' = 'gene' \n"
-            + "                AND gts.taxon_id in ("
-            + organisms
-            + ") \n"
-            + "      UNION ALL  \n"
+            + "from ( \n"
             + "        SELECT wit.source_id, wit.field_name as table_name  \n"
             + "        FROM apidb.IsolateDetail wit \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
+	        + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
@@ -274,9 +243,9 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             + recordType
             + "' = 'isolate' \n"
             + "      UNION ALL  \n"
-            + "        SELECT wit.source_id, wit.field_name as table_name  \n"
+            + "        SELECT wit.source_id, replace(wit.field_name, 'CompoundsMetabolicPathways', 'Reaction/Pathway/Enzyme')  as table_name  \n"
             + "        FROM apidb.CompoundDetail wit \n"
-	    + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
+	        + "        WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n"
             + "                AND wit.field_name in ("
             + fields
             + ") \n"
