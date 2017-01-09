@@ -109,11 +109,6 @@ public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
   }
 
   @Override
-  protected String getGenerateScriptName() {
-    return "hsssGenerateGenomicLocationsScript";
-  }
-
-  @Override
   protected List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params,
                                                        File organismDir) throws PluginModelException, PluginUserException {
       List<String> command = super.makeCommandToCreateBashScript(jobDir, params, organismDir);

@@ -3,7 +3,7 @@
 use strict;
 use File::Basename;
 
-my ($contigFile ,$numGroups, $prefix, $dataType, $seqFilter, $minLoc, $maxLoc) = @ARGV;
+my ($contigFile ,$numGroups, $prefix, $dataType, $locationsFile) = @ARGV;
 
 my $sourceIdDir = dirname($contigFile);
 my $sourceIdFile = $sourceIdDir.'/locationToSourceId.dat';
@@ -28,6 +28,19 @@ while (<S>) {
   $source_id_hash{$contigSourceId}{$datatype}{$location} = $sourceId;
 }
 close(S);
+
+my (@sequence, @start, @end);
+if ($locationsFile) {
+  open(L, $locationsFile) || die "Can't open location file '$locationsFile'\n";
+  while (<L>) {
+    chomp;
+    my ($sequence, $start, $end) = split(/\t/);
+    push (@sequence, $sequence);
+    push (@start, $start);
+    push (@end, $end);
+  }
+  close(L);
+}
 
 while(<STDIN>) {
   chomp;
@@ -56,26 +69,30 @@ while(<STDIN>) {
   die "contigSourceId : $contigSourceId dataType : $dataType location : $location source id not found" unless $sourceId;
   $prefix =  $prefix=~/^NULL$/ ? '' : $prefix;
   print STDERR join("\t", $sourceId, @fields) . "\n" ;
-  print STDOUT join("\t", $sourceId, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
+
+  # if locations are provided, check this is in one
+  my $goodLocation = 0;
+  for my $i (0 .. $#sequence) {
+    $goodLocation = 1
+      if $contigSourceId eq $sequence[$i] && $location > $start[$i] && $location < $end[$i];
+  }
+
+  print STDOUT join("\t", $sourceId, @fields) . "\n"  unless ($locationsFile && !$goodLocation);
 }
 
 sub usage {
   die "
 Replace the first and second columns of a stream with a SNP ID, given a file with a mapping.
 
-Usage: hsssReconstructSnpId contig_id_file num_groups [seq_id min_loc max_loc] < snp_search_result
+Usage: hsssReconstructChipSnpId contig_id_file num_groups [location_file] < snp_search_result
 
 Where:
   - contig_id_file: tab delimited, two columns, first column contig index (1,2,...); second column contig source_id
   - num_groups: either 1 or 2.   If 1, then reformat phenotype column; if 2 reformat triallelic and prod variable columns
-  - seq_source_id:  optional  sequence source id.  if present, return only SNPs on this sequence.
-  - min_loc: required if seq_id provided.  return only SNPs at this location or larger
-  - max_loc: required if seq_id provided.  return only SNPs at this location or smaller
-
+  - location_file:  optional name of tab-delimited file of (sequence source ID, start, end)
+      if present, return only SNPs in these locations
   - snp_search_result: tab_delimited with columns contig_index, genomic_location, knowns_percent, non-major_allele_percent, product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense).
 
 Replaces the first two columns of snp_search_result with a single column that is the concatenation of the contig_source_id-location, ie, a snp source id.
-
-Also reformats some columns from numerals to words.
 ";
 }
