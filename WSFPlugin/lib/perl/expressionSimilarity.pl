@@ -565,5 +565,7 @@ sub pearson_correlation {
 	$yy += $weights->[$i] * ($queryVector->[$i])**2;
     }
 
-    return ($W * $xy - $x*$y)/(sqrt(($W*$xx-$x*$x)*($W*$yy-$y*$y)));
+    if (($W*$xx-$x*$x)*($W*$yy-$y*$y) > 0) {
+      return ($W * $xy - $x*$y)/(sqrt(($W*$xx-$x*$x)*($W*$yy-$y*$y)));
+    }
 }
