@@ -432,7 +432,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           " WHERE sn.na_sequence_id = sa.na_sequence_id)";
     }
     else {
-      locTable = "ApidbTuning.FeatureLocation";
+      locTable = "apidb.FeatureLocation";
     }
 
     // get a temp table name
@@ -491,7 +491,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("       ca.wdk_weight, ca.project_id, ");
     builder.append("       NVL(fl.is_reversed, 0) AS is_reversed, ");
     builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM ApidbTuning.FeatureLocation fl, " + cacheSql + " ca ");
+    builder.append("FROM apidb.FeatureLocation fl, " + cacheSql + " ca ");
     builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
     builder.append("  AND fl.is_top_level = 1");
     builder.append("  AND fl.feature_type = 'GeneFeature'");
