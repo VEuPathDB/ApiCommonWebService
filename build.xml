@@ -17,7 +17,7 @@
 
   <target name="ApiCommonWebsite-Checkout" unless="ApiCommonWebsite.present">
     <ant target="defaultProjectCheckout" inheritAll="false">
-      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/apidb/ApiCommonWebsite"/>
+      <property name="svnurl" value="https://cbilsvn.pmacs.upenn.edu/svn/apidb/ApiCommonWebsite"/>
       <property name="project" value="ApiCommonWebsite"/>
       <property name="version" value=""/>
     </ant>
