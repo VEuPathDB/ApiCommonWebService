@@ -23,6 +23,7 @@ import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
+import org.gusdb.wdk.model.user.StepUtilities;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -406,7 +407,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
-    AnswerValue answerValue = user.getStep(stepId).getAnswerValue();
+    AnswerValue answerValue = StepUtilities.getStep(user, stepId).getAnswerValue();
 
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
