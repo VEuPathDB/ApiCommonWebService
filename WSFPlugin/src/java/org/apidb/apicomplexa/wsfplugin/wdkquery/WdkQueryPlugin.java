@@ -144,7 +144,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // get the user
       String userSignature = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUser(userSignature);
+      User user = wdkModel.getUserFactory().getUserBySignature(userSignature);
       UserBean userBean = new UserBean(user);
 
       // web service call to get param values

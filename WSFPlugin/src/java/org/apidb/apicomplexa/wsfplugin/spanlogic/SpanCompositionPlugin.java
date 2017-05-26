@@ -257,7 +257,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
       String signature = request.getContext().get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUser(signature);
+      User user = wdkModel.getUserFactory().getUserBySignature(signature);
 
       // create temp tables from caches
       Flag flag = new Flag();
