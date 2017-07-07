@@ -27,7 +27,7 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
   @Override
   protected String getIdUrl(String recordClass, String projectId,
-      String sourceId,  String defline) throws EuPathServiceException {
+      String sourceId, String defline) throws EuPathServiceException {
     try {
       if(sourceId.endsWith("-p1")) {
         // until we handle proteins, trim "-p1" suffix to turn protein ID into transcript ID

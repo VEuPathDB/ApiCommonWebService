@@ -107,7 +107,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // logger.info("Invoking WdkQueryPlugin......");
     int resultSize = 0;
-    ResultList resultList = null;
     Map<String, String> paramValues = request.getParams();
     Map<String, String> context = request.getContext();
 
@@ -145,7 +144,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // get the user
       String userSignature = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUser(userSignature);
+      User user = wdkModel.getUserFactory().getUserBySignature(userSignature);
       UserBean userBean = new UserBean(user);
 
       // web service call to get param values
@@ -172,12 +171,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
       QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, true, 0, context);
-      resultList = queryInstance.getResults();
-      logger.info("Results set was filled");
-
-      resultSize = writeQueryResults(response, resultList, columnOrders);
-      logger.info("Query results have been processed.... " + resultSize);
-
+      try (ResultList resultList = queryInstance.getResults()) {
+        logger.info("Results set was filled");
+        resultSize = writeQueryResults(response, resultList, columnOrders);
+        logger.info("Query results have been processed.... " + resultSize);
+      }
     }
     catch (WdkUserException ex) {
       logger.info("WdkUserException in execute()" + ex.toString());
