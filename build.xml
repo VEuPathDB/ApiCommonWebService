@@ -38,6 +38,7 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ApiCommonWebService-Installation" depends="ApiCommonWebsite-Installation,
+  	                                                       ApiCommonWebService-MavenInstallation,
                                                            ApiCommonWebService/WSFPlugin-Installation,
                                                            ApiCommonWebService/HighSpeedSnpSearch-Installation">
 
@@ -46,6 +47,13 @@
     </ant>
 
   </target>
+	
+	<target name="ApiCommonWebService-MavenInstallation">
+	  <ant target="mavenBuildProject">
+	    <property name="project" value="ApiCommonWebService"/>
+	  </ant>
+	  <property name="alreadyBuilt" value="true"/>
+	  </target>
 
 
  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
