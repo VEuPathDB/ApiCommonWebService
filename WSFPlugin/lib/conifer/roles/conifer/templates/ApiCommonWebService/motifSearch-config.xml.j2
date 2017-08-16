@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{# $SourceFileURL$ #}
+Templated by Conifer using
+{{ template_path }}
+with vars from
+Cohort: {{ cohort }}
+Project: {{ project }}
+Environment: {{ env|default() }}
+site_vars file: {{ site_vars }}
+-->
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>The configuration file for MotifSearch WSF Plugin.</comment>
+
+<!-- the Regular Expressions defined in this config file use Java flavor. -->
+
+<!-- 
+    Optional, the regex for genomic fasta file has to have 3 groups.
+    group(1) = genomic sequence source id;
+    group(2) = strand, either '+' or '-'
+    group(3) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
+    
+    An example of the headline will be like this:
+    >gb|scf_1107000998814 | strand=(+) | organism=Toxoplasma_gondii_GT1 | version=2008-07-23 | length=1231
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
+
+    <entry key="DnaDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*strand=\(([+\-])\)\s*\|\s*organism=([^|\s]+)]]></entry>
+-->
+
+
+<!-- 
+    Optional, the regex for protein fasta file has to have 2 groups, 
+    group(1) = gene source id;
+    group(2) = organism, the organism has to match with any one of the suffix in the ProjectMap below;
+    
+    An example of the headline will be like this:
+    >psu|NCLIV_009530 | organism=Neospora_caninum | product=hypothetical protein, conserved | location=NCLIV_chrIV:42585-46508(+) | length=1307
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
+
+<entry key="ProteinDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*organism=([^|\s]+)]]></entry>
+-->
+
+
+<!-- 
+    Optional, the regex for protein fasta file has to have 2 groups, 
+    group(1) = gene source id;
+    group(2) = genus, the genus is passed to a stored procedure to lookup the Project
+
+    An example of the headline will be like this:
+    >scf_1107000999344-1-267055-267297 | organism=Toxoplasma_gondii_GT1 | location=TGGT1_chrV:2837876-2838118(-) | length=81
+    
+    the regex given below is the default regex, and will be used if the field doesn't exist.
+
+    <entry key="OrfDeflineRegex"><![CDATA[>(?:\w*\|)*([^|\s]+)\s*\|.*?\s*organism=([^|\s]+)]]></entry>
+-->
+
+
+
+<!--
+    Optional, the length of the context to be displayed around the matched motifs. For example, if this
+    field is set to 20, then 20 bps before & after the motif will be displayed along with the motif.
+-->
+<entry key="ContextLength">{{ motifsearchconfig_motifCntxtLen }}</entry>
+
+</properties>
