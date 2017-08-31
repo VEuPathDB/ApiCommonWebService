@@ -144,7 +144,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   @Override
   public String[] getColumns() {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
-			  COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
+        COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
   }
 
   @Override
@@ -256,8 +256,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     try {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
-      String signature = request.getContext().get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserBySignature(signature);
+      String userId = request.getContext().get(Utilities.QUERY_CTX_USER);
+      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
 
       // create temp tables from caches
       Flag flag = new Flag();
