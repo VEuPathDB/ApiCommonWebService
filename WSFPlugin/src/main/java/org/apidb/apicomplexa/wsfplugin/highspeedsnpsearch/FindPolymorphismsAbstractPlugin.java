@@ -98,7 +98,10 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
   }
 
   /**
-   * @throws WsfPluginException
+   * 
+   * @param jobDir
+   * @param params
+   * @param organismDir
    * @throws PluginModelException
    */
   protected void initForBashScript(File jobDir, Map<String, String> params, File organismDir)

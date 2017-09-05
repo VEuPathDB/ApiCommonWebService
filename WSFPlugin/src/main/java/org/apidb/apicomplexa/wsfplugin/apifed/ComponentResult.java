@@ -10,10 +10,10 @@ public class ComponentResult {
 
   protected final PluginResponse response;
 
-  private String message = "";
-  private int signal = 0;
-  private String token = null;
-  private int rowCount = 0;
+  private String _message = "";
+  private int _signal = 0;
+  private String _token = null;
+  private int _rowCount = 0;
 
   /**
    * create a result container without tokens.
@@ -25,29 +25,29 @@ public class ComponentResult {
   }
   
   public int getSignal() {
-    return signal;
+    return _signal;
   }
 
   private synchronized boolean requestToken(String projectId) {
-    if (this.token == null) { // no token set, set the token
-      this.token = projectId;
+    if (_token == null) { // no token set, set the token
+      _token = projectId;
       return true;
     }
     else
       // toke already set, check if the token is the same as the stored one.
-      return this.token.equals(projectId);
+      return _token.equals(projectId);
   }
 
   public synchronized void releaseToken(String projectId) {
     // only release it if it's the same token
-    if (this.token != null && this.token.equals(projectId))
-      this.token = null;
+    if (_token != null && _token.equals(projectId))
+      _token = null;
   }
 
   public boolean addRow(String projectId, String[] row) throws PluginModelException, PluginUserException {
     if (requestToken(projectId)) {
       response.addRow(row);
-      rowCount++;
+      _rowCount++;
       return true;
     }
     else
@@ -55,15 +55,15 @@ public class ComponentResult {
   }
 
   public int getRowCount() {
-    return rowCount;
+    return _rowCount;
   }
 
   public boolean addMessage(String projectId, String message) throws PluginModelException, PluginUserException  {
     if (requestToken(projectId)) {
-      if (this.message.length() > 0)
-        this.message += ",";
-      this.message += projectId + ":" + message;
-      response.setMessage(this.message);
+      if (_message.length() > 0)
+        _message += ",";
+      _message += projectId + ":" + message;
+      response.setMessage(_message);
       return true;
     }
     else
@@ -80,7 +80,7 @@ public class ComponentResult {
   public boolean addSignal(String projectId, int signal) throws PluginModelException, PluginUserException  {
     if (requestToken(projectId)) {
       response.addAttachment(projectId + SIGNAL_SUFFIX, Integer.toString(signal));
-      if (signal != 0) this.signal = signal;
+      if (signal != 0) _signal = signal;
       return true;
     } else return false;
   }

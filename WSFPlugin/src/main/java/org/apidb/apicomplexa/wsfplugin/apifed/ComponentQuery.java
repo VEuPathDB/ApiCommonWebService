@@ -78,9 +78,9 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
       }
 
       long end = System.currentTimeMillis();
-      // misleading.. always 0, check why:
-			//  logger.info("Thread (" + url + ") has returned " + rowCount + " results, " + attachmentCount +
-			//     " attachments, in " + ((end - start) / 1000.0) + " seconds.");
+      // TODO: misleading.. always 0, check why, then reset level to info
+      logger.trace("Thread (" + url + ") has returned " + rowCount + " results, " + attachmentCount +
+          " attachments, in " + ((end - start) / 1000.0) + " seconds.");
     }
     catch (Exception ex) {
       logger.error("Error occurred related to " + url, ex);

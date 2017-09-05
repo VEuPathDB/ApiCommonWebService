@@ -131,7 +131,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     List<String> command = makeCommandToCreateBashScript(jobDir, params, organismDir);
     //String[] array = new String[command.size()];
     logger.info("running command " + command.toString() + "with commandName" + commandName);
-    runCommandToCreateBashScript(command, commandName);
+    runCommandToCreateBashScript(command);
 
     // invoke the command, and set default 2 min as timeout limit
     long start = System.currentTimeMillis();
@@ -263,7 +263,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     
   protected abstract List<String> makeCommandToCreateBashScript(File jobDir, Map<String, String> params, File organismDir) throws PluginUserException, PluginModelException ;
 
-  protected void runCommandToCreateBashScript( List<String> command, String bashScriptFileName) throws PluginModelException  {
+  protected void runCommandToCreateBashScript( List<String> command) throws PluginModelException  {
     String gusBin = GusHome.getGusHome() + "/bin";
 
     String[] array = new String[command.size()];

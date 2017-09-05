@@ -266,7 +266,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
       // compose the final sql by comparing two regions with span
       // operation.
-      String sql = composeSql(request.getProjectId(), operation, tempA, tempB, strand, output, flag);
+      String sql = composeSql(operation, tempA, tempB, strand, output, flag);
 
       logger.debug("SPAN LOGIC SQL:\n" + sql);
 
@@ -347,7 +347,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return new String[] { start, stop };
   }
 
-  private String composeSql(String projectId, String operation, String tempTableA, String tempTableB,
+  private String composeSql(String operation, String tempTableA, String tempTableB,
       String strand, String output, Flag flag) {
     StringBuilder builder = new StringBuilder();
 

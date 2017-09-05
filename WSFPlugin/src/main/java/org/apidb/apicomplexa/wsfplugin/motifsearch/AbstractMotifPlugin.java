@@ -209,8 +209,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
           continue;
         }
 
-        findMatches(response, dsId.trim(), searchPattern,
-            config.getContextLength(), orders);
+        findMatches(response, dsId.trim(), searchPattern, orders);
       }
       return 0;
     } catch (Exception ex) {
@@ -260,8 +259,8 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   }
 
   private void findMatches(PluginResponse response, String datasetID,
-      Pattern searchPattern, int contextLength, 
-      Map<String, Integer> orders) throws IOException, PluginModelException, PluginUserException {
+      Pattern searchPattern, Map<String, Integer> orders)
+          throws IOException, PluginModelException, PluginUserException {
 
     File datasetFile = openDataFile(datasetID);
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));

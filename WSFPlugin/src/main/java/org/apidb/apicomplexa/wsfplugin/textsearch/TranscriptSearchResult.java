@@ -11,6 +11,7 @@ public class TranscriptSearchResult extends SearchResult {
     this.geneSourceId = geneSourceId;
   }
 
+  @Override
   public String getGeneSourceId() {
     return geneSourceId;
     }

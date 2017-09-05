@@ -1,5 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
+import static org.gusdb.fgputil.FormatUtil.NL;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -91,13 +93,12 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
       }
       else {
         DataSource dataSource = wdkModel.getAppDb().getDataSource();
-        String newline = System.lineSeparator();
 
         String organism = removeSingleQuotes(params.get(PARAM_ORGANISM));
 
         // can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
-        String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + newline +
-            "from apidbtuning.geneattributes g " + newline + "where g.source_id is not null" + newline +
+        String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + NL +
+            "from apidbtuning.geneattributes g " + NL + "where g.source_id is not null" + NL +
             " and g.organism = '" + organism + "'";
 
         ResultSet rs = null;

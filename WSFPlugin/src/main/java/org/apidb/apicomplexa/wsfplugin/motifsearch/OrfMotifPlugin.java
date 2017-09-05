@@ -12,11 +12,9 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
 public class OrfMotifPlugin extends AAMotifPlugin {
 
   // let's store files in same directory
-  private static final String FIELD_REGEX = "OrfDeflineRegex";
-
-  private static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s]+)";
+  private static final String CUSTOM_FIELD_REGEX = "OrfDeflineRegex";
 
   public OrfMotifPlugin() {
-    super(FIELD_REGEX, DEFAULT_REGEX);
+    super(CUSTOM_FIELD_REGEX, DEFAULT_REGEX);
   }
 }
