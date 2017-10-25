@@ -179,27 +179,24 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
     catch (WdkUserException ex) {
       logger.info("WdkUserException in execute()" + ex.toString());
-      // String msg = ex.toString();
-      String msg = ex.formatErrors();
+      String msg = ex.toString();
       logger.info("Message = " + msg);
-      // if(msg.matches("Invalid value"){}
-      if (msg.indexOf("Please choose value(s) for parameter") != -1) {
+      if (msg.contains("Please choose value(s) for parameter")) {
         resultSize = 0;
       }
       else if (msg.contains("No value supplied for param")) {
         resultSize = 0;
-        // isolate query on crypto/plasmo with only param values for
-        // plasmo
+        // isolate query on crypto/plasmo with only param values for plasmo
       }
       else if (msg.contains("does not exist")) {
         resultSize = 0;
       }
-      else if (msg.indexOf("does not contain") != -1) {
+      else if (msg.contains("does not contain")) {
         resultSize = -2; // query set or query doesn't exist
         // } else if (msg.indexOf("encountered an invalid term") != -1) {
         // resultSize = 0; // parameter value relates to a different comp site
       }
-      else if (msg.indexOf("does not include") != -1) {
+      else if (msg.contains("does not include")) {
         resultSize = -2; // query set or query doesn't exist
       }
       else if (msg.contains("datasets value '' has an error: Missing the value")) {
