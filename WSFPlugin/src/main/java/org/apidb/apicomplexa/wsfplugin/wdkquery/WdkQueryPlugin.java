@@ -65,41 +65,21 @@ public class WdkQueryPlugin extends AbstractPlugin {
     super();
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
-   */
   @Override
   public String[] getRequiredParameterNames() {
     return new String[] {};
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getColumns()
-   */
   @Override
   public String[] getColumns() {
     return new String[] {};
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
   public void validateParameters(PluginRequest request) {
     // do nothing in this plugin
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
-   */
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
 
@@ -170,7 +150,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, true, 0, context);
+      QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, 0, context);
       try (ResultList resultList = queryInstance.getResults()) {
         logger.info("Results set was filled");
         resultSize = writeQueryResults(response, resultList, columnOrders);
@@ -302,7 +282,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       if (params.containsKey(key)) {
         Param param = params.get(key);
         if (param instanceof FilterParam) {
-          // do nothing, will use the value as is.
+          // do nothing, will use the value as is
         } else if (param instanceof AbstractEnumParam) {
           String valList = value;
           AbstractEnumParam abParam = (AbstractEnumParam) param;
