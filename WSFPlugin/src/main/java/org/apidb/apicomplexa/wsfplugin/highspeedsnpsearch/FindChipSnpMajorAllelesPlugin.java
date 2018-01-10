@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -16,12 +17,12 @@ import org.gusdb.wsf.plugin.PluginUserException;
 public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST_A = "ref_samples_filter_metadata";
+  public static final String PARAM_STRAIN_FILTER_A = "ref_samples_filter_metadata";
   public static final String PARAM_ASSAY_TYPE = "snp_assay_type";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "comp_samples_filter_metadata";
+  public static final String PARAM_STRAIN_FILTER_B = "comp_samples_filter_metadata";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
@@ -56,8 +57,8 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
   @Override
     public String[] getRequiredParameterNames() {
       return new String[] { PARAM_ORGANISM,PARAM_WEBSVCPATH,PARAM_ASSAY_TYPE,
-			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
-			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
+			  PARAM_STRAIN_FILTER_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
+			  PARAM_STRAIN_FILTER_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
   }
 
   /*
@@ -106,8 +107,10 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
     String gusBin = GusHome.getGusHome() + "/bin";
 
     // set A
-    String strainsA = params.get(PARAM_STRAIN_LIST_A);
-    if (strainsA == null) throw new PluginUserException("Strains param is empty");
+    String strainsSql_A = params.get(PARAM_STRAIN_FILTER_A);
+    if (strainsSql_A == null) throw new PluginUserException("Strains A param is empty");
+    String strainsA = getParamValueFromSql(strainsSql_A, "FindChipSnpMajorAllelesPlugin_A", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
+
     int strainsCountA = writeStrainsFile(jobDir, strainsA, "strainsA");
     String readFreqPercentA = params.get(PARAM_READ_FREQ_PERCENT_A);
     File readFreqDirA = new File(organismDir, "readFreq" + readFreqPercentA);
@@ -119,8 +122,10 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
     if (unknownsThresholdA > (strainsCountA - 1)) unknownsThresholdA = strainsCountA - 1;  // must be at least 1 known
 
     // set B
-    String strainsB = params.get(PARAM_STRAIN_LIST_B);
-    if (strainsB == null) throw new PluginUserException("Strains param is empty");
+    String strainsSql_B = params.get(PARAM_STRAIN_FILTER_B);
+    if (strainsSql_B == null) throw new PluginUserException("Strains B param is empty");
+    String strainsB = getParamValueFromSql(strainsSql_B, "FindMajorAllelesPlugin_B", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
+
     int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsB");
     String readFreqPercentB = params.get(PARAM_READ_FREQ_PERCENT_B);
     File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);

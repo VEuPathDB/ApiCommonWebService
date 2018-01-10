@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.runtime.GusHome;
@@ -21,11 +22,11 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
   private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
   protected String getPARAM_STRAIN_LIST() {
-    return this.PARAM_STRAIN_LIST;
+    return this.PARAM_STRAIN_FILTER;
   }
   
   // required parameter definition
-  private String PARAM_STRAIN_LIST = getPARAM_STRAIN_LIST();
+  private String PARAM_STRAIN_FILTER = getPARAM_STRAIN_LIST();
 
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
@@ -47,7 +48,7 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
    */
   @Override
   public String[] getRequiredParameterNames() {
-    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_LIST, PARAM_MIN_PERCENT_KNOWNS,
+    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_FILTER, PARAM_MIN_PERCENT_KNOWNS,
         PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH };
     String[] extraParameters = getExtraParamNames();
     return ArrayUtil.concatenate(baseParameters, extraParameters);
@@ -116,10 +117,13 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
     List<String> command = new ArrayList<String>();
     String gusBin = GusHome.getGusHome() + "/bin";
 
-    String strains = params.get(PARAM_STRAIN_LIST);
-    if (strains == null)
+    String strainsSql = params.get(PARAM_STRAIN_FILTER);
+ 
+    if (strainsSql == null)
       throw new PluginUserException("Strains param is empty");
-    int strainsCount = writeStrainsFile(jobDir, strains, "strains");
+    String strainsListString = getParamValueFromSql(strainsSql, "FindPolymorphismsPlugin", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
+;
+    int strainsCount = writeStrainsFile(jobDir, strainsListString, "strains");
     String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
     File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
     if (!readFreqDir.exists())
