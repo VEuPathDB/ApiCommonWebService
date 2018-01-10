@@ -16,18 +16,13 @@ import org.apache.log4j.Logger;
 /**
  * @author steve
  */
-public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractPlugin {
+public abstract class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(FindPolymorphismsPlugin.class);
 
-  protected String getPARAM_STRAIN_LIST() {
-    return this.PARAM_STRAIN_FILTER;
-  }
+  protected abstract String getStrainFilterParamName() ;
   
-  // required parameter definition
-  private String PARAM_STRAIN_FILTER = getPARAM_STRAIN_LIST();
-
   public static final String PARAM_MIN_PERCENT_KNOWNS = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_POLYMORPHISMS = "MinPercentMinorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT = "ReadFrequencyPercent";
@@ -48,7 +43,7 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
    */
   @Override
   public String[] getRequiredParameterNames() {
-    String[] baseParameters = { PARAM_ORGANISM, PARAM_STRAIN_FILTER, PARAM_MIN_PERCENT_KNOWNS,
+    String[] baseParameters = { PARAM_ORGANISM, getStrainFilterParamName(), PARAM_MIN_PERCENT_KNOWNS,
         PARAM_MIN_PERCENT_POLYMORPHISMS, PARAM_READ_FREQ_PERCENT, PARAM_WEBSVCPATH };
     String[] extraParameters = getExtraParamNames();
     return ArrayUtil.concatenate(baseParameters, extraParameters);
@@ -117,7 +112,7 @@ public class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearchAbstractP
     List<String> command = new ArrayList<String>();
     String gusBin = GusHome.getGusHome() + "/bin";
 
-    String strainsSql = params.get(PARAM_STRAIN_FILTER);
+    String strainsSql = params.get(getStrainFilterParamName());
  
     if (strainsSql == null)
       throw new PluginUserException("Strains param is empty");

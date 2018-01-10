@@ -44,7 +44,7 @@ public class FindChipPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin
   }
 
   @Override
-      protected String getPARAM_STRAIN_LIST() {
+      protected String getStrainFilterParamName() {
       return "ref_samples_filter_metadata";
   }
 
