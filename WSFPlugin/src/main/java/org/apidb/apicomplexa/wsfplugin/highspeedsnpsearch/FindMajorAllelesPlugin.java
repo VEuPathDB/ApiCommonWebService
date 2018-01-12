@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -16,11 +17,11 @@ import org.gusdb.wsf.plugin.PluginUserException;
 public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
 
   // required parameter definition
-  public static final String PARAM_STRAIN_LIST_A = "ngsSnp_strain_meta_a";
+  public static final String PARAM_STRAIN_FILTER_A = "ngsSnp_strain_meta_a";
   public static final String PARAM_MIN_PERCENT_KNOWNS_A = "MinPercentIsolateCalls";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_A = "MinPercentMajorAlleles";
   public static final String PARAM_READ_FREQ_PERCENT_A = "ReadFrequencyPercent";
-  public static final String PARAM_STRAIN_LIST_B = "ngsSnp_strain_meta_m";
+  public static final String PARAM_STRAIN_FILTER_B = "ngsSnp_strain_meta_m";
   public static final String PARAM_MIN_PERCENT_KNOWNS_B = "MinPercentIsolateCallsTwo";
   public static final String PARAM_MIN_PERCENT_MAJOR_ALLELES_B = "MinPercentMajorAllelesTwo";
   public static final String PARAM_READ_FREQ_PERCENT_B = "ReadFrequencyPercentTwo";
@@ -50,8 +51,8 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM,PARAM_WEBSVCPATH,
-			  PARAM_STRAIN_LIST_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
-			  PARAM_STRAIN_LIST_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
+			  PARAM_STRAIN_FILTER_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
+			  PARAM_STRAIN_FILTER_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
   }
 
   /*
@@ -94,7 +95,10 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     String gusBin = GusHome.getGusHome() + "/bin";
 
     // set A
-    String strainsA = params.get(PARAM_STRAIN_LIST_A);
+    String strainsSql_A = params.get(PARAM_STRAIN_FILTER_A);
+    if (strainsSql_A == null) throw new PluginUserException("Strains A param is empty");
+    String strainsA = getParamValueFromSql(strainsSql_A, "FindMajorAllelesPlugin_A", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
+
     if (strainsA == null) throw new PluginUserException("Strains param is empty");
     int strainsCountA = writeStrainsFile(jobDir, strainsA, "strainsA");
     String readFreqPercentA = params.get(PARAM_READ_FREQ_PERCENT_A);
@@ -107,8 +111,10 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
     if (unknownsThresholdA > (strainsCountA - 1)) unknownsThresholdA = strainsCountA - 1;  // must be at least 1 known
 
     // set B
-    String strainsB = params.get(PARAM_STRAIN_LIST_B);
-    if (strainsB == null) throw new PluginUserException("Strains param is empty");
+    String strainsSql_B = params.get(PARAM_STRAIN_FILTER_B);
+    if (strainsSql_B == null) throw new PluginUserException("Strains B param is empty");
+    String strainsB = getParamValueFromSql(strainsSql_B, "FindMajorAllelesPlugin_B", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
+
     int strainsCountB = writeStrainsFile(jobDir, strainsB, "strainsB");
     String readFreqPercentB = params.get(PARAM_READ_FREQ_PERCENT_B);
     File readFreqDirB = new File(organismDir, "readFreq" + readFreqPercentB);

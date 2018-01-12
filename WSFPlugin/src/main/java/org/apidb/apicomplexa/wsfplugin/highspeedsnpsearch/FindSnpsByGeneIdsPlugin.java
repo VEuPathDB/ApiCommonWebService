@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.gusdb.fgputil.db.SqlUtils;
+import org.gusdb.fgputil.db.slowquery.QueryLogger;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginUserException;
@@ -72,6 +73,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
         ResultSet rs = null;
 
         try {
+          long startTime = System.currentTimeMillis();
           rs = SqlUtils.executeQuery(dataSource, sql, "FindSnpsByGeneIdsPlugin");
 
           while (rs.next()) {
@@ -81,6 +83,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
             bw.write(sourceId + "\t" + start + "\t" + end);
             bw.newLine();
           }
+          QueryLogger.logEndStatementExecution(sql, "ChipSnpsByGeneIdsPlugin", startTime);
 
         }
         catch (Exception ex) {

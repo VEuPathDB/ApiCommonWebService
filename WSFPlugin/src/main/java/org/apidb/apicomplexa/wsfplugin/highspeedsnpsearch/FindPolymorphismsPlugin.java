@@ -39,7 +39,7 @@ public class FindPolymorphismsPlugin extends FindPolymorphismsAbstractPlugin {
   }
 
   @Override
-      protected String getPARAM_STRAIN_LIST() {
+      protected String getStrainFilterParamName() {
       return "ngsSnp_strain_meta";
   }
 
