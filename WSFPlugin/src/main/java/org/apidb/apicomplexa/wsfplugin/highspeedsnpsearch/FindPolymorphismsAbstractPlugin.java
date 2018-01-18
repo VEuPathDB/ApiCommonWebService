@@ -117,7 +117,6 @@ public abstract class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearch
     if (strainsSql == null)
       throw new PluginUserException("Strains param is empty");
     String strainsListString = getParamValueFromSql(strainsSql, "FindPolymorphismsPlugin", wdkModel.getAppDb().getDataSource()).stream().collect(Collectors.joining(", "));
-;
     int strainsCount = writeStrainsFile(jobDir, strainsListString, "strains");
     String readFreqPercent = params.get(PARAM_READ_FREQ_PERCENT);
     File readFreqDir = new File(organismDir, "readFreq" + readFreqPercent);
