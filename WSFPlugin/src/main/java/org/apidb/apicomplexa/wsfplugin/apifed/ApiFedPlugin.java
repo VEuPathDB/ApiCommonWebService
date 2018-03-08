@@ -186,12 +186,17 @@ public class ApiFedPlugin extends AbstractPlugin {
   }
 
   private List<ComponentQuery> getComponents(PluginRequest request, Set<String> projects,
-      ComponentResult result) {
+      ComponentResult result) throws PluginModelException {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
-      String url = projectMapper.getWebServiceUrl(projectId);
-      ComponentQuery query = new ComponentQuery(projectId, url, request, result);
-      queries.add(query);
+      try {
+        String url = projectMapper.getWebServiceUrl(projectId);
+        ComponentQuery query = new ComponentQuery(projectId, url, request, result);
+        queries.add(query);
+      }
+      catch (WdkModelException e) {
+        throw new PluginModelException(e);
+      }
     }
     return queries;
   }
