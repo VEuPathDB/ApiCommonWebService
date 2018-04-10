@@ -239,7 +239,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         "    FROM apidb.IsolateDetail wit \n" +
         "    WHERE " + (pureWildcard ? " 1 = 1 " : " CONTAINS(content, ?, 1) > 0 ") + " \n" +
         "      AND wit.field_name in (" + fields + ") \n" +
-        "      AND '" + recordType + "' = 'isolate' \n" +
+        "      AND '" + recordType + "' = 'popset' \n" +
         "  UNION ALL  \n" +
         "    SELECT wit.source_id, replace(replace(replace(wit.field_name, 'CompoundsMetabolicPathways', 'Reactions and Enzymes'), 'PathwaysFromCompounds', 'Pathways'), 'CompoundName', 'Compound Name')  as table_name  \n" +
         "    FROM apidb.CompoundDetail wit \n" +
