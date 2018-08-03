@@ -270,9 +270,9 @@ public class ListComparisonPlugin extends AbstractPlugin {
             if (line.length() == 0) continue;
             String[] parts = line.split("\t");
 
-            if (parts.length != 3)
-                throw new PluginModelException("Invalid output format:\n"
-                        + content);
+            if (parts.length != 2)
+                throw new PluginModelException("Invalid output format -- split into " + parts.length + " parts. Content:\n"
+                        + content + "\n<<END OF CONTENT\n");
 
             String datasetName = parts[0].trim();
             String fdr = parts[1].trim();
