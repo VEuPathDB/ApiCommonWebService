@@ -280,7 +280,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
 
-            String[] row = new String[7];
+            String[] row = new String[2];
             row[columns.get(COLUMN_DATASET_ID)] = datasetName;
             row[columns.get(COLUMN_FDR)] = fdr;
             response.addRow(row);
