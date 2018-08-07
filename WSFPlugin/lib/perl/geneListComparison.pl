@@ -83,7 +83,7 @@ else {
 my %RNASeqHash;
 my %organismHash;
 my $sql = <<EOSQL;
-select distinct organism || '\t' || dataset_name 
+select distinct organism || '\t' || dataset_presenter_id
     from ApidbTuning.DatasetGeneList 
 EOSQL
     
@@ -180,7 +180,7 @@ foreach my $test (keys %RNASeqHash) {
 #so this is working with the %matchedDatasets 
 foreach my $returnResult (keys %matchedDatasets) {
 #    my $listResults = $matchedDatasets{$returnResult};
-    print $returnResult."\t".$matchedDatasets{$returnResult}."\n";
+    print $returnResult."\t".$matchedDatasets{$returnResult}."\t100\n";  ##note, need to replace 100 with #valid ids for this organism
 }
 
 
@@ -239,7 +239,7 @@ sub createRankedList {
     my $sql = <<EOSQL;
     select distinct source_id || '\t' ||  fdiff_abs 
 from  ApidbTuning.DatasetGeneList  
-where dataset_name = '$datasetToCheck'
+where dataset_presenter_id = '$datasetToCheck'
 EOSQL
     
 my $sth = $dbh->prepare($sql);
