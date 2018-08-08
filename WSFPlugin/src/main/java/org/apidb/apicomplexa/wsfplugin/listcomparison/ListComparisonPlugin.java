@@ -33,7 +33,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
     // required parameter definition
     public static final String PARAM_DS_GENE_IDS = "ds_gene_ids";
     public static final String PARAM_ORTHOLOGYFLAG = "orthologyFlag";
-    public static final String PARAM_FDR = "FDR";
+    public static final String PARAM_FDR = "threshold";
     // required result column definition
     public static final String COLUMN_DATASET_ID = "dataset_id";
     public static final String COLUMN_FDR = "percent_count";
@@ -262,8 +262,8 @@ public class ListComparisonPlugin extends AbstractPlugin {
                 new ByteArrayInputStream(content.getBytes())));
 
         NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMaximumFractionDigits(4);
-        format.setMinimumFractionDigits(4);
+        format.setMaximumFractionDigits(8);
+        //        format.setMinimumFractionDigits(4);
 
         String line;
         while ((line = in.readLine()) != null) {
