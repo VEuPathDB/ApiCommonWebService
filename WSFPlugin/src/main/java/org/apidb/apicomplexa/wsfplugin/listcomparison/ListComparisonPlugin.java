@@ -33,10 +33,11 @@ public class ListComparisonPlugin extends AbstractPlugin {
     // required parameter definition
     public static final String PARAM_DS_GENE_IDS = "ds_gene_ids";
     public static final String PARAM_ORTHOLOGYFLAG = "orthologyFlag";
-    public static final String PARAM_FDR = "FDR";
+    public static final String PARAM_FDR = "threshold";
     // required result column definition
     public static final String COLUMN_DATASET_ID = "dataset_id";
-    public static final String COLUMN_FDR = "fdr";
+    public static final String COLUMN_FDR = "percent_count";
+    public static final String COLUMN_HIT = "hit_count";
     //    public static final String COLUMN_PROJECT_ID = "ProjectId";
 
     // field definition
@@ -115,7 +116,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getColumns() {
-        return new String[] { COLUMN_DATASET_ID, COLUMN_FDR};
+        return new String[] { COLUMN_DATASET_ID, COLUMN_FDR, COLUMN_HIT};
     }
 
     /*
@@ -261,8 +262,8 @@ public class ListComparisonPlugin extends AbstractPlugin {
                 new ByteArrayInputStream(content.getBytes())));
 
         NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMaximumFractionDigits(4);
-        format.setMinimumFractionDigits(4);
+        format.setMaximumFractionDigits(8);
+        //        format.setMinimumFractionDigits(4);
 
         String line;
         while ((line = in.readLine()) != null) {
@@ -271,18 +272,20 @@ public class ListComparisonPlugin extends AbstractPlugin {
             String[] parts = line.split("\t");
 
             if (parts.length != 3)
-                throw new PluginModelException("Invalid output format:\n"
-                        + content);
+                throw new PluginModelException("Invalid output format -- split into " + parts.length + " parts. Content:\n"
+                        + content + "\n<<END OF CONTENT\n");
 
-            String datasetName = parts[0].trim();
+            String datasetId = parts[0].trim();
             String fdr = parts[1].trim();
+            String valid_ids = parts[2].trim();
 
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
 
-            String[] row = new String[7];
-            row[columns.get(COLUMN_DATASET_ID)] = datasetName;
+            String[] row = new String[3];
+            row[columns.get(COLUMN_DATASET_ID)] = datasetId;
             row[columns.get(COLUMN_FDR)] = fdr;
+            row[columns.get(COLUMN_HIT)] = valid_ids;
             response.addRow(row);
         }
         in.close();
