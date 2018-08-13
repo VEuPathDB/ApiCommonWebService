@@ -17,7 +17,7 @@ use Data::Dumper;
 # ARGV[3] - db_connection
 # ARGV[4] - db_login
 # ARGV[5] - db_password
-#print STDERR join("\n", @_) . "\n";
+#print STDERR "'" . join("' '", @_) . "'\n";
 
 my $idSql = $ARGV[0];
 
@@ -29,6 +29,8 @@ my $useOrthology = $ARGV[1];
 my $dbConnection = $ARGV[3];
 my $dbLogin = $ARGV[4];
 my $dbPassword = $ARGV[5];
+
+#print "geneListComparison \'$idSql\' $useOrthology $FDR $dbConnection $dbLogin $dbPassword\n";
 
 #print STDERR "db connection $dbConnection db login $dbLogin db Password $dbPassword\n";
 
@@ -162,9 +164,9 @@ foreach my $test (keys %RNASeqHash) {
 	my $match = &runGSEA($tempRankFile,$tempConFile);
 	my @results = @$match;
 	my $fdrToCheck = $results[3];
-	print STDERR "fdr to check is $fdrToCheck\n";
+#	print STDERR "fdr to check is $fdrToCheck\n";
 	if ($fdrToCheck <= $FDR) {
-
+#          print "Checking FDR: '$fdrToCheck' <= '$FDR'\n";
 	    $matchedDatasets{$datasetToCheck}=$fdrToCheck;
 	}
 	else {
@@ -178,9 +180,10 @@ foreach my $test (keys %RNASeqHash) {
 #results I want are probably the dataset that hits the threshold, the FDR, nominal pvalue - needs warning 
 
 #so this is working with the %matchedDatasets 
-foreach my $returnResult (keys %matchedDatasets) {
+foreach my $returnResult (sort{$matchedDatasets{$a} <=> $matchedDatasets{$b}} keys %matchedDatasets) {
 #    my $listResults = $matchedDatasets{$returnResult};
     print $returnResult."\t".$matchedDatasets{$returnResult}."\t100\n";  ##note, need to replace 100 with #valid ids for this organism
+#    print "testing\t".$returnResult."\t".$matchedDatasets{$returnResult}."\t100\n";  ##note, need to replace 100 with #valid ids for this organism
 }
 
 
@@ -268,18 +271,21 @@ return %List;
 sub runGSEA {
     my ($rank,$conList) = @_;
     #where will GSEA run from? I need to get this installed too.
+    system("chmod 644 $rank");
+    system("chmod 644 $conList");
     use File::Temp qw/ tempfile  tempdir/;
 #    print "files are $rank and $conList\n";
     my $tempDir = tempdir();
     chdir $tempDir;
-    my $cmd = "java -Duser.home=/var/www/Common/tmp/wdkStepAnalysisJobs/apicommdevn -cp /var/www/brunkb.plasmodb.org/GSEA/gsea2-2.2.4.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme weighted -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 500 -set_min 5 -collapse false -out $tempDir";
+# TODO: need to clean up command below.  Duser.home should probably be /tmp as don't think we need to save it.  Once jar file is installed needs to be changed .. this will only work on ash currently.
+    my $cmd = "java -Duser.home=/tmp -cp /usr/local/jar/gsea2-2.2.4.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme weighted -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 500 -set_min 5 -collapse false -out $tempDir";
 #    print "here it is".$ENV{PWD};
 #    my $testing = `cat $conList`;
 #    print $testing."\n\n";
 #    my $test2 = `cat $rank`;
 #    print "rank is $test2\n";
     my ($EnrichmentScore,$NEnrichmentScore,$NomPValue,$FDRQValue,$FWERQval,$leadingEdge,$tag,$list,$signal);
-#    print STDERR "command being used is $cmd\n\n";
+#    print "command being used is:\n $cmd\n\n";
 #    system($cmd);
     system("$cmd > /dev/null 2>&1");
     opendir(DIR, $tempDir) || die("Cannot open $tempDir !\n");
@@ -328,7 +334,7 @@ sub runGSEA {
     #    next;
     #}
     my @finalResults = ($EnrichmentScore,$NEnrichmentScore,$NomPValue,$FDRQValue,$FWERQval,$tag,$list,$signal);
-	print STDERR  " RESULTS $EnrichmentScore\t$NEnrichmentScore\t$NomPValue\t$FDRQValue\t$FWERQval\t$tag\t$list\t$signal";
+#	print " RESULTS $EnrichmentScore\t$NEnrichmentScore\t$NomPValue\t$FDRQValue\t$FWERQval\t$tag\t$list\t$signal\n";
     return \@finalResults;
     
     

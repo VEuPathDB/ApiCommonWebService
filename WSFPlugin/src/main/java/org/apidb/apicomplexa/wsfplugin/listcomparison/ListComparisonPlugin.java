@@ -261,9 +261,9 @@ public class ListComparisonPlugin extends AbstractPlugin {
         BufferedReader in = new BufferedReader(new InputStreamReader(
                 new ByteArrayInputStream(content.getBytes())));
 
-        NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMaximumFractionDigits(8);
-        //        format.setMinimumFractionDigits(4);
+        //NumberFormat format = NumberFormat.getNumberInstance();
+        //format.setMaximumFractionDigits(4);
+        //format.setMinimumFractionDigits(4);
 
         String line;
         while ((line = in.readLine()) != null) {
