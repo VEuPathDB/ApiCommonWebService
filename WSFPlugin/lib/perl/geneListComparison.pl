@@ -24,13 +24,14 @@ my $idSql = $ARGV[0];
 
 my $FDR = $ARGV[2];
 my $useOrthology = $ARGV[1];
+$useOrthology =~ s/\'//g;
 
 # read the db connection information
 my $dbConnection = $ARGV[3];
 my $dbLogin = $ARGV[4];
 my $dbPassword = $ARGV[5];
 
-#print "geneListComparison \'$idSql\' $useOrthology $FDR $dbConnection $dbLogin $dbPassword\n";
+#print "geneListComparison \'$idSql\' useOrthology='$useOrthology' FDR='$FDR' $dbConnection $dbLogin $dbPassword\n";
 
 #print STDERR "db connection $dbConnection db login $dbLogin db Password $dbPassword\n";
 
