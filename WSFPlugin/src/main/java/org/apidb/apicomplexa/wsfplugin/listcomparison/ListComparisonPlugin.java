@@ -1,13 +1,9 @@
-/**
- * 
- */
 package org.apidb.apicomplexa.wsfplugin.listcomparison;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -128,7 +124,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
     public void validateParameters(PluginRequest request)
             throws PluginUserException {
         // validate orthologs JP THIS ISNT WORKING AS PARAM IS COMING THROUGH AS 'no' not no  
-        Map<String, String> params = request.getParams();
+        //Map<String, String> params = request.getParams();
         /** String orthologs = params.get(PARAM_ORTHOLOGYFLAG);
         if (!orthologs.equalsIgnoreCase("yes")
                 && !orthologs.equalsIgnoreCase("no"))
@@ -208,9 +204,8 @@ public class ListComparisonPlugin extends AbstractPlugin {
                         + output);
 
             // prepare the result
-            String queryDatasetName = params.get(PARAM_DS_GENE_IDS);
-            prepareResult(response, output.toString(),
-                    request.getOrderedColumns(), queryDatasetName);
+            //String queryDatasetName = params.get(PARAM_DS_GENE_IDS);
+            prepareResult(response, output.toString(), request.getOrderedColumns());
 
             return signal;
         } catch (IOException ex) {
@@ -244,8 +239,8 @@ public class ListComparisonPlugin extends AbstractPlugin {
         return array;
     }
 
-    private void prepareResult(PluginResponse response, String content, String[] orderedColumns,
-            String queryDatasetName) throws IOException, PluginModelException, PluginUserException {
+    private void prepareResult(PluginResponse response, String content, String[] orderedColumns)
+            throws IOException, PluginModelException, PluginUserException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
