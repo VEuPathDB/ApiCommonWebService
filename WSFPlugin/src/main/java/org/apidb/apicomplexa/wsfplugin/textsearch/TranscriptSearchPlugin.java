@@ -229,7 +229,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     String sql = new String(
         "select source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
-            + "from (  SELECT distinct min(trans.source_id) as source_id, b.gene_source_id, regexp_replace(external_database_name, '_RSRC$', '') as table_name \n"
+            + "from (  SELECT distinct min(trans.source_id) as source_id, b.gene_source_id, replace(external_database_name, '_RSRC', '') as table_name \n"
             + "        FROM ApidbTuning.Blastp b, ApidbTuning.TranscriptAttributes trans  \n"
             + "        WHERE ((CONTAINS(b.description, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
              + "          AND 'Blastp' in (" + fields + ") \n"
