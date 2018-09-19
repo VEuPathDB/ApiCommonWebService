@@ -154,13 +154,16 @@ foreach my $test (keys %RNASeqHash) {
 	}
 #	die "KILLED IT";
 	my ($tempRankFh, $tempRankFile) = tempfile(SUFFIX => '.rnk');
-	my @keys = sort { $rank{$a} <=> $rank{$b} } keys(%rank);
-	
+	my @keys = sort { $rank{$b} <=> $rank{$a} } keys(%rank);
+	my $ctRank = 0;
 	foreach my $element (@keys) {
+          $ctRank++;
 #need to create a sorted file
 #	print STDERR "element is $element\n";
 #	print STDERR "temp file is $tempRankFile\n";
 	    print $tempRankFh $element."\t".$rank{$element}."\n";
+#	    print $tempRankFh $element."\t$ctRank\n";
+#          last if $ctRank >= 1000 || $rank{$element} <= 5;  ##note that constraining this in the query
 	}
 	my $match = &runGSEA($tempRankFile,$tempConFile);
 	my @results = @$match;
@@ -241,25 +244,22 @@ sub createRankedList {
     my ($dbh, $datasetToCheck) = @_;
     
     my $sql = <<EOSQL;
-    select distinct source_id || '\t' ||  fdiff_abs 
+select * from (
+select distinct source_id, fdiff_abs
 from  ApidbTuning.DatasetGeneList  
 where dataset_presenter_id = '$datasetToCheck'
+and fdiff_abs >= 5
+order by fdiff_abs desc
+)where rownum <= 1500
 EOSQL
     
 my $sth = $dbh->prepare($sql);
     
     $sth->execute();
-    my $line;
-    $sth->bind_columns(undef, \$line);
-    
     my %List;
-    
-    while( $sth->fetch() ) {
-	my @temps = split "\t", $line;
-	my $sourceId = $temps[0];
-	my $abs_FC = $temps[1];
+    while( my($sourceId,$abs_FC) = $sth->fetchrow_array() ) {
 	$List{$sourceId} = $abs_FC;
-#	print STDERR "source id $sourceId absFC $abs_FC\n";
+#	print "source id $sourceId absFC $abs_FC\n";
     }
     $sth->finish();
 #    my ($tempRankFh, $tempRankFile) = tempfile();
@@ -279,7 +279,7 @@ sub runGSEA {
     my $tempDir = tempdir();
     chdir $tempDir;
 # TODO: need to clean up command below.  Duser.home should probably be /tmp as don't think we need to save it.  Once jar file is installed needs to be changed .. this will only work on ash currently.
-    my $cmd = "java -Duser.home=/tmp -cp /usr/local/jar/gsea2-2.2.4.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme weighted -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 500 -set_min 5 -collapse false -out $tempDir";
+    my $cmd = "java -Duser.home=/tmp -cp /usr/local/jar/gsea-3.0.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme weighted -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 500 -set_min 5 -collapse false -out $tempDir";
 #    print "here it is".$ENV{PWD};
 #    my $testing = `cat $conList`;
 #    print $testing."\n\n";
