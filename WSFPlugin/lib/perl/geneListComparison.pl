@@ -248,9 +248,9 @@ select * from (
 select distinct source_id, fdiff_abs
 from  ApidbTuning.DatasetGeneList  
 where dataset_presenter_id = '$datasetToCheck'
-and fdiff_abs >= 5
+-- and fdiff_abs >= 5
 order by fdiff_abs desc
-)where rownum <= 1500
+) --where rownum <= 1500
 EOSQL
     
 my $sth = $dbh->prepare($sql);
