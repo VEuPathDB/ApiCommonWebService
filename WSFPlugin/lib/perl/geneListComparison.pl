@@ -170,6 +170,7 @@ foreach my $test (keys %RNASeqHash) {
 	my $fdrToCheck = $results[3];
 #	print STDERR "fdr to check is $fdrToCheck\n";
 	if ($fdrToCheck <= $FDR) {
+          next unless $fdrToCheck;
 #          print "Checking FDR: '$fdrToCheck' <= '$FDR'\n";
 	    $matchedDatasets{$datasetToCheck}=$fdrToCheck;
 	}
@@ -278,8 +279,9 @@ sub runGSEA {
 #    print "files are $rank and $conList\n";
     my $tempDir = tempdir();
     chdir $tempDir;
+
 # TODO: need to clean up command below.  Duser.home should probably be /tmp as don't think we need to save it.  Once jar file is installed needs to be changed .. this will only work on ash currently.
-    my $cmd = "java -Duser.home=/tmp -cp /usr/local/jar/gsea-3.0.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme weighted -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 500 -set_min 5 -collapse false -out $tempDir";
+    my $cmd = "java -Duser.home=/tmp -cp /usr/local/jar/gsea-3.0.jar -Xmx1080m  xtools.gsea.GseaPreranked -gmx $conList -rnk $rank  -zip_report false -gui false -norm meandiv -nperm 1000 -scoring_scheme classic -make_sets false -plot_top_x 0 -rnd_seed timestamp -set_max 5000 -set_min 5 -collapse false -out $tempDir";
 #    print "here it is".$ENV{PWD};
 #    my $testing = `cat $conList`;
 #    print $testing."\n\n";
