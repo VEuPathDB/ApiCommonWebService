@@ -255,27 +255,6 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     return sql;
   }
 
-  // private PreparedStatement getValidationQuery() throws WsfServiceException {
-  // String sql = new String("select attrs.source_id, attrs.project_id \n"
-  // + "from ApidbTuning.GeneId alias, ApidbTuning.GeneAttributes attrs \n"
-  // + "where alias.Id = ? \n"
-  // + " and alias.gene = attrs.source_id \n"
-  // + " and alias.unique_mapping = 1 \n"
-  // + " and attrs.project_id = ? \n"
-  // + " and ? like '%' || attrs.organism || '%'");
-  //
-  // WdkModelBean wdkModel = (WdkModelBean) this.context
-  // .get(CConstants.WDK_MODEL_KEY);
-  // DBPlatform platform = wdkModel.getModel().getQueryPlatform();
-  // DataSource dataSource = platform.getDataSource();
-  //
-  // try {
-  // return SqlUtils.getPreparedStatement(dataSource, sql);
-  // } catch (SQLException ex) {
-  // throw new WsfServiceException(ex);
-  // }
-  // }
-
   private Map<String, SearchResult> validateRecords(String projectId,
       Map<String, SearchResult> commentResults, String organisms) throws PluginModelException {
 
