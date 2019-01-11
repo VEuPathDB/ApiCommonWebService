@@ -16,7 +16,12 @@
     <dependency>
       <groupId>org.eupathdb</groupId>
       <artifactId>api-common-website-model</artifactId>
-    </dependency> 
+    </dependency>
+
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>wdk-website-controller</artifactId>
+    </dependency>
   
     <dependency>
       <groupId>org.eupathdb</groupId>
