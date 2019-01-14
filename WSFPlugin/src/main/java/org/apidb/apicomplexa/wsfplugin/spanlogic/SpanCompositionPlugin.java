@@ -257,7 +257,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
       String userId = request.getContext().get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
+      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
+          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
 
       // create temp tables from caches
       Flag flag = new Flag();
@@ -413,7 +414,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     String cacheSql = "(" + answerValue.getIdSql() + ")";
 
     // get the table or sql that returns the location information
-    String rcName = answerValue.getQuestion().getRecordClass().getFullName();
+    String rcName = answerValue.getAnswerSpec().getQuestion().getRecordClass().getFullName();
     String locTable;
     if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
       locTable = "(SELECT source_id AS feature_source_id, project_id, " +

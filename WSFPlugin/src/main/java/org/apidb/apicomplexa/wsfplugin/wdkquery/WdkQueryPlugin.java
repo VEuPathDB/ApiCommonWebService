@@ -28,7 +28,9 @@ import org.gusdb.wdk.model.query.param.FilterParamNew;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
+import org.gusdb.wdk.model.query.spec.QueryInstanceSpec;
 import org.gusdb.wdk.model.question.Question;
+import org.gusdb.wdk.model.user.StepContainer;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -144,7 +146,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // get the user
       String userId = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
+      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
+          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
       UserBean userBean = new UserBean(user);
 
       // web service call to get param values
@@ -157,11 +160,17 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // check if question is set
       Query query;
       if (questionName != null) {
-        Question question = wdkModel.getQuestion(questionName);
-        query = question.getQuery();
+        query = wdkModel.getQuestion(questionName)
+            .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName))
+            .getQuery();
       }
       else {
         query = (Query) wdkModel.resolveReference(queryName);
+      }
+
+      // if query has answer params, throw; they are not allowed
+      if (query.getAnswerParamCount() > 0) {
+        throw new PluginUserException("This operation cannot be performed on combiner queries such as " + query.getFullName());
       }
 
       // converting from internal values to dependent values
@@ -170,7 +179,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, true, 0, context);
+      QueryInstance<?> queryInstance = Query.makeQueryInstance(QueryInstanceSpec
+          .builder()
+          .putAll(SOParams)
+          .buildRunnable(user, query, StepContainer.emptyContainer()));
       try (ResultList resultList = queryInstance.getResults()) {
         logger.info("Results set was filled");
         resultSize = writeQueryResults(response, resultList, columnOrders);
@@ -228,9 +240,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // get param
     Param param;
     if (questionName != null) {
-      // context question is defined, should get the param from
-      // question
-      Question question = wdkModel.getQuestion(questionName);
+      // context question is defined, should get the param from question
+      Question question = wdkModel.getQuestion(questionName)
+          .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName));
       String partName = paramName.substring(paramName.indexOf(".") + 1);
       param = question.getParamMap().get(partName);
 
