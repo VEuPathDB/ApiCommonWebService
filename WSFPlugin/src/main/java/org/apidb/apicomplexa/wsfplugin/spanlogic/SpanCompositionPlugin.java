@@ -18,11 +18,13 @@ import org.apache.log4j.Logger;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.fgputil.validation.ValidationLevel;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
+import org.gusdb.wdk.model.answer.factory.AnswerValueFactory;
 import org.gusdb.wdk.model.user.StepUtilities;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -408,7 +410,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
-    AnswerValue answerValue = StepUtilities.getStep(user, stepId).getAnswerValue();
+    AnswerValue answerValue = AnswerValueFactory.makeAnswer(
+        StepUtilities.getStep(user, stepId, ValidationLevel.RUNNABLE)
+          .getRunnable().getOrThrow(step -> new WdkModelException(
+            "Step " + stepId + " is not runnable. Validation: " + step.getValidationBundle().toString())));
 
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";

@@ -14,10 +14,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.fgputil.validation.ValidationLevel;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.jspwrap.EnumParamBean;
 import org.gusdb.wdk.model.jspwrap.UserBean;
@@ -29,6 +29,7 @@ import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
 import org.gusdb.wdk.model.query.spec.QueryInstanceSpec;
+import org.gusdb.wdk.model.query.spec.QueryInstanceSpecBuilder.FillStrategy;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.StepContainer;
 import org.gusdb.wdk.model.user.User;
@@ -179,50 +180,57 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance<?> queryInstance = Query.makeQueryInstance(QueryInstanceSpec
+      
+      QueryInstanceSpec qiSpec = QueryInstanceSpec
           .builder()
           .putAll(SOParams)
-          .buildRunnable(user, query, StepContainer.emptyContainer()));
-      try (ResultList resultList = queryInstance.getResults()) {
-        logger.info("Results set was filled");
-        resultSize = writeQueryResults(response, resultList, columnOrders);
-        logger.info("Query results have been processed.... " + resultSize);
-      }
-    }
-    catch (WdkUserException ex) {
-      logger.info("WdkUserException in execute()" + ex.toString());
-      String msg = ex.toString();
-      logger.info("Message = " + msg);
-      if (msg.contains("Please choose value(s) for parameter")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("No value supplied for param")) {
-        resultSize = 0;
-        // isolate query on crypto/plasmo with only param values for plasmo
-      }
-      else if (msg.contains("does not exist")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("does not contain")) {
-        resultSize = -2; // query set or query doesn't exist
-        // } else if (msg.indexOf("encountered an invalid term") != -1) {
-        // resultSize = 0; // parameter value relates to a different comp site
-      }
-      else if (msg.contains("does not include")) {
-        resultSize = -2; // query set or query doesn't exist
-      }
-      else if (msg.contains("datasets value '' has an error: Missing the value")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("Invalid term")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("Some of the input parameters are invalid")) {
-        resultSize = 0;
+          .buildValidated(user, query, StepContainer.emptyContainer(), ValidationLevel.RUNNABLE, FillStrategy.NO_FILL);
+      if (qiSpec.isRunnable()) {
+        QueryInstance<?> queryInstance = Query.makeQueryInstance(qiSpec.getRunnable().getLeft());
+        try (ResultList resultList = queryInstance.getResults()) {
+          logger.info("Results set was filled");
+          resultSize = writeQueryResults(response, resultList, columnOrders);
+          logger.info("Query results have been processed.... " + resultSize);
+        }
       }
       else {
-        logger.error("WdkUserException: " + ex);
-        resultSize = -1; // actual error, can't handle
+        String joinedValidationErrors = FormatUtil.join(qiSpec.getValidationBundle().getAllErrors(), FormatUtil.NL);
+        // NOTE: used to catch a WdkUserException here, but now reading validation errors
+        // FIXME: The new messages MAY NOT MATCH the old ones, so we may be returning the wrong thing here
+        //logger.info("WdkUserException in execute()" + ex.toString());
+        String msg = joinedValidationErrors; // ex.toString();
+        logger.info("Message = " + msg);
+        if (msg.contains("Please choose value(s) for parameter")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("No value supplied for param")) {
+          resultSize = 0;
+          // isolate query on crypto/plasmo with only param values for plasmo
+        }
+        else if (msg.contains("does not exist")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("does not contain")) {
+          resultSize = -2; // query set or query doesn't exist
+          // } else if (msg.indexOf("encountered an invalid term") != -1) {
+          // resultSize = 0; // parameter value relates to a different comp site
+        }
+        else if (msg.contains("does not include")) {
+          resultSize = -2; // query set or query doesn't exist
+        }
+        else if (msg.contains("datasets value '' has an error: Missing the value")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("Invalid term")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("Some of the input parameters are invalid")) {
+          resultSize = 0;
+        }
+        else {
+          logger.error("Unrecognized validation error: " + msg);
+          resultSize = -1; // actual error, can't handle
+        }
       }
     }
     catch (Exception ex) {
