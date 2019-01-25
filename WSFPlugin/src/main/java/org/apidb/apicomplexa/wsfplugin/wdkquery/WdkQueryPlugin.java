@@ -383,9 +383,6 @@ public class WdkQueryPlugin extends AbstractPlugin {
   private boolean validateSingleValues(AbstractEnumParam p, EnumParamVocabInstance vocab, String value) {
     String[] conVocab = vocab.getVocab();
     logger.debug("conVocab.length = " + conVocab.length);
-    if (p.isSkipValidation())
-      return true;
-    // initVocabMap();
     for (String v : conVocab) {
       if (value.equalsIgnoreCase(v))
         return true;
