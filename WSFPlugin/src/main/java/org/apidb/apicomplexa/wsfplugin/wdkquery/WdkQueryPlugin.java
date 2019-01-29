@@ -313,7 +313,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
   }
 
   private Map<String, String> convertParams(User user, Map<String, String> paramValues,
-      Map<String, Param> params) {
+      Map<String, Param> params) throws WdkModelException {
     Map<String, String> ret = new HashMap<String, String>();
     for (String key : paramValues.keySet()) {
       String value = paramValues.get(key);
@@ -327,7 +327,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamVocabInstance vocabInstance = abParam.getVocabInstance(user, paramValues);
           if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
-            valList = vocabInstance.getDefaultValue();
+            valList = abParam.getDefault(vocabInstance);
           }
 
           // Code to specifically work around a specific problem
@@ -345,7 +345,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             mystring = unescapeValue(mystring, abParam.getQuote());
             try {
               logger.debug("ParamName = " + param.getName() + " ------ Value = " + mystring);
-              if (validateSingleValues(abParam, vocabInstance, mystring.trim())) {
+              if (validateSingleValues(vocabInstance, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
                 logger.debug("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
@@ -380,7 +380,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return ret;
   }
 
-  private boolean validateSingleValues(AbstractEnumParam p, EnumParamVocabInstance vocab, String value) {
+  private boolean validateSingleValues(EnumParamVocabInstance vocab, String value) {
     String[] conVocab = vocab.getVocab();
     logger.debug("conVocab.length = " + conVocab.length);
     for (String v : conVocab) {
