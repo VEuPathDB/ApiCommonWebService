@@ -26,7 +26,7 @@ my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to c
 
 my $idT = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
 
-my $userGeneListQuery = "select distinct ga." . $idT . ", ga.organism from apidbtuning.datasetgenelist ga, (" . $idSql . ") id where id.gene_source_id = ga.source_id";
+my $userGeneListQuery = "select distinct ga." . $idT . ", ga.organism from apidbtuning.geneattributes ga, (" . $idSql . ") id where id.gene_source_id = ga.source_id";
 
 #print STDERR $userGeneListQuery . "\n";
 
@@ -49,9 +49,7 @@ $userStatemnetHandle->finish();
 
 ########################################################## dataset list hash table ###############################################
 
-my $idD = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
-
-my $datasetGeneListQuery = "select distinct ga." . $idD . ", ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
+my $datasetGeneListQuery = "select distinct ga." . $idT . ", ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
 
 my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                   
 $datasetStatmentHandle->execute();
@@ -73,10 +71,12 @@ while(my($id, $org, $dataset) = $datasetStatmentHandle->fetchrow_array() ) {
 print "dataset_id", "\t", "overlap","\t", "ul_nonDS","\t", "ds_nonUL". "\t", "nonUL_nonDS", "\t", "p_value", "\n";
 
 foreach my $org (keys %userLists){
-    my $backgroundSize = &getBackgroundForOrganism($dbh, $org, $useOrthology); ########## background SIZE                       
+    my $backgroundSize = &getBackgroundForOrganism($dbh, $org, $idT); ########## background SIZE                       
     my @userIdList = keys %{$userLists{$org}}; 
     my $userListSize = scalar @userIdList;   ############################### user_list SIZE
 
+    # make a hash from the userIdList Array
+    my %userIdListHash = map { $_ => 1 } @userIdList;
 
     foreach my $dataset (keys %{$datasetLists{$org}}){
 	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
@@ -89,20 +89,20 @@ foreach my $org (keys %userLists){
 
 	# Find the number of overlap between two lists
 	foreach my $value1 (@datasetIdList){
-	    if (defined ($value1 eq (keys %{$userLists{$org}}))){
-		    $t11++;
-	    }
+          if($userIdListHash{$value1}) {
+            $t11++;
+          }
 	}
 
 	$t12 = $datasetListSize - $t11;
 	$t21 = $userListSize - $t11;
 	$t22 = $backgroundSize - $t11 - $t12 -$t21;
-	
 	my $pValue = &runRscript($t11, $t21, $t12, $t22);
 
-	if ($pValue < 0.1){
+# NOTE: if we need to restrict by pvalue, we should read this as a param, not use 0.1 hard coded	
+#	if ($pValue < 0.1){
             print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
-	}
+#	}
 
     }
 }
@@ -135,9 +135,7 @@ RCODE
 
 
 sub getBackgroundForOrganism{
-    my ($dbh, $org,$userOrthology) = @_;
-
-    my $idType = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
+    my ($dbh, $org, $idType) = @_;
 
     my $sql = <<EOSQL;
      select count(distinct $idType) 
@@ -155,3 +153,4 @@ EOSQL
 
 
 
+1;
