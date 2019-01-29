@@ -24,16 +24,20 @@ public class ListComparisonPlugin extends AbstractPlugin {
 
     private static final Logger logger = Logger.getLogger(ListComparisonPlugin.class);
 
-    private static final String PROPERTY_FILE = "geneListComparison-config.xml";
+    private static final String PROPERTY_FILE = "fisherExactTest-config.xml";
 
     // required parameter definition
     public static final String PARAM_DS_GENE_IDS = "ds_gene_ids";
     public static final String PARAM_ORTHOLOGYFLAG = "orthologyFlag";
-    public static final String PARAM_FDR = "threshold";
+    public static final String PARAM_FC = "fold_change";
     // required result column definition
     public static final String COLUMN_DATASET_ID = "dataset_id";
-    public static final String COLUMN_FDR = "percent_count";
-    public static final String COLUMN_HIT = "hit_count";
+    public static final String COLUMN_OVERLAP = "overlap";
+    public static final String COLUMN_ULnonDS = "ul_nonDS";
+    public static final String COLUMN_DSnonUL = "ds_nonUL";
+    public static final String COLUMN_nonULnonDS = "nonUL_nonDS";
+    public static final String COLUMN_Pvalue = "p_value";
+    
     //    public static final String COLUMN_PROJECT_ID = "ProjectId";
 
     // field definition
@@ -52,7 +56,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
     //    private String projectId;
 
     public ListComparisonPlugin() {
-        super(PROPERTY_FILE);
+      super(PROPERTY_FILE);
     }
 
     // load properties
@@ -102,7 +106,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getRequiredParameterNames() {
-        return new String[] { PARAM_DS_GENE_IDS, PARAM_FDR, PARAM_ORTHOLOGYFLAG };
+        return new String[] { PARAM_DS_GENE_IDS, PARAM_FC, PARAM_ORTHOLOGYFLAG };
     }
 
     /*
@@ -112,7 +116,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getColumns() {
-        return new String[] { COLUMN_DATASET_ID, COLUMN_FDR, COLUMN_HIT};
+        return new String[] { COLUMN_DATASET_ID, COLUMN_OVERLAP, COLUMN_ULnonDS, COLUMN_DSnonUL, COLUMN_nonULnonDS, COLUMN_Pvalue};
     }
 
     /*
@@ -161,14 +165,14 @@ public class ListComparisonPlugin extends AbstractPlugin {
 	params.put(PARAM_SCALE_DATA, scaleData);  **/
 
         // validate fdr_cutoff - CANT GET IT TO WORK 
-        /** int fdr = 0;
+        /** int fc = 0;
         try {
-            fdr = Integer.parseInt(params.get(PARAM_FDR));
-            if (fdr < 0 || fdr > 1)
+            fc = Integer.parseInt(params.get(PARAM_FC));
+            if (fc < 0)
                 throw new PluginUserException(
-                        "The FDR cutoff should be within the range of [0 - 1]");
+                        "The FC cutoff should be greater than 0");
         } //catch (NumberFormatException ex) {
-	// throw new PluginUserException("Invalid FDR value: " + fdr
+	// throw new PluginUserException("Invalid FC value: " + fc
 	//          + ", a number is expected.");
 	//}
 	**/
@@ -225,7 +229,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
         cmds.add(perlScript);
         cmds.add(params.get(PARAM_DS_GENE_IDS));
         cmds.add(params.get(PARAM_ORTHOLOGYFLAG));
-        cmds.add(params.get(PARAM_FDR));
+        cmds.add(params.get(PARAM_FC));
 
         cmds.add(dbConnection);
         cmds.add(dbLogin);
@@ -266,21 +270,27 @@ public class ListComparisonPlugin extends AbstractPlugin {
             if (line.length() == 0) continue;
             String[] parts = line.split("\t");
 
-            if (parts.length != 3)
+            if (parts.length != 6)
                 throw new PluginModelException("Invalid output format -- split into " + parts.length + " parts. Content:\n"
                         + content + "\n<<END OF CONTENT\n");
 
             String datasetId = parts[0].trim();
-            String fdr = parts[1].trim();
-            String valid_ids = parts[2].trim();
+            String num_overlap = parts[1].trim();
+            String num_ul_nonDS = parts[2].trim();
+            String num_ds_nonUL = parts[3].trim();
+            String num_nonUL_nonDS = parts[4].trim();
+            String p = parts[5].trim();
 
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
 
-            String[] row = new String[3];
+            String[] row = new String[6];
             row[columns.get(COLUMN_DATASET_ID)] = datasetId;
-            row[columns.get(COLUMN_FDR)] = fdr;
-            row[columns.get(COLUMN_HIT)] = valid_ids;
+            row[columns.get(COLUMN_OVERLAP)] = num_overlap;
+            row[columns.get(COLUMN_ULnonDS)] = num_ul_nonDS;
+	    row[columns.get(COLUMN_DSnonUL)] = num_ds_nonUL;
+	    row[columns.get(COLUMN_nonULnonDS)] = num_nonUL_nonDS;
+	    row[columns.get(COLUMN_Pvalue)] = p;
             response.addRow(row);
         }
         in.close();
