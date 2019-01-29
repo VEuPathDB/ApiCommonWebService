@@ -70,7 +70,7 @@ while(my($id, $org, $dataset) = $datasetStatmentHandle->fetchrow_array() ) {
 
 ###################################### give each of those columns a colname
 
-#print "dataset_id", "\t", "overlap","\t", "ul_nonDS","\t", "ds_nonUL". "\t", "nonUL_nonDS", "\t", "p_value", "\n";
+print "dataset_id", "\t", "overlap","\t", "ul_nonDS","\t", "ds_nonUL". "\t", "nonUL_nonDS", "\t", "p_value", "\n";
 
 foreach my $org (keys %userLists){
     my $backgroundSize = &getBackgroundForOrganism($dbh, $org, $useOrthology); ########## background SIZE                       
@@ -98,6 +98,7 @@ foreach my $org (keys %userLists){
 	$t21 = $userListSize - $t11;
 	$t22 = $backgroundSize - $t11 - $t12 -$t21;
 	
+	my $pValue = &runRscript($t11, $t21, $t12, $t22);
 
 	if ($pValue < 0.1){
             print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
