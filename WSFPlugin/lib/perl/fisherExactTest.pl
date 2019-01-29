@@ -26,6 +26,7 @@ my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to c
 
 my $idT = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
 
+
 my $userGeneListQuery = "select distinct ga." . $idT . ", ga.organism from apidbtuning.geneattributes ga, (" . $idSql . ") id where id.gene_source_id = ga.source_id";
 
 #print STDERR $userGeneListQuery . "\n";
@@ -43,8 +44,6 @@ while(my ($id,$org) = $userStatemnetHandle->fetchrow_array() ) {
 }
 
 $userStatemnetHandle->finish();
-
-#print STDERR Dumper \%userLists;
 
 
 ########################################################## dataset list hash table ###############################################
@@ -83,26 +82,35 @@ foreach my $org (keys %userLists){
 
 	my $datasetListSize  =  scalar @datasetIdList; ####################### dataset_list SIZE
 	
-	my $t11; my $t21; my $t12; my $t22;
+	my $t11 = 0; 
+	my $t21 = 0; 
+	my $t12 = 0; 
+	my $t22 = 0;
        
-	my ($FF, $TXT) = tempfile(SUFFIX => '.txt');
 
 	# Find the number of overlap between two lists
 	foreach my $value1 (@datasetIdList){
           if($userIdListHash{$value1}) {
             $t11++;
-          }
+	  }
 	}
 
 	$t12 = $datasetListSize - $t11;
 	$t21 = $userListSize - $t11;
 	$t22 = $backgroundSize - $t11 - $t12 -$t21;
+
+	#print STDERR $t22 . "\n";
+	
+
+
 	my $pValue = &runRscript($t11, $t21, $t12, $t22);
+
 
 # NOTE: if we need to restrict by pvalue, we should read this as a param, not use 0.1 hard coded	
 #	if ($pValue < 0.1){
             print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
 #	}
+
 
     }
 }
@@ -112,7 +120,7 @@ sub runRscript{
     
     my $rCode = <<"RCODE";
 
-    Test <-matrix(c($t11,$t21,$t12,$t22),nrow = 2, dimnames = list(DS = c("DS", "Non-DS"),UL = c("UL", "Non-UL")))
+    Test <-matrix(c($t11,$t21,$t12,$t22), nrow = 2, dimnames = list(DS = c("DS", "Non-DS"),UL = c("UL", "Non-UL")))
     fisher.test(Test, alternative = "greater")\$p
 
 RCODE
@@ -150,7 +158,6 @@ EOSQL
     
     return $idCount;
 }
-
 
 
 1;
