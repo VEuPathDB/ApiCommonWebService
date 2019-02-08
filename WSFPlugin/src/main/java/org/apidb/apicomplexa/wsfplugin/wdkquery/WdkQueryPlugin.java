@@ -159,7 +159,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // check if question is set
       Query query;
       if (questionName != null) {
-        query = wdkModel.getQuestion(questionName)
+        query = wdkModel.getQuestionByName(questionName)
             .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName))
             .getQuery();
       }
@@ -247,7 +247,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     Param param;
     if (questionName != null) {
       // context question is defined, should get the param from question
-      Question question = wdkModel.getQuestion(questionName)
+      Question question = wdkModel.getQuestionByName(questionName)
           .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName));
       String partName = paramName.substring(paramName.indexOf(".") + 1);
       param = question.getParamMap().get(partName);
