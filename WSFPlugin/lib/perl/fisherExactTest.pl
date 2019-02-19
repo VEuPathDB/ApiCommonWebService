@@ -6,6 +6,15 @@ use DBD::Oracle;
 use File::Temp qw/ tempfile /;
 use Data::Dumper;
 
+=head
+my $filename = '/tmp/testing.txt';
+open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
+print $fh "ARGUMENTS=" . join(" ", @ARGV) . "\n";
+close $fh;
+=cut
+
+#print STDERR "ARGUMENTS=" . join(" ", @ARGV) . "\n";
+
 
 my $idSql = $ARGV[0];
 my $useOrthology = $ARGV[1];
@@ -24,9 +33,15 @@ my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to c
 
 my $idT = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
 
-my $userGeneListQuery = "select distinct ga." . $idT . ", ga.organism from apidbtuning.geneattributes  ga, (" . $idSql . ") id where id.gene_source_id = ga.source_id";
+my $userGeneListQuery;
 
-#print STDERR $userGeneListQuery . "\n";
+if (lc($useOrthology) eq "yes"){
+ $userGeneListQuery = "select distinct ga.orthomcl_name, \'all\' as organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+
+}else {
+     $userGeneListQuery = "select distinct ga.source_id, ga. organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+
+}
 
 my $userStatemnetHandle = $dbh->prepare($userGeneListQuery);
 
@@ -42,21 +57,35 @@ while(my ($id,$org) = $userStatemnetHandle->fetchrow_array() ) {
 
 $userStatemnetHandle->finish();
 
+
 ########################################################## user dataset list hash table ###########################################
 
-my $datasetGeneListQuery = "select distinct ga." . $idT . ", ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
+my $datasetGeneListQuery;
 
-my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                   
+if (lc($useOrthology) eq "yes"){
+ $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
+
+}else {
+     $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
+
+}
+
+
+#my $datasetGeneListQuery = "select distinct ga." . $idT . ", ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";                                                                                                      
+
+my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                  
+
 $datasetStatmentHandle->execute();
 
-my %datasetLists;                                                                                                                  
+my %datasetLists;
 
-while(my($id, $org, $dataset) = $datasetStatmentHandle->fetchrow_array() ) {                                             
+while(my($id, $org, $dataset) = $datasetStatmentHandle->fetchrow_array() ) {
 
-    $datasetLists{$org}->{$dataset}->{$id}++;                                                                                      
+    $datasetLists{$org}->{$dataset}->{$id}++;
 
-}                                                                                                                                  $datasetStatmentHandle->finish();  
+}                                                                                                                                  
 
+$datasetStatmentHandle->finish();
 ########################################################## Background Dataset list hash table #####################################
 
 my $backgroundDatasetQuery = "select distinct ga." . $idT . ", ga.dataset_presenter_id from apidbtuning.datasetgenelist ga";
@@ -125,7 +154,7 @@ foreach my $org (keys %userLists){
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
- print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
+print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
 
     }
 }
