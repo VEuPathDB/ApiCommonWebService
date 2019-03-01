@@ -411,10 +411,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
     WdkUserException e = new WdkUserException("No step with ID " + stepId + " exists for user " + user.getUserId());
-    Step step = wdkModel.getStepFactory().getStepById(stepId, ValidationLevel.RUNNABLE).orElseThrow(() -> e);
-    if (step.getUser().getUserId() != user.getUserId()) {
-      throw e;
-    }
+    Step step = wdkModel.getStepFactory().getStepByIdAndUserId(stepId, user.getUserId(),
+        ValidationLevel.RUNNABLE).orElseThrow(() -> e);
+
     AnswerValue answerValue = AnswerValueFactory.makeAnswer(step.getRunnable()
         .getOrThrow(validatedStep -> new WdkModelException(
             "Step " + stepId + " is not runnable. Validation: " + validatedStep.getValidationBundle().toString())));
