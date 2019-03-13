@@ -119,7 +119,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // when running a id search, the question holds the name of the search,
     // the param should be empty, and the query holds the name of the id
     // query.
-    String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
+    String questionFullName = context.get(Utilities.QUERY_CTX_QUESTION);
     String paramName = context.get(Utilities.QUERY_CTX_PARAM);
     String queryName = context.get(Utilities.QUERY_CTX_QUERY);
 
@@ -131,7 +131,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("Parameters were processed");
 
     try {
-      logger.debug("context question: '" + questionName + "', param: '" + paramName + "', query: '" +
+      logger.debug("context question: '" + questionFullName + "', param: '" + paramName + "', query: '" +
           queryName + "', SiteModel=" + request.getProjectId());
 
       // Variable to maintain the order of columns in the result... maintains
@@ -151,16 +151,16 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // web service call to get param values
       if (paramName != null) {
-        resultSize = writeParamResult(response, user, paramValues, columnOrders, questionName, paramName);
+        resultSize = writeParamResult(response, user, paramValues, columnOrders, questionFullName, paramName);
         logger.info("Param results have been processed.... " + resultSize);
         return resultSize;
       }
 
       // check if question is set
       Query query;
-      if (questionName != null) {
-        query = wdkModel.getQuestionByFullName(questionName)
-            .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName))
+      if (questionFullName != null) {
+        query = wdkModel.getQuestionByFullName(questionFullName)
+            .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionFullName))
             .getQuery();
       }
       else {
@@ -242,13 +242,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
   }
 
   private int writeParamResult(PluginResponse response, User user, Map<String, String> paramValues,
-      Map<String, Integer> columnOrders, String questionName, String paramName) throws PluginModelException, WdkModelException, PluginUserException {
+      Map<String, Integer> columnOrders, String questionFullName, String paramName) throws PluginModelException, WdkModelException, PluginUserException {
     // get param
     Param param;
-    if (questionName != null) {
+    if (questionFullName != null) {
       // context question is defined, should get the param from question
-      Question question = wdkModel.getQuestionByFullName(questionName)
-          .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionName));
+      Question question = wdkModel.getQuestionByFullName(questionFullName)
+          .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionFullName));
       String partName = paramName.substring(paramName.indexOf(".") + 1);
       param = question.getParamMap().get(partName);
 
@@ -259,7 +259,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       if (param == null)
         // param = (Param) wdkModel.resolveReference(paramName);
         throw new PluginModelException("parameter " + paramName + " does not exist in question " +
-            questionName);
+            questionFullName);
     }
     else {
       logger.debug("got param from model.");
