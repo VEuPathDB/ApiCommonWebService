@@ -19,11 +19,10 @@ import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
-import org.gusdb.wdk.model.jspwrap.EnumParamBean;
-import org.gusdb.wdk.model.jspwrap.UserBean;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
 import org.gusdb.wdk.model.query.param.AbstractEnumParam;
+import org.gusdb.wdk.model.query.param.EnumParamVocabInstance;
 import org.gusdb.wdk.model.query.param.FilterParamNew;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
@@ -145,11 +144,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // get the user
       String userId = context.get(Utilities.QUERY_CTX_USER);
       User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
-      UserBean userBean = new UserBean(user);
 
       // web service call to get param values
       if (paramName != null) {
-        resultSize = writeParamResult(response, userBean, paramValues, columnOrders, questionName, paramName);
+        resultSize = writeParamResult(response, user, paramValues, columnOrders, questionName, paramName);
         logger.info("Param results have been processed.... " + resultSize);
         return resultSize;
       }
@@ -165,7 +163,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       }
 
       // converting from internal values to dependent values
-      Map<String, String> SOParams = convertParams(userBean, paramValues, query.getParamMap());// getParamsFromQuery(q));
+      Map<String, String> SOParams = convertParams(user, paramValues, query.getParamMap());// getParamsFromQuery(q));
 
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
@@ -223,7 +221,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return resultSize;
   }
 
-  private int writeParamResult(PluginResponse response, UserBean userBean, Map<String, String> paramValues,
+  private int writeParamResult(PluginResponse response, User user, Map<String, String> paramValues,
       Map<String, Integer> columnOrders, String questionName, String paramName) throws PluginModelException, WdkModelException, PluginUserException {
     // get param
     Param param;
@@ -256,7 +254,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // only process the result if it's an enum param
     if (param instanceof AbstractEnumParam) {
-      return handleVocabParams(response, userBean, (AbstractEnumParam) param, paramValues, columnOrders);
+      return handleVocabParams(response, user, (AbstractEnumParam) param, paramValues, columnOrders);
     }
     else
       return 0;
@@ -294,8 +292,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return resultSize;
   }
 
-  private Map<String, String> convertParams(UserBean userBean, Map<String, String> paramValues,
-      Map<String, Param> params) throws WdkModelException {
+  private Map<String, String> convertParams(User user, Map<String, String> paramValues,
+      Map<String, Param> params) {
     Map<String, String> ret = new HashMap<String, String>();
     for (String key : paramValues.keySet()) {
       String value = paramValues.get(key);
@@ -303,26 +301,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Param param = params.get(key);
         if (param instanceof FilterParamNew) {
           // do nothing, will use the value as is.
-        } else if (param instanceof AbstractEnumParam) {
+        }
+        else if (param instanceof AbstractEnumParam) {
           String valList = value;
           AbstractEnumParam abParam = (AbstractEnumParam) param;
-          EnumParamBean abParamBean = new EnumParamBean(abParam);
-          abParamBean.setUser(userBean);
-          if (abParam.isDependentParam()) {
-            Map<String, String> dependedValues = new LinkedHashMap<>();
-            for (Param dependedParam : abParam.getDependedParams()) {
-              String dependedParamValue = paramValues.get(dependedParam.getName());
-              dependedValues.put(dependedParam.getName(), dependedParamValue);
-            }
-            abParamBean.setContextValues(dependedValues);
-          }
+          EnumParamVocabInstance vocabInstance = abParam.getVocabInstance(user, paramValues);
           if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
-            try {
-              valList = abParamBean.getDefault();
-            }
-            catch (Exception e) {
-              logger.info("error using default value.");
-            }
+            valList = vocabInstance.getDefaultValue();
           }
 
           // Code to specifically work around a specific problem
@@ -333,14 +318,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
             valList = "rnor";
           // end workaround
 
-          String[] vals = abParamBean.getTerms(valList);
+          String[] vals = abParam.convertToTerms(valList);
           String newVals = "";
           for (String mystring : vals) {
             // unescape each individual term.
-            mystring = unescapeValue(mystring, abParamBean.getQuote());
+            mystring = unescapeValue(mystring, abParam.getQuote());
             try {
               logger.debug("ParamName = " + param.getName() + " ------ Value = " + mystring);
-              if (validateSingleValues(abParamBean, mystring.trim())) {
+              if (validateSingleValues(abParam, vocabInstance, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
                 logger.debug("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
@@ -375,8 +360,8 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return ret;
   }
 
-  private boolean validateSingleValues(EnumParamBean p, String value) {
-    String[] conVocab = p.getVocab();
+  private boolean validateSingleValues(AbstractEnumParam p, EnumParamVocabInstance vocab, String value) {
+    String[] conVocab = vocab.getVocab();
     logger.debug("conVocab.length = " + conVocab.length);
     if (p.isSkipValidation())
       return true;
@@ -388,24 +373,14 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return false;
   }
 
-  private int handleVocabParams(PluginResponse response, UserBean userBean, AbstractEnumParam vocabParam,
+  private int handleVocabParams(PluginResponse response, User user, AbstractEnumParam vocabParam,
       Map<String, String> ps, Map<String, Integer> columnOrders) throws PluginModelException,
       PluginUserException, WdkModelException {
     logger.debug("Function to Handle a vocab param in WdkQueryPlugin: " + vocabParam.getFullName());
-    EnumParamBean paramBean = new EnumParamBean(vocabParam);
-    paramBean.setUser(userBean);
-    // set depended value if needed
-    if (vocabParam.isDependentParam()) {
-      Map<String, String> dependedValues = new LinkedHashMap<>();
-      for (Param dependedParam : vocabParam.getDependedParams()) {
-        String dependedValue = ps.get(dependedParam.getName());
-        dependedValues.put(dependedParam.getName(), dependedValue);
-        logger.debug(dependedParam.getName() + " ==== " + dependedValue);
-      }
-      paramBean.setContextValues(dependedValues);
-    }
-    Map<String, String> displayMap = paramBean.getDisplayMap();
-    Map<String, String> parentMap = paramBean.getParentMap();
+
+    EnumParamVocabInstance vocabInstance = vocabParam.getVocabInstance(user, ps);
+    Map<String, String> displayMap = vocabInstance.getDisplayMap();
+    Map<String, String> parentMap = vocabInstance.getParentMap();
 
     boolean hasTerm = false, hasInternal = false;
     int count = 0;
@@ -438,7 +413,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
     // term & internal has to exist
     if (!hasTerm || !hasInternal)
-      throw new WdkModelException("The wsf call for param " + paramBean.getFullName() +
+      throw new WdkModelException("The wsf call for param " + vocabParam.getFullName() +
           " doesn't specify term & internal columns.");
     return count;
   }
