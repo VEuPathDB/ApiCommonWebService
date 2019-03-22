@@ -54,7 +54,6 @@ public class ListComparisonPlugin extends AbstractPlugin {
     private String dbLogin;
     private String dbPassword;
     //    private String projectId;
-
     public ListComparisonPlugin() {
       super(PROPERTY_FILE);
     }
@@ -234,12 +233,14 @@ public class ListComparisonPlugin extends AbstractPlugin {
         cmds.add(dbConnection);
         cmds.add(dbLogin);
         cmds.add(dbPassword);
-
+	cmds.add("| sort -k6,6");
+       
         //cmds.add(params.get(PARAM_WEIGHTS_STRING));
 
 
         String[] array = new String[cmds.size()];
         cmds.toArray(array);
+	
         return array;
     }
 
