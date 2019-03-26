@@ -34,6 +34,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
     public static final String COLUMN_DATASET_ID = "dataset_id";
     public static final String COLUMN_OVERLAP = "overlap";
     public static final String COLUMN_ULnonDS = "ul_nonDS";
+    public static final String COLUMN_FE = "fe";
     public static final String COLUMN_DSnonUL = "ds_nonUL";
     public static final String COLUMN_nonULnonDS = "nonUL_nonDS";
     public static final String COLUMN_Pvalue = "p_value";
@@ -115,7 +116,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getColumns() {
-        return new String[] { COLUMN_DATASET_ID, COLUMN_OVERLAP, COLUMN_ULnonDS, COLUMN_DSnonUL, COLUMN_nonULnonDS, COLUMN_Pvalue};
+        return new String[] { COLUMN_DATASET_ID, COLUMN_OVERLAP, COLUMN_ULnonDS, COLUMN_FE, COLUMN_DSnonUL, COLUMN_nonULnonDS, COLUMN_Pvalue};
     }
 
     /*
@@ -271,24 +272,26 @@ public class ListComparisonPlugin extends AbstractPlugin {
             if (line.length() == 0) continue;
             String[] parts = line.split("\t");
 
-            if (parts.length != 6)
+            if (parts.length != 7)
                 throw new PluginModelException("Invalid output format -- split into " + parts.length + " parts. Content:\n"
                         + content + "\n<<END OF CONTENT\n");
 
             String datasetId = parts[0].trim();
             String num_overlap = parts[1].trim();
             String num_ul_nonDS = parts[2].trim();
-            String num_ds_nonUL = parts[3].trim();
-            String num_nonUL_nonDS = parts[4].trim();
-            String p = parts[5].trim();
+	    String num_fe = parts[3].trim();
+            String num_ds_nonUL = parts[4].trim();
+            String num_nonUL_nonDS = parts[5].trim();
+            String p = parts[6].trim();
 
             // do not skip the query gene, and include it in the result list
             // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
 
-            String[] row = new String[6];
+            String[] row = new String[7];
             row[columns.get(COLUMN_DATASET_ID)] = datasetId;
             row[columns.get(COLUMN_OVERLAP)] = num_overlap;
             row[columns.get(COLUMN_ULnonDS)] = num_ul_nonDS;
+	    row[columns.get(COLUMN_FE)] = num_fe;
 	    row[columns.get(COLUMN_DSnonUL)] = num_ds_nonUL;
 	    row[columns.get(COLUMN_nonULnonDS)] = num_nonUL_nonDS;
 	    row[columns.get(COLUMN_Pvalue)] = p;
