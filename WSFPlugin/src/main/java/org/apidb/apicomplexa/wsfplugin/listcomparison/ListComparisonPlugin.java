@@ -32,11 +32,11 @@ public class ListComparisonPlugin extends AbstractPlugin {
     public static final String PARAM_FC = "fold_change";
     // required result column definition
     public static final String COLUMN_DATASET_ID = "dataset_id";
-    public static final String COLUMN_OVERLAP = "overlap";
-    public static final String COLUMN_ULnonDS = "ul_nonDS";
-    public static final String COLUMN_FE = "fe";
-    public static final String COLUMN_DSnonUL = "ds_nonUL";
-    public static final String COLUMN_nonULnonDS = "nonUL_nonDS";
+    public static final String COLUMN_ObserOverlap = "obser_ovelap";
+    public static final String COLUMN_ExpOverlap = "exp_overlap";
+    public static final String COLUMN_FE = "fold_enrichment";
+    public static final String COLUMN_PercentUL = "percent_ul";
+    public static final String COLUMN_PercentDS = "percent_ds";
     public static final String COLUMN_Pvalue = "p_value";
     
     //    public static final String COLUMN_PROJECT_ID = "ProjectId";
@@ -116,7 +116,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getColumns() {
-        return new String[] { COLUMN_DATASET_ID, COLUMN_OVERLAP, COLUMN_ULnonDS, COLUMN_FE, COLUMN_DSnonUL, COLUMN_nonULnonDS, COLUMN_Pvalue};
+        return new String[] { COLUMN_DATASET_ID, COLUMN_ObserOverlap, COLUMN_ExpOverlap, COLUMN_FE, COLUMN_PercentUL, COLUMN_PercentDS, COLUMN_Pvalue};
     }
 
     /*
@@ -277,11 +277,11 @@ public class ListComparisonPlugin extends AbstractPlugin {
                         + content + "\n<<END OF CONTENT\n");
 
             String datasetId = parts[0].trim();
-            String num_overlap = parts[1].trim();
-            String num_ul_nonDS = parts[2].trim();
+            String num_ObserOverlap = parts[1].trim();
+            String num_ExpecOverlap = parts[2].trim();
 	    String num_fe = parts[3].trim();
-            String num_ds_nonUL = parts[4].trim();
-            String num_nonUL_nonDS = parts[5].trim();
+            String num_percentUL = parts[4].trim();
+            String num_percentDS = parts[5].trim();
             String p = parts[6].trim();
 
             // do not skip the query gene, and include it in the result list
@@ -289,11 +289,11 @@ public class ListComparisonPlugin extends AbstractPlugin {
 
             String[] row = new String[7];
             row[columns.get(COLUMN_DATASET_ID)] = datasetId;
-            row[columns.get(COLUMN_OVERLAP)] = num_overlap;
-            row[columns.get(COLUMN_ULnonDS)] = num_ul_nonDS;
+            row[columns.get(COLUMN_ObserOverlap)] = num_ObserOverlap;
+            row[columns.get(COLUMN_ExpOverlap)] = num_ExpecOverlap;
 	    row[columns.get(COLUMN_FE)] = num_fe;
-	    row[columns.get(COLUMN_DSnonUL)] = num_ds_nonUL;
-	    row[columns.get(COLUMN_nonULnonDS)] = num_nonUL_nonDS;
+	    row[columns.get(COLUMN_PercentUL)] = num_percentUL;
+	    row[columns.get(COLUMN_PercentDS)] = num_percentDS;
 	    row[columns.get(COLUMN_Pvalue)] = p;
             response.addRow(row);
         }

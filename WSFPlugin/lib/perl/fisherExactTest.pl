@@ -151,9 +151,9 @@ foreach my $org (keys %userLists){
         $t21 = $datasetListSize - $t11;
         $t22 = $backgroundSize - $t11 - $t12 -$t21;
 	
-	$percent_UL = ($t11/$tt)*100;
-	$percent_DS = (($t11 + $t21) / $backgroundSize)*100;
-	$exp_overlap = (($t11+$t12) * $percent_DS) / 100;
+	$percent_UL = ($t11/$tt) *100;
+	$percent_DS = (($t11 + $t21) / $backgroundSize) *100;
+	$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
 	
 	if($exp_overlap != 0) {
             $fold_enrichment = $t11/$exp_overlap;
