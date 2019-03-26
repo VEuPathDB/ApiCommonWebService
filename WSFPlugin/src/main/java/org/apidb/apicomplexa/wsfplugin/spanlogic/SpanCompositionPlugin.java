@@ -407,7 +407,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
-    AnswerValue answerValue = StepUtilities.getStep(user, stepId).getAnswerValue();
+    AnswerValue answerValue = StepUtilities.getStepByValidStepId(user, stepId).getAnswerValue();
 
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
