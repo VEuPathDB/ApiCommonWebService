@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl                                                                                                                     
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
@@ -125,28 +126,39 @@ foreach my $org (keys %userLists){
 	my  @backgroundDatasetIdList = keys %{$backgroundDSLists{$dataset}};
 	
 	my $t11 = 0; 
-	my $t21 = 0; 
 	my $t12 = 0; 
+	my $t21 = 0; 
 	my $t22 = 0;
 	my $tt = 0;
-
+	my $exp_overlap = 0;
+        my $percent_UL = 0;
+        my $percent_DS = 0;
+	my $fold_enrichment = "";
 	# Find the number of overlap between two lists
 	foreach my $value1 (@datasetIdList){
           if($userIdListHash{$value1}) {
             $t11++;
 	  }
 	}
-
-	$t12 = $datasetListSize - $t11;
-
+	
 	foreach my $value2 (@backgroundDatasetIdList){
 	    if($userIdListHash{$value2}){
 		$tt++;
 	    }
 	}
 
-	$t21 = $tt - $t11;
-	$t22 = $backgroundSize - $t11 - $t12 -$t21;
+	$t12 = $tt - $t11;
+        $t21 = $datasetListSize - $t11;
+        $t22 = $backgroundSize - $t11 - $t12 -$t21;
+	
+	$percent_UL = ($t11/$tt) *100;
+	$percent_DS = (($t11 + $t21) / $backgroundSize) *100;
+	$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
+	
+	if($exp_overlap != 0) {
+            $fold_enrichment = $t11/$exp_overlap;
+        }
+
 
 	my $pValue = &runRscript($t11, $t21, $t12, $t22);
 
@@ -154,7 +166,7 @@ foreach my $org (keys %userLists){
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
-print  $dataset,"\t",$t11,"\t",$t21, "\t", $t12, "\t", $t22, "\t", $pValue, "\n";
+print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n";
 
     }
 }
