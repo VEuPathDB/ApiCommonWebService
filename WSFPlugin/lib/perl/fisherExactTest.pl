@@ -117,7 +117,7 @@ foreach my $org (keys %userLists){
     foreach my $dataset (keys %{$datasetLists{$org}}){
 
 	my $backgroundSize = &getBackgroundForOrganism($dbh, $dataset, $idT); ########## background dataset SIZE 
-
+      
 	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
 
 	my $datasetListSize  =  scalar @datasetIdList; ####################### User_dataset_list SIZE
@@ -151,18 +151,19 @@ foreach my $org (keys %userLists){
         $t21 = $datasetListSize - $t11;
         $t22 = $backgroundSize - $t11 - $t12 -$t21;
 	
-	$percent_UL = ($t11/$tt) *100;
-	$percent_DS = (($t11 + $t21) / $backgroundSize) *100;
-	$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
-	
+	$percent_UL = sprintf("%.2f", ($t11/$tt) *100);
+	$percent_DS = sprintf("%.2f", (($t11 + $t21) / $backgroundSize) *100);
+	#$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
+	$exp_overlap = sprintf("%.2f", ($t11+$t12) * ($percent_DS / 100));
+
 	if($exp_overlap != 0) {
-            $fold_enrichment = $t11/$exp_overlap;
+            $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
         }
 
 
 	my $pValue = &runRscript($t11, $t21, $t12, $t22);
 
-
+	$pValue = sprintf("%.2f", $pValue);
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
