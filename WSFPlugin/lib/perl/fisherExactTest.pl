@@ -163,7 +163,7 @@ foreach my $org (keys %userLists){
 
 	my $pValue = &runRscript($t11, $t21, $t12, $t22);
 
-	$pValue = sprintf("%.2f", $pValue);
+	$pValue = sprintf("%.6f", $pValue);
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
