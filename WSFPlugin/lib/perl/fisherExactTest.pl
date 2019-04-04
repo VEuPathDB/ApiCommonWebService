@@ -72,6 +72,7 @@ $userStatemnetHandle->finish();
 my $datasetGeneListQuery;
 
 if (lc($useOrthology) eq "yes"){
+
  $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff) ";
 
 }else {
@@ -171,6 +172,7 @@ foreach my $org (keys %userLists){
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
+
 print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
 
     }
@@ -206,6 +208,7 @@ sub getBackgroundForOrganism{
      select count(distinct $idType) 
      from  apidbtuning.datasetgenelist  
      where dataset_presenter_id = '$dataset'
+    
 EOSQL
     
     my $sth = $dbh->prepare($sql);
