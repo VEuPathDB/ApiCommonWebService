@@ -20,12 +20,20 @@ close $fh;
 my $idSql = $ARGV[0];
 my $useOrthology = $ARGV[1];
 $useOrthology =~ s/\'//g;
-my $FC = $ARGV[2];
+
+my $datasetCutoffType = $ARGV[2];
+die "datasetCutofftype should be fc or rank:  found $datasetCutoffType" unless($datasetCutoffType eq 'fc' || $datasetCutoffType eq 'rank');
+
+my $datasetCutoff = $ARGV[3];
 
 # read the db connection information
-my $dbConnection = $ARGV[3];
-my $dbLogin = $ARGV[4];
-my $dbPassword = $ARGV[5];
+my $dbConnection = $ARGV[4];
+my $dbLogin = $ARGV[5];
+my $dbPassword = $ARGV[6];
+
+
+
+my $pValueCutoff = $ARGV[7];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to connect: DBI->errstr\n";
@@ -64,15 +72,11 @@ $userStatemnetHandle->finish();
 my $datasetGeneListQuery;
 
 if (lc($useOrthology) eq "yes"){
- $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
+ $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff) ";
 
 }else {
-     $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";
-
+  $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)";
 }
-
-
-#my $datasetGeneListQuery = "select distinct ga." . $idT . ", ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ga.fdiff_abs > $FC";                                                                                                      
 
 my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                  
 
@@ -167,7 +171,7 @@ foreach my $org (keys %userLists){
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
-print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n";
+print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
 
     }
 }
