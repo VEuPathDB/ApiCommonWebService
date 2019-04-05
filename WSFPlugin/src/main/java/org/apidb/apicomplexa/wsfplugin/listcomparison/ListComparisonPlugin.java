@@ -29,7 +29,10 @@ public class ListComparisonPlugin extends AbstractPlugin {
     // required parameter definition
     public static final String PARAM_DS_GENE_IDS = "ds_gene_ids";
     public static final String PARAM_ORTHOLOGYFLAG = "orthologyFlag";
-    public static final String PARAM_FC = "fold_change";
+    public static final String PARAM_DS_CUTOFF_TYPE = "datasetCutoffType";
+    public static final String PARAM_DS_CUTOFF = "datasetCutoff";
+    public static final String PARAM_THRESHOLD = "threshold";
+
     // required result column definition
     public static final String COLUMN_DATASET_ID = "dataset_id";
     public static final String COLUMN_ObserOverlap = "obser_ovelap";
@@ -106,7 +109,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getRequiredParameterNames() {
-        return new String[] { PARAM_DS_GENE_IDS, PARAM_FC, PARAM_ORTHOLOGYFLAG };
+        return new String[] { PARAM_DS_GENE_IDS, PARAM_DS_CUTOFF_TYPE, PARAM_DS_CUTOFF, PARAM_THRESHOLD, PARAM_ORTHOLOGYFLAG };
     }
 
     /*
@@ -229,11 +232,15 @@ public class ListComparisonPlugin extends AbstractPlugin {
         cmds.add(perlScript);
         cmds.add(params.get(PARAM_DS_GENE_IDS));
         cmds.add(params.get(PARAM_ORTHOLOGYFLAG));
-        cmds.add(params.get(PARAM_FC));
+
+        cmds.add(params.get(PARAM_DS_CUTOFF_TYPE));
+        cmds.add(params.get(PARAM_DS_CUTOFF));
 
         cmds.add(dbConnection);
         cmds.add(dbLogin);
         cmds.add(dbPassword);
+        cmds.add(params.get(PARAM_THRESHOLD));
+
 	cmds.add("| sort -k6,6");
        
         //cmds.add(params.get(PARAM_WEIGHTS_STRING));
