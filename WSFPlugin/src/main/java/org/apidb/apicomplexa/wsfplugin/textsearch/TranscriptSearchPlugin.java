@@ -58,7 +58,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     // get parameters
     Map<String, String> params = request.getParams();
     String fields = params.get(PARAM_DATASETS).trim().replaceAll("'", "");
-    logger.debug("fields = \"" + fields + "\"");
+    logger.info("fields = \"" + fields + "\"");
     String textExpression = params.get(PARAM_TEXT_EXPRESSION).trim();
 
     String organisms = params.get(PARAM_ORGANISMS);
@@ -96,7 +96,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     // search comments
     Map<String, SearchResult> commentResults = new LinkedHashMap<>();
     String oracleTextExpression = transformQueryString(textExpression);
-    logger.debug("oracleTextExpression = \"" + oracleTextExpression + "\"");
+    logger.info("oracleTextExpression = \"" + oracleTextExpression + "\"");
     String projectId = request.getProjectId();
     String sql;
     if (searchComments) {
