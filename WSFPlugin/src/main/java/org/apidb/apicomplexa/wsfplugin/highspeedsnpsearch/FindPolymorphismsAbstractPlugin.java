@@ -138,8 +138,8 @@ public abstract class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearch
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());
     command.add(jobDir.getPath() + "/" + getResultsFileBaseName());
-    command.add(new Integer(percentPolymorphisms).toString());
-    command.add(new Integer(unknownsThreshold).toString());
+    command.add(Integer.valueOf(percentPolymorphisms).toString());
+    command.add(Integer.valueOf(unknownsThreshold).toString());
     command.add(jobDir.getPath() + "/strains");
     command.add(reconstructNameCmd);
     command.add(prefix);
