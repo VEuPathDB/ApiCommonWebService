@@ -86,7 +86,7 @@ sub processGene {
   return unless $snpsCount;
 
   my $nonCodingCount = $snpsCount - $codingCount;
-  my $dnds = $synCount? $nonSynCount / $synCount : $nonSynCount;
+  my $dnds = $synCount? $nonSynCount / $synCount : undef;
   my $density = $snpsCount / (($filterEnd - $filterStart) / 1000);
 
   if ($snpClass && ($snpsMin || $snpsMax != -1)) {
@@ -117,7 +117,7 @@ sub processGene {
     return 0 if ($density < $densityMin || ($densityMax != -1 && $density > $densityMax));
   }
 
-  print STDOUT join("\t", $filterGeneId, sprintf("%.2f",$density), sprintf("%.2f",$dnds), $synCount, $nonSynCount, $nonCodingCount, $nonsenseCount, $snpsCount) . "\n";
+  print STDOUT join("\t", $filterGeneId, sprintf("%.2f",$density), $synCount ? sprintf("%.2f",$dnds) : undef, $synCount, $nonSynCount, $nonCodingCount, $nonsenseCount, $snpsCount) . "\n";
 }
 
 sub usage {
