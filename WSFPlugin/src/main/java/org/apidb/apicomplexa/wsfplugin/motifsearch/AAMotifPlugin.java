@@ -67,6 +67,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
       symbols.put('9', "ACDGNPSTV");
       symbols.put('B', "AGS");
       symbols.put('Z', "ACDEGHKNQRST");
+      symbols.put('X', "ACDEFGHIKLMNPQRSTVWY");
 
       return symbols;
     }
