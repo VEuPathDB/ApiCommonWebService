@@ -270,7 +270,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
     logger.debug("Parameter found : " + param.getFullName());
     if (param instanceof FlatVocabParam)
-      logger.debug("param query: " + ((FlatVocabParam) param).getQuery().getFullName());
+      logger.debug("param query: " + ((FlatVocabParam) param).getVocabularyQuery().getFullName());
 
     // only process the result if it's an enum param
     if (param instanceof AbstractEnumParam) {
