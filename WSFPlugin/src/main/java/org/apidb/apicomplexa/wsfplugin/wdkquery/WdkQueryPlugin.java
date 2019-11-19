@@ -327,7 +327,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamVocabInstance vocabInstance = abParam.getVocabInstance(user, paramValues);
           if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
-            valList = abParam.getDefault(vocabInstance);
+            valList = abParam.getDefault(null, vocabInstance);
           }
 
           // Code to specifically work around a specific problem
