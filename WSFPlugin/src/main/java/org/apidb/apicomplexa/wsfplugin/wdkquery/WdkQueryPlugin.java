@@ -14,10 +14,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.fgputil.validation.ValidationLevel;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.dbms.ResultList;
 import org.gusdb.wdk.model.query.Query;
 import org.gusdb.wdk.model.query.QueryInstance;
@@ -27,7 +27,10 @@ import org.gusdb.wdk.model.query.param.FilterParamNew;
 import org.gusdb.wdk.model.query.param.FlatVocabParam;
 import org.gusdb.wdk.model.query.param.Param;
 import org.gusdb.wdk.model.query.param.StringParam;
+import org.gusdb.wdk.model.query.spec.ParameterContainerInstanceSpecBuilder.FillStrategy;
+import org.gusdb.wdk.model.query.spec.QueryInstanceSpec;
 import org.gusdb.wdk.model.question.Question;
+import org.gusdb.wdk.model.user.StepContainer;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -116,7 +119,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // when running a id search, the question holds the name of the search,
     // the param should be empty, and the query holds the name of the id
     // query.
-    String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
+    String questionFullName = context.get(Utilities.QUERY_CTX_QUESTION);
     String paramName = context.get(Utilities.QUERY_CTX_PARAM);
     String queryName = context.get(Utilities.QUERY_CTX_QUERY);
 
@@ -128,7 +131,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("Parameters were processed");
 
     try {
-      logger.debug("context question: '" + questionName + "', param: '" + paramName + "', query: '" +
+      logger.debug("context question: '" + questionFullName + "', param: '" + paramName + "', query: '" +
           queryName + "', SiteModel=" + request.getProjectId());
 
       // Variable to maintain the order of columns in the result... maintains
@@ -143,23 +146,30 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
       // get the user
       String userId = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
+      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
+          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
 
       // web service call to get param values
       if (paramName != null) {
-        resultSize = writeParamResult(response, user, paramValues, columnOrders, questionName, paramName);
+        resultSize = writeParamResult(response, user, paramValues, columnOrders, questionFullName, paramName);
         logger.info("Param results have been processed.... " + resultSize);
         return resultSize;
       }
 
       // check if question is set
       Query query;
-      if (questionName != null) {
-        Question question = wdkModel.getQuestion(questionName);
-        query = question.getQuery();
+      if (questionFullName != null) {
+        query = wdkModel.getQuestionByFullName(questionFullName)
+            .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionFullName))
+            .getQuery();
       }
       else {
         query = (Query) wdkModel.resolveReference(queryName);
+      }
+
+      // if query has answer params, throw; they are not allowed
+      if (query.getAnswerParamCount() > 0) {
+        throw new PluginUserException("This operation cannot be performed on combiner queries such as " + query.getFullName());
       }
 
       // converting from internal values to dependent values
@@ -168,47 +178,57 @@ public class WdkQueryPlugin extends AbstractPlugin {
       // execute query, and get results back
       logger.info("Processing Query " + query.getFullName() + "...");
       logger.info("Params used to create query instance: " + FormatUtil.prettyPrint(SOParams));
-      QueryInstance<?> queryInstance = query.makeInstance(user, SOParams, true, 0, context);
-      try (ResultList resultList = queryInstance.getResults()) {
-        logger.info("Results set was filled");
-        resultSize = writeQueryResults(response, resultList, columnOrders);
-        logger.info("Query results have been processed.... " + resultSize);
-      }
-    }
-    catch (WdkUserException ex) {
-      logger.info("WdkUserException in execute()" + ex.toString());
-      String msg = ex.toString();
-      logger.info("Message = " + msg);
-      if (msg.contains("Please choose value(s) for parameter")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("No value supplied for param")) {
-        resultSize = 0;
-        // isolate query on crypto/plasmo with only param values for plasmo
-      }
-      else if (msg.contains("does not exist")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("does not contain")) {
-        resultSize = -2; // query set or query doesn't exist
-        // } else if (msg.indexOf("encountered an invalid term") != -1) {
-        // resultSize = 0; // parameter value relates to a different comp site
-      }
-      else if (msg.contains("does not include")) {
-        resultSize = -2; // query set or query doesn't exist
-      }
-      else if (msg.contains("datasets value '' has an error: Missing the value")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("Invalid term")) {
-        resultSize = 0;
-      }
-      else if (msg.contains("Some of the input parameters are invalid")) {
-        resultSize = 0;
+      
+      QueryInstanceSpec qiSpec = QueryInstanceSpec
+          .builder()
+          .putAll(SOParams)
+          .buildValidated(user, query, StepContainer.emptyContainer(), ValidationLevel.RUNNABLE, FillStrategy.NO_FILL);
+      if (qiSpec.isRunnable()) {
+        QueryInstance<?> queryInstance = Query.makeQueryInstance(qiSpec.getRunnable().getLeft());
+        try (ResultList resultList = queryInstance.getResults()) {
+          logger.info("Results set was filled");
+          resultSize = writeQueryResults(response, resultList, columnOrders);
+          logger.info("Query results have been processed.... " + resultSize);
+        }
       }
       else {
-        logger.error("WdkUserException: " + ex);
-        resultSize = -1; // actual error, can't handle
+        String joinedValidationErrors = FormatUtil.join(qiSpec.getValidationBundle().getAllErrors(), FormatUtil.NL);
+        // NOTE: used to catch a WdkUserException here, but now reading validation errors
+        // FIXME: The new messages MAY NOT MATCH the old ones, so we may be returning the wrong thing here
+        //logger.info("WdkUserException in execute()" + ex.toString());
+        String msg = joinedValidationErrors; // ex.toString();
+        logger.info("Message = " + msg);
+        if (msg.contains("Please choose value(s) for parameter")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("No value supplied for param")) {
+          resultSize = 0;
+          // isolate query on crypto/plasmo with only param values for plasmo
+        }
+        else if (msg.contains("does not exist")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("does not contain")) {
+          resultSize = -2; // query set or query doesn't exist
+          // } else if (msg.indexOf("encountered an invalid term") != -1) {
+          // resultSize = 0; // parameter value relates to a different comp site
+        }
+        else if (msg.contains("does not include")) {
+          resultSize = -2; // query set or query doesn't exist
+        }
+        else if (msg.contains("datasets value '' has an error: Missing the value")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("Invalid term")) {
+          resultSize = 0;
+        }
+        else if (msg.contains("Some of the input parameters are invalid")) {
+          resultSize = 0;
+        }
+        else {
+          logger.error("Unrecognized validation error: " + msg);
+          resultSize = -1; // actual error, can't handle
+        }
       }
     }
     catch (Exception ex) {
@@ -222,13 +242,13 @@ public class WdkQueryPlugin extends AbstractPlugin {
   }
 
   private int writeParamResult(PluginResponse response, User user, Map<String, String> paramValues,
-      Map<String, Integer> columnOrders, String questionName, String paramName) throws PluginModelException, WdkModelException, PluginUserException {
+      Map<String, Integer> columnOrders, String questionFullName, String paramName) throws PluginModelException, WdkModelException, PluginUserException {
     // get param
     Param param;
-    if (questionName != null) {
-      // context question is defined, should get the param from
-      // question
-      Question question = wdkModel.getQuestion(questionName);
+    if (questionFullName != null) {
+      // context question is defined, should get the param from question
+      Question question = wdkModel.getQuestionByFullName(questionFullName)
+          .orElseThrow(() -> new PluginModelException("Cannot find question with passed context name " + questionFullName));
       String partName = paramName.substring(paramName.indexOf(".") + 1);
       param = question.getParamMap().get(partName);
 
@@ -239,7 +259,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       if (param == null)
         // param = (Param) wdkModel.resolveReference(paramName);
         throw new PluginModelException("parameter " + paramName + " does not exist in question " +
-            questionName);
+            questionFullName);
     }
     else {
       logger.debug("got param from model.");
@@ -250,7 +270,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     }
     logger.debug("Parameter found : " + param.getFullName());
     if (param instanceof FlatVocabParam)
-      logger.debug("param query: " + ((FlatVocabParam) param).getQuery().getFullName());
+      logger.debug("param query: " + ((FlatVocabParam) param).getVocabularyQuery().getFullName());
 
     // only process the result if it's an enum param
     if (param instanceof AbstractEnumParam) {
@@ -293,7 +313,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
   }
 
   private Map<String, String> convertParams(User user, Map<String, String> paramValues,
-      Map<String, Param> params) {
+      Map<String, Param> params) throws WdkModelException {
     Map<String, String> ret = new HashMap<String, String>();
     for (String key : paramValues.keySet()) {
       String value = paramValues.get(key);
@@ -307,7 +327,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
           AbstractEnumParam abParam = (AbstractEnumParam) param;
           EnumParamVocabInstance vocabInstance = abParam.getVocabInstance(user, paramValues);
           if ((param instanceof FlatVocabParam || param.isAllowEmpty()) && valList.length() == 0) {
-            valList = vocabInstance.getDefaultValue();
+            valList = abParam.getDefault(null, vocabInstance);
           }
 
           // Code to specifically work around a specific problem
@@ -325,7 +345,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             mystring = unescapeValue(mystring, abParam.getQuote());
             try {
               logger.debug("ParamName = " + param.getName() + " ------ Value = " + mystring);
-              if (validateSingleValues(abParam, vocabInstance, mystring.trim())) {
+              if (validateSingleValues(vocabInstance, mystring.trim())) {
                 // ret.put(param.getName(), o);
                 newVals = newVals + "," + mystring.trim();
                 logger.debug("validated-------------\n ParamName = " + param.getName() + " ------ Value = " +
@@ -360,12 +380,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
     return ret;
   }
 
-  private boolean validateSingleValues(AbstractEnumParam p, EnumParamVocabInstance vocab, String value) {
+  private boolean validateSingleValues(EnumParamVocabInstance vocab, String value) {
     String[] conVocab = vocab.getVocab();
     logger.debug("conVocab.length = " + conVocab.length);
-    if (p.isSkipValidation())
-      return true;
-    // initVocabMap();
     for (String v : conVocab) {
       if (value.equalsIgnoreCase(v))
         return true;

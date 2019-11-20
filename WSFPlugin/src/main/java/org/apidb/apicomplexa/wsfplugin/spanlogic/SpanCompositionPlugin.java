@@ -18,12 +18,14 @@ import org.apache.log4j.Logger;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.fgputil.validation.ValidationLevel;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
-import org.gusdb.wdk.model.user.StepUtilities;
+import org.gusdb.wdk.model.answer.factory.AnswerValueFactory;
+import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -257,7 +259,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
       // get the answerValue from the step id
       String userId = request.getContext().get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId));
+      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
+          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
 
       // create temp tables from caches
       Flag flag = new Flag();
@@ -407,13 +410,18 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
-    AnswerValue answerValue = StepUtilities.getStepByValidStepId(user, stepId).getAnswerValue();
+    WdkUserException e = new WdkUserException("No step with ID " + stepId + " exists for user " + user.getUserId());
+    Step step = wdkModel.getStepFactory().getStepByIdAndUserId(stepId, user.getUserId(),
+        ValidationLevel.RUNNABLE).orElseThrow(() -> e);
+    AnswerValue answerValue = AnswerValueFactory.makeAnswer(step.getRunnable()
+        .getOrThrow(validatedStep -> new WdkModelException(
+            "Step " + stepId + " is not runnable. Validation: " + validatedStep.getValidationBundle().toString())));
 
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
 
     // get the table or sql that returns the location information
-    String rcName = answerValue.getQuestion().getRecordClass().getFullName();
+    String rcName = answerValue.getAnswerSpec().getQuestion().getRecordClass().getFullName();
     String locTable;
     if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
       locTable = "(SELECT source_id AS feature_source_id, project_id, " +

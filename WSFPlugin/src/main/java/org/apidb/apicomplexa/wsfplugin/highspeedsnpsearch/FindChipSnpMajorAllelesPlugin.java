@@ -144,12 +144,12 @@ public class FindChipSnpMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlu
     command.add(gusBin + "/hsssGenerateMajorAllelesScript");
     command.add(jobDir.getPath());
     command.add(readFreqDirA.getPath());
-    command.add(new Integer(percentMajorAllelesA).toString());
-    command.add(new Integer(unknownsThresholdA).toString());
+    command.add(Integer.valueOf(percentMajorAllelesA).toString());
+    command.add(Integer.valueOf(unknownsThresholdA).toString());
     command.add(jobDir.getPath() + "/" + "strainsA");
     command.add(readFreqDirB.getPath());
-    command.add(new Integer(percentMajorAllelesB).toString());
-    command.add(new Integer(unknownsThresholdB).toString());
+    command.add(Integer.valueOf(percentMajorAllelesB).toString());
+    command.add(Integer.valueOf(unknownsThresholdB).toString());
     command.add(jobDir.getPath() + "/" + "strainsB");
     command.add("1");
     command.add(jobDir.getPath() + "/" + getCommandName());

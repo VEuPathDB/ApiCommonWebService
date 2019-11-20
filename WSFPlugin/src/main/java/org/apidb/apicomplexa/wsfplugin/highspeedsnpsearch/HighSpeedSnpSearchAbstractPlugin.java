@@ -179,7 +179,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     }
 
   synchronized String getTimeStamp() {
-    return new Long(new Date().getTime()).toString();
+    return Long.valueOf(new Date().getTime()).toString();
   }
 
   protected abstract String getCommandName();
