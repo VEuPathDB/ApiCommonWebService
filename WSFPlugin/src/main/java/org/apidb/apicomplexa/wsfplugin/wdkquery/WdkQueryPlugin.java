@@ -338,7 +338,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
             valList = "rnor";
           // end workaround
 
-          String[] vals = abParam.convertToTerms(valList);
+          String[] vals = valList.split(",");
           String newVals = "";
           for (String mystring : vals) {
             // unescape each individual term.
