@@ -39,7 +39,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   @Override
   public String[] getRequiredParameterNames() {
-    return new String[]{ "text_search_organism", "text_expression", "solr_text_fields" };
+    return new String[]{ "solr_search_organism", "text_expression", "solr_text_fields" };
   }
 
   @Override
