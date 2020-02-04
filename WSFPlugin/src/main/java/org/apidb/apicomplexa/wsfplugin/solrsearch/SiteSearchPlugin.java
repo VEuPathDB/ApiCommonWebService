@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
 import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.FormatUtil.Style;
 import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.fgputil.web.MimeTypes;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -55,7 +56,8 @@ public class SiteSearchPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
-    LOG.info("Executing " + SiteSearchPlugin.class.getSimpleName() + "...\n" + FormatUtil.getCurrentStackTrace());
+    LOG.info("Executing " + SiteSearchPlugin.class.getSimpleName() +
+        " with params " + FormatUtil.prettyPrint(request.getParams(), Style.MULTI_LINE));
     Response solrResponse = null;
     try {
       Client client = ClientBuilder.newClient();
@@ -110,7 +112,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get("text_expression"));
-    List<String> organismTerms = getTermsFromInternal(internalValues.get("text_search_organism"));
+    List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"));
     List<String> searchFields = getTermsFromInternal(internalValues.get("solr_text_fields"))
         .stream()
         .map(term -> searchFieldMap.get(term))
