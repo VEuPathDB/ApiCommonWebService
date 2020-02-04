@@ -55,6 +55,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
+    LOG.info("Executing " + SiteSearchPlugin.class.getSimpleName() + "...\n" + FormatUtil.getCurrentStackTrace());
     Response solrResponse = null;
     try {
       Client client = ClientBuilder.newClient();

@@ -52,6 +52,15 @@ public class SiteSearchUtil {
     public String getSolrField() {
       return _solrField;
     }
+
+    @Override
+    public String toString() {
+      return new JSONObject()
+        .put("term", _term)
+        .put("internal", _internal)
+        .put("solrField", _solrField)
+        .toString();
+    }
   }
 
   public static WdkModel getWdkModel(String projectId) {

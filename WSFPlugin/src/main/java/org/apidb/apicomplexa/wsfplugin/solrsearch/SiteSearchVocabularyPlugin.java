@@ -5,7 +5,9 @@ import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearc
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -13,6 +15,8 @@ import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 
 public class SiteSearchVocabularyPlugin extends AbstractPlugin {
+
+  private static final Logger LOG = Logger.getLogger(SiteSearchVocabularyPlugin.class);
 
   @Override
   public String[] getRequiredParameterNames() {
@@ -32,8 +36,10 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
+    LOG.info("Executing " + SiteSearchVocabularyPlugin.class.getSimpleName() + "...\n" + FormatUtil.getCurrentStackTrace());
     List<SearchField> fields = getSearchFields(getRequestedDocumentType(request));
     for (SearchField field : fields) {
+      LOG.info("Adding response row: " + field);
       response.addRow(new String[] { field.getTerm(), field.getInternal() });
     }
     return 0;
