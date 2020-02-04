@@ -60,14 +60,15 @@ public class SiteSearchPlugin extends AbstractPlugin {
     try {
       Client client = ClientBuilder.newClient();
       String metadataUrl = SiteSearchUtil.getSolrServiceUrl();
-      LOG.info("Querying site search service with: " + metadataUrl);
+      JSONObject requestBody = buildRequestJson(request);
+      LOG.info("Querying site search service at " + metadataUrl + " with JSON body: " + requestBody.toString(2));
       WebTarget webTarget = client.target(metadataUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MimeTypes.ND_JSON);
-      JSONObject requestBody = buildRequestJson(request);
       solrResponse = invocationBuilder.post(Entity.entity(requestBody.toString(), MediaType.APPLICATION_JSON));
       BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)solrResponse.getEntity()));
       while (br.ready()) {
         String line = br.readLine();
+        LOG.info("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
         if (tokens.length != 2) throw new PluginModelException("Unexpected format in line: " + line);
         JSONArray primaryKey = new JSONArray(tokens[0]);
