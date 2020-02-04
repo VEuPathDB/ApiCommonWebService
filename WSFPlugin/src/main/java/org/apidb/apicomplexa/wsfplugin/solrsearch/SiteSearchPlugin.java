@@ -112,8 +112,8 @@ public class SiteSearchPlugin extends AbstractPlugin {
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get("text_expression"));
-    List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"));
-    List<String> searchFields = getTermsFromInternal(internalValues.get("solr_text_fields"))
+    List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"), false);
+    List<String> searchFields = getTermsFromInternal(internalValues.get("solr_text_fields"), true)
         .stream()
         .map(term -> searchFieldMap.get(term))
         .filter(field -> field != null)
@@ -129,9 +129,9 @@ public class SiteSearchPlugin extends AbstractPlugin {
       );
   }
 
-  private static List<String> getTermsFromInternal(String internalEnumValue) {
+  private static List<String> getTermsFromInternal(String internalEnumValue, boolean performDequote) {
     return Arrays.stream(internalEnumValue.split(","))
-      .map(quotedStr -> unquoteString(quotedStr))
+      .map(string -> performDequote ? unquoteString(string) : string)
       .collect(Collectors.toList());
   }
 
