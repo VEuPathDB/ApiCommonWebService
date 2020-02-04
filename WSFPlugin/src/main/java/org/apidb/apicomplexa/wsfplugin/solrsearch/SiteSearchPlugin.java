@@ -44,7 +44,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   @Override
   public String[] getColumns() {
-    return new String[] { "source_id", "gene_source_id", "project_id", "matched_result", "score" };
+    return new String[] { "source_id", "gene_source_id", "project_id", "matched_result", "max_score" };
   }
 
   @Override
