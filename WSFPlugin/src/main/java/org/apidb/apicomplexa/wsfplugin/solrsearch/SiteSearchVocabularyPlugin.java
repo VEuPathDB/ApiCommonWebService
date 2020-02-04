@@ -1,9 +1,11 @@
 package org.apidb.apicomplexa.wsfplugin.solrsearch;
 
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRequestedDocumentType;
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearchFields;
+
 import java.util.List;
 
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
-import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -30,8 +32,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
-    RecordClass recordClass = SiteSearchUtil.getRecordClass(request);
-    List<SearchField> fields = SiteSearchUtil.getSearchFields(recordClass);
+    List<SearchField> fields = getSearchFields(getRequestedDocumentType(request));
     for (SearchField field : fields) {
       response.addRow(new String[] { field.getTerm(), field.getInternal() });
     }

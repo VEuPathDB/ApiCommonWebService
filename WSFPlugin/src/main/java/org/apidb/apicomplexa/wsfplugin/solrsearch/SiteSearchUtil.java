@@ -20,6 +20,7 @@ import org.gusdb.fgputil.json.JsonIterators;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
+import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
 import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -62,14 +63,23 @@ public class SiteSearchUtil {
     return "https://dfalke-b.plasmodb.org/site-search";
   }
 
-  public static RecordClass getRecordClass(PluginRequest request) throws PluginModelException {
+  private static RecordClass getRecordClass(PluginRequest request) throws PluginModelException {
     String questionFullName = request.getContext().get("wdk-question");
     return getWdkModel(request.getProjectId()).getQuestionByFullName(questionFullName)
       .map(question -> question.getRecordClass())
       .orElseThrow(() -> new PluginModelException("Could not find context question: " + questionFullName));
   }
 
-  public static List<SearchField> getSearchFields(RecordClass recordClass) throws PluginModelException {
+  public static String getRequestedDocumentType(PluginRequest request) throws PluginModelException {
+    String urlSegment = getRecordClass(request).getUrlSegment();
+    return urlSegment.equals("transcript") ? "gene" : urlSegment;
+  }
+
+  public static PrimaryKeyDefinition getPrimaryKeyDefinition(PluginRequest request) throws PluginModelException {
+    return getRecordClass(request).getPrimaryKeyDefinition();
+  }
+
+  public static List<SearchField> getSearchFields(String documentType) throws PluginModelException {
     Response response = null;
     try {
       Client client = ClientBuilder.newClient();
@@ -87,11 +97,11 @@ public class SiteSearchUtil {
       JSONArray docTypes = new JSONObject(responseBody).getJSONArray("documentTypes");
       List<JSONArray> fieldsJsons = JsonIterators.arrayStream(docTypes)
         .map(obj -> obj.getJSONObject())
-        .filter(obj -> obj.getString("id").equals(recordClass.getUrlSegment()))
+        .filter(obj -> obj.getString("id").equals(documentType))
         .map(obj -> obj.getJSONObject("wdkRecordTypeData").getJSONArray("searchFields"))
         .collect(Collectors.toList());
       if (fieldsJsons.size() != 1) {
-        throw new PluginModelException("Could not find unique document type with id " + recordClass.getUrlSegment());
+        throw new PluginModelException("Could not find unique document type with id " + documentType);
       }
       return JsonIterators.arrayStream(fieldsJsons.get(0))
         .map(obj -> obj.getJSONObject())

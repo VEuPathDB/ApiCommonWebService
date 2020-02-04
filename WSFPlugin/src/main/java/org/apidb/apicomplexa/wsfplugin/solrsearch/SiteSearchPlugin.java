@@ -1,5 +1,8 @@
 package org.apidb.apicomplexa.wsfplugin.solrsearch;
 
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRequestedDocumentType;
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearchFields;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +25,6 @@ import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.fgputil.web.MimeTypes;
-import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -53,7 +55,6 @@ public class SiteSearchPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
-    RecordClass recordClass = SiteSearchUtil.getRecordClass(request);
     Response solrResponse = null;
     try {
       Client client = ClientBuilder.newClient();
@@ -61,7 +62,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       LOG.info("Querying site search service with: " + metadataUrl);
       WebTarget webTarget = client.target(metadataUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MimeTypes.ND_JSON);
-      JSONObject requestBody = buildRequestJson(request, recordClass);
+      JSONObject requestBody = buildRequestJson(request);
       solrResponse = invocationBuilder.post(Entity.entity(requestBody.toString(), MediaType.APPLICATION_JSON));
       BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)solrResponse.getEntity()));
       while (br.ready()) {
@@ -100,9 +101,10 @@ public class SiteSearchPlugin extends AbstractPlugin {
    *   }
    * }
    */
-  private JSONObject buildRequestJson(PluginRequest request, RecordClass recordClass) throws PluginModelException {
+  private JSONObject buildRequestJson(PluginRequest request) throws PluginModelException {
+    String docType = getRequestedDocumentType(request);
     Map<String,SearchField> searchFieldMap = Functions.getMapFromValues(
-        SiteSearchUtil.getSearchFields(recordClass), field -> field.getTerm());
+        getSearchFields(docType), field -> field.getTerm());
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get("text_expression"));
@@ -118,7 +120,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       .put("restrictToProject", projectId)
       .put("restrictSearchToOrganisms", organismTerms)
       .put("documentTypeFilter", new JSONObject()
-        .put("documentType", recordClass.getUrlSegment())
+        .put("documentType", docType)
         .put("foundOnlyInFields", searchFields)
       );
   }
