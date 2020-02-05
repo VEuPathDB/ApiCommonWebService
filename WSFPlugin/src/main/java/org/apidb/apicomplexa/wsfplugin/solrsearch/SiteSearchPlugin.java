@@ -24,6 +24,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
 import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.FormatUtil.Style;
 import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.fgputil.web.MimeTypes;
@@ -75,25 +76,31 @@ public class SiteSearchPlugin extends AbstractPlugin {
           " from site search service with status: " + searchResponse.getStatus());
 
       // process response
-      BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
-      while (br.ready()) {
-        String line = br.readLine();
+      String responseText = IoUtil.readAllChars(new InputStreamReader((InputStream)searchResponse.getEntity()));
+      LOG.info("Here's the response:\n" + responseText);
+      //BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
+      //while (br.ready()) {
+      //  String line = br.readLine();
+      for (String line : responseText.split(FormatUtil.NL)) {
         LOG.info("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
         if (tokens.length != 2) throw new PluginModelException("Unexpected format in line: " + line);
         JSONArray primaryKey = new JSONArray(tokens[0]);
         String score = tokens[1];
-        response.addRow(new String[]{
+        // FIXME: currently hard-coded for transcripts
+        String[] row = new String[]{
+          "",
           primaryKey.getString(0),
-          primaryKey.getString(1),
-          primaryKey.getString(2),
-          "1",
+          request.getProjectId(),
+          "Y",
           score
-        });
+        };
+        LOG.info("Returning row: " + new JSONArray(row).toString());
+        response.addRow(row);
       }
       return 0;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new PluginModelException("Could not read response from site search service", e);
     }
     finally {
