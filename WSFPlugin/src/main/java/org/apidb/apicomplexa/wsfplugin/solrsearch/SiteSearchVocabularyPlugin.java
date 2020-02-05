@@ -25,7 +25,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
 
   @Override
   public String[] getColumns() {
-    return new String[]{ "internal", "term" };
+    return new String[]{ "internal", "term", "display" };
   }
 
   @Override
@@ -42,7 +42,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
     List<SearchField> fields = getSearchFields(serviceUrl, docType);
     for (SearchField field : fields) {
       LOG.debug("Adding response row: " + field);
-      response.addRow(new String[] { field.getTerm(), field.getDisplay() });
+      response.addRow(new String[] { field.getTerm(), field.getTerm(), field.getDisplay() });
     }
     return 0;
   }
