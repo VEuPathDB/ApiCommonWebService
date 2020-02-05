@@ -36,12 +36,12 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
   @Override
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
-    LOG.info("Executing " + SiteSearchVocabularyPlugin.class.getSimpleName() + "...");
+    LOG.debug("Executing " + SiteSearchVocabularyPlugin.class.getSimpleName() + "...");
     String serviceUrl = getSiteSearchServiceUrl(request);
     String docType = getRequestedDocumentType(request);
     List<SearchField> fields = getSearchFields(serviceUrl, docType);
     for (SearchField field : fields) {
-      LOG.info("Adding response row: " + field);
+      LOG.debug("Adding response row: " + field);
       response.addRow(new String[] { field.getInternal(), field.getTerm() });
     }
     return 0;
