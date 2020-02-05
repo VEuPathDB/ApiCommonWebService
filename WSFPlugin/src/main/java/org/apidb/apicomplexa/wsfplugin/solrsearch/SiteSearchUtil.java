@@ -34,32 +34,32 @@ public class SiteSearchUtil {
 
   public static class SearchField {
 
-    public final String _term;
-    public final String _internal;
     public final String _solrField;
+    public final String _display;
+    public final String _term;
 
-    public SearchField(String name, String displayName, String term) {
+    public SearchField(String name, String display, String term) {
       _solrField = name;
-      _term = displayName;
-      _internal = term;
+      _display = display;
+      _term = term;
     }
 
-    public String getTerm() {
-      return _term;
-    }
-    public String getInternal() {
-      return _internal;
-    }
     public String getSolrField() {
       return _solrField;
+    }
+    public String getDisplay() {
+      return _display;
+    }
+    public String getTerm() {
+      return _term;
     }
 
     @Override
     public String toString() {
       return new JSONObject()
-        .put("term", _term)
-        .put("internal", _internal)
         .put("solrField", _solrField)
+        .put("display", _display)
+        .put("term", _term)
         .toString();
     }
   }

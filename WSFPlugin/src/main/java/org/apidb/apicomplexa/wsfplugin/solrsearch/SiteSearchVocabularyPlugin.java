@@ -42,7 +42,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
     List<SearchField> fields = getSearchFields(serviceUrl, docType);
     for (SearchField field : fields) {
       LOG.debug("Adding response row: " + field);
-      response.addRow(new String[] { field.getInternal(), field.getTerm() });
+      response.addRow(new String[] { field.getTerm(), field.getDisplay() });
     }
     return 0;
   }
