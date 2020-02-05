@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.client.Client;
@@ -67,10 +68,15 @@ public class SiteSearchUtil {
     return InstanceManager.getInstance(WdkModel.class, GusHome.getGusHome(), projectId);
   }
 
-  public static String getSiteSearchServiceUrl(PluginRequest request) {
-    WdkModel wdkModel = getWdkModel(request.getProjectId());
-    // TODO: use value in model.prop when it exists; for now use Dave's site
-    return "https://dfalke-b.plasmodb.org/site-search";
+  public static String getSiteSearchServiceUrl(PluginRequest request) throws PluginModelException {
+    Map<String,String> modelProps = getWdkModel(request.getProjectId()).getProperties();
+    String localhost = modelProps.get("LOCALHOST");
+    String siteSearchServiceUrl = modelProps.get("SITE_SEARCH_SERVICE_URL");
+    if (localhost == null || siteSearchServiceUrl == null) {
+      throw new PluginModelException("model.prop must contain the properties: LOCALHOST, SITE_SEARCH_SERVICE_URL");
+    }
+    return localhost + siteSearchServiceUrl;
+    //return "https://dfalke-b.plasmodb.org/site-search";
   }
 
   private static RecordClass getRecordClass(PluginRequest request) throws PluginModelException {
