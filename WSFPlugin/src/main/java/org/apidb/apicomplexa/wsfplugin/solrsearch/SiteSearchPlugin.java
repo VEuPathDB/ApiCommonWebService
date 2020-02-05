@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.solrsearch;
 
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRequestedDocumentType;
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearchFields;
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSiteSearchServiceUrl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -58,16 +59,23 @@ public class SiteSearchPlugin extends AbstractPlugin {
       throws PluginModelException, PluginUserException {
     LOG.info("Executing " + SiteSearchPlugin.class.getSimpleName() +
         " with params " + FormatUtil.prettyPrint(request.getParams(), Style.MULTI_LINE));
-    Response solrResponse = null;
+    Response searchResponse = null;
     try {
-      Client client = ClientBuilder.newClient();
-      String metadataUrl = SiteSearchUtil.getSolrServiceUrl();
+      // build request elements
+      String searchUrl = getSiteSearchServiceUrl(request);
       JSONObject requestBody = buildRequestJson(request);
-      LOG.info("Querying site search service at " + metadataUrl + " with JSON body: " + requestBody.toString(2));
-      WebTarget webTarget = client.target(metadataUrl);
+      LOG.info("Querying site search service at " + searchUrl + " with JSON body: " + requestBody.toString(2));
+
+      // make request
+      Client client = ClientBuilder.newClient();
+      WebTarget webTarget = client.target(searchUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MimeTypes.ND_JSON);
-      solrResponse = invocationBuilder.post(Entity.entity(requestBody.toString(), MediaType.APPLICATION_JSON));
-      BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)solrResponse.getEntity()));
+      searchResponse = invocationBuilder.post(Entity.entity(requestBody.toString(), MediaType.APPLICATION_JSON));
+      LOG.info("Received response of size " + searchResponse.getLength() +
+          " from site search service with status: " + searchResponse.getStatus());
+
+      // process response
+      BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
       while (br.ready()) {
         String line = br.readLine();
         LOG.info("Site Search Service response line: " + line);
@@ -89,7 +97,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       throw new PluginModelException("Could not read response from site search service", e);
     }
     finally {
-      if (solrResponse != null) solrResponse.close();
+      if (searchResponse != null) searchResponse.close();
     }
   }
   /**
@@ -105,15 +113,15 @@ public class SiteSearchPlugin extends AbstractPlugin {
    *   }
    * }
    */
-  private JSONObject buildRequestJson(PluginRequest request) throws PluginModelException {
+  private static JSONObject buildRequestJson(PluginRequest request) throws PluginModelException {
     String docType = getRequestedDocumentType(request);
     Map<String,SearchField> searchFieldMap = Functions.getMapFromValues(
-        getSearchFields(docType), field -> field.getTerm());
+        getSearchFields(getSiteSearchServiceUrl(request), docType), field -> field.getTerm());
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get("text_expression"));
     List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"), false);
-    List<String> searchFields = getTermsFromInternal(internalValues.get("solr_text_fields"), true)
+    List<String> searchFieldNames = getTermsFromInternal(internalValues.get("solr_text_fields"), true)
         .stream()
         .map(term -> searchFieldMap.get(term))
         .filter(field -> field != null)
@@ -125,7 +133,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       .put("restrictSearchToOrganisms", organismTerms)
       .put("documentTypeFilter", new JSONObject()
         .put("documentType", docType)
-        .put("foundOnlyInFields", searchFields)
+        .put("foundOnlyInFields", searchFieldNames)
       );
   }
 

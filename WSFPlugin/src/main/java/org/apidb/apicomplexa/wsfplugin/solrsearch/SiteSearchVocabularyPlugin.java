@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.solrsearch;
 
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRequestedDocumentType;
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearchFields;
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSiteSearchServiceUrl;
 
 import java.util.List;
 
@@ -36,7 +37,9 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
   protected int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException, PluginUserException {
     LOG.info("Executing " + SiteSearchVocabularyPlugin.class.getSimpleName() + "...");
-    List<SearchField> fields = getSearchFields(getRequestedDocumentType(request));
+    String serviceUrl = getSiteSearchServiceUrl(request);
+    String docType = getRequestedDocumentType(request);
+    List<SearchField> fields = getSearchFields(serviceUrl, docType);
     for (SearchField field : fields) {
       LOG.info("Adding response row: " + field);
       response.addRow(new String[] { field.getInternal(), field.getTerm() });

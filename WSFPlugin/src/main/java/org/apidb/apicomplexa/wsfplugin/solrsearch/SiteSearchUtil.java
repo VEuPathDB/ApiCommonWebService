@@ -67,7 +67,8 @@ public class SiteSearchUtil {
     return InstanceManager.getInstance(WdkModel.class, GusHome.getGusHome(), projectId);
   }
 
-  public static String getSolrServiceUrl() {
+  public static String getSiteSearchServiceUrl(PluginRequest request) {
+    WdkModel wdkModel = getWdkModel(request.getProjectId());
     // TODO: use value in model.prop when it exists; for now use Dave's site
     return "https://dfalke-b.plasmodb.org/site-search";
   }
@@ -88,11 +89,11 @@ public class SiteSearchUtil {
     return getRecordClass(request).getPrimaryKeyDefinition();
   }
 
-  public static List<SearchField> getSearchFields(String documentType) throws PluginModelException {
+  public static List<SearchField> getSearchFields(String siteSearchServiceUrl, String documentType) throws PluginModelException {
     Response response = null;
     try {
       Client client = ClientBuilder.newClient();
-      String metadataUrl = getSolrServiceUrl() + "/categories-metadata";
+      String metadataUrl = siteSearchServiceUrl + "/categories-metadata";
       LOG.info("Querying site search service with: " + metadataUrl);
       WebTarget webTarget = client.target(metadataUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
