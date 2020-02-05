@@ -128,19 +128,23 @@ public class SiteSearchPlugin extends AbstractPlugin {
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get("text_expression"));
     List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"), false);
-    List<String> searchFieldNames = getTermsFromInternal(internalValues.get("solr_text_fields"), true)
-        .stream()
-        .map(term -> searchFieldMap.get(term))
-        .filter(field -> field != null)
-        .map(field -> field.getSolrField())
-        .collect(Collectors.toList());
+    List<String> searchFieldTerms = getTermsFromInternal(internalValues.get("solr_text_fields"), true);
+    List<String> searchFieldSolrNames =
+      (searchFieldTerms.isEmpty() ?
+        searchFieldMap.values().stream() :
+        searchFieldTerms.stream()
+          .map(term -> searchFieldMap.get(term))
+          .filter(field -> field != null)
+      )
+      .map(field -> field.getSolrField())
+      .collect(Collectors.toList());
     return new JSONObject()
       .put("searchText", searchTerm)
       .put("restrictToProject", projectId)
       .put("restrictSearchToOrganisms", organismTerms)
       .put("documentTypeFilter", new JSONObject()
         .put("documentType", docType)
-        .put("foundOnlyInFields", searchFieldNames)
+        .put("foundOnlyInFields", searchFieldSolrNames)
       );
   }
 
