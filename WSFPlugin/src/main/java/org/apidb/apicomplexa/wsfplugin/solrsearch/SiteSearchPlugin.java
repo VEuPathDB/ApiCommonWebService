@@ -5,7 +5,6 @@ import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearc
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSiteSearchServiceUrl;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
@@ -24,7 +23,6 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
 import org.gusdb.fgputil.FormatUtil;
-import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.FormatUtil.Style;
 import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.fgputil.web.MimeTypes;
@@ -72,17 +70,13 @@ public class SiteSearchPlugin extends AbstractPlugin {
       WebTarget webTarget = client.target(searchUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MimeTypes.ND_JSON);
       searchResponse = invocationBuilder.post(Entity.entity(requestBody.toString(), MediaType.APPLICATION_JSON));
-      LOG.info("Received response of size " + searchResponse.getLength() +
-          " from site search service with status: " + searchResponse.getStatus());
 
-      // process response
-      String responseText = IoUtil.readAllChars(new InputStreamReader((InputStream)searchResponse.getEntity()));
-      LOG.info("Here's the response:\n" + responseText);
-      //BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
-      //while (br.ready()) {
-      //  String line = br.readLine();
-      for (String line : responseText.split(FormatUtil.NL)) {
-        LOG.info("Site Search Service response line: " + line);
+      LOG.info("Received response from site search service with status: " + searchResponse.getStatus());
+
+      BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
+      String line;
+      while ((line = br.readLine()) != null) {
+        LOG.debug("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
         if (tokens.length != 2) throw new PluginModelException("Unexpected format in line: " + line);
         JSONArray primaryKey = new JSONArray(tokens[0]);
@@ -95,7 +89,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
           "Y",
           score
         };
-        LOG.info("Returning row: " + new JSONArray(row).toString());
+        LOG.debug("Returning row: " + new JSONArray(row).toString());
         response.addRow(row);
       }
       return 0;
