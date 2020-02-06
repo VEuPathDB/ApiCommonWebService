@@ -38,9 +38,13 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   private static final Logger LOG = Logger.getLogger(SiteSearchPlugin.class);
 
+  private static final String ORGANISM_PARAM_NAME = "solr_search_organism";
+  private static final String SEARCH_TEXT_PARAM_NAME = "text_expression";
+  private static final String SEARCH_FIELDS_PARAM_NAME = "solr_text_fields";
+
   @Override
   public String[] getRequiredParameterNames() {
-    return new String[]{ "solr_search_organism", "text_expression", "solr_text_fields" };
+    return new String[]{ ORGANISM_PARAM_NAME, SEARCH_TEXT_PARAM_NAME, SEARCH_FIELDS_PARAM_NAME };
   }
 
   @Override
@@ -120,9 +124,9 @@ public class SiteSearchPlugin extends AbstractPlugin {
         getSearchFields(getSiteSearchServiceUrl(request), docType), field -> field.getTerm());
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
-    String searchTerm = unquoteString(internalValues.get("text_expression"));
-    List<String> organismTerms = getTermsFromInternal(internalValues.get("solr_search_organism"), false);
-    List<String> searchFieldTerms = getTermsFromInternal(internalValues.get("solr_text_fields"), true);
+    String searchTerm = unquoteString(internalValues.get(SEARCH_TEXT_PARAM_NAME));
+    List<String> organismTerms = getTermsFromInternal(internalValues.get(ORGANISM_PARAM_NAME), false);
+    List<String> searchFieldTerms = getTermsFromInternal(internalValues.get(SEARCH_FIELDS_PARAM_NAME), true);
     List<String> searchFieldSolrNames =
       (searchFieldTerms.isEmpty() ?
         searchFieldMap.values().stream() :
