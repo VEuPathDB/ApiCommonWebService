@@ -39,7 +39,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
     LOG.debug("Executing " + SiteSearchVocabularyPlugin.class.getSimpleName() + "...");
     String serviceUrl = getSiteSearchServiceUrl(request);
     String docType = getRequestedDocumentType(request);
-    List<SearchField> fields = getSearchFields(serviceUrl, docType);
+    List<SearchField> fields = getSearchFields(serviceUrl, docType, request.getProjectId());
     for (SearchField field : fields) {
       LOG.debug("Adding response row: " + field);
       response.addRow(new String[] { field.getTerm(), field.getTerm(), field.getDisplay() });

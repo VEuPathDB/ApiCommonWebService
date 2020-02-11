@@ -121,7 +121,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
   private static JSONObject buildRequestJson(PluginRequest request) throws PluginModelException {
     String docType = getRequestedDocumentType(request);
     Map<String,SearchField> searchFieldMap = Functions.getMapFromValues(
-        getSearchFields(getSiteSearchServiceUrl(request), docType), field -> field.getTerm());
+        getSearchFields(getSiteSearchServiceUrl(request), docType, request.getProjectId()), field -> field.getTerm());
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get(SEARCH_TEXT_PARAM_NAME));

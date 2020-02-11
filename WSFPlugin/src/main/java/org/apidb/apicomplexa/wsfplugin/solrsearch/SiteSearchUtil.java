@@ -107,11 +107,11 @@ public class SiteSearchUtil {
     return getRecordClass(request).getPrimaryKeyDefinition();
   }
 
-  public static List<SearchField> getSearchFields(String siteSearchServiceUrl, String documentType) throws PluginModelException {
+  public static List<SearchField> getSearchFields(String siteSearchServiceUrl, String documentType, String projectId) throws PluginModelException {
     Response response = null;
     try {
       Client client = ClientBuilder.newClient();
-      String metadataUrl = siteSearchServiceUrl + METADATA_URI;
+      String metadataUrl = siteSearchServiceUrl + METADATA_URI + "?projectId=" + projectId;
       LOG.info("Querying site search service with: " + metadataUrl);
       WebTarget webTarget = client.target(metadataUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
