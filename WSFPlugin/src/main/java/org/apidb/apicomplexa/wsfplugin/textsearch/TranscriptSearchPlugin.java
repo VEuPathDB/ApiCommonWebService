@@ -208,6 +208,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         + "              WHERE ( (CONTAINS(tsc.content, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
         + "               AND tsc.comment_id = c.comment_id\n"
         + "               AND c.is_visible = 1\n"
+        + "               AND c.comment_target_id = 'gene'\n"
         + "               AND c.review_status_id != 'task'\n"
         + "               AND c.review_status_id != 'rejected'\n"
         +                 recordTypePredicate
