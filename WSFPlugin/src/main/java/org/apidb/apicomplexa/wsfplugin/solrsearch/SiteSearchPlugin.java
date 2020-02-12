@@ -138,7 +138,8 @@ public class SiteSearchPlugin extends AbstractPlugin {
       .collect(Collectors.toList());
     return new JSONObject()
       .put("searchText", searchTerm)
-      .put("restrictToProject", projectId)
+      // only add project ID filter for non-portal sites; for portal get back all records
+      .put("restrictToProject", projectId.equals("EuPathDB") ? null : projectId)
       .put("restrictSearchToOrganisms", organismTerms)
       .put("documentTypeFilter", new JSONObject()
         .put("documentType", docType)

@@ -111,7 +111,9 @@ public class SiteSearchUtil {
     Response response = null;
     try {
       Client client = ClientBuilder.newClient();
-      String metadataUrl = siteSearchServiceUrl + METADATA_URI + "?projectId=" + projectId;
+      // only add project ID filter for non-portal sites; for portal get back all fields
+      String projectIdParam = projectId.equals("EuPathDB") ? "" : "?projectId=" + projectId;
+      String metadataUrl = siteSearchServiceUrl + METADATA_URI + projectIdParam;
       LOG.info("Querying site search service with: " + metadataUrl);
       WebTarget webTarget = client.target(metadataUrl);
       Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
