@@ -59,7 +59,9 @@ public class SiteSearchPlugin extends AbstractPlugin {
     PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
     String[] dynamicColumns = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
         new String[]{ "matched_result", "max_score" } : new String[]{ "max_score" };
-    return ArrayUtil.concatenate(pkDef.getColumnRefs(), dynamicColumns);
+    String[] columns = ArrayUtil.concatenate(pkDef.getColumnRefs(), dynamicColumns);
+    LOG.info("SiteSearchPlugin instance will return the following columns: " + FormatUtil.join(columns, ", "));
+    return columns;
   }
 
   @Override
