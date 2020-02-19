@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 
@@ -41,13 +42,8 @@ import org.gusdb.wsf.plugin.PluginUserException;
       super(regexField, defaultRegex);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.WsfPlugin#getColumns()
-     */
-      @Override
-      public String[] getColumns() {
+    @Override
+    public String[] getColumns(PluginRequest request) {
       return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
                     COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
     }

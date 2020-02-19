@@ -1,5 +1,6 @@
 package org.apidb.apicomplexa.wsfplugin.solrsearch;
 
+import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRecordClass;
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getRequestedDocumentType;
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSearchFields;
 import static org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.getSiteSearchServiceUrl;
@@ -21,11 +22,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.TranscriptUtil;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
+import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.FormatUtil.Style;
 import org.gusdb.fgputil.functional.Functions;
+import org.gusdb.fgputil.json.JsonUtil;
 import org.gusdb.fgputil.web.MimeTypes;
+import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
+import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -48,8 +54,12 @@ public class SiteSearchPlugin extends AbstractPlugin {
   }
 
   @Override
-  public String[] getColumns() {
-    return new String[] { "source_id", "gene_source_id", "project_id", "matched_result", "max_score" };
+  public String[] getColumns(PluginRequest request) throws PluginModelException {
+    RecordClass recordClass = getRecordClass(request);
+    PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
+    String[] dynamicColumns = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
+        new String[]{ "matched_result", "max_score" } : new String[]{ "max_score" };
+    return ArrayUtil.concatenate(pkDef.getColumnRefs(), dynamicColumns);
   }
 
   @Override
@@ -79,20 +89,22 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
       BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
       String line;
+      RecordClass recordClass = getRecordClass(request);
       while ((line = br.readLine()) != null) {
         LOG.debug("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
-        if (tokens.length != 2) throw new PluginModelException("Unexpected format in line: " + line);
+        if (tokens.length != 2) {
+          throw new PluginModelException("Unexpected format in line: " + line);
+        }
         JSONArray primaryKey = new JSONArray(tokens[0]);
         String score = tokens[1];
-        // FIXME: currently hard-coded for transcripts
-        String[] row = new String[]{
-          "",
-          primaryKey.getString(0),
-          request.getProjectId(),
-          "Y",
-          score
-        };
+
+        // build WSF plugin result row from parsed site search row
+        String[] row = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
+          // transcript requests only return gene ID; return it + empty transcript ID (will be filled in later)
+          new String[]{ primaryKey.getString(0), "", request.getProjectId(), "Y", score } :
+          ArrayUtil.concatenate(JsonUtil.toStringArray(primaryKey), new String[] { request.getProjectId(), score });
+
         LOG.debug("Returning row: " + new JSONArray(row).toString());
         response.addRow(row);
       }

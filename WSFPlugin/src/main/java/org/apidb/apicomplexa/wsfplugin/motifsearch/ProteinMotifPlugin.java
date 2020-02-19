@@ -5,6 +5,7 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import java.util.Map;
 import org.gusdb.wsf.plugin.PluginModelException;
+import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 
@@ -34,15 +35,10 @@ public class ProteinMotifPlugin extends AAMotifPlugin {
     super(regexField, defaultRegex);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getColumns()
-   */
-    @Override
-	public String[] getColumns() {
-	return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
-			      COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+  @Override
+  public String[] getColumns(PluginRequest request) {
+    return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
+        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
   }
 
   @Override

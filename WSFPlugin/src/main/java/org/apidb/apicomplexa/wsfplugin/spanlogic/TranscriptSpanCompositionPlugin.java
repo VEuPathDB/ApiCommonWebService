@@ -2,6 +2,8 @@ package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
 import java.util.Map;
 
+import org.gusdb.wsf.plugin.PluginRequest;
+
 public class TranscriptSpanCompositionPlugin extends SpanCompositionPlugin {
   
   public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
@@ -21,7 +23,7 @@ public class TranscriptSpanCompositionPlugin extends SpanCompositionPlugin {
   }
 
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
               COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
   }

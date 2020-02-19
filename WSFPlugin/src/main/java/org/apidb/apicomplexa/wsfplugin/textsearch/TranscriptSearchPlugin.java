@@ -41,7 +41,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
   public static final String PARAM_MAX_PVALUE = "max_pvalue";
   
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_RECORD_ID, COLUMN_GENE_SOURCE_ID, COLUMN_MATCHED_RESULT, COLUMN_MAX_SCORE, COLUMN_DATASETS };
   }
 

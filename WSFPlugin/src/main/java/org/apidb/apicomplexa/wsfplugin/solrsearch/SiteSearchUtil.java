@@ -25,7 +25,6 @@ import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
 import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -88,7 +87,7 @@ public class SiteSearchUtil {
     return localhost + siteSearchServiceUrl;
   }
 
-  private static RecordClass getRecordClass(PluginRequest request) throws PluginModelException {
+  public static RecordClass getRecordClass(PluginRequest request) throws PluginModelException {
     String questionFullName = request.getContext().get(Utilities.QUERY_CTX_QUESTION);
     return getWdkModel(request.getProjectId()).getQuestionByFullName(questionFullName)
       .map(question -> question.getRecordClass())
@@ -101,10 +100,6 @@ public class SiteSearchUtil {
       getGeneRecordClass(getWdkModel(request.getProjectId())) :
       recordClass
     ).getUrlSegment();
-  }
-
-  public static PrimaryKeyDefinition getPrimaryKeyDefinition(PluginRequest request) throws PluginModelException {
-    return getRecordClass(request).getPrimaryKeyDefinition();
   }
 
   public static List<SearchField> getSearchFields(String siteSearchServiceUrl, String documentType, String projectId) throws PluginModelException {

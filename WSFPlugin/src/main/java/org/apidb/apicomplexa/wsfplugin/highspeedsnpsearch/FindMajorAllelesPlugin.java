@@ -42,39 +42,22 @@ public class FindMajorAllelesPlugin extends HighSpeedSnpSearchAbstractPlugin {
   @SuppressWarnings("unused")
   private static final String JOBS_DIR_PREFIX = "hsssFindMajorAlleles.";
 
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
-   */
   @Override
     public String[] getRequiredParameterNames() {
     return new String[] { PARAM_ORGANISM,PARAM_WEBSVCPATH,
-			  PARAM_STRAIN_FILTER_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
-			  PARAM_STRAIN_FILTER_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
+        PARAM_STRAIN_FILTER_A, PARAM_MIN_PERCENT_KNOWNS_A, PARAM_MIN_PERCENT_MAJOR_ALLELES_A, PARAM_READ_FREQ_PERCENT_A,
+        PARAM_STRAIN_FILTER_B, PARAM_MIN_PERCENT_KNOWNS_B, PARAM_MIN_PERCENT_MAJOR_ALLELES_B, PARAM_READ_FREQ_PERCENT_B};
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
-   */
   @Override
-    public String[] getColumns() {
+    public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID,
-			  COLUMN_MAJOR_ALLELE_A, COLUMN_MAJOR_ALLELE_PCT_A, COLUMN_TRIALLELIC_A, COLUMN_MAJOR_PRODUCT_A, COLUMN_MAJOR_PRODUCT_VARIABLE_A,
-			  COLUMN_MAJOR_ALLELE_B, COLUMN_MAJOR_ALLELE_PCT_B, COLUMN_TRIALLELIC_B, COLUMN_MAJOR_PRODUCT_B, COLUMN_MAJOR_PRODUCT_VARIABLE_B};
+        COLUMN_MAJOR_ALLELE_A, COLUMN_MAJOR_ALLELE_PCT_A, COLUMN_TRIALLELIC_A, COLUMN_MAJOR_PRODUCT_A, COLUMN_MAJOR_PRODUCT_VARIABLE_A,
+        COLUMN_MAJOR_ALLELE_B, COLUMN_MAJOR_ALLELE_PCT_B, COLUMN_TRIALLELIC_B, COLUMN_MAJOR_PRODUCT_B, COLUMN_MAJOR_PRODUCT_VARIABLE_B};
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
-    public void validateParameters(PluginRequest request)
-     {
+  public void validateParameters(PluginRequest request) {
   }
 
   @Override

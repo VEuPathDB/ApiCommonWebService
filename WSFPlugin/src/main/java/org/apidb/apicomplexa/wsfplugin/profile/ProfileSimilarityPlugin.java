@@ -124,22 +124,12 @@ public class ProfileSimilarityPlugin extends AbstractPlugin {
 			      PARAM_MISSING_PTS_PERCENT };
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
-     */
     @Override
-    public String[] getColumns() {
+    public String[] getColumns(PluginRequest request) {
         return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_ID, COLUMN_PROJECT_ID,
 			      COLUMN_MATCHED_RESULT, COLUMN_DISTANCE, COLUMN_SHIFT, COLUMN_QUERY_GENE_ID };
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-     */
     @Override
     public void validateParameters(PluginRequest request)
             throws PluginUserException {

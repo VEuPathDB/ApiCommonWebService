@@ -144,7 +144,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   private final Random random = new Random();
 
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT, COLUMN_FEATURE_REGION,
         COLUMN_MATCHED_COUNT, COLUMN_MATCHED_REGIONS, COLUMN_MATCHED_RESULT };
   }

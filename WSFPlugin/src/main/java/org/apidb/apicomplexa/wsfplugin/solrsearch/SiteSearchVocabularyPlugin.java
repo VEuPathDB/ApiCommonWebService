@@ -24,7 +24,7 @@ public class SiteSearchVocabularyPlugin extends AbstractPlugin {
   }
 
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[]{ "internal", "term", "display" };
   }
 

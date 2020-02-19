@@ -149,13 +149,8 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
     }
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
-   */
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
       return new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT, COLUMN_DENSITY,
                             COLUMN_DNDS, COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL };
   }

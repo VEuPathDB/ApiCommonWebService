@@ -73,7 +73,7 @@ public class PlasmoAPPlugin extends AbstractPlugin {
    * @see org.gusdb.wsf.WsfPlugin#getColumns()
    */
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_REPORT, COLUMN_SIGNAL };
   }
 

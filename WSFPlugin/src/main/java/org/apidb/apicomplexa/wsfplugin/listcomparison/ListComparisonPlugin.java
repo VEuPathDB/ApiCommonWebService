@@ -63,12 +63,6 @@ public class ListComparisonPlugin extends AbstractPlugin {
     }
 
     // load properties
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-     */
     @Override
     public void initialize()
             throws PluginModelException {
@@ -102,31 +96,16 @@ public class ListComparisonPlugin extends AbstractPlugin {
 	//	          + "field is missing from the configuration file");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
-     */
     @Override
     public String[] getRequiredParameterNames() {
         return new String[] { PARAM_DS_GENE_IDS, PARAM_DS_CUTOFF_TYPE, PARAM_DS_CUTOFF, PARAM_THRESHOLD, PARAM_ORTHOLOGYFLAG };
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
-     */
     @Override
-    public String[] getColumns() {
+    public String[] getColumns(PluginRequest request) {
         return new String[] { COLUMN_DATASET_ID, COLUMN_ObserOverlap, COLUMN_ExpOverlap, COLUMN_FE, COLUMN_PercentUL, COLUMN_PercentDS, COLUMN_Pvalue};
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-     */
     @Override
     public void validateParameters(PluginRequest request)
             throws PluginUserException {

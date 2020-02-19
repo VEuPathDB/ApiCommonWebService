@@ -1,6 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
 import org.gusdb.fgputil.ArrayUtil;
+import org.gusdb.wsf.plugin.PluginRequest;
 
 public class GeneBlastPlugin extends EuPathBlastPlugin {
   
@@ -12,7 +13,7 @@ public class GeneBlastPlugin extends EuPathBlastPlugin {
   }
 
   @Override
-  public String[] getColumns() {
-    return ArrayUtil.append(super.getColumns(),COLUMN_GENE_SOURCE_ID,COLUMN_MATCHED_RESULT);
+  public String[] getColumns(PluginRequest request) {
+    return ArrayUtil.append(super.getColumns(request),COLUMN_GENE_SOURCE_ID,COLUMN_MATCHED_RESULT);
   }
 }

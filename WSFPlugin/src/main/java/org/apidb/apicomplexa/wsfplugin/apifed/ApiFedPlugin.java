@@ -38,42 +38,21 @@ public class ApiFedPlugin extends AbstractPlugin {
   // Member Variable
   private ProjectMapper projectMapper;
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
-   */
   @Override
   public String[] getRequiredParameterNames() {
     return new String[] {};
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getColumns()
-   */
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] {};
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
   public void validateParameters(PluginRequest request) {
     // Do Nothing in this plugin
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
-   */
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
     logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);

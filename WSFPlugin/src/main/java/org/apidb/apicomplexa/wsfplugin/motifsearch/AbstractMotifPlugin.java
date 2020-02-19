@@ -114,11 +114,6 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     this.projectMapper = projectMapper;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-   */
   @Override
   public void initialize()
       throws PluginModelException {
@@ -127,43 +122,22 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     config = new MotifConfig(properties, regexField, defaultRegex);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getRequiredParameters()
-   */
   @Override
   public String[] getRequiredParameterNames() {
     return new String[] { PARAM_EXPRESSION, PARAM_DATASET };
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#getColumns()
-   */
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-			    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
-  public void validateParameters(PluginRequest request)
-       {
+  public void validateParameters(PluginRequest request) {
     // do nothing in this plugin
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.WsfPlugin#execute(java.util.Map, java.lang.String[])
-   */
   @Override
   public int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException {

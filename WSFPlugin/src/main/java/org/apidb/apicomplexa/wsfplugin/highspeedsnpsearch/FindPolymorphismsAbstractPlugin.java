@@ -36,11 +36,6 @@ public abstract class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearch
     super(propertyFile);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
-   */
   @Override
   public String[] getRequiredParameterNames() {
     String[] baseParameters = { PARAM_ORGANISM, getStrainFilterParamName(), PARAM_MIN_PERCENT_KNOWNS,
@@ -54,22 +49,12 @@ public abstract class FindPolymorphismsAbstractPlugin extends HighSpeedSnpSearch
     return a;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getColumns()
-   */
   @Override
-  public String[] getColumns() {
+  public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_SNP_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_PERCENT_OF_POLYMORPHISMS,
         COLUMN_PERCENT_OF_KNOWNS, COLUMN_PHENOTYPE };
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
   public void validateParameters(PluginRequest request) {}
 
