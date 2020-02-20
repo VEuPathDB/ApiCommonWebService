@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.blast;
 
 import static org.gusdb.fgputil.FormatUtil.urlEncodeUtf8;
 
+import org.gusdb.wdk.model.record.RecordClass;
 import org.apache.log4j.Logger;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
@@ -28,7 +29,7 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
   }
 
   @Override
-  protected String getIdUrl(String recordClass, String projectId,
+  protected String getIdUrl(RecordClass recordClass, String projectId,
     String sourceId, String defline) throws EuPathServiceException {
 
     logger.debug("GENE FORMATTER: getIdUrl()  recordClass: " + recordClass);
@@ -39,7 +40,7 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
       // until then the blast protein is breaking because it cannot find the gene ID)
       sourceId = sourceId.replace("-p1", "");
     }
-    return "/app/record/gene/"
+    return getWebappBaseUrl(recordClass.getWdkModel()) + "/record/gene/"
       + urlEncodeUtf8(getGeneSourceId(defline));
   }
 
