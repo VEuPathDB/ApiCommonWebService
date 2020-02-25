@@ -50,7 +50,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   @Override
   public String[] getRequiredParameterNames() {
-    return new String[]{ ORGANISM_PARAM_NAME, SEARCH_TEXT_PARAM_NAME, SEARCH_FIELDS_PARAM_NAME };
+    return new String[]{ SEARCH_TEXT_PARAM_NAME, SEARCH_FIELDS_PARAM_NAME };
   }
 
   @Override
@@ -139,7 +139,8 @@ public class SiteSearchPlugin extends AbstractPlugin {
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
     String searchTerm = unquoteString(internalValues.get(SEARCH_TEXT_PARAM_NAME));
-    List<String> organismTerms = getTermsFromInternal(internalValues.get(ORGANISM_PARAM_NAME), false);
+    List<String> organismTerms = internalValues.containsKey(ORGANISM_PARAM_NAME) ?
+        getTermsFromInternal(internalValues.get(ORGANISM_PARAM_NAME), false) : null;
     List<String> searchFieldTerms = getTermsFromInternal(internalValues.get(SEARCH_FIELDS_PARAM_NAME), true);
     List<String> searchFieldSolrNames =
       (searchFieldTerms.isEmpty() ?
