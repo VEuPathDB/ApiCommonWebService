@@ -46,6 +46,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   private static final String ORGANISM_PARAM_NAME = "solr_search_organism";
   private static final String SEARCH_TEXT_PARAM_NAME = "text_expression";
+  private static final String SEARCH_DOC_TYPE = "solr_doc_type";
   private static final String SEARCH_FIELDS_PARAM_NAME = "solr_text_fields";
 
   @Override
@@ -66,7 +67,13 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   @Override
   public void validateParameters(PluginRequest request) throws PluginModelException, PluginUserException {
-    // parameters should already be validated by WDK
+    // most validation already performed by WDK; make sure passed doc type
+    //   matches urlSegment of requested record class
+    if (!getRequestedDocumentType(request).equals(request.getParams().get(SEARCH_DOC_TYPE))) {
+      throw new PluginUserException("Invalid param value '" +
+          request.getParams().get(SEARCH_DOC_TYPE) + "' for " + SEARCH_DOC_TYPE +
+          ".  Value for this recordclass must be " + getRequestedDocumentType(request));
+    }
   }
 
   @Override
@@ -119,6 +126,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       if (searchResponse != null) searchResponse.close();
     }
   }
+
   /**
    * Builds something like this:
    * 
