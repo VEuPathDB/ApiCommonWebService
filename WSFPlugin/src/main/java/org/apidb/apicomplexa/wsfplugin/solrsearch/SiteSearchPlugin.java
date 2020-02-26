@@ -99,6 +99,7 @@ public class SiteSearchPlugin extends AbstractPlugin {
       BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)searchResponse.getEntity()));
       String line;
       RecordClass recordClass = getRecordClass(request);
+      boolean pkHasProjectId = recordClass.getPrimaryKeyDefinition().hasColumn("project_id");
       while ((line = br.readLine()) != null) {
         LOG.debug("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
@@ -112,7 +113,9 @@ public class SiteSearchPlugin extends AbstractPlugin {
         String[] row = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
           // transcript requests only return gene ID; return it + empty transcript ID (will be filled in later)
           new String[]{ primaryKey.getString(0), "", request.getProjectId(), "Y", score } :
-          ArrayUtil.concatenate(JsonUtil.toStringArray(primaryKey), new String[] { request.getProjectId(), score });
+          ArrayUtil.concatenate(JsonUtil.toStringArray(primaryKey),
+            // only include projectId if it is a primary key field
+            pkHasProjectId ? new String[] { request.getProjectId(), score } : new String[] { score });
 
         LOG.debug("Returning row: " + new JSONArray(row).toString());
         response.addRow(row);
