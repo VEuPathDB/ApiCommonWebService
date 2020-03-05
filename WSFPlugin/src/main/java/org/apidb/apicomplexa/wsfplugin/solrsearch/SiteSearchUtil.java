@@ -123,7 +123,7 @@ public class SiteSearchUtil {
       List<JSONArray> fieldsJsons = JsonIterators.arrayStream(docTypes)
         .map(obj -> obj.getJSONObject())
         .filter(obj -> obj.getString("id").equals(documentType))
-        .map(obj -> obj.getJSONObject("wdkRecordTypeData").getJSONArray("searchFields"))
+        .map(obj -> obj.getJSONArray("searchFields"))
         .collect(Collectors.toList());
       if (fieldsJsons.size() != 1) {
         throw new PluginModelException("Could not find unique document type with id " + documentType);
