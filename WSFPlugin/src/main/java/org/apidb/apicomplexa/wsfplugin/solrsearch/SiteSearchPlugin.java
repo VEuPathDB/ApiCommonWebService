@@ -44,10 +44,10 @@ public class SiteSearchPlugin extends AbstractPlugin {
 
   private static final Logger LOG = Logger.getLogger(SiteSearchPlugin.class);
 
-  private static final String ORGANISM_PARAM_NAME = "solr_search_organism";
+  private static final String ORGANISM_PARAM_NAME = "text_search_organism";
   private static final String SEARCH_TEXT_PARAM_NAME = "text_expression";
-  private static final String SEARCH_DOC_TYPE = "solr_doc_type";
-  private static final String SEARCH_FIELDS_PARAM_NAME = "solr_text_fields";
+  private static final String SEARCH_DOC_TYPE = "document_type";
+  private static final String SEARCH_FIELDS_PARAM_NAME = "text_fields";
 
   @Override
   public String[] getRequiredParameterNames() {
