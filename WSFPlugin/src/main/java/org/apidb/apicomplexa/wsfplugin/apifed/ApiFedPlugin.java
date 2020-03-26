@@ -151,7 +151,6 @@ public class ApiFedPlugin extends AbstractPlugin {
     }
     // if organism exists, find the mapped project
     if (organisms != null) {
-      LOG.info("Received the following value for organisms: " + organisms);
       organisms = stripLeadingAndTrailingQuotes(organisms);
       for (String organism : organisms.split(",")) {
         String projectId = projectMapper.getProjectByOrganism(organism);
