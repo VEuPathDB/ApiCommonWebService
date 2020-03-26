@@ -1,12 +1,12 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
@@ -105,7 +105,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
       match.sourceId = sourceId;
       try {
         match.projectId = getProjectId(organism);
-      } catch (SQLException ex) {
+      } catch (WdkModelException ex) {
         throw new PluginModelException(ex);
       }
 

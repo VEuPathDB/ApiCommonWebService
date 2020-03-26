@@ -193,7 +193,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     
     try {
       return projectMapper.getProjectByOrganism(organism);
-    } catch (SQLException e) {
+    } catch (WdkModelException e) {
       throw new PluginModelException("Failed getting projectId for organism " + organism, e);
     }
   }

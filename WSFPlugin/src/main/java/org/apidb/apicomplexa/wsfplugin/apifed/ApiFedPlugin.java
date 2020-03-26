@@ -1,6 +1,5 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -120,7 +119,7 @@ public class ApiFedPlugin extends AbstractPlugin {
         catch (InterruptedException ex) {}
       }
     }
-    catch (SQLException ex) {
+    catch (WdkModelException ex) {
       throw new PluginModelException(ex);
     }
     logger.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
@@ -135,7 +134,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     return true;
   }
 
-  private Set<String> getProjects(Map<String, String> params, boolean all) throws SQLException {
+  private Set<String> getProjects(Map<String, String> params, boolean all) throws WdkModelException {
     Set<String> projects = new LinkedHashSet<>();
     if (all) {
       projects.addAll(projectMapper.getFederatedProjects());

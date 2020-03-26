@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -285,7 +284,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     response.addRow(result);
   }
 
-  protected String getProjectId(String organism) throws SQLException {
+  protected String getProjectId(String organism) throws WdkModelException {
     return projectMapper.getProjectByOrganism(organism);
   }
 
