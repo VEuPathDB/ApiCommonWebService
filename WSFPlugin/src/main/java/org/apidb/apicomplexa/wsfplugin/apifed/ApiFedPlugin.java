@@ -22,7 +22,7 @@ import org.gusdb.wsf.plugin.PluginResponse;
  */
 public class ApiFedPlugin extends AbstractPlugin {
 
-  private static final Logger logger = Logger.getLogger(ApiFedPlugin.class);
+  private static final Logger LOG = Logger.getLogger(ApiFedPlugin.class);
 
   public static final String VERSION = "3.0";
 
@@ -54,7 +54,7 @@ public class ApiFedPlugin extends AbstractPlugin {
 
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
-    logger.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
+    LOG.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
 
     String projectId = request.getProjectId();
     try {
@@ -69,7 +69,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     Map<String, String> context = request.getContext();
     String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
     String paramName = context.get(Utilities.QUERY_CTX_PARAM);
-    logger.debug("question: " + questionName + ", param: " + paramName);
+    LOG.debug("question: " + questionName + ", param: " + paramName);
 
     Map<String, String> params = request.getParams();
 
@@ -122,7 +122,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     catch (WdkModelException ex) {
       throw new PluginModelException(ex);
     }
-    logger.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
+    LOG.info("ApiFedPlugin finished. #Rows retieved = " + componentResult.getRowCount());
     return componentResult.getSignal();
   }
 
@@ -151,6 +151,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     }
     // if organism exists, find the mapped project
     if (organisms != null) {
+      LOG.info("Received the following value for organisms: " + organisms);
       organisms = stripLeadingAndTrailingQuotes(organisms);
       for (String organism : organisms.split(",")) {
         String projectId = projectMapper.getProjectByOrganism(organism);
