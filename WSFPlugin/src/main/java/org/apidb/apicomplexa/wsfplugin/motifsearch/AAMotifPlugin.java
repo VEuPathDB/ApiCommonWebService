@@ -23,7 +23,8 @@ import org.gusdb.wsf.plugin.PluginUserException;
 
     // let's store files in same directory
     protected static final String FIELD_REGEX = "ProteinDeflineRegex";
-    protected static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s]+)";
+      //    protected static final String DEFAULT_REGEX = ">(?:\\w*\\|)*([^|\\s]+)\\s*\\|.*?\\s*organism=([^|\\s]+)";
+    protected static final String DEFAULT_REGEX = ">.*transcript=([^|\\s]+).*organism=([^|\\s]+)";
 
     private static final Logger logger = Logger.getLogger(AAMotifPlugin.class);
 
@@ -99,7 +100,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
       String organism = deflineMatcher.group(2).replace('_', ' ');
 
       // workaround: trim "-p1" suffix to turn protein ID into transcript ID
-      sourceId = sourceId.replace("-p1", "");
+      // sourceId = sourceId.replace("-p1", "");
 
       Match match = new Match();
       match.sourceId = sourceId;
