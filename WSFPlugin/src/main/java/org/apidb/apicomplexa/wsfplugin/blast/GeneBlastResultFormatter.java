@@ -1,11 +1,12 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
-import static org.gusdb.fgputil.FormatUtil.urlEncodeUtf8;
-
-import org.gusdb.wdk.model.record.RecordClass;
 import org.apache.log4j.Logger;
+import org.apidb.apicommon.model.TranscriptUtil;
+import org.eupathdb.common.model.ProjectMapper;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
+import org.gusdb.wdk.model.WdkModelException;
+import org.gusdb.wdk.model.record.RecordClass;
 
 public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
@@ -34,14 +35,23 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
     logger.debug("GENE FORMATTER: getIdUrl()  recordClass: " + recordClass);
 
-    if(sourceId.endsWith("-p1")) {
+    if (sourceId.endsWith("-p1")) {
       // until we handle proteins, trim "-p1" suffix to turn protein ID into transcript ID
       // (cannot test until we generate deflines with gene information,
       // until then the blast protein is breaking because it cannot find the gene ID)
+      // TODO: why is this needed; this is dead code (sourceId not used)
       sourceId = sourceId.replace("-p1", "");
     }
-    return getWebappBaseUrl(recordClass.getWdkModel()) + "/record/gene/"
-      + urlEncodeUtf8(getGeneSourceId(defline));
+
+    try {
+      // don't use passed recordclass; this formatter will only be used for transcript results / found genes
+      String geneRecordClassName = TranscriptUtil.getGeneRecordClass(recordClass.getWdkModel()).getFullName();
+      return ProjectMapper.getMapper(recordClass.getWdkModel())
+          .getRecordUrl(geneRecordClassName, projectId, getGeneSourceId(defline));
+    }
+    catch (WdkModelException e) {
+      throw new EuPathServiceException("Unable to format result", e);
+    }
   }
 
 }
