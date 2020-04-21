@@ -103,19 +103,20 @@ public class SiteSearchPlugin extends AbstractPlugin {
       while ((line = br.readLine()) != null) {
         LOG.debug("Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
-        if (tokens.length != 2) {
+        if (tokens.length < 2 || tokens.length > 3) {
           throw new PluginModelException("Unexpected format in line: " + line);
         }
         JSONArray primaryKey = new JSONArray(tokens[0]);
         String score = tokens[1];
+        String projectId = tokens.length == 3 && !tokens[2].isBlank() ? tokens[2].trim() : request.getProjectId();
 
         // build WSF plugin result row from parsed site search row
         String[] row = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
           // transcript requests only return gene ID; return it + empty transcript ID (will be filled in later)
-          new String[]{ primaryKey.getString(0), "", request.getProjectId(), "Y", score } :
+          new String[]{ primaryKey.getString(0), "", projectId, "Y", score } :
           ArrayUtil.concatenate(JsonUtil.toStringArray(primaryKey),
             // only include projectId if it is a primary key field
-            pkHasProjectId ? new String[] { request.getProjectId(), score } : new String[] { score });
+            pkHasProjectId ? new String[] { projectId, score } : new String[] { score });
 
         LOG.debug("Returning row: " + new JSONArray(row).toString());
         response.addRow(row);
