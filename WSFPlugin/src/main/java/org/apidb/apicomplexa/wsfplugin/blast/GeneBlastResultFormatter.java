@@ -2,7 +2,6 @@ package org.apidb.apicomplexa.wsfplugin.blast;
 
 import org.apache.log4j.Logger;
 import org.apidb.apicommon.model.TranscriptUtil;
-import org.eupathdb.common.model.ProjectMapper;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
 import org.gusdb.wdk.model.WdkModelException;
@@ -46,8 +45,7 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
     try {
       // don't use passed recordclass; this formatter will only be used for transcript results / found genes
       String geneRecordClassName = TranscriptUtil.getGeneRecordClass(recordClass.getWdkModel()).getFullName();
-      return ProjectMapper.getMapper(recordClass.getWdkModel())
-          .getRecordUrl(geneRecordClassName, projectId, getGeneSourceId(defline));
+      return getIdUrl(recordClass.getWdkModel(), geneRecordClassName, projectId, getGeneSourceId(defline));
     }
     catch (WdkModelException e) {
       throw new EuPathServiceException("Unable to format result", e);
