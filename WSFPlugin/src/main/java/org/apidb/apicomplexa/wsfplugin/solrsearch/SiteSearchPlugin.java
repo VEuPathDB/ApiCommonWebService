@@ -21,7 +21,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
 import org.apidb.apicommon.model.TranscriptUtil;
 import org.apidb.apicomplexa.wsfplugin.solrsearch.SiteSearchUtil.SearchField;
 import org.gusdb.fgputil.ArrayUtil;
@@ -100,25 +102,30 @@ public class SiteSearchPlugin extends AbstractPlugin {
       String line;
       RecordClass recordClass = getRecordClass(request);
       boolean pkHasProjectId = recordClass.getPrimaryKeyDefinition().hasColumn("project_id");
+      Priority recordLoggingPriority = Level.DEBUG;
+      boolean logRecordProcessing = LOG.isEnabledFor(recordLoggingPriority);
       while ((line = br.readLine()) != null) {
-        LOG.debug("Site Search Service response line: " + line);
+        if (logRecordProcessing) LOG.log(recordLoggingPriority,
+          "Site Search Service response line: " + line);
         String[] tokens = line.split(FormatUtil.TAB);
         if (tokens.length < 2 || tokens.length > 3) {
           throw new PluginModelException("Unexpected format in line: " + line);
         }
         JSONArray primaryKey = new JSONArray(tokens[0]);
         String score = tokens[1];
-        String projectId = tokens.length == 3 && !tokens[2].isBlank() ? tokens[2].trim() : request.getProjectId();
+        boolean recordHasProjectId = tokens.length == 3 && !tokens[2].isBlank();
+        String recordProjectId = recordHasProjectId ? tokens[2].trim() : request.getProjectId(); // supplement with local project ID
 
         // build WSF plugin result row from parsed site search row
         String[] row = TranscriptUtil.isTranscriptRecordClass(recordClass) ?
           // transcript requests only return gene ID; return it + empty transcript ID (will be filled in later)
-          new String[]{ primaryKey.getString(0), "", projectId, "Y", score } :
+          new String[]{ primaryKey.getString(0), "", recordProjectId, "Y", score } :
           ArrayUtil.concatenate(JsonUtil.toStringArray(primaryKey),
             // only include projectId if it is a primary key field
-            pkHasProjectId ? new String[] { projectId, score } : new String[] { score });
+            pkHasProjectId ? new String[] { recordProjectId, score } : new String[] { score });
 
-        LOG.debug("Returning row: " + new JSONArray(row).toString());
+        if (logRecordProcessing) LOG.log(recordLoggingPriority,
+          "Returning row (project ID appended? " + !recordHasProjectId + "): " + new JSONArray(row).toString());
         response.addRow(row);
       }
       return 0;
@@ -166,12 +173,16 @@ public class SiteSearchPlugin extends AbstractPlugin {
     return new JSONObject()
       .put("searchText", searchTerm)
       // only add project ID filter for non-portal sites; for portal get back all records
-      .put("restrictToProject", projectId.equals("EuPathDB") ? null : projectId)
+      .put("restrictToProject", isPortal(projectId) ? null : projectId)
       .put("restrictSearchToOrganisms", organismTerms)
       .put("documentTypeFilter", new JSONObject()
         .put("documentType", docType)
         .put("foundOnlyInFields", searchFieldSolrNames)
       );
+  }
+
+  private static boolean isPortal(String projectId) {
+    return projectId.equals("EuPathDB");
   }
 
   private static List<String> getTermsFromInternal(String internalEnumValue, boolean performDequote) {
