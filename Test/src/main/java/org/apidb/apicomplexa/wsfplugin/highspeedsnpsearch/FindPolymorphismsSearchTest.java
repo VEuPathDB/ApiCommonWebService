@@ -6,11 +6,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
 import org.gusdb.fgputil.FormatUtil;
-import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FindPolymorphismsSearchTest extends HsssTest {
 
@@ -24,7 +23,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
   public FindPolymorphismsPlugin getPlugin() {
     return new FindPolymorphismsPlugin();
   }
-  
+
   public void prepareParams(Map<String, String> params) {
     params.put(FindPolymorphismsPlugin.PARAM_ORGANISM, "Homo sapiens 123");
     params.put(FindPolymorphismsPlugin.PARAM_WEBSVCPATH, projectHome + "/ApiCommonWebService/HighSpeedSnpSearch/test/PROJECT_GOES_HERE");
@@ -53,7 +52,7 @@ public class FindPolymorphismsSearchTest extends HsssTest {
     search.setProjectMapper(new MockProjectMapper());
 
     // prepare parameters
-    Map<String, String> params = new HashMap<String, String>();
+    var params = new HashMap<String, String>();
     prepareParams(params);
 
     // invoke the plugin and get result back
@@ -65,12 +64,12 @@ public class FindPolymorphismsSearchTest extends HsssTest {
     String[][] results = response.getPage(0);
     System.out.println(FormatUtil.printArray(results));
 
-    Assert.assertEquals(getExpectedResultCount(), results.length);
+    Assertions.assertEquals(getExpectedResultCount(), results.length);
   }
 
   private PluginRequest getRequest(Map<String, String> params) {
     // prepare columns
-    String[] columns = new String[] { 
+    String[] columns = new String[] {
       FindPolymorphismsPlugin.COLUMN_SNP_SOURCE_ID,
       FindPolymorphismsPlugin.COLUMN_PROJECT_ID,
       FindPolymorphismsPlugin.COLUMN_PERCENT_OF_POLYMORPHISMS,
@@ -80,10 +79,10 @@ public class FindPolymorphismsSearchTest extends HsssTest {
     PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
-    request.setContext(new HashMap<String, String>());
+    request.setContext(new HashMap<>());
 
     return request;
   }
 
 }
- 
+

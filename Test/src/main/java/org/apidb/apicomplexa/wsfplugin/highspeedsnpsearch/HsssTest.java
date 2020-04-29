@@ -1,22 +1,20 @@
 package org.apidb.apicomplexa.wsfplugin.highspeedsnpsearch;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.log4j.Logger;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wsf.plugin.Plugin;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Super class for high speed snp search tests
@@ -45,9 +43,8 @@ public class HsssTest {
           + Utilities.SYSTEM_PROPERTY_GUS_HOME);
   }
 
-  @Before
-  public void prepareConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
+  @BeforeEach
+  public void prepareConfigFile() throws IOException {
 
     // prepare the config file
     properties = new Properties();
@@ -60,8 +57,7 @@ public class HsssTest {
   }
 
   @Test
-  public void testReadConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
+  public void testReadConfigFile() throws IOException {
 
     // prepare the config file
     Properties properties = new Properties();
@@ -73,12 +69,12 @@ public class HsssTest {
     properties.loadFromXML(inStream);
     inStream.close();
     String jobDir = properties.getProperty(HighSpeedSnpSearchAbstractPlugin.PROPERTY_JOBS_DIR);
-    Assert.assertTrue(jobDir != null);
+    Assertions.assertNotNull(jobDir);
   }
 
 
   protected Map<String, Object> getContext() {
-    Map<String, Object> context = new HashMap<String, Object>();
+    var context = new HashMap<String, Object>();
     context.put(Plugin.CTX_CONFIG_PATH, gusHome + "/config/");
     return context;
   }
@@ -86,10 +82,10 @@ public class HsssTest {
 
   protected PluginResponse getResponse() {
     int invokeId = 0;
-    File storageDir = new File("/tmp/junk");
+    var storageDir = new File("/tmp/junk");
+    //noinspection ResultOfMethodCallIgnored
     new File(storageDir, Integer.toString(invokeId)).mkdirs();
-    PluginResponse response = new PluginResponse(storageDir, invokeId);
-    return response;
+    return new PluginResponse(storageDir, invokeId);
   }
 }
- 
+

@@ -1,30 +1,27 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
+import org.apache.log4j.Logger;
+import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
+import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.wdk.model.Utilities;
+import org.gusdb.wsf.plugin.Plugin;
+import org.gusdb.wsf.plugin.PluginRequest;
+import org.gusdb.wsf.plugin.PluginResponse;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.log4j.Logger;
-import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
-import org.gusdb.fgputil.FormatUtil;
-import org.gusdb.wdk.model.Utilities;
-import org.gusdb.wsf.common.WsfRequest;
-import org.gusdb.wsf.plugin.Plugin;
-import org.gusdb.wsf.plugin.PluginRequest;
-import org.gusdb.wsf.plugin.PluginResponse;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 public class MotifSearchTest {
 
@@ -50,9 +47,8 @@ public class MotifSearchTest {
           + Utilities.SYSTEM_PROPERTY_GUS_HOME);
   }
 
-  @Before
-  public void prepareConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
+  @BeforeEach
+  public void prepareConfigFile() throws IOException {
 
     // prepare the config file
     properties = new Properties();
@@ -64,7 +60,7 @@ public class MotifSearchTest {
     try (InputStream inStream = new FileInputStream(sampleFile)) {
       properties.loadFromXML(inStream);
     }
-    
+
     properties.setProperty(DnaMotifPlugin.FIELD_REGEX, "");
   }
 
@@ -75,11 +71,11 @@ public class MotifSearchTest {
 
     Pattern pattern = Pattern.compile(regex);
     Matcher matcher = pattern.matcher(content);
-    Assert.assertTrue(matcher.find());
-    Assert.assertEquals(3, matcher.groupCount());
-    Assert.assertEquals("scf_1107000998814", matcher.group(1));
-    Assert.assertEquals("+", matcher.group(2));
-    Assert.assertEquals("Toxoplasma", matcher.group(3));
+    Assertions.assertTrue(matcher.find());
+    Assertions.assertEquals(3, matcher.groupCount());
+    Assertions.assertEquals("scf_1107000998814", matcher.group(1));
+    Assertions.assertEquals("+", matcher.group(2));
+    Assertions.assertEquals("Toxoplasma", matcher.group(3));
   }
 
   @Test
@@ -89,10 +85,10 @@ public class MotifSearchTest {
 
     Pattern pattern = Pattern.compile(regex);
     Matcher matcher = pattern.matcher(content);
-    Assert.assertTrue(matcher.find());
-    Assert.assertEquals(2, matcher.groupCount());
-    Assert.assertEquals("NCLIV_009530", matcher.group(1));
-    Assert.assertEquals("Neospora", matcher.group(2));
+    Assertions.assertTrue(matcher.find());
+    Assertions.assertEquals(2, matcher.groupCount());
+    Assertions.assertEquals("NCLIV_009530", matcher.group(1));
+    Assertions.assertEquals("Neospora", matcher.group(2));
   }
 
   @Test
@@ -106,7 +102,7 @@ public class MotifSearchTest {
     search.setProjectMapper(new MockProjectMapper());
 
     // prepare parameters
-    Map<String, String> params = new HashMap<String, String>();
+    var params = new HashMap<String, String>();
     params.put(AbstractMotifPlugin.PARAM_EXPRESSION, "GGATCC");
     params.put(AbstractMotifPlugin.PARAM_DATASET,
         getPath("/fasta/sample-dna.fasta"));
@@ -120,7 +116,7 @@ public class MotifSearchTest {
     String[][] results = response.getPage(0);
     System.out.println(FormatUtil.printArray(results));
 
-    Assert.assertEquals(2, results.length);
+    Assertions.assertEquals(2, results.length);
   }
 
   @Test
@@ -136,14 +132,14 @@ public class MotifSearchTest {
     search.setProjectMapper(new MockProjectMapper());
 
     // prepare parameters
-    Map<String, String> params = new HashMap<String, String>();
+    var params = new HashMap<String, String>();
     params.put(AbstractMotifPlugin.PARAM_EXPRESSION, "0[6]{2,8}G");
     params.put(AbstractMotifPlugin.PARAM_DATASET,
         getPath("/fasta/sample-protein.fasta"));
 
     // invoke the plugin and get result back
-    PluginRequest request = getRequest(params);
-    PluginResponse response = getResponse();
+    var request = getRequest(params);
+    var response = getResponse();
     search.execute(request, response);
 
     // print results
@@ -152,11 +148,11 @@ public class MotifSearchTest {
     // print results
     System.out.println(FormatUtil.printArray(results));
 
-    Assert.assertEquals(3, results.length);
+    Assertions.assertEquals(3, results.length);
   }
 
   private Map<String, Object> getContext() {
-    Map<String, Object> context = new HashMap<String, Object>();
+    var context = new HashMap<String, Object>();
     context.put(Plugin.CTX_CONFIG_PATH, gusHome + "/config/");
     return context;
   }
@@ -172,7 +168,7 @@ public class MotifSearchTest {
     PluginRequest request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
-    request.setContext(new HashMap<String, String>());
+    request.setContext(new HashMap<>());
 
     return request;
   }
@@ -184,9 +180,9 @@ public class MotifSearchTest {
   }
 
   private PluginResponse getResponse() throws IOException {
-    File storageDir = File.createTempFile("temp/wsf", null);
+    var storageDir = File.createTempFile("temp/wsf", null);
+    //noinspection ResultOfMethodCallIgnored
     storageDir.mkdirs();
-    PluginResponse response = new PluginResponse(storageDir, 0);
-    return response;
+    return new PluginResponse(storageDir, 0);
   }
 }

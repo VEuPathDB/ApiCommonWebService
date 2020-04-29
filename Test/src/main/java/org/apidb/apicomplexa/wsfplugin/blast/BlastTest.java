@@ -1,27 +1,23 @@
 package org.apidb.apicomplexa.wsfplugin.blast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Properties;
-import java.util.Random;
-
-import org.junit.Assert;
-
 import org.apidb.apicomplexa.wsfplugin.MockProjectMapper;
-import org.eupathdb.common.model.ProjectMapper;
 import org.eupathdb.websvccommon.wsfplugin.blast.AbstractBlastPlugin;
 import org.eupathdb.websvccommon.wsfplugin.blast.BlastConfig;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
 import org.eupathdb.websvccommon.wsfplugin.blast.ResultFormatter;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.Properties;
+import java.util.Random;
 
 public class BlastTest {
 
@@ -44,9 +40,8 @@ public class BlastTest {
           + SYS_PROJECT_HOME);
   }
 
-  @Before
-  public void prepareConfigFile() throws InvalidPropertiesFormatException,
-      FileNotFoundException, IOException {
+  @BeforeEach
+  public void prepareConfigFile() throws IOException {
 
     // prepare the config file
     _properties = new Properties();
@@ -86,16 +81,17 @@ public class BlastTest {
     // create a plugin, and test the fields
     BlastConfig config = new BlastConfig(properties);
 
-    Assert.assertEquals(blastPath, config.getBlastPath());
-    Assert.assertEquals(tempPath, config.getTempDir().getName());
-    Assert.assertEquals(timeout, config.getTimeout());
-    Assert.assertEquals(extraOptions, config.getExtraOptions());
-    Assert.assertEquals(sourceIdRegex, config.getSourceIdRegex());
-    Assert.assertEquals(organismRegex, config.getOrganismRegex());
+    Assertions.assertEquals(blastPath, config.getBlastPath());
+    Assertions.assertEquals(tempPath, config.getTempDir().getName());
+    Assertions.assertEquals(timeout, config.getTimeout());
+    Assertions.assertEquals(extraOptions, config.getExtraOptions());
+    Assertions.assertEquals(sourceIdRegex, config.getSourceIdRegex());
+    Assertions.assertEquals(organismRegex, config.getOrganismRegex());
 
     // make sure to drop the temp path
     File tempDir = new File(tempPath);
     if (tempDir.exists())
+      //noinspection ResultOfMethodCallIgnored
       tempDir.delete();
   }
 
@@ -114,15 +110,15 @@ public class BlastTest {
     BlastConfig config = new BlastConfig(properties);
     BlastConfig defaultConfig = new BlastConfig(_properties);
 
-    Assert.assertEquals(blastPath, config.getBlastPath());
-    Assert.assertEquals(defaultConfig.getTempDir().getAbsolutePath(),
+    Assertions.assertEquals(blastPath, config.getBlastPath());
+    Assertions.assertEquals(defaultConfig.getTempDir().getAbsolutePath(),
         config.getTempDir().getAbsolutePath());
-    Assert.assertEquals(defaultConfig.getTimeout(), config.getTimeout());
-    Assert.assertEquals(defaultConfig.getExtraOptions(),
+    Assertions.assertEquals(defaultConfig.getTimeout(), config.getTimeout());
+    Assertions.assertEquals(defaultConfig.getExtraOptions(),
         config.getExtraOptions());
-    Assert.assertEquals(defaultConfig.getSourceIdRegex(),
+    Assertions.assertEquals(defaultConfig.getSourceIdRegex(),
         config.getSourceIdRegex());
-    Assert.assertEquals(defaultConfig.getOrganismRegex(),
+    Assertions.assertEquals(defaultConfig.getOrganismRegex(),
         config.getOrganismRegex());
   }
 
@@ -132,13 +128,13 @@ public class BlastTest {
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-hits.out", message);
 
-    Assert.assertEquals(5, results.length);
-    Assert.assertEquals(columns.length, results[0].length);
-    Assert.assertTrue(results[0][2] == null);
-    Assert.assertTrue(results[0][3].length() > 100);
-    Assert.assertTrue(results[4][2].length() > 100);
-    Assert.assertTrue(results[4][3] == null);
-    Assert.assertTrue(message.length() == 0);
+    Assertions.assertEquals(5, results.length);
+    Assertions.assertEquals(columns.length, results[0].length);
+    Assertions.assertNull(results[0][2]);
+    Assertions.assertTrue(results[0][3].length() > 100);
+    Assertions.assertTrue(results[4][2].length() > 100);
+    Assertions.assertNull(results[4][3]);
+    Assertions.assertEquals(0, message.length());
   }
 
   @Test
@@ -147,78 +143,40 @@ public class BlastTest {
     String[][] results = format(new NcbiBlastResultFormatter(),
         "ncbi-blast-no-hits.out", message);
 
-    Assert.assertEquals(0, results.length);
-    Assert.assertTrue(message.length() > 100);
+    Assertions.assertEquals(0, results.length);
+    Assertions.assertTrue(message.length() > 100);
   }
 
   @Test
-  public void testFormatNcbiResultsWithError() throws URISyntaxException, IOException {
-    StringBuffer message = new StringBuffer();
-    String[][] results = format(new NcbiBlastResultFormatter(),
-        "ncbi-blast-err.out", message);
+  public void testFormatNcbiResultsWithError()
+  throws URISyntaxException, IOException, PluginModelException {
+    var message = new StringBuffer();
+    var results = format(new NcbiBlastResultFormatter(), "ncbi-blast-err.out",
+      message);
 
-    Assert.assertEquals(0, results.length);
-    Assert.assertTrue(message.length() > 100);
+    Assertions.assertEquals(0, results.length);
+    Assertions.assertTrue(message.length() > 100);
   }
 
-  // @Test
-  // public void testFormatWuResultsWithHits() throws URISyntaxException,
-  // WsfServiceException, WdkModelException, WdkUserException, IOException,
-  // SQLException {
-  // StringBuffer message = new StringBuffer();
-  // String[][] results = format(new WuBlastResultFormatter(),
-  // "wu-blast-hits.out", message);
-  //
-  // Assert.assertEquals(5, results.length);
-  // Assert.assertEquals(columns.length, results[0].length);
-  // Assert.assertTrue(results[0][2] == null);
-  // Assert.assertTrue(results[0][3].length() > 100);
-  // Assert.assertTrue(results[4][2].length() > 100);
-  // Assert.assertTrue(results[4][3] == null);
-  // Assert.assertTrue(message.length() == 0);
-  // }
-  //
-  // @Test
-  // public void testFormatWuResultsWithoutHits() throws WdkModelException,
-  // WdkUserException, WsfServiceException, URISyntaxException, IOException,
-  // SQLException {
-  // StringBuffer message = new StringBuffer();
-  // String[][] results = format(new WuBlastResultFormatter(),
-  // "wu-blast-no-hit.out", message);
-  //
-  // Assert.assertEquals(0, results.length);
-  // Assert.assertTrue(message.length() > 100);
-  // }
-  //
-  // @Test
-  // public void testFormatWuResultsWithError() throws WdkModelException,
-  // WdkUserException, WsfServiceException, URISyntaxException, IOException,
-  // SQLException {
-  // StringBuffer message = new StringBuffer();
-  // String[][] results = format(new WuBlastResultFormatter(),
-  // "wu-blast-err.out", message);
-  //
-  // Assert.assertEquals(0, results.length);
-  // Assert.assertTrue(message.length() > 100);
-  // }
-
   private String[][] format(ResultFormatter formatter, String fileName,
-      StringBuffer message) throws URISyntaxException, IOException {
-    BlastConfig config = new BlastConfig(_properties);
-    ProjectMapper projectMapper = new MockProjectMapper();
+      StringBuffer message)
+  throws URISyntaxException, IOException, PluginModelException {
+    var config = new BlastConfig(_properties);
+    var projectMapper = new MockProjectMapper();
     formatter.setConfig(config);
     formatter.setProjectMapper(projectMapper);
 
     // get blast output file
-    URL url = this.getClass().getResource("/blast/" + fileName);
-    File resultFile = new File(url.toURI());
-    String dbType = "Genomics";
-    String recordClass = "GeneRecordClasses.GeneRecordClass";
+    var url = this.getClass().getResource("/blast/" + fileName);
+    var resultFile = new File(url.toURI());
+    var dbType = "Genomics";
+    var recordClass = "GeneRecordClasses.GeneRecordClass";
 
-    File storageDir = File.createTempFile("temp/wsf", null);
+    var storageDir = File.createTempFile("temp/wsf", null);
+    //noinspection ResultOfMethodCallIgnored
     storageDir.mkdirs();
-    PluginResponse response = new PluginResponse(storageDir, 0);
-    String msg = formatter.formatResult(response, columns, resultFile,
+    var response = new PluginResponse(storageDir, 0);
+    var msg = formatter.formatResult(response, columns, resultFile,
         recordClass, dbType);
     message.append(msg);
     return response.getPage(0);

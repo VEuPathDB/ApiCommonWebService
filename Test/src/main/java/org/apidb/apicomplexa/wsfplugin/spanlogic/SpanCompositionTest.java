@@ -1,65 +1,42 @@
 package org.apidb.apicomplexa.wsfplugin.spanlogic;
 
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_PROJECT_ID;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_SOURCE_ID;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.COLUMN_WDK_WEIGHT;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_DIRECTION_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_OFFSET_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_BEGIN_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_DIRECTION_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_OFFSET_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_END_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OPERATION;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_OUTPUT;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_SPAN_PREFIX;
-import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.PARAM_STRAND;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.wdk.controller.CConstants;
 import org.gusdb.wdk.model.UnitTestHelper;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.WdkModelException;
-import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.jspwrap.WdkModelBean;
-import org.gusdb.wdk.model.question.Question;
-import org.gusdb.wdk.model.user.Step;
 import org.gusdb.wdk.model.user.User;
-import org.gusdb.wsf.common.WsfRequest;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+
+import static org.apidb.apicomplexa.wsfplugin.spanlogic.SpanCompositionPlugin.*;
 
 public class SpanCompositionTest {
 
-  private static Logger logger = Logger.getLogger(SpanCompositionTest.class);
+  private static final Logger logger = Logger.getLogger(SpanCompositionTest.class);
 
-  private WdkModel wdkModel;
-  private User user;
-  private SpanCompositionPlugin plugin;
-  private Map<String, String> steps;
+  private final WdkModel wdkModel;
+  private final User user;
+  private final SpanCompositionPlugin plugin;
+  private final Map<String, String> steps;
 
-  public SpanCompositionTest() throws Exception {
+  public SpanCompositionTest() {
     wdkModel = UnitTestHelper.getModel();
     user = UnitTestHelper.getRegisteredUser();
     plugin = createPlugin();
-    steps = new HashMap<String, String>();
+    steps = new HashMap<>();
   }
 
   @Test
@@ -91,23 +68,23 @@ public class SpanCompositionTest {
       }
     }
     logger.info("Failed: " + count);
-    Assert.assertTrue(success);
+    Assertions.assertTrue(success);
   }
 
   private PluginResponse getResponse() throws IOException {
     File storageDir = File.createTempFile("temp/wsf", null);
+    //noinspection ResultOfMethodCallIgnored
     storageDir.mkdirs();
-    PluginResponse response = new PluginResponse(storageDir, 0);
-    return response;
+    return new PluginResponse(storageDir, 0);
   }
 
   private List<SpanCompositionTestCase> loadTestCases(String resourceName)
       throws URISyntaxException, IOException, PluginUserException {
-    List<SpanCompositionTestCase> testCases = new ArrayList<SpanCompositionTestCase>();
-    URL url = SpanCompositionTest.class.getResource(resourceName);
+    var testCases = new ArrayList<SpanCompositionTestCase>();
+    var url = SpanCompositionTest.class.getResource(resourceName);
     if (url != null) {
-      File file = new File(url.toURI());
-      BufferedReader reader = new BufferedReader(new FileReader(file));
+      var file = new File(url.toURI());
+      var reader = new BufferedReader(new FileReader(file));
       String line;
       int id = 1;
       while ((line = reader.readLine()) != null) {
@@ -123,10 +100,9 @@ public class SpanCompositionTest {
     return testCases;
   }
 
-  private PluginRequest createRequest(SpanCompositionTestCase testCase)
-      throws WdkModelException, WdkUserException {
+  private PluginRequest createRequest(SpanCompositionTestCase testCase) {
     // prepare parameters
-    Map<String, String> params = new HashMap<String, String>();
+    var params = new HashMap<String, String>();
 
     params.put(PARAM_OPERATION, testCase.operator);
 
@@ -150,13 +126,13 @@ public class SpanCompositionTest {
     params.put(PARAM_OUTPUT, testCase.outputFrom);
 
     // prepare columns
-    String[] columns = { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT };
+    var columns = { COLUMN_PROJECT_ID, COLUMN_SOURCE_ID, COLUMN_WDK_WEIGHT };
 
     // prepare the request context
-    Map<String, String> context = new HashMap<String, String>();
+    var context = new HashMap<String, String>();
     context.put(Utilities.QUERY_CTX_USER, user.getSignature());
 
-    PluginRequest request = new PluginRequest();
+    var request = new PluginRequest();
     request.setParams(params);
     request.setOrderedColumns(columns);
     request.setContext(context);
@@ -164,51 +140,50 @@ public class SpanCompositionTest {
     return request;
   }
 
-  private String createGeneStep(String[] input) throws WdkModelException, WdkUserException {
-    String key = FormatUtil.printArray(input).intern();
+  private String createGeneStep(String[] input) {
+    var key = FormatUtil.printArray(input).intern();
     if (steps.containsKey(key))
       return steps.get(key);
 
     // IsolateQuestions.IsolateByIsolateId
-    Question question = wdkModel.getQuestion("GeneQuestions.GeneByLocusTag");
-    Map<String, String> params = new HashMap<String, String>();
+    var question = wdkModel.getQuestion("GeneQuestions.GeneByLocusTag");
+    var params = new HashMap<String, String>();
 
-    StringBuilder builder = new StringBuilder();
-    for (String gene : input) {
-      builder.append(gene + " ");
+    var builder = new StringBuilder();
+    for (var gene : input) {
+      builder.append(gene).append(" ");
     }
 
     // isolate_id
     params.put("ds_gene_ids", builder.toString().trim());
 
-    Step step = user.createStep(question, params, (String) null, false, true, 0);
-    String sql = step.getAnswerValue().getIdSql();
+    var step = user.createStep(question, params, (String) null, false, true, 0);
+    //noinspection ConstantConditions
+    var sql = step.getAnswerValue().getIdSql();
     steps.put(key, sql);
     return sql;
   }
 
   private void validateResults(SpanCompositionTestCase testCase,
       String[][] actualResults) {
-    Set<String> expected = new HashSet<String>();
-    for (String value : testCase.expectedOutput) {
-      expected.add(value);
-    }
+    var expected = new HashSet<String>();
+    Collections.addAll(expected, testCase.expectedOutput);
 
-    Set<String> actual = new HashSet<String>();
-    for (int i = 0; i < actualResults.length; i++) {
-      String value = actualResults[i][1];
+    var actual = new HashSet<String>();
+    for (var actualResult : actualResults) {
+      var value = actualResult[1];
       actual.add(value);
     }
     testCase.actualOutput = new String[actual.size()];
     actual.toArray(testCase.actualOutput);
 
-    for (String value : expected) {
+    for (var value : expected) {
       if (!actual.contains(value)) {
         testCase.success = false;
         return;
       }
     }
-    for (String value : actual) {
+    for (var value : actual) {
       if (!expected.contains(value)) {
         testCase.success = false;
         return;
@@ -220,7 +195,7 @@ public class SpanCompositionTest {
   private SpanCompositionPlugin createPlugin() {
     SpanCompositionPlugin plugin = new SpanCompositionPlugin();
 
-    Map<String, Object> context = new HashMap<String, Object>();
+    var context = new HashMap<String, Object>();
     context.put(CConstants.WDK_MODEL_KEY, new WdkModelBean(wdkModel));
     plugin.initialize(context);
 
