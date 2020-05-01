@@ -1,28 +1,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
- 
+
   <parent>
     <groupId>org.eupathdb</groupId>
     <artifactId>api-common-websvc</artifactId>
     <version>1.0.0</version>
   </parent>
-  
+
   <name>Api Common Web Service - WSF Plugin</name>
   <artifactId>api-common-websvc-wsfplugin</artifactId>
   <packaging>jar</packaging>
-  
+
   <dependencies>
-  
+
     <dependency>
       <groupId>org.eupathdb</groupId>
       <artifactId>api-common-website-model</artifactId>
     </dependency>
-  
+
     <dependency>
       <groupId>org.eupathdb</groupId>
       <artifactId>ebrc-website-common-model</artifactId>
-    </dependency>  
-    
+    </dependency>
+
     <dependency>
       <groupId>org.eupathdb</groupId>
       <artifactId>ebrc-websvc-common-wsfplugin</artifactId>
@@ -32,42 +32,47 @@
       <groupId>org.gusdb</groupId>
       <artifactId>wdk-model</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.gusdb</groupId>
       <artifactId>fgputil-util</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.gusdb</groupId>
       <artifactId>wsf-plugin</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.gusdb</groupId>
       <artifactId>wsf-client</artifactId>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>wsf-common</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
-    
+
   </dependencies>
-  
+
 </project>
