@@ -1,4 +1,4 @@
-<project name="ApiCommonWebService" default="Installation" basedir=".">
+<project name="Installation" default="Installation" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->

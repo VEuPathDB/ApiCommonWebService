@@ -35,11 +35,6 @@
     
     <dependency>
       <groupId>org.gusdb</groupId>
-      <artifactId>fgputil-util</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.gusdb</groupId>
       <artifactId>wsf-plugin</artifactId>
     </dependency>
     
@@ -48,6 +43,41 @@
       <artifactId>wsf-client</artifactId>
     </dependency>
     
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>wsf-common</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-core</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-db</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-json</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
@@ -62,12 +92,16 @@
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>
     </dependency>
-    
+
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
     </dependency>
-    
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+    </dependency>
+
   </dependencies>
   
 </project>
