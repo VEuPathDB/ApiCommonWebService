@@ -87,8 +87,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
      */
     public String getRegion() {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(begin).append("&nbsp;-&nbsp;").append(end);
-      buffer.append("&nbsp;(").append(getReversed()).append(")");
+      buffer.append(begin).append(" - ").append(end);
+      buffer.append(" (").append(getReversed()).append(")");
       return buffer.toString();
     }
 
@@ -566,8 +566,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     for (Feature fr : feature.matched) {
       if (builder.length() > 0) builder.append("; ");
       String srcId = fr.geneSourceId.equals("dontcare")? fr.sourceId : fr.geneSourceId;
-      builder.append(srcId + ":&nbsp;" + fr.getBegin() + "&nbsp;-&nbsp;" + fr.getEnd() + "&nbsp;(" +
-          fr.getReversed() + ")");
+      builder.append(srcId + ": " + fr.getBegin() + " - " + fr.getEnd() + " (" + fr.getReversed() + ")");
     }
     String matched = builder.toString();
     if (matched.length() > 4000)
