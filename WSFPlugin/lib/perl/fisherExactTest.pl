@@ -25,15 +25,15 @@ my $datasetCutoffType = $ARGV[2];
 die "datasetCutofftype should be fc or rank:  found $datasetCutoffType" unless($datasetCutoffType eq 'fc' || $datasetCutoffType eq 'rank');
 
 my $datasetCutoff = $ARGV[3];
+my $datasetSelection = $ARGV[4];
+
 
 # read the db connection information
-my $dbConnection = $ARGV[4];
-my $dbLogin = $ARGV[5];
-my $dbPassword = $ARGV[6];
+my $dbConnection = $ARGV[5];
+my $dbLogin = $ARGV[6];
+my $dbPassword = $ARGV[7];
 
-
-
-my $pValueCutoff = $ARGV[7];
+my $pValueCutoff = $ARGV[8];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to connect: DBI->errstr\n";
@@ -44,13 +44,15 @@ my $idT = (lc($useOrthology) eq "yes") ? "orthomcl_name" : "source_id";
 
 my $userGeneListQuery;
 
+
 if (lc($useOrthology) eq "yes"){
- $userGeneListQuery = "select distinct ga.orthomcl_name, \'all\' as organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
-
+    $userGeneListQuery = "select distinct ga.orthomcl_name, \'all\' as organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+    
 }else {
-     $userGeneListQuery = "select distinct ga.source_id, ga. organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
-
+    $userGeneListQuery = "select distinct ga.source_id, ga. organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+    
 }
+
 
 my $userStatemnetHandle = $dbh->prepare($userGeneListQuery);
 
@@ -73,10 +75,17 @@ my $datasetGeneListQuery;
 
 if (lc($useOrthology) eq "yes"){
 
- $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff) ";
+ $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga,(select udg.gene_source_id from ApiDBUserDatasets.InstalledUserDataset uds, ApiDBUserDatasets.UD_GeneId udg 
+  where uds.USER_DATASET_ID = udg.USER_DATASET_ID and uds.name= '$datasetSelection') id
+WHERE ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)
+AND id.gene_source_id = ga.source_id";
 
 }else {
-  $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga where ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)";
+  $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga,
+(select udg.gene_source_id from ApiDBUserDatasets.InstalledUserDataset uds, ApiDBUserDatasets.UD_GeneId udg 
+ where uds.USER_DATASET_ID = udg.USER_DATASET_ID and uds.name= '$datasetSelection') id
+WHERE ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)
+AND id.gene_source_id = ga.source_id";
 }
 
 my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                  
@@ -205,9 +214,10 @@ sub getBackgroundForOrganism{
     my ($dbh, $dataset, $idType) = @_;
 
     my $sql = <<EOSQL;
-     select count(distinct $idType) 
-     from  apidbtuning.datasetgenelist  
-     where dataset_presenter_id = '$dataset'
+
+    select count(distinct $idType)
+    from  apidbtuning.datasetgenelist
+    where dataset_presenter_id = '$dataset'
     
 EOSQL
     
