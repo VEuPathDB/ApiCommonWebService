@@ -29,8 +29,9 @@ public class ListComparisonPlugin extends AbstractPlugin {
     // required parameter definition
     public static final String PARAM_DS_GENE_IDS = "ds_gene_ids";
     public static final String PARAM_DS_SELECTION = "datasetSelection";
-    public static final String PARAM_DS_CUTOFF_TYPE = "datasetCutoffType";
-    public static final String PARAM_DS_CUTOFF = "datasetCutoff";
+    public static final String PARAM_ENRICHMENT_TYPE = "enrichmentType";
+    //public static final String PARAM_DS_CUTOFF_TYPE = "datasetCutoffType";
+    //public static final String PARAM_DS_CUTOFF = "datasetCutoff";
     public static final String PARAM_THRESHOLD = "threshold";
     public static final String PARAM_ORTHOLOGYFLAG = "orthologyFlag";
 
@@ -99,7 +100,7 @@ public class ListComparisonPlugin extends AbstractPlugin {
 
     @Override
     public String[] getRequiredParameterNames() {
-        return new String[] { PARAM_DS_GENE_IDS, PARAM_DS_CUTOFF_TYPE, PARAM_DS_CUTOFF, PARAM_THRESHOLD, PARAM_ORTHOLOGYFLAG,PARAM_DS_SELECTION };
+        return new String[] { PARAM_DS_GENE_IDS, PARAM_THRESHOLD, PARAM_ORTHOLOGYFLAG,PARAM_DS_SELECTION,PARAM_ENRICHMENT_TYPE};
     }
 
     @Override
@@ -213,9 +214,10 @@ public class ListComparisonPlugin extends AbstractPlugin {
         cmds.add(params.get(PARAM_DS_GENE_IDS));
         cmds.add(params.get(PARAM_ORTHOLOGYFLAG));
 
-        cmds.add(params.get(PARAM_DS_CUTOFF_TYPE));
-        cmds.add(params.get(PARAM_DS_CUTOFF));
+        //cmds.add(params.get(PARAM_DS_CUTOFF_TYPE));
+        //cmds.add(params.get(PARAM_DS_CUTOFF));
         cmds.add(params.get(PARAM_DS_SELECTION));
+        cmds.add(params.get(PARAM_ENRICHMENT_TYPE));
 
         cmds.add(dbConnection);
         cmds.add(dbLogin);

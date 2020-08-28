@@ -21,19 +21,20 @@ my $idSql = $ARGV[0];
 my $useOrthology = $ARGV[1];
 $useOrthology =~ s/\'//g;
 
-my $datasetCutoffType = $ARGV[2];
-die "datasetCutofftype should be fc or rank:  found $datasetCutoffType" unless($datasetCutoffType eq 'fc' || $datasetCutoffType eq 'rank');
+#my $datasetCutoffType = $ARGV[2];
+#die "datasetCutofftype should be fc or rank:  found $datasetCutoffType" unless($datasetCutoffType eq 'fc' || $datasetCutoffType eq 'rank');
 
-my $datasetCutoff = $ARGV[3];
-my $datasetSelection = $ARGV[4];
+#my $datasetCutoff = $ARGV[3];
+my $datasetSelection = $ARGV[2];
+my $enrichmentType = $ARGV[3];
 
 
 # read the db connection information
-my $dbConnection = $ARGV[5];
-my $dbLogin = $ARGV[6];
-my $dbPassword = $ARGV[7];
+my $dbConnection = $ARGV[4];
+my $dbLogin = $ARGV[5];
+my $dbPassword = $ARGV[6];
 
-my $pValueCutoff = $ARGV[8];
+my $pValueCutoff = $ARGV[7];
 
 # setup DBI connections
 my $dbh = DBI->connect($dbConnection, $dbLogin, $dbPassword) or die "Unable to connect: DBI->errstr\n";
@@ -77,15 +78,13 @@ if (lc($useOrthology) eq "yes"){
 
  $datasetGeneListQuery= "select distinct ga.orthomcl_name, \'all\' as organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga,(select udg.gene_source_id from ApiDBUserDatasets.InstalledUserDataset uds, ApiDBUserDatasets.UD_GeneId udg 
   where uds.USER_DATASET_ID = udg.USER_DATASET_ID and uds.name= '$datasetSelection') id
-WHERE ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)
-AND id.gene_source_id = ga.source_id";
+WHERE ga.fdiff_abs >=10  and id.gene_source_id = ga.source_id";
 
 }else {
   $datasetGeneListQuery = "select distinct ga.source_id, ga.organism, ga.dataset_presenter_id from apidbtuning.datasetgenelist ga,
 (select udg.gene_source_id from ApiDBUserDatasets.InstalledUserDataset uds, ApiDBUserDatasets.UD_GeneId udg 
  where uds.USER_DATASET_ID = udg.USER_DATASET_ID and uds.name= '$datasetSelection') id
-WHERE ('$datasetCutoffType' = 'fc' AND ga.fdiff_abs >= $datasetCutoff) OR ('$datasetCutoffType' = 'rank' AND ga.myrow <= $datasetCutoff)
-AND id.gene_source_id = ga.source_id";
+WHERE  ga.fdiff_abs >=10 and id.gene_source_id = ga.source_id";
 }
 
 my $datasetStatmentHandle = $dbh->prepare($datasetGeneListQuery);                                                                  
@@ -98,7 +97,8 @@ while(my($id, $org, $dataset) = $datasetStatmentHandle->fetchrow_array() ) {
 
     $datasetLists{$org}->{$dataset}->{$id}++;
 
-}                                                                                                                                  
+}     
+
 
 $datasetStatmentHandle->finish();
 ########################################################## Background Dataset list hash table #####################################
@@ -119,7 +119,7 @@ while(my($id,$dataset) = $backgroundDatasetStatmentHandle->fetchrow_array() ) {
 ######################################################### combined calculation ### ###############################################
 
 #print "dataset_id", "\t", "overlap","\t", "ul_nonDS","\t", "ds_nonUL". "\t", "nonUL_nonDS", "\t", "p_value", "\n";
-
+if ($enrichmentType eq "over-represented"){
 foreach my $org (keys %userLists){
 
     my @userIdList = keys %{$userLists{$org}}; 
@@ -175,24 +175,218 @@ foreach my $org (keys %userLists){
         }
 
 
-	my $pValue = &runRscript($t11, $t21, $t12, $t22);
+	my $pValue = &runROverRepresented($t11, $t21, $t12, $t22);
 
 	$pValue = sprintf("%.6f", $pValue);
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
 
-print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
+        print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
 
     }
+ }
+
+
 }
 
-sub runRscript{
+
+
+if ($enrichmentType eq "under-represented"){
+foreach my $org (keys %userLists){
+
+    my @userIdList = keys %{$userLists{$org}}; 
+    my $userListSize = scalar @userIdList;   ############################### user_list SIZE
+
+    #make a hash from the userIdList Array, keys are the elements from @userIdList
+    my %userIdListHash = map { $_ => 1 } @userIdList;
+
+    foreach my $dataset (keys %{$datasetLists{$org}}){
+
+	my $backgroundSize = &getBackgroundForOrganism($dbh, $dataset, $idT); ########## background dataset SIZE 
+      
+	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
+
+	my $datasetListSize  =  scalar @datasetIdList; ####################### User_dataset_list SIZE
+	
+	##### background dataset geneIDs array (this is used for the calculation of $t21)
+	my  @backgroundDatasetIdList = keys %{$backgroundDSLists{$dataset}};
+	
+	my $t11 = 0; 
+	my $t12 = 0; 
+	my $t21 = 0; 
+	my $t22 = 0;
+	my $tt = 0;
+	my $exp_overlap = 0;
+        my $percent_UL = 0;
+        my $percent_DS = 0;
+	my $fold_enrichment = "";
+	# Find the number of overlap between two lists
+	foreach my $value1 (@datasetIdList){
+          if($userIdListHash{$value1}) {
+            $t11++;
+	  }
+	}
+	
+	foreach my $value2 (@backgroundDatasetIdList){
+	    if($userIdListHash{$value2}){
+		$tt++;
+	    }
+	}
+
+	$t12 = $tt - $t11;
+        $t21 = $datasetListSize - $t11;
+        $t22 = $backgroundSize - $t11 - $t12 -$t21;
+	
+	$percent_UL = sprintf("%.2f", ($t11/$tt) *100);
+	$percent_DS = sprintf("%.2f", (($t11 + $t21) / $backgroundSize) *100);
+	#$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
+	$exp_overlap = sprintf("%.2f", ($t11+$t12) * ($percent_DS / 100));
+
+	if($exp_overlap != 0) {
+            $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
+        }
+
+
+	my $pValue = &runRUnderRepresented($t11, $t21, $t12, $t22);
+
+	$pValue = sprintf("%.6f", $pValue);
+###############################################################################################################
+##### the 'print' values order should match up the headers order in ListComparionPlugin.java
+###############################################################################################################
+
+        print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
+
+    }
+ }
+
+
+}
+
+
+
+if ($enrichmentType eq "both"){
+foreach my $org (keys %userLists){
+
+    my @userIdList = keys %{$userLists{$org}}; 
+    my $userListSize = scalar @userIdList;   ############################### user_list SIZE
+
+    #make a hash from the userIdList Array, keys are the elements from @userIdList
+    my %userIdListHash = map { $_ => 1 } @userIdList;
+
+    foreach my $dataset (keys %{$datasetLists{$org}}){
+
+	my $backgroundSize = &getBackgroundForOrganism($dbh, $dataset, $idT); ########## background dataset SIZE 
+      
+	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
+
+	my $datasetListSize  =  scalar @datasetIdList; ####################### User_dataset_list SIZE
+	
+	##### background dataset geneIDs array (this is used for the calculation of $t21)
+	my  @backgroundDatasetIdList = keys %{$backgroundDSLists{$dataset}};
+	
+	my $t11 = 0; 
+	my $t12 = 0; 
+	my $t21 = 0; 
+	my $t22 = 0;
+	my $tt = 0;
+	my $exp_overlap = 0;
+        my $percent_UL = 0;
+        my $percent_DS = 0;
+	my $fold_enrichment = "";
+	# Find the number of overlap between two lists
+	foreach my $value1 (@datasetIdList){
+          if($userIdListHash{$value1}) {
+            $t11++;
+	  }
+	}
+	
+	foreach my $value2 (@backgroundDatasetIdList){
+	    if($userIdListHash{$value2}){
+		$tt++;
+	    }
+	}
+
+	$t12 = $tt - $t11;
+        $t21 = $datasetListSize - $t11;
+        $t22 = $backgroundSize - $t11 - $t12 -$t21;
+	
+	$percent_UL = sprintf("%.2f", ($t11/$tt) *100);
+	$percent_DS = sprintf("%.2f", (($t11 + $t21) / $backgroundSize) *100);
+	#$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
+	$exp_overlap = sprintf("%.2f", ($t11+$t12) * ($percent_DS / 100));
+
+	if($exp_overlap != 0) {
+            $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
+        }
+
+
+	my $pValue = &runRBoth($t11, $t21, $t12, $t22);
+
+	$pValue = sprintf("%.6f", $pValue);
+###############################################################################################################
+##### the 'print' values order should match up the headers order in ListComparionPlugin.java
+###############################################################################################################
+
+        print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
+
+    }
+ }
+
+
+}
+
+
+
+
+sub runROverRepresented{
     my ($t11,$t21,$t12,$t22) = @_;
     
     my $rCode = <<"RCODE";
     Test <-matrix(c($t11,$t21,$t12,$t22), nrow = 2, dimnames = list(DS = c("DS", "Non-DS"),UL = c("UL", "Non-UL")))
     fisher.test(Test, alternative = "greater")\$p
+RCODE
+
+    my ($FH, $file) = tempfile(SUFFIX => '.R');     
+    print $FH  $rCode;
+    my $command = "Rscript " .  $file;
+    my $p_value  =  `$command`;
+    
+    #print STDERR $p_value;
+    close (FH);
+    
+    if ($p_value =~ m/^\[1\]\s*([\d]+.+)/ || $p_value =~ m/^\[1\]\s*([\d]+)/) {
+        #print "$1\n";
+	return  $1;
+    }
+}
+sub runRUnderRepresented{
+    my ($t11,$t21,$t12,$t22) = @_;
+    
+    my $rCode = <<"RCODE";
+    Test <-matrix(c($t11,$t21,$t12,$t22), nrow = 2, dimnames = list(DS = c("DS", "Non-DS"),UL = c("UL", "Non-UL")))
+    fisher.test(Test, alternative = "less")\$p
+RCODE
+
+    my ($FH, $file) = tempfile(SUFFIX => '.R');     
+    print $FH  $rCode;
+    my $command = "Rscript " .  $file;
+    my $p_value  =  `$command`;
+    
+    #print STDERR $p_value;
+    close (FH);
+    
+    if ($p_value =~ m/^\[1\]\s*([\d]+.+)/ || $p_value =~ m/^\[1\]\s*([\d]+)/) {
+        #print "$1\n";
+	return  $1;
+    }
+}
+sub runRBoth{
+    my ($t11,$t21,$t12,$t22) = @_;
+    
+    my $rCode = <<"RCODE";
+    Test <-matrix(c($t11,$t21,$t12,$t22), nrow = 2, dimnames = list(DS = c("DS", "Non-DS"),UL = c("UL", "Non-UL")))
+    fisher.test(Test, alternative = "two.sided")\$p
 RCODE
 
     my ($FH, $file) = tempfile(SUFFIX => '.R');     
