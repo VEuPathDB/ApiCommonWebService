@@ -1,9 +1,9 @@
-** ApiCommonWebService
+# ApiCommonWebService
 Plugins to execute web services under the wadl-based Web Service infrastructure <a href="https://github.com/VEuPathDB/WSF">WSF</a> common to the genomic sites.
 
 Additionally, the CLI implementation of the HighSpeedSnpSearch system that is called by the [High Speed Snp Search plugin](WSFPlugin/src/main/java/org/apidb/apicomplexa/wsfplugin/highspeedsnpsearch)
 
-** Dependencies
+## Dependencies
 
    + ant
    + Perl 5
@@ -12,11 +12,11 @@ Additionally, the CLI implementation of the HighSpeedSnpSearch system that is ca
    + environment variables for GUS_HOME and PROJECT_HOME
    + Internal Dependencies: see [build.xml](build.xml)
 
-** Installation instructions.
+## Installation instructions.
 
    + bld ApiCommonWebService
 
-** Manifest
+## Manifest
 
    + WSFPlugin/config :: configuration for individual plugins
    + WSFPlugin/lib :: conifer and perl libraries for the plugins
