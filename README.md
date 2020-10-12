@@ -1,5 +1,5 @@
 # ApiCommonWebService
-Plugins to execute web services under the wadl-based Web Service infrastructure <a href="https://github.com/VEuPathDB/WSF">WSF</a> common to the genomic sites.
+Plugins to execute web services under the wadl-based Web Service infrastructure <a href="https://github.com/VEuPathDB/WSF">WSF</a> common to the VEuPathDB genomics sites.
 
 Additionally, the CLI implementation of the HighSpeedSnpSearch system that is called by the [High Speed Snp Search plugin](WSFPlugin/src/main/java/org/apidb/apicomplexa/wsfplugin/highspeedsnpsearch)
 
