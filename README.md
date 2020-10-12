@@ -1,5 +1,5 @@
 # ApiCommonWebService
-[WSF](https://github.com/VEuPathDB/WSF) Plugins that are common to all VEuPathDB genomics (ApiCommon) web sites.  See [WSFPlugin/src](WSFPlugin/src/main/java/org/eupathdb/websvccommon/wsfplugin) for the list of plugins.
+[WSF](https://github.com/VEuPathDB/WSF) Plugins that are common to all VEuPathDB genomics (ApiCommon) web sites.  See [WSFPlugin/src](WSFPlugin/src/main/java/org/apidb/apicomplexa/wsfplugin) for the list of plugins.
 
 Additionally, the CLI implementation of the HighSpeedSnpSearch system that is called by the [High Speed Snp Search plugin](WSFPlugin/src/main/java/org/apidb/apicomplexa/wsfplugin/highspeedsnpsearch)
 
