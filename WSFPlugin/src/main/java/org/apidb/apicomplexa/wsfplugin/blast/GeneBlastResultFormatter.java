@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.apidb.apicommon.model.TranscriptUtil;
 import org.eupathdb.websvccommon.wsfplugin.EuPathServiceException;
 import org.eupathdb.websvccommon.wsfplugin.blast.NcbiBlastResultFormatter;
+import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wdk.model.record.RecordClass;
 
@@ -11,17 +12,28 @@ public class GeneBlastResultFormatter extends NcbiBlastResultFormatter {
 
  private static final Logger logger = Logger.getLogger(GeneBlastResultFormatter.class);
 
-  private String getGeneSourceId(String defline) {
+ public static final String COLUMN_MATCHED_RESULT = "matched_result";
+ public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
+
+ private String getGeneSourceId(String defline) {
     return getField(defline, findGene(defline));
   }
 
   @Override
+  public String[] getDeclaredColumns() {
+    return ArrayUtil.append(
+      super.getDeclaredColumns(),
+      COLUMN_GENE_SOURCE_ID,
+      COLUMN_MATCHED_RESULT);
+  }
+
+  @Override
   protected boolean assignExtraColumns(int index, String[] row, String[] columns, String defline) {
-    if (columns[index].equals(GeneBlastPlugin.COLUMN_MATCHED_RESULT)) {
+    if (columns[index].equals(COLUMN_MATCHED_RESULT)) {
       row[index] = new String("Y");
       return true;
     }
-    if (columns[index].equals(GeneBlastPlugin.COLUMN_GENE_SOURCE_ID)) {
+    if (columns[index].equals(COLUMN_GENE_SOURCE_ID)) {
       row[index] = getGeneSourceId(defline);
       return true;
     }   

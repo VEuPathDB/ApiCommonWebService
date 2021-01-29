@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apidb.apicommon.model.TranscriptUtil;
+import org.eupathdb.websvccommon.wsfplugin.PluginUtilities;
 import org.eupathdb.websvccommon.wsfplugin.solrsearch.EuPathSiteSearchPlugin;
-import org.eupathdb.websvccommon.wsfplugin.solrsearch.SiteSearchUtil;
 import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -59,9 +59,9 @@ public class SiteSearchPlugin extends EuPathSiteSearchPlugin {
   }
 
   public static String convertDocumentType(PluginRequest request) throws PluginModelException {
-    RecordClass recordClass = SiteSearchUtil.getRecordClass(request);
+    RecordClass recordClass = PluginUtilities.getRecordClass(request);
     return (isTranscriptRecordClass(recordClass) ?
-      getGeneRecordClass(SiteSearchUtil.getWdkModel(request.getProjectId())) :
+      getGeneRecordClass(PluginUtilities.getWdkModel(request.getProjectId())) :
       recordClass
     ).getUrlSegment();
   }
