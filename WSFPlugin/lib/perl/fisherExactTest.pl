@@ -119,7 +119,7 @@ while(my($id,$dataset) = $backgroundDatasetStatmentHandle->fetchrow_array() ) {
 ######################################################### combined calculation ### ###############################################
 
 #print "dataset_id", "\t", "overlap","\t", "ul_nonDS","\t", "ds_nonUL". "\t", "nonUL_nonDS", "\t", "p_value", "\n";
-if ($enrichmentType eq "over-represented"){
+
 foreach my $org (keys %userLists){
 
     my @userIdList = keys %{$userLists{$org}}; 
@@ -174,83 +174,18 @@ foreach my $org (keys %userLists){
             $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
         }
 
+       my $pValue;
 
-	my $pValue = &runROverRepresented($t11, $t21, $t12, $t22);
-
-	$pValue = sprintf("%.6f", $pValue);
-###############################################################################################################
-##### the 'print' values order should match up the headers order in ListComparionPlugin.java
-###############################################################################################################
-
-        print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
-
-    }
- }
-
-
-}
-
-
-
-if ($enrichmentType eq "under-represented"){
-foreach my $org (keys %userLists){
-
-    my @userIdList = keys %{$userLists{$org}}; 
-    my $userListSize = scalar @userIdList;   ############################### user_list SIZE
-
-    #make a hash from the userIdList Array, keys are the elements from @userIdList
-    my %userIdListHash = map { $_ => 1 } @userIdList;
-
-    foreach my $dataset (keys %{$datasetLists{$org}}){
-
-	my $backgroundSize = &getBackgroundForOrganism($dbh, $dataset, $idT); ########## background dataset SIZE 
-      
-	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
-
-	my $datasetListSize  =  scalar @datasetIdList; ####################### User_dataset_list SIZE
-	
-	##### background dataset geneIDs array (this is used for the calculation of $t21)
-	my  @backgroundDatasetIdList = keys %{$backgroundDSLists{$dataset}};
-	
-	my $t11 = 0; 
-	my $t12 = 0; 
-	my $t21 = 0; 
-	my $t22 = 0;
-	my $tt = 0;
-	my $exp_overlap = 0;
-        my $percent_UL = 0;
-        my $percent_DS = 0;
-	my $fold_enrichment = "";
-	# Find the number of overlap between two lists
-	foreach my $value1 (@datasetIdList){
-          if($userIdListHash{$value1}) {
-            $t11++;
-	  }
-	}
-	
-	foreach my $value2 (@backgroundDatasetIdList){
-	    if($userIdListHash{$value2}){
-		$tt++;
-	    }
-	}
-
-	$t12 = $tt - $t11;
-        $t21 = $datasetListSize - $t11;
-        $t22 = $backgroundSize - $t11 - $t12 -$t21;
-	
-	$percent_UL = sprintf("%.2f", ($t11/$tt) *100);
-	$percent_DS = sprintf("%.2f", (($t11 + $t21) / $backgroundSize) *100);
-	#$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
-	$exp_overlap = sprintf("%.2f", ($t11+$t12) * ($percent_DS / 100));
-
-	if($exp_overlap != 0) {
-            $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
+        if($enrichmentType eq "over-represented"){
+	    $pValue = &runROverRepresented($t11, $t21, $t12, $t22);
+        }elsif($enrichmentType eq "under-represented"){
+            $pValue = &runRUnderRepresented($t11, $t21, $t12, $t22);
+        }else{
+            $pValue = &runRBoth($t11, $t21, $t12, $t22);
         }
 
-
-	my $pValue = &runRUnderRepresented($t11, $t21, $t12, $t22);
-
 	$pValue = sprintf("%.6f", $pValue);
+
 ###############################################################################################################
 ##### the 'print' values order should match up the headers order in ListComparionPlugin.java
 ###############################################################################################################
@@ -259,83 +194,6 @@ foreach my $org (keys %userLists){
 
     }
  }
-
-
-}
-
-
-
-if ($enrichmentType eq "both"){
-foreach my $org (keys %userLists){
-
-    my @userIdList = keys %{$userLists{$org}}; 
-    my $userListSize = scalar @userIdList;   ############################### user_list SIZE
-
-    #make a hash from the userIdList Array, keys are the elements from @userIdList
-    my %userIdListHash = map { $_ => 1 } @userIdList;
-
-    foreach my $dataset (keys %{$datasetLists{$org}}){
-
-	my $backgroundSize = &getBackgroundForOrganism($dbh, $dataset, $idT); ########## background dataset SIZE 
-      
-	my  @datasetIdList = keys %{$datasetLists{$org}->{$dataset}};
-
-	my $datasetListSize  =  scalar @datasetIdList; ####################### User_dataset_list SIZE
-	
-	##### background dataset geneIDs array (this is used for the calculation of $t21)
-	my  @backgroundDatasetIdList = keys %{$backgroundDSLists{$dataset}};
-	
-	my $t11 = 0; 
-	my $t12 = 0; 
-	my $t21 = 0; 
-	my $t22 = 0;
-	my $tt = 0;
-	my $exp_overlap = 0;
-        my $percent_UL = 0;
-        my $percent_DS = 0;
-	my $fold_enrichment = "";
-	# Find the number of overlap between two lists
-	foreach my $value1 (@datasetIdList){
-          if($userIdListHash{$value1}) {
-            $t11++;
-	  }
-	}
-	
-	foreach my $value2 (@backgroundDatasetIdList){
-	    if($userIdListHash{$value2}){
-		$tt++;
-	    }
-	}
-
-	$t12 = $tt - $t11;
-        $t21 = $datasetListSize - $t11;
-        $t22 = $backgroundSize - $t11 - $t12 -$t21;
-	
-	$percent_UL = sprintf("%.2f", ($t11/$tt) *100);
-	$percent_DS = sprintf("%.2f", (($t11 + $t21) / $backgroundSize) *100);
-	#$exp_overlap = ($t11+$t12) * ($percent_DS / 100);
-	$exp_overlap = sprintf("%.2f", ($t11+$t12) * ($percent_DS / 100));
-
-	if($exp_overlap != 0) {
-            $fold_enrichment = sprintf("%.2f", $t11/$exp_overlap);
-        }
-
-
-	my $pValue = &runRBoth($t11, $t21, $t12, $t22);
-
-	$pValue = sprintf("%.6f", $pValue);
-###############################################################################################################
-##### the 'print' values order should match up the headers order in ListComparionPlugin.java
-###############################################################################################################
-
-        print  $dataset,"\t",$t11,"\t",$exp_overlap, "\t", $fold_enrichment, "\t", $percent_UL, "\t", $percent_DS,"\t", $pValue, "\n" if($pValue <= $pValueCutoff);
-
-    }
- }
-
-
-}
-
 
 
 
