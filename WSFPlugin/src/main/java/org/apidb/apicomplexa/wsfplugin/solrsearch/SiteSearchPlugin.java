@@ -40,6 +40,8 @@ public class SiteSearchPlugin extends EuPathSiteSearchPlugin {
   protected JSONObject supplementSearchParams(PluginRequest request, JSONObject baseSolrRequestJson) {
     String projectId = request.getProjectId();
     Map<String,String> internalValues = request.getParams();
+
+    // if the parameter set includes an organism parameter, add organisms to solr query, else don't
     List<String> organismTerms = internalValues.containsKey(ORGANISM_PARAM_NAME) ?
         getTermsFromInternal(internalValues.get(ORGANISM_PARAM_NAME), false) : null;
     return baseSolrRequestJson
