@@ -86,7 +86,11 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
       Match match = new Match();
       match.projectId = projectId;
       match.matchCount = 1;
-      match.locations = getLocation(length, start, stop, reversed);
+      if (strand.equals("r")){
+	  match.locations = getLocation(length, start+1, stop, reversed);
+      }else{
+	  match.locations = getLocation(length, start, stop-1, reversed);
+      }
       match.sourceId = sequenceId + ":" + match.locations + ":" + strand;
 
       // create matching context
