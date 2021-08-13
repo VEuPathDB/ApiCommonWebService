@@ -62,7 +62,7 @@ while(<STDIN>) {
     }
 
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
-      print STDOUT join("\t", "$idPrefix,$contigSourceId.$location,$idSuffix", @fields) . "\n";
+      print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
     }
   }
 }
