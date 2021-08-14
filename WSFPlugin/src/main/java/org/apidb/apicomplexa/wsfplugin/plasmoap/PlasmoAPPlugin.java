@@ -39,15 +39,10 @@ public class PlasmoAPPlugin extends AbstractPlugin {
   }
 
   // load properties
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-   */
   @Override
-  public void initialize() throws PluginModelException {
-    super.initialize();
+  public void initialize(PluginRequest request) throws PluginModelException {
+
+    super.initialize(request);
 
     // load properties
     perlExe = getProperty(FIELD_PERL_EXE);

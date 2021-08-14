@@ -43,7 +43,9 @@ public class SiteSearchPlugin extends EuPathSiteSearchPlugin {
     return !TranscriptUtil.isTranscriptRecordClass(recordClass) ?
       super.readResultRow(recordClass, primaryKey, pkHasProjectId, recordProjectId, score) :
       // transcript requests only return gene ID; return it + empty transcript ID (will be filled in later)
-      new String[]{ primaryKey.getString(0), "", recordProjectId, "Y", score };
+      TranscriptUtil.isProjectIdInPks(recordClass.getWdkModel()) ?
+          new String[]{ primaryKey.getString(0), "", recordProjectId, "Y", score } :
+          new String[]{ primaryKey.getString(0), "", "Y", score };
   }
 
   @Override

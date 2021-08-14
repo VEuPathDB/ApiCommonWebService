@@ -69,18 +69,9 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
     return projectMapper;
   }
 
-  public void setProjectMapper(ProjectMapper projectMapper) {
-    this.projectMapper = projectMapper;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.AbstractPlugin#initialize(java.util.Map)
-   */
   @Override
-  public void initialize() throws PluginModelException  {
-    super.initialize();
+  public void initialize(PluginRequest request) throws PluginModelException  {
+    super.initialize(request);
 
     // jobs dir
     logger.debug(properties);
@@ -93,25 +84,20 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
         throw new PluginModelException(PROPERTY_JOBS_DIR
                 + " " + jobsDirName + " does not exist");
 
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#execute(java.util.Map,
-   * java.lang.String[])
-   */
-  @Override
-    public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
     String projectId = request.getProjectId();
     try {
-      this.wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-      this.projectMapper = ProjectMapper.getMapper(wdkModel);
+      wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+      projectMapper = ProjectMapper.getMapper(wdkModel);
     }
     catch (WdkModelException ex) {
       throw new PluginModelException(ex);
     }
-    
+
+  }
+
+  @Override
+    public int execute(PluginRequest request, PluginResponse response) throws PluginModelException, PluginUserException {
+
     String jobsDirPrefix = getJobsDirPrefix();
     //String idPrefix = getIdPrefix();
 
@@ -125,7 +111,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
     logger.info("Invoking " + commandName + " plugin execute() for job " + jobDir.getPath());
 
-    File organismDir = findOrganismDir(params, projectId);
+    File organismDir = findOrganismDir(params, request.getProjectId());
 
     // create bash script
     List<String> command = makeCommandToCreateBashScript(jobDir, params, organismDir);
@@ -151,7 +137,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
                   jobDir + " failed: " + output);
 
       // prepare the result
-      prepareResult(response, projectId, jobDir.getPath() + "/" + getResultsFileBaseName(),
+      prepareResult(response, request.getProjectId(), jobDir.getPath() + "/" + getResultsFileBaseName(),
                     request.getOrderedColumns());
     } catch (IOException ex) {
       long end = System.currentTimeMillis();

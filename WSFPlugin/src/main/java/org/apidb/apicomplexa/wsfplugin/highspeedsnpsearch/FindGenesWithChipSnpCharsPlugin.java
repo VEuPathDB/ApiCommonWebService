@@ -16,6 +16,7 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
+import org.apidb.apicommon.model.TranscriptUtil;
 import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -54,22 +55,12 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
   public static final String COLUMN_NONSENSE = "num_nonsense";
   public static final String COLUMN_TOTAL = "chip_total_snps";
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#getRequiredParameterNames()
-   */
   @Override
   public String[] getExtraParamNames() {
     return new String[] { PARAM_SNP_CLASS, PARAM_OCCURENCES_LOWER, PARAM_OCCURENCES_UPPER, PARAM_DNDS_LOWER,
         PARAM_DNDS_UPPER, PARAM_DENSITY_LOWER, PARAM_DENSITY_UPPER };
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.gusdb.wsf.plugin.WsfPlugin#validateParameters(java.util.Map)
-   */
   @Override
   public void validateParameters(PluginRequest request) {}
 
@@ -131,14 +122,14 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
       try {
         if (bw != null) {
           bw.close();
-	  // run Unix sort on newly-created file, so it's ordered like the SNP files
-	  String gusBin = GusHome.getGusHome() + "/bin";
-          ProcessBuilder builder
-	      = new ProcessBuilder(gusBin + "/apiSortNoLocale", "-k", "1,1", "-k", "2,2n", "-o",
-				   jobDir.getPath() + "/" + geneLocationsFileName,
-				   jobDir.getPath() + "/" + geneLocationsFileName);
-	  builder.start().waitFor();
-	}
+          // run Unix sort on newly-created file, so it's ordered like the SNP files
+          String gusBin = GusHome.getGusHome() + "/bin";
+          ProcessBuilder builder = new ProcessBuilder(
+              gusBin + "/apiSortNoLocale", "-k", "1,1", "-k", "2,2n", "-o",
+              jobDir.getPath() + "/" + geneLocationsFileName,
+              jobDir.getPath() + "/" + geneLocationsFileName);
+          builder.start().waitFor();
+        }
       }
       catch (IOException e) {
         throw new PluginModelException("Failed closing file" + filtersFile, e);
@@ -151,8 +142,11 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
 
   @Override
   public String[] getColumns(PluginRequest request) {
-      return new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT, COLUMN_DENSITY,
-                            COLUMN_DNDS, COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL };
+    return TranscriptUtil.isProjectIdInPks(wdkModel)
+        ? new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT, COLUMN_DENSITY,
+                         COLUMN_DNDS, COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL }
+        : new String[] { COLUMN_GENE_SOURCE_ID, COLUMN_SOURCE_ID, COLUMN_MATCHED_RESULT, COLUMN_DENSITY,
+                         COLUMN_DNDS, COLUMN_SYN, COLUMN_NONSYN, COLUMN_NONCODING, COLUMN_NONSENSE, COLUMN_TOTAL };
   }
 
   @Override
@@ -200,7 +194,8 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
     String[] row = new String[11];
     row[columns.get(COLUMN_GENE_SOURCE_ID)] = parts[0];
     row[columns.get(COLUMN_SOURCE_ID)] = null;
-    row[columns.get(COLUMN_PROJECT_ID)] = projectId;
+    if (columns.containsKey(COLUMN_PROJECT_ID))
+      row[columns.get(COLUMN_PROJECT_ID)] = projectId;
     row[columns.get(COLUMN_MATCHED_RESULT)] = "Y";
     row[columns.get(COLUMN_DENSITY)] = parts[1];
     row[columns.get(COLUMN_DNDS)] = parts[2];

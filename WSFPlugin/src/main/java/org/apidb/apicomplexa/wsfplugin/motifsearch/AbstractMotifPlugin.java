@@ -114,9 +114,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   }
 
   @Override
-  public void initialize()
+  public void initialize(PluginRequest request)
       throws PluginModelException {
-    super.initialize();
+    super.initialize(request);
 
     config = new MotifConfig(properties, regexField, defaultRegex);
   }

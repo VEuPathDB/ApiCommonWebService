@@ -57,9 +57,9 @@ public class JaneListComparisonPlugin extends AbstractPlugin {
 
     // load properties
     @Override
-    public void initialize()
+    public void initialize(PluginRequest request)
             throws PluginModelException {
-        super.initialize();
+        super.initialize(request);
 
         // load properties
         perlExec = getProperty(FIELD_PERL_EXECUTABLE);
