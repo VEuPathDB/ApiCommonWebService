@@ -38,7 +38,7 @@ public class ProteinMotifPlugin extends AAMotifPlugin {
   @Override
   public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID, COLUMN_MATCHED_RESULT,
-        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE, COLUMN_MATCH_SEQUENCES };
   }
 
   @Override
@@ -52,6 +52,7 @@ public class ProteinMotifPlugin extends AAMotifPlugin {
     result[orders.get(COLUMN_LOCATIONS)] = match.locations;
     result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
     result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
+    result[orders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
     response.addRow(result);
   }
 

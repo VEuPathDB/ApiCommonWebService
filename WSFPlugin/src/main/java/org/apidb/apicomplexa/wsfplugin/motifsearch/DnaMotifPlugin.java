@@ -98,10 +98,15 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
       int begin = Math.max(0, start - contextLength);
       if (begin > 0)
         context.append("...");
-      if (begin < start)
+      if (begin < start){
         context.append(sequence.substring(begin, start));
+      }
+
+      String motif = sequence.substring(matcher.start(), matcher.end());
+      match.matchSequences.add(motif);
+
       context.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
-      context.append(sequence.substring(start, stop));
+      context.append(motif);
       context.append("</span>");
       int end = Math.min(sequence.length(), stop + contextLength);
       if (end > stop)

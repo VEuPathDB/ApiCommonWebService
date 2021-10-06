@@ -9,6 +9,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
@@ -45,6 +47,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     public String locations;
     public int matchCount = 0;
     public String sequence;
+    public List<String> matchSequences = new ArrayList<>();
 
     public String getKey() {
       return sourceId + projectId;
@@ -76,6 +79,8 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   public static final String COLUMN_LOCATIONS = "Locations";
   public static final String COLUMN_MATCH_COUNT = "MatchCount";
   public static final String COLUMN_SEQUENCE = "Sequence";
+  public static final String COLUMN_MATCH_SEQUENCES = "MatchSequences";
+
 
   protected static final String MOTIF_STYLE_CLASS = "motif";
 
@@ -129,7 +134,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   @Override
   public String[] getColumns(PluginRequest request) {
     return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE, COLUMN_MATCH_SEQUENCES };
   }
 
   @Override
@@ -280,6 +285,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     result[orders.get(COLUMN_LOCATIONS)] = match.locations;
     result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
     result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
+    result[orders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
     // logger.debug("result " + resultToString(result) + "\n");
     response.addRow(result);
   }
