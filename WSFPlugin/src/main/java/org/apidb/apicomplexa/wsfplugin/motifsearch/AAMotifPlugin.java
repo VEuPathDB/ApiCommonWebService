@@ -46,7 +46,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
     @Override
     public String[] getColumns(PluginRequest request) {
       return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-                    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE };
+                    COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE, COLUMN_MATCH_SEQUENCES };
     }
 
     @Override
@@ -78,6 +78,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
       result[orders.get(COLUMN_LOCATIONS)] = match.locations;
       result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
       result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
+      result[orders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
       response.addRow(result);
     }
 
@@ -146,8 +147,11 @@ import org.gusdb.wsf.plugin.PluginUserException;
             seq.append(sequence.substring(matcher.start() - contextLength,
                 matcher.start()));
           }
+          String motif = sequence.substring(matcher.start(), matcher.end());
+          match.matchSequences.add(motif);
+
           seq.append("<span class=\"" + MOTIF_STYLE_CLASS + "\">");
-          seq.append(sequence.substring(matcher.start(), matcher.end()));
+          seq.append(motif);
           seq.append("</span>");
 
           // determine if we have enough space for the new sequence
