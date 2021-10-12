@@ -279,7 +279,7 @@ if ($inputValid) {
         print $elementId . "\t" . $dist ."\t" . $shift . "\n";
     }
 } else {
-    print STDERR "ERROR: Invalid input. Query failed.\n";
+    print STDERR "ERROR: Invalid input. Query failed.\n$errorMsg\n";
 }
 
 # clean up
