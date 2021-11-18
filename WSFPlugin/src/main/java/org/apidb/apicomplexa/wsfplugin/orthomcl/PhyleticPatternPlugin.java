@@ -139,21 +139,30 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
         String profilePattern = params.get(PARAM_PROFILE_PATTERN);
         String organism = params.get(PARAM_ORGANISM);
 	
-	Set setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,profilePattern);
+	Set<String> setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,profilePattern);
 
-	// sql will have organism in it SELECT source_id, orthomcl_name
-	// FROM ApidbTuning.TranscriptAttributes
-	// WHERE taxon_id IN (".$taxonIds.")"
-
-	new SQLRunner(datasource, sql, "Read gene/group pairs").executeQuery(rs -> {
+	DataSource appDs = wdkModel.getAppDb().getDataSource();
+	String sql = "SELECT source_id, orthomcl_name FROM ApidbTuning.TranscriptAttributes WHERE taxon_id IN ("
+	             + organism + ")";
+	new SQLRunner(appDs, sql).executeQuery(rs -> {
 		while (rs.next()) {
-		    // read the result set.  get the gene id and group id.  
-		    if (setOfGroups.contains(groupId) {
-			    addGene(response,geneId,
+		    if (setOfGroups.contains(rs.getString(2)) {
+			    addGene(response,rs.getString(1),request.getOrderedColumns());
+			    // use something like prepareResult method below??
 		    }
 		}
 	});
 
+
+
+
+
+
+
+
+
+
+1
         // prepare the command
 
         String[] cmds = prepareCommand(params);
@@ -269,19 +278,24 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
         in.close();
     }
 
+    private Set getSetOfGroupsFromOrthomcl(String postUrl,String profilePattern)
+	    throws PluginModelException, PluginUserException {
 
-    {
-	"searchConfig": {
-	    "parameters": {
-		"phyletic_expression": "EUKA>=5T AND hsap>=10"
-		    },
-		"wdkWeight": 10
-		    },
-	    "reportConfig": {
-		"attributes": [
-      "primary_key"
-			       ],
-		    "tables": []
-		    }
+	String bodyText = "{\"searchConfig\":{\"parameters\":{\"phyletic_expression\":\"" +
+	              profilePattern +
+	              "\"},\"wdkWeight\": 10},\"reportConfig\":{\"attributes\": [\"primary_key\"],\"tables\":[]}}}";
+	Set<String> groupIds = new HashSet<String>();
+	try (InputStream tabularStream = ClientUtil.makeAsyncPostRequest(
+	    postUrl,                     // request URL
+	    bodyText,                    // request body
+	    MediaType.APPLICATION_JSON,  // request type
+	    MediaType.WILDCARD)          // response type
+	    .getInputStream()) {
+		// process the stream
+		BufferedReader reader = new BufferedReader(new InputStreamReader(tabularStream));
+		String groupId = reader.readline();
+		groupIds.add(groupId);
+	    }
+	)
+	return groupIds;
     }
-}
