@@ -353,10 +353,10 @@ public class WdkQueryPlugin extends AbstractPlugin {
 
           // Code to specifically work around a specific problem
           // created by the OrthologPattern Question
-          if (param.getName().equalsIgnoreCase("phyletic_indent_map"))
-            valList = "ARCH";
-          if (param.getName().equalsIgnoreCase("phyletic_term_map"))
-            valList = "rnor";
+          // if (param.getName().equalsIgnoreCase("phyletic_indent_map"))
+          //   valList = "ARCH";
+          // if (param.getName().equalsIgnoreCase("phyletic_term_map"))
+          //   valList = "rnor";
           // end workaround
 
           String[] vals = valList.split(",");

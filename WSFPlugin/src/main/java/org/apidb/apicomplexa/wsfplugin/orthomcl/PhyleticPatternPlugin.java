@@ -25,7 +25,7 @@ import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
 import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
-import org.gusdb.fgputil.Client.ClientUtil;
+import org.gusdb.fgputil.client.ClientUtil;
 import org.gusdb.fgputil.db.runner.SQLRunner;
 
 /**
@@ -40,11 +40,11 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
 
     // required parameter definition
     public static final String PARAM_ORGANISM = "organism";
-    public static final String PARAM_PROFILE_PATTERN = "profile_pattern";
+    public static final String PARAM_PHYLETIC_PATTERN = "phyletic_pattern";
 
     // required result column definition
     public static final String COLUMN_SOURCE_ID = "source_id";
-    public static final String COLUMN_GENE_ID = "GeneID";
+    public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
     public static final String COLUMN_PROJECT_ID = "ProjectId";
     public static final String COLUMN_MATCHED_RESULT = "matched_result";
     public static final String COLUMN_ORTHOMCL_NAME = "orthomcl_name";
@@ -104,12 +104,12 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
      */
     @Override
     public String[] getRequiredParameterNames() {
-        return new String[] { PARAM_ORGANISM, PARAM_PROFILE_PATTERN };
+        return new String[] { PARAM_ORGANISM, PARAM_PHYLETIC_PATTERN };
     }
 
     @Override
     public String[] getColumns(PluginRequest request) {
-        return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_ID, COLUMN_PROJECT_ID,
+        return new String[] { COLUMN_SOURCE_ID, COLUMN_GENE_SOURCE_ID, COLUMN_PROJECT_ID,
 			      COLUMN_MATCHED_RESULT, COLUMN_ORTHOMCL_NAME };
     }
 
@@ -119,10 +119,10 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
 
         Map<String, String> params = request.getParams();
         String organism = params.get(PARAM_ORGANISM);
-        String profilePattern = params.get(PARAM_PROFILE_PATTERN);
+        String phyleticPattern = params.get(PARAM_PHYLETIC_PATTERN);
 
         // how validate organism?  are there examples?
-	// how validate profilePattern?  use ortho code or component site code?
+	// how validate phyleticPattern?  use ortho code or component site code?
     }
 
     /*
@@ -136,100 +136,27 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
         logger.debug("Invoking PhyleticPatternPlugin...");
 
         Map<String, String> params = request.getParams();
-        String profilePattern = params.get(PARAM_PROFILE_PATTERN);
+        String phyleticPattern = params.get(PARAM_PHYLETIC_PATTERN);
         String organism = params.get(PARAM_ORGANISM);
 	
-	Set<String> setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,profilePattern);
+	Set<String> setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,phyleticPattern);
 
 	DataSource appDs = wdkModel.getAppDb().getDataSource();
-	String sql = "SELECT source_id, orthomcl_name FROM ApidbTuning.TranscriptAttributes WHERE taxon_id IN ("
+	String sql = "SELECT gene_source_id, orthomcl_name FROM ApidbTuning.TranscriptAttributes WHERE taxon_id IN ("
 	             + organism + ")";
 	new SQLRunner(appDs, sql).executeQuery(rs -> {
 		while (rs.next()) {
-		    if (setOfGroups.contains(rs.getString(2)) {
-			    addGene(response,rs.getString(1),request.getOrderedColumns());
+		    if (setOfGroups.contains(rs.getString(2))) {
+			    addGene(response,rs.getString(1),rs.getString(2),request.getOrderedColumns());
 			    // use something like prepareResult method below??
 		    }
 		}
 	});
-
-
-
-
-
-
-
-
-
-
-1
-        // prepare the command
-
-        String[] cmds = prepareCommand(params);
-
-        // measure the time used for invocation
-        long start = System.currentTimeMillis();
-        try {
-            // invoke the command, and set default 10 min as timeout limit
-            StringBuffer output = new StringBuffer();
-
-            int signal = invokeCommand(cmds, output, 10 * 60);
-            long end = System.currentTimeMillis();
-            logger.debug("Invocation takes: " + ((end - start) / 1000.0)
-                    + " seconds");
-
-            if (signal != 0)
-                throw new PluginModelException("The invocation is failed: "
-                        + output);
-
-            // prepare the result
-            String queryGeneId = params.get(PARAM_GENE_ID);
-            prepareResult(response, output.toString(),
-                    request.getOrderedColumns(), queryGeneId);
-
-            return signal;
-        } catch (IOException ex) {
-            long end = System.currentTimeMillis();
-            logger.debug("Invocation takes: " + ((end - start) / 1000.0)
-                    + " seconds");
-
-            throw new PluginModelException(ex);
-        }
-
     }
+	    
 
-    private String[] prepareCommand(Map<String, String> params) {
-        List<String> cmds = new ArrayList<String>();
-
-        cmds.add(perlExec);
-        cmds.add(perlScript);
-        cmds.add(params.get(PARAM_DISTANCE_METHOD));
-        cmds.add(params.get(PARAM_NUM_RETURN));
-        cmds.add(params.get(PARAM_GENE_ID));
-        cmds.add(params.get(PARAM_PROFILE_SET));
-        cmds.add(params.get(PARAM_SEARCH_GOAL));
-        //cmds.add(params.get(PARAM_SCALE_DATA));
-        cmds.add(params.get(PARAM_TIME_SHIFT));
-	//    cmds.add(params.get(PARAM_SHIFT_PLUS_MINUS));
-
-        cmds.add(params.get(PARAM_SCALE_FACTOR));
-        cmds.add(params.get(PARAM_MIN_POINTS));
-        cmds.add(params.get(PARAM_MISSING_PTS_PERCENT));
-
-        cmds.add(dbConnection);
-        cmds.add(dbLogin);
-        cmds.add(dbPassword);
-
-        //cmds.add(params.get(PARAM_WEIGHTS_STRING));
-
-
-        String[] array = new String[cmds.size()];
-        cmds.toArray(array);
-        return array;
-    }
-
-    private void prepareResult(PluginResponse response, String content, String[] orderedColumns,
-            String queryGeneId) throws IOException, PluginModelException, PluginUserException {
+    private void addGene(PluginResponse response, String geneId, String orthomclGroup, String[] orderedColumns)
+	            throws IOException, PluginModelException, PluginUserException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -237,52 +164,20 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
             columns.put(orderedColumns[i], i);
         }
 
-        // check if the output contains error message
-        if (content.indexOf("ERROR:") >= 0)
-            throw new PluginModelException(content);
-
-        // read from the buffered stream
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                new ByteArrayInputStream(content.getBytes())));
-
-        NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMaximumFractionDigits(4);
-        format.setMinimumFractionDigits(4);
-
-        String line;
-        while ((line = in.readLine()) != null) {
-            line = line.trim();
-            if (line.length() == 0) continue;
-            String[] parts = line.split("\t");
-
-            if (parts.length != 3)
-                throw new PluginModelException("Invalid output format:\n"
-                        + content);
-
-            String geneId = parts[0].trim();
-            double distance = Double.parseDouble(parts[1]);
-
-            // do not skip the query gene, and include it in the result list
-            // if (geneId.equalsIgnoreCase(queryGeneId)) continue;
-
-            String[] row = new String[7];
-            row[columns.get(COLUMN_GENE_ID)] = geneId;
-            row[columns.get(COLUMN_PROJECT_ID)] = projectId;
-            row[columns.get(COLUMN_MATCHED_RESULT)] = new String("Y");
-            row[columns.get(COLUMN_SOURCE_ID)] = null;
-            row[columns.get(COLUMN_DISTANCE)] = format.format(distance);
-            row[columns.get(COLUMN_SHIFT)] = parts[2];
-            row[columns.get(COLUMN_QUERY_GENE_ID)] = queryGeneId;
-            response.addRow(row);
-        }
-        in.close();
+	String[] row = new String[7];
+	row[columns.get(COLUMN_GENE_SOURCE_ID)] = geneId;
+	row[columns.get(COLUMN_PROJECT_ID)] = projectId;
+	row[columns.get(COLUMN_MATCHED_RESULT)] = new String("Y");
+	row[columns.get(COLUMN_SOURCE_ID)] = null;
+	row[columns.get(COLUMN_ORTHOMCL_NAME)] = orthomclGroup;
+	response.addRow(row);
     }
 
-    private Set getSetOfGroupsFromOrthomcl(String postUrl,String profilePattern)
+    private Set getSetOfGroupsFromOrthomcl(String postUrl,String phyleticPattern)
 	    throws PluginModelException, PluginUserException {
 
 	String bodyText = "{\"searchConfig\":{\"parameters\":{\"phyletic_expression\":\"" +
-	              profilePattern +
+	              phyleticPattern +
 	              "\"},\"wdkWeight\": 10},\"reportConfig\":{\"attributes\": [\"primary_key\"],\"tables\":[]}}}";
 	Set<String> groupIds = new HashSet<String>();
 	try (InputStream tabularStream = ClientUtil.makeAsyncPostRequest(
@@ -296,6 +191,8 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
 		String groupId = reader.readline();
 		groupIds.add(groupId);
 	    }
-	)
+	
 	return groupIds;
     }
+
+}
