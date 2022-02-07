@@ -20,6 +20,9 @@ import java.util.HashSet;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
+import org.gusdb.fgputil.runtime.InstanceManager;
+import org.gusdb.wdk.model.WdkModel;
+import org.gusdb.wdk.model.WdkModelException;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -27,6 +30,7 @@ import org.gusdb.wsf.plugin.PluginResponse;
 import org.gusdb.wsf.plugin.PluginUserException;
 import org.gusdb.fgputil.client.ClientUtil;
 import org.gusdb.fgputil.db.runner.SQLRunner;
+import org.gusdb.fgputil.db.runner.SQLRunnerException;
 
 /**
  * @author markhick
@@ -45,7 +49,7 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
     // required result column definition
     public static final String COLUMN_SOURCE_ID = "source_id";
     public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
-    public static final String COLUMN_PROJECT_ID = "ProjectId";
+    public static final String COLUMN_PROJECT_ID = "project_id";
     public static final String COLUMN_MATCHED_RESULT = "matched_result";
     public static final String COLUMN_ORTHOMCL_NAME = "orthomcl_name";
 
@@ -138,25 +142,43 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
         Map<String, String> params = request.getParams();
         String phyleticPattern = params.get(PARAM_PHYLETIC_PATTERN);
         String organism = params.get(PARAM_ORGANISM);
-	
-	Set<String> setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,phyleticPattern);
 
+	Set<String> setOfGroups;
+	setOfGroups = getSetOfGroupsFromOrthomcl(postUrl,phyleticPattern);
+	
+	WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
 	DataSource appDs = wdkModel.getAppDb().getDataSource();
 	String sql = "SELECT gene_source_id, orthomcl_name FROM ApidbTuning.TranscriptAttributes WHERE taxon_id IN ("
 	             + organism + ")";
-	new SQLRunner(appDs, sql).executeQuery(rs -> {
+	try {
+	     new SQLRunner(appDs, sql).executeQuery(rs -> {
 		while (rs.next()) {
 		    if (setOfGroups.contains(rs.getString(2))) {
+			try {
 			    addGene(response,rs.getString(1),rs.getString(2),request.getOrderedColumns());
-			    // use something like prepareResult method below??
+			} catch (PluginModelException|PluginUserException e) {
+			    throw new SQLRunnerException(e);
+			} 
 		    }
 		}
-	});
+		return null;
+	    });
+	} catch (SQLRunnerException e) {
+	    try {     // unwrap the exception thrown by sql runner and convert to pluginmodel or pluginuser exception
+		throw e.getCause();
+	    } catch (PluginModelException|PluginUserException e2) {
+		throw e2;
+	    } catch (Exception e2) {
+		throw new PluginModelException("Unable to get gene_source_id and orthomcl_name from database",e2);
+	    } catch (Throwable e2) {
+		throw new PluginModelException("Unable to get gene_source_id and orthomcl_name from database",e2);
+	    }
+	}
+	return 0;
     }
 	    
-
-    private void addGene(PluginResponse response, String geneId, String orthomclGroup, String[] orderedColumns)
-	            throws IOException, PluginModelException, PluginUserException {
+    private void addGene(PluginResponse response, String geneId, String orthomclGroup, String[] orderedColumns)	
+	throws PluginModelException, PluginUserException {
         // create a map of <column/position>
         Map<String, Integer> columns = new HashMap<String, Integer>(
                 orderedColumns.length);
@@ -174,25 +196,31 @@ public class PhyleticPatternPlugin extends AbstractPlugin {
     }
 
     private Set getSetOfGroupsFromOrthomcl(String postUrl,String phyleticPattern)
-	    throws PluginModelException, PluginUserException {
+	throws PluginModelException, PluginUserException {
 
 	String bodyText = "{\"searchConfig\":{\"parameters\":{\"phyletic_expression\":\"" +
-	              phyleticPattern +
-	              "\"},\"wdkWeight\": 10},\"reportConfig\":{\"attributes\": [\"primary_key\"],\"tables\":[]}}}";
+	    phyleticPattern +
+	    "\"},\"wdkWeight\": 10},\"reportConfig\":{\"attributes\": [\"primary_key\"],\"includeHeader\":false,\"attachmentType\":\"plain\"}}";
 	Set<String> groupIds = new HashSet<String>();
-	try (InputStream tabularStream = ClientUtil.makeAsyncPostRequest(
-	    postUrl,                     // request URL
-	    bodyText,                    // request body
-	    MediaType.APPLICATION_JSON,  // request type
-	    MediaType.WILDCARD)          // response type
-	    .getInputStream()) {
-		// process the stream
-		BufferedReader reader = new BufferedReader(new InputStreamReader(tabularStream));
-		String groupId = reader.readline();
-		groupIds.add(groupId);
-	    }
-	
-	return groupIds;
+
+	try (
+	    InputStream tabularStream = ClientUtil.makeAsyncPostRequest(
+	         postUrl,                     // request URL
+		 bodyText,                    // request body
+		 MediaType.TEXT_PLAIN,        // request type
+		 MediaType.WILDCARD)          // response type
+		.getInputStream();
+	    BufferedReader reader = new BufferedReader(new InputStreamReader(tabularStream))
+	     ) {
+		String groupId = reader.readLine().strip();
+		while (groupId != null) {
+		    groupIds.add(groupId);
+		    groupId = reader.readLine().strip();
+		}
+		return groupIds;
+	} catch (Exception e) {
+	    throw new PluginModelException("Unable to get groups from orthomcl", e.getCause());
+	}	
     }
 
 }
