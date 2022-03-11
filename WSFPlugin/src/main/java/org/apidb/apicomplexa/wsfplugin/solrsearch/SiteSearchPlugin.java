@@ -58,7 +58,7 @@ public class SiteSearchPlugin extends EuPathSiteSearchPlugin {
         getTermsFromInternal(internalValues.get(ORGANISM_PARAM_NAME), false) : null;
     return baseSolrRequestJson
       // only add project ID filter for non-portal sites; for portal get back all records
-      .put("restrictToProject", isPortal(projectId) ? null : projectId)
+      .put("restrictToProject", isPortal(projectId) ? "VEuPathDB" : projectId)
       .put("restrictSearchToOrganisms", organismTerms);
   }
 
