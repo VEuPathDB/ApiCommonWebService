@@ -49,7 +49,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     public String sequence;
     public List<String> matchSequences = new ArrayList<>();
 
-    public String getKey() {
+    private String getKey() {
       return sourceId + projectId;
     }
 
@@ -60,10 +60,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
     @Override
     public boolean equals(Object obj) {
-      if (obj != null && obj instanceof Match) {
-        Match match = (Match) obj;
-        return getKey().equals(match.getKey());
-      } else return false;
+      return obj != null
+          && obj instanceof Match
+          && getKey().equals(((Match)obj).getKey());
     }
   }
 

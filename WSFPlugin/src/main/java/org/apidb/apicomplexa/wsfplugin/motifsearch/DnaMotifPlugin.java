@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import java.util.HashMap;

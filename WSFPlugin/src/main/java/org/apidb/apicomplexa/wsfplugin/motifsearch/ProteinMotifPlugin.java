@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import java.util.Map;
@@ -13,12 +10,12 @@ import org.gusdb.wsf.plugin.PluginUserException;
  * @author Jerric, modified by Cristina 2010 to add DNA motif
  * @created Jan 31, 2006
  */
-
-// geneID could be an ORF or a genomic sequence deending on who uses the plugin
 public class ProteinMotifPlugin extends AAMotifPlugin {
 
   public static final String COLUMN_GENE_SOURCE_ID = "gene_source_id";
   public static final String COLUMN_MATCHED_RESULT = "matched_result";
+
+  private static final String FIELD_REGEX = "ProteinDeflineRegex";
 
   public ProteinMotifPlugin() {
     super(FIELD_REGEX, DEFAULT_REGEX);
