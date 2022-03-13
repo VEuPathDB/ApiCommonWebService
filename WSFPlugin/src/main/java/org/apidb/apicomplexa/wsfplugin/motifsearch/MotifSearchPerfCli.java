@@ -8,9 +8,14 @@ import java.util.Properties;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.Timer;
 
+/**
+ * Runs the DnaMotif search from command line, given a match pattern and an input file
+ */
 public class MotifSearchPerfCli {
 
   public static void main(String[] args) throws Exception {
+
+    // parse args; some minimal validation
     System.err.println("Args: " + FormatUtil.arrayToString(args, ", "));
     if (args.length != 2) usageAndExit();
     String pattern = args[0].trim();
@@ -20,13 +25,21 @@ public class MotifSearchPerfCli {
       System.err.println(file.getAbsolutePath() + " is not a readable file.");
       System.exit(2);
     }
+
+    // build simple config from DnaMotifPlugin
     MotifConfig config = new MotifConfig(new Properties(),
         DnaMotifPlugin.FIELD_REGEX, DnaMotifPlugin.DEFAULT_REGEX);
+
+    // instantiate this class (will collect statistics)
     MotifSearchPerfCli stats = new MotifSearchPerfCli();
+
+    // create a DnaMatchFinder and find matches
     new DnaMatchFinder(config).findMatches(file,
         AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP),
         stats::nextMatch,
         org -> "PlasmoDB");
+
+    // report statistics gathered
     stats.report();
   }
 
