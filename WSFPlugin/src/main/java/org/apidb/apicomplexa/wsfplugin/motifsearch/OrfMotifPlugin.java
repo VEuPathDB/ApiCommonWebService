@@ -12,6 +12,7 @@ public class OrfMotifPlugin extends AAMotifPlugin {
   private static final String CUSTOM_FIELD_REGEX = "OrfDeflineRegex";
 
   public OrfMotifPlugin() {
-    super(CUSTOM_FIELD_REGEX, DEFAULT_REGEX);
+    super(CUSTOM_FIELD_REGEX);
   }
+
 }

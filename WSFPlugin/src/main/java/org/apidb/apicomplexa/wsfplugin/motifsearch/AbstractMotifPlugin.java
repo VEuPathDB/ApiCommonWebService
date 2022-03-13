@@ -1,20 +1,15 @@
-/**
- * 
- */
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.eupathdb.common.model.ProjectMapper;
+import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
+import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -28,93 +23,75 @@ import org.gusdb.wsf.plugin.PluginUserException;
  * @author Jerric, modified by Cristina 2010 to add DNA motif
  * @created Jan 31, 2006
  */
-
-// geneID could be an ORF or a genomic sequence deending on who uses the plugin
 public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
-  private static final Logger logger = Logger.getLogger(AbstractMotifPlugin.class);
-  
-  protected class Match {
+  private static final Logger LOG = Logger.getLogger(AbstractMotifPlugin.class);
 
-    public String sourceId;
-    public String projectId;
-
+  public interface MatchFinder {
     /**
-     * 
-     * locations contains (xxx-yyy), (xxx-yyyy), ... sequence contains sequences
-     * from matches, separated by a space (so it wraps in summary page)
+     * Finds matches of the passed pattern in the given file and submits them to the consumer
+     *
+     * @param datasetFile file to read
+     * @param searchPattern pattern to search for
+     * @param consumer consumes the matches, writing them to the plugin response
+     * @param orgToProjectId function that looks up projectId by organism
      */
-    public String locations;
-    public int matchCount = 0;
-    public String sequence;
-    public List<String> matchSequences = new ArrayList<>();
-
-    private String getKey() {
-      return sourceId + projectId;
-    }
-
-    @Override
-    public int hashCode() {
-      return getKey().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj != null
-          && obj instanceof Match
-          && getKey().equals(((Match)obj).getKey());
-    }
+    void findMatches(
+        File fastaFile,
+        Pattern searchPattern,
+        ConsumerWithException<Match> consumer,
+        FunctionWithException<String, String> orgToProjectId) throws Exception;
   }
 
-  // required parameter definition
+  // motif search property file
   public static final String PROPERTY_FILE = "motifSearch-config.xml";
 
+  // required parameter definition
   public static final String PARAM_DATASET = "motif_organism";
   public static final String PARAM_EXPRESSION = "motif_expression";
+  private static final String[] REQUIRED_PARAMETER_NAMES = new String[] {
+      PARAM_EXPRESSION,
+      PARAM_DATASET
+  };
 
-  // column definitions for returnd results
+  // column definitions for returned results
   public static final String COLUMN_SOURCE_ID = "SourceID";
   public static final String COLUMN_PROJECT_ID = "ProjectId";
   public static final String COLUMN_LOCATIONS = "Locations";
   public static final String COLUMN_MATCH_COUNT = "MatchCount";
   public static final String COLUMN_SEQUENCE = "Sequence";
   public static final String COLUMN_MATCH_SEQUENCES = "MatchSequences";
+  private static final String[] OUTPUT_COLUMNS = new String[] {
+      COLUMN_SOURCE_ID,
+      COLUMN_PROJECT_ID,
+      COLUMN_LOCATIONS,
+      COLUMN_MATCH_COUNT,
+      COLUMN_SEQUENCE,
+      COLUMN_MATCH_SEQUENCES
+  };
 
-
+  // CSS style to color matches within context
   protected static final String MOTIF_STYLE_CLASS = "motif";
 
-  private String regexField;
-  private String defaultRegex;
-
-  private MotifConfig config;
-  private ProjectMapper projectMapper;
-
+  // provides record type specific symbol translation in the submitted pattern
   protected abstract Map<Character, String> getSymbols();
 
-  protected abstract void findMatches(PluginResponse response,
-      Map<String, Integer> orders, String headline, Pattern searchPattern,
-      String sequence) throws PluginModelException, PluginUserException ;
+  // provides record type specific match finder
+  protected abstract MatchFinder getMatchFinder(MotifConfig config);
 
+  // fields initialized in constructor
+  private final String _regexField;
+  private final String _defaultRegex;
+
+  // fields initialized in initialize()
+  private MotifConfig _config;
+  private ProjectMapper _projectMapper;
+  private Map<String, Integer> _columnOrders;
+  
   protected AbstractMotifPlugin(String regexField, String defaultRegex) {
     super(PROPERTY_FILE);
-    this.regexField = regexField;
-    this.defaultRegex = defaultRegex;
-  }
-
-  public MotifConfig getConfig() {
-    return config;
-  }
-
-  public void setConfig(MotifConfig config) {
-    this.config = config;
-  }
-
-  public ProjectMapper getProjectMapper() {
-    return projectMapper;
-  }
-
-  public void setProjectMapper(ProjectMapper projectMapper) {
-    this.projectMapper = projectMapper;
+    _regexField = regexField;
+    _defaultRegex = defaultRegex;
   }
 
   @Override
@@ -122,18 +99,34 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       throws PluginModelException {
     super.initialize(request);
 
-    config = new MotifConfig(properties, regexField, defaultRegex);
+    // create motif-specific config
+    _config = new MotifConfig(properties, _regexField, _defaultRegex);
+
+    // create project mapper
+    String projectId = request.getProjectId();
+    try {
+      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
+      _projectMapper = ProjectMapper.getMapper(wdkModel);
+    }
+    catch (WdkModelException ex) {
+      throw new PluginModelException(ex);
+    }
+
+    // create a column order map
+    String[] orderedColumnArray = request.getOrderedColumns();
+    _columnOrders = new HashMap<String, Integer>();
+    for (int i = 0; i < orderedColumnArray.length; i++)
+      _columnOrders.put(orderedColumnArray[i], i);
   }
 
   @Override
   public String[] getRequiredParameterNames() {
-    return new String[] { PARAM_EXPRESSION, PARAM_DATASET };
+    return REQUIRED_PARAMETER_NAMES;
   }
 
   @Override
   public String[] getColumns(PluginRequest request) {
-    return new String[] { COLUMN_SOURCE_ID, COLUMN_PROJECT_ID,
-        COLUMN_LOCATIONS, COLUMN_MATCH_COUNT, COLUMN_SEQUENCE, COLUMN_MATCH_SEQUENCES };
+    return OUTPUT_COLUMNS;
   }
 
   @Override
@@ -144,33 +137,19 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   @Override
   public int execute(PluginRequest request, PluginResponse response)
       throws PluginModelException {
-    logger.info("Invoking MotifSearchPlugin...");
+    LOG.info("Invoking MotifSearchPlugin...");
 
-    String projectId = request.getProjectId();
-    try {
-      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-      projectMapper = ProjectMapper.getMapper(wdkModel);
-    }
-    catch (WdkModelException ex) {
-      throw new PluginModelException(ex);
-    }
-    
     Map<String, String> params = request.getParams();
-    // create a column order map
-    String[] orderedColumns = request.getOrderedColumns();
-    Map<String, Integer> orders = new HashMap<String, Integer>();
-    for (int i = 0; i < orderedColumns.length; i++)
-      orders.put(orderedColumns[i], i);
 
     // get required parameters
     String datasetIDs = params.get(PARAM_DATASET);
 
-    // translate the expression
+    // get and translate the expression
     String expression = params.get(PARAM_EXPRESSION);
-    Pattern searchPattern = translateExpression(expression);
+    Pattern searchPattern = translateExpression(expression, getSymbols());
 
-    logger.debug("datasetIDs: " + datasetIDs);
-    logger.debug("expression: " + expression);
+    LOG.debug("datasetIDs: " + datasetIDs);
+    LOG.debug("expression: " + expression);
 
     // open the flatfile database assigned by the user
     try {
@@ -178,28 +157,32 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
       // scan on each dataset, and add matched motifs in the result
       for (String dsId : dsIds) {
-        logger.debug("execute(): dsId: " + dsId);
+        LOG.debug("execute(): dsId: " + dsId);
         // parent organisms in a treeParam, we only need the leave nodes
         if (dsId.equals("-1") || dsId.length() <= 3) {
-          logger.debug("organism value: (" + dsId
+          LOG.debug("organism value: (" + dsId
               + ") not included; we only care about leaf nodes\n");
           continue;
         }
 
-        findMatches(response, dsId.trim(), searchPattern, orders);
+        getMatchFinder(_config).findMatches(
+            openDataFile(dsId.trim()),
+            searchPattern,
+            match -> addMatch(match, response, _columnOrders),
+            _projectMapper::getProjectByOrganism);
       }
       return 0;
-    } catch (Exception ex) {
-      throw new PluginModelException(ex);
+    }
+    catch (Exception e) {
+      // wrap with PluginModelException only if needed
+      throw e instanceof PluginModelException
+        ? (PluginModelException)e
+        : new PluginModelException(e);
     }
   }
 
-  /**
-   * @param fileID
-   * @return
-   */
-  private File openDataFile(String datasetID) throws IOException {
-    logger.info("openDataFile() - datasetID: " + datasetID + "\n");
+  private static File openDataFile(String datasetID) throws IOException {
+    LOG.info("openDataFile() - datasetID: " + datasetID + "\n");
 
     File dataFile = new File(datasetID);
     if (!dataFile.exists()) throw new IOException("The dataset \""
@@ -207,9 +190,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     else return dataFile;
   }
 
-  private Pattern translateExpression(String expression) {
-    Map<Character, String> codes = getSymbols();
-
+  public static Pattern translateExpression(String expression, Map<Character, String> codes) {
     boolean inSquareBraces = false, inCurlyBraces = false;
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < expression.length(); i++) {
@@ -229,82 +210,40 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       }
       if (!skipChar) builder.append(ch);
     }
-    logger.debug("translated expression: " + builder);
+    LOG.debug("translated expression: " + builder);
 
     int option = Pattern.CASE_INSENSITIVE;
     return Pattern.compile(builder.toString(), option);
   }
 
-  private void findMatches(PluginResponse response, String datasetID,
-      Pattern searchPattern, Map<String, Integer> orders)
-          throws IOException, PluginModelException, PluginUserException {
-
-    File datasetFile = openDataFile(datasetID);
-    BufferedReader in = new BufferedReader(new FileReader(datasetFile));
-
-    // read header of the first sequence
-    String headline = null, line;
-    StringBuilder sequence = new StringBuilder();
-    try {
-      while ((line = in.readLine()) != null) {
-        line = line.trim();
-        if (line.length() == 0) continue;
-
-        if (line.charAt(0) == '>') {
-          // starting of a new sequence, process the previous sequence if
-          // have any;
-          if (sequence.length() > 0) {
-            findMatches(response, orders, headline, searchPattern,
-                sequence.toString());
-
-            // clear the sequence buffer to be ready for the next one
-            sequence = new StringBuilder();
-          }
-          headline = line;
-        } else {
-          sequence.append(line);
-        }
-      }
-    } finally {
-      in.close();
-    }
-
-    // process the last sequence, if it hasn't been processed
-    if (headline != null && sequence.length() > 0) {
-      findMatches(response, orders, headline, searchPattern,
-          sequence.toString());
-    }
-  }
-
-  protected void addMatch(PluginResponse response, Match match,
-      Map<String, Integer> orders) throws PluginModelException, PluginUserException  {
-    String[] result = new String[orders.size()];
-    result[orders.get(COLUMN_PROJECT_ID)] = match.projectId;
-    result[orders.get(COLUMN_SOURCE_ID)] = match.sourceId;
-    result[orders.get(COLUMN_LOCATIONS)] = match.locations;
-    result[orders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
-    result[orders.get(COLUMN_SEQUENCE)] = match.sequence;
-    result[orders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
+  protected void addMatch(Match match, PluginResponse response,
+      Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
+    String[] result = new String[columnOrders.size()];
+    result[columnOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
+    result[columnOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;
+    result[columnOrders.get(COLUMN_LOCATIONS)] = match.locations;
+    result[columnOrders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
+    result[columnOrders.get(COLUMN_SEQUENCE)] = match.sequence;
+    result[columnOrders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
     // logger.debug("result " + resultToString(result) + "\n");
     response.addRow(result);
   }
 
-  protected String getProjectId(String organism) throws WdkModelException {
-    return projectMapper.getProjectByOrganism(organism);
-  }
-
-  protected String getLocation(int length, int start, int stop, boolean reversed) {
+  public static String formatLocation(int length, int start, int stop, boolean reversed) {
     // show the location at base 1.
     if (reversed) {
       int newStart = length - stop + 1;
       stop = length - start + 1;
       start = newStart;
-    } else {
+    }
+    else {
       start += 1;
       stop += 1;
     }
     String location = Integer.toString(start);
-    if (start != stop) location += "-" + stop;
+    if (start != stop) {
+      location += "-" + stop;
+    }
     return location;
   }
 
