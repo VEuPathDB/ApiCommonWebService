@@ -55,14 +55,16 @@ public class MotifSearchPerfCli {
     double avgMatchesPerSequence = (double)_numTotalMatches / (double)_numSequencesWithMatches;
     double avgMatchLength = (double)_totalLength / (double)_numTotalMatches;
     long msPerMatch = runtimeMillis / _numTotalMatches;
+    Runtime rt = Runtime.getRuntime();
     System.out.println(
         "Statistics:"
-        + NL + "  " + Timer.getDurationString(runtimeMillis) + " Total runtime"
         + NL + "  " + _numSequencesWithMatches + ": Number of sequences with matches"
         + NL + "  " + _numTotalMatches + ": Number of total matches"
         + NL + "  " + avgMatchesPerSequence + ": Avg matches per sequence"
-        + NL + "  " + avgMatchLength + ": Avg match length"
-        + NL + "  " + Timer.getDurationString(msPerMatch) + " Time per match found"
+        + NL + "  " + avgMatchLength + ": Avg match length (including context and highlighting HTML)"
+        + NL + "  " + Timer.getDurationString(runtimeMillis) + " total runtime"
+        + NL + "  " + Timer.getDurationString(msPerMatch) + " per match found"
+        + NL + "  " + rt.totalMemory() / 1024 + "kb memory allocated to complete this task"
     );
   }
 }
