@@ -5,17 +5,20 @@ import static org.gusdb.fgputil.FormatUtil.NL;
 import java.io.File;
 import java.util.Properties;
 
+import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.Timer;
 
 public class MotifSearchPerfCli {
 
   public static void main(String[] args) throws Exception {
+    System.err.println("Args: " + FormatUtil.arrayToString(args, ", "));
     if (args.length != 2) usageAndExit();
     String pattern = args[0].trim();
-    File file = new File(args[1]);
     if (pattern.isEmpty()) usageAndExit();
+    File file = new File(args[1]);
     if (!file.isFile() || !file.canRead()) {
       System.err.println(file.getAbsolutePath() + " is not a readable file.");
+      System.exit(2);
     }
     MotifConfig config = new MotifConfig(new Properties(),
         DnaMotifPlugin.FIELD_REGEX, DnaMotifPlugin.DEFAULT_REGEX);
@@ -28,7 +31,7 @@ public class MotifSearchPerfCli {
   }
 
   private static void usageAndExit() {
-    System.err.println("USAGE: fgpJava " + MotifSearchPerfCli.class + " <pattern> <fasta_file>");
+    System.err.println("USAGE: fgpJava " + MotifSearchPerfCli.class.getName() + " <pattern> <fasta_file>");
     System.exit(1);
   }
 
