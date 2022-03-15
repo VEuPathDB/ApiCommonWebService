@@ -48,7 +48,8 @@ public class TileMatcher {
                     if (matchStartsInOverlap && !atEndOfSequence) {
                         continue;
                     }
-                    if (matcher.end() - matcher.start() + 1 > MAX_MATCH_LENGTH) {
+
+                    if (matcher.group().length() > MAX_MATCH_LENGTH) {
                         throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
                     }
                     final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
