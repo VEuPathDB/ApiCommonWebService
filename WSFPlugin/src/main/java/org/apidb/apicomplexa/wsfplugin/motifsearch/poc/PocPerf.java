@@ -33,12 +33,14 @@ public class PocPerf {
             System.err.println(file.getAbsolutePath() + " is not a readable file.");
             System.exit(2);
         }
-        final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
-        SequencesToSingleLine.toSingleLine(reader, collapsedFilePath);
 
-        final File collapsedFile = new File(collapsedFilePath);
+        if (!file.getPath().endsWith("motif")) {
+            final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
+            SequencesToSingleLine.toSingleLine(reader, collapsedFilePath);
+            file = new File(collapsedFilePath);
+        }
 
-        try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(collapsedFile)) {
+        try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(file)) {
             do {
                 final Optional<SequenceFileStreamer.FastaInputStream> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
@@ -54,7 +56,6 @@ public class PocPerf {
             } while (true);
         }
         stats.report();
-        collapsedFile.delete();
     }
 
     private static void usageAndExit() {

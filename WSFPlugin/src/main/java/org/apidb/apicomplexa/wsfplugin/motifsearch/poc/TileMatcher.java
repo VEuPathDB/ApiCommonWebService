@@ -124,6 +124,7 @@ public class TileMatcher {
         }
 
         public CharBuffer shiftBuffers() {
+            currentBuffer.position(0);
             if (buffer1 == currentBuffer) {
                 buffer2.put(buffer1.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
                 currentBuffer = buffer2;
