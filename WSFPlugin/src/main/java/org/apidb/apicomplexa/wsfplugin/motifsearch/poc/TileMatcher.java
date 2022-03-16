@@ -29,9 +29,9 @@ public class TileMatcher {
         boolean reachedNewline = false;
         final List<MatchWithContext> matches = new ArrayList<>();
         final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength);
+        int bytesRead;
         try (final Reader streamReader = new InputStreamReader(sequenceInput);
              final BufferedReader bufferedReader = new BufferedReader(streamReader, sequenceBuffer.getTotalBufferSize())) {
-            int bytesRead;
             do {
                 if (first) {
                     first = false;
@@ -46,14 +46,16 @@ public class TileMatcher {
                 } while (sequenceBuffer.getCurrentBuffer().remaining() != 0 && bytesRead != -1);
 
                 String subsequence = sequenceBuffer.readCurrentSubsequence();
-                if (subsequence.contains(System.lineSeparator())) {
-                    subsequence = subsequence.split(System.lineSeparator())[0];
-                    reachedNewline = true;
-                }
+//                if (subsequence.contains(System.lineSeparator())) {
+//                    subsequence = subsequence.split(System.lineSeparator())[0];
+//                    reachedNewline = true;
+//                }
 
                 final Matcher matcher = pattern.matcher(subsequence);
-                if (matcher.find()
-                        && (matcher.start() <= BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && bytesRead != -1)) {
+                while (matcher.find()) {
+                    if (matcher.start() <= BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && bytesRead != -1) {
+                        break;
+                    }
                     if (matcher.group().length() > MAX_MATCH_LENGTH) {
                         throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
                     }
