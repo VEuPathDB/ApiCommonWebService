@@ -6,6 +6,7 @@ import org.gusdb.fgputil.Timer;
 
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class PocPerf {
             System.err.println(file.getAbsolutePath() + " is not a readable file.");
             System.exit(2);
         }
-        final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), args[1] + ".motif").toString();
+        final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
         SequencesToSingleLine.toSingleLine(reader, collapsedFilePath);
 
         final File collapsedFile = new File(collapsedFilePath);
