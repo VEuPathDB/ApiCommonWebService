@@ -8,6 +8,15 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+import java.io.*;
+import java.nio.CharBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class TileMatcher {
     private static int BUFFER_SIZE = 8192;
     private static int MAX_MATCH_LENGTH = 1024;
@@ -31,8 +40,8 @@ public class TileMatcher {
                     sequenceBuffer.shiftBuffers();
                 }
 
+                // Read data into shifted buffer until buffer is full.
                 do {
-                    // Read data into shifted buffer until buffer is full.
                     bytesRead = bufferedReader.read(sequenceBuffer.getCurrentBuffer());
                 } while (sequenceBuffer.getCurrentBuffer().remaining() != 0 && bytesRead != -1);
 
@@ -42,15 +51,8 @@ public class TileMatcher {
                     reachedNewline = true;
                 }
 
-                // |abcd|defg|hijk|
                 final Matcher matcher = pattern.matcher(subsequence);
-                if (matcher.find()) {
-                    final boolean matchStartsInOverlap = matcher.start() >= BUFFER_SIZE - sequenceBuffer.getOverlapWindow() + contextLength;
-                    final boolean atEndOfSequence = bytesRead == -1 || reachedNewline;
-                    // If start is in the overlap window, it'll get picked up in the next iteration, guaranteed to have context.
-                    if (matchStartsInOverlap && !atEndOfSequence) {
-                        continue;
-                    }
+                if (matcher.find() && matcher.start() > BUFFER_SIZE + sequenceBuffer.getOverlapWindow()) {
                     if (matcher.group().length() > MAX_MATCH_LENGTH) {
                         throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
                     }
@@ -89,8 +91,6 @@ public class TileMatcher {
             buffer2 = CharBuffer.allocate(totalBufferSize);
             contextBuffer = CharBuffer.allocate(contextLength);
             currentBuffer = buffer1;
-            // Start at BUFFER_SIZE position, to reserve first "chunk" of buffer for past context.
-            currentBuffer.position(contextLength);
         }
 
         public String getLeadingContext(Matcher matcher, int contextLength) {
@@ -131,11 +131,13 @@ public class TileMatcher {
 
         public CharBuffer shiftBuffers() {
             if (buffer1 == currentBuffer) {
+                contextBuffer.position(0);
                 buffer2.put(buffer1.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
                 contextBuffer.position(0);
                 contextBuffer.put(buffer1.array(), totalBufferSize - contextLength, contextLength);
                 currentBuffer = buffer2;
             } else {
+                contextBuffer.position(0);
                 buffer1.put(buffer2.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
                 contextBuffer.position(0);
                 contextBuffer.put(buffer2.array(), totalBufferSize - contextLength, contextLength);
