@@ -20,7 +20,7 @@ public class DnaMatchFinder extends HighMemoryMatchFinder {
       String defLine,
       Pattern searchPattern,
       String sequence,
-      ConsumerWithException<Match> consumer,
+      ConsumerWithException<PluginMatch> consumer,
       FunctionWithException<String, String> orgToProjectId) throws Exception {
 
     Matcher deflineMatcher = _config.getDeflinePattern().matcher(defLine);
@@ -45,7 +45,7 @@ public class DnaMatchFinder extends HighMemoryMatchFinder {
     while (matcher.find()) {
       int start = matcher.start();
       int stop = matcher.end();
-      Match match = new Match();
+      PluginMatch match = new PluginMatch();
       match.projectId = projectId;
       match.matchCount = 1;
       if (strand.equals("r")) {

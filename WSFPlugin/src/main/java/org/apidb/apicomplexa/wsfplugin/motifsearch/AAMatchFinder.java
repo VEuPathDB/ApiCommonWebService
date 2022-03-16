@@ -20,7 +20,7 @@ public class AAMatchFinder extends HighMemoryMatchFinder {
       String defLine,
       Pattern searchPattern,
       String sequence,
-      ConsumerWithException<Match> consumer,
+      ConsumerWithException<PluginMatch> consumer,
       FunctionWithException<String, String> orgToProjectId) throws Exception {
 
     // parse the headline
@@ -39,7 +39,7 @@ public class AAMatchFinder extends HighMemoryMatchFinder {
     // workaround: trim "-p1" suffix to turn protein ID into transcript ID
     // sourceId = sourceId.replace("-p1", "");
 
-    Match match = new Match();
+    PluginMatch match = new PluginMatch();
     match.sourceId = sourceId;
     match.projectId = orgToProjectId.apply(organism);
 

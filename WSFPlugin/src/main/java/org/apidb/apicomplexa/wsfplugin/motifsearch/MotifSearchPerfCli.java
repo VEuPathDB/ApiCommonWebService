@@ -54,7 +54,7 @@ public class MotifSearchPerfCli {
   private long _numTotalMatches = 0;
   private long _totalLength = 0;
 
-  public void nextMatch(Match match) {
+  public void nextMatch(PluginMatch match) {
     if (!match.sequenceId.equals(_thisSequence)) {
       _numSequencesWithMatches++;
       _thisSequence = match.sequenceId;

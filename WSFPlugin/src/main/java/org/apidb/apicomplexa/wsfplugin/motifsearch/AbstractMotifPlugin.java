@@ -5,9 +5,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicomplexa.wsfplugin.motifsearch.exception.MotifTooLongException;
 import org.eupathdb.common.model.ProjectMapper;
+import org.eupathdb.common.service.PostValidationUserException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 import org.gusdb.fgputil.runtime.InstanceManager;
@@ -31,7 +34,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     /**
      * Finds matches of the passed pattern in the given file and submits them to the consumer
      *
-     * @param datasetFile file to read
+     * @param fastaFile file to read
      * @param searchPattern pattern to search for
      * @param consumer consumes the matches, writing them to the plugin response
      * @param orgToProjectId function that looks up projectId by organism
@@ -39,7 +42,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     void findMatches(
         File fastaFile,
         Pattern searchPattern,
-        ConsumerWithException<Match> consumer,
+        ConsumerWithException<PluginMatch> consumer,
         FunctionWithException<String, String> orgToProjectId) throws Exception;
   }
 
@@ -136,7 +139,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   @Override
   public int execute(PluginRequest request, PluginResponse response)
-      throws PluginModelException {
+      throws PluginModelException, PluginUserException {
     LOG.info("Invoking MotifSearchPlugin...");
 
     Map<String, String> params = request.getParams();
@@ -173,11 +176,15 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       }
       return 0;
     }
+    catch (MotifTooLongException e) {
+      throw new PostValidationUserException(e.getMessage());
+    }
+    catch (PluginModelException e) {
+      throw e;
+    }
     catch (Exception e) {
       // wrap with PluginModelException only if needed
-      throw e instanceof PluginModelException
-        ? (PluginModelException)e
-        : new PluginModelException(e);
+      throw new PluginModelException(e);
     }
   }
 
@@ -213,11 +220,15 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     LOG.debug("translated expression: " + builder);
 
     int option = Pattern.CASE_INSENSITIVE;
-    return Pattern.compile(builder.toString(), option);
+    try {
+      return Pattern.compile(builder.toString(), option);
+    } catch (PatternSyntaxException e) {
+      throw new PostValidationUserException("Failed to parse input pattern.");
+    }
   }
 
-  protected void addMatch(Match match, PluginResponse response,
-      Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
+  protected void addMatch(PluginMatch match, PluginResponse response,
+                          Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
     String[] result = new String[columnOrders.size()];
     result[columnOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[columnOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;
