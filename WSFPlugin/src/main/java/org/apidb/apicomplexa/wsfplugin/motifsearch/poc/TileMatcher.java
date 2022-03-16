@@ -42,9 +42,10 @@ public class TileMatcher {
                     reachedNewline = true;
                 }
 
+                // |abcd|defg|hijk|
                 final Matcher matcher = pattern.matcher(subsequence);
                 if (matcher.find()) {
-                    final boolean matchStartsInOverlap = matcher.start() >= BUFFER_SIZE - sequenceBuffer.getOverlapWindow();
+                    final boolean matchStartsInOverlap = matcher.start() >= BUFFER_SIZE - sequenceBuffer.getOverlapWindow() + contextLength;
                     final boolean atEndOfSequence = bytesRead == -1 || reachedNewline;
                     // If start is in the overlap window, it'll get picked up in the next iteration, guaranteed to have context.
                     if (matchStartsInOverlap && !atEndOfSequence) {
@@ -73,6 +74,7 @@ public class TileMatcher {
         private CharBuffer buffer1;
         private CharBuffer buffer2;
         private CharBuffer currentBuffer;
+        private CharBuffer contextBuffer;
 
         private int overlapWindow;
         private int totalBufferSize;
@@ -80,11 +82,12 @@ public class TileMatcher {
         private boolean hasLeadingContext;
 
         public SequenceBuffer(int maxLength, int contextLength) {
-            this.overlapWindow =  2 * maxLength + contextLength; // The leading overlap window only may only need to be equal to contextLength.
+            this.overlapWindow =  2 * maxLength; // The leading overlap window only may only need to be equal to contextLength.
             this.contextLength = contextLength;
             this.totalBufferSize = 2 * overlapWindow + BUFFER_SIZE;
             buffer1 = CharBuffer.allocate(totalBufferSize);
             buffer2 = CharBuffer.allocate(totalBufferSize);
+            contextBuffer = CharBuffer.allocate(contextLength);
             currentBuffer = buffer1;
             // Start at BUFFER_SIZE position, to reserve first "chunk" of buffer for past context.
             currentBuffer.position(contextLength);
@@ -94,20 +97,22 @@ public class TileMatcher {
             if (!hasLeadingContext) {
                 return "";
             }
-            final int position = currentBuffer.position();
-            final int limit = currentBuffer.limit();
-            currentBuffer.position((overlapWindow - contextLength + matcher.start()));
-            currentBuffer.limit((overlapWindow - contextLength + matcher.start()) + contextLength);
-            String leadingContext = currentBuffer.toString();
-            currentBuffer.limit(limit);
-            currentBuffer.position(position);
-            return leadingContext;
+            contextBuffer.position(contextLength - (contextLength - matcher.start()));
+            return contextBuffer.toString();
+//            final int position = currentBuffer.position();
+//            final int limit = currentBuffer.limit();
+//            currentBuffer.position((overlapWindow - contextLength + matcher.start()));
+//            currentBuffer.limit((overlapWindow - contextLength + matcher.start()) + contextLength);
+//            String leadingContext = currentBuffer.toString();
+//            currentBuffer.limit(limit);
+//            currentBuffer.position(position);
+//            return leadingContext;
         }
 
         public String readCurrentSubsequence() {
             // Reset to mark to only read starting from the end of the first overlap window.
             int limit = totalBufferSize - currentBuffer.remaining();
-            currentBuffer.position(contextLength);
+            currentBuffer.position(0);
             currentBuffer.limit(limit);
             return currentBuffer.toString();
         }
@@ -127,9 +132,13 @@ public class TileMatcher {
         public CharBuffer shiftBuffers() {
             if (buffer1 == currentBuffer) {
                 buffer2.put(buffer1.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
+                contextBuffer.position(0);
+                contextBuffer.put(buffer1.array(), totalBufferSize - contextLength, contextLength);
                 currentBuffer = buffer2;
             } else {
                 buffer1.put(buffer2.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
+                contextBuffer.position(0);
+                contextBuffer.put(buffer2.array(), totalBufferSize - contextLength, contextLength);
                 currentBuffer = buffer1;
             }
             hasLeadingContext = true;
