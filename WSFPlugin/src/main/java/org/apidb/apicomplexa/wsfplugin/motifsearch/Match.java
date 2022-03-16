@@ -3,7 +3,7 @@ package org.apidb.apicomplexa.wsfplugin.motifsearch;
 import java.util.ArrayList;
 import java.util.List;
 
-class Match {
+public class Match {
 
   public String sourceId;
   public String projectId;
