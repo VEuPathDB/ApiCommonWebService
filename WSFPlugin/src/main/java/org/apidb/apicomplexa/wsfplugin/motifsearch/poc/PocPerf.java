@@ -34,7 +34,7 @@ public class PocPerf {
             System.exit(2);
         }
 
-        if (!file.getPath().endsWith("motif")) {
+        if (!file.getPath().endsWith(".motif")) {
             final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
             SequencesToSingleLine.toSingleLine(reader, collapsedFilePath);
             file = new File(collapsedFilePath);
@@ -48,11 +48,7 @@ public class PocPerf {
                     break;
                 }
                 System.out.println("Reading input.");
-                List<MatchWithContext> matches = new ArrayList<>();
                 TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch);
-                if (matches.isEmpty()) {
-                    System.out.println("Mo match found for pattern: " + pattern);
-                }
             } while (true);
         }
         stats.report();

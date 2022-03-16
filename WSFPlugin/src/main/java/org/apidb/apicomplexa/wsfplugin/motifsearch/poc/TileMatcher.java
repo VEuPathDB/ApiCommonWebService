@@ -19,7 +19,7 @@ public class TileMatcher {
         boolean first = true;
         boolean reachedNewline = false;
         final List<MatchWithContext> matches = new ArrayList<>();
-        final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH);
+        final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength);
         try (final Reader streamReader = new InputStreamReader(sequenceInput);
              final BufferedReader bufferedReader = new BufferedReader(streamReader, sequenceBuffer.getTotalBufferSize())) {
             int bytesRead;
@@ -76,17 +76,18 @@ public class TileMatcher {
 
         private int overlapWindow;
         private int totalBufferSize;
+        private int contextLength;
         private boolean hasLeadingContext;
 
-        public SequenceBuffer(int maxLength) {
-            this.overlapWindow = 2 * maxLength; // The leading overlap window only may only need to be equal to contextLength.
+        public SequenceBuffer(int maxLength, int contextLength) {
+            this.overlapWindow =  2 * maxLength + contextLength; // The leading overlap window only may only need to be equal to contextLength.
+            this.contextLength = contextLength;
             this.totalBufferSize = 2 * overlapWindow + BUFFER_SIZE;
             buffer1 = CharBuffer.allocate(totalBufferSize);
             buffer2 = CharBuffer.allocate(totalBufferSize);
             currentBuffer = buffer1;
             // Start at BUFFER_SIZE position, to reserve first "chunk" of buffer for past context.
-            currentBuffer.position(overlapWindow);
-            currentBuffer.mark();
+            currentBuffer.position(contextLength);
         }
 
         public String getLeadingContext(Matcher matcher, int contextLength) {
@@ -106,7 +107,7 @@ public class TileMatcher {
         public String readCurrentSubsequence() {
             // Reset to mark to only read starting from the end of the first overlap window.
             int limit = totalBufferSize - currentBuffer.remaining();
-            currentBuffer.reset();
+            currentBuffer.position(contextLength);
             currentBuffer.limit(limit);
             return currentBuffer.toString();
         }
@@ -124,7 +125,6 @@ public class TileMatcher {
         }
 
         public CharBuffer shiftBuffers() {
-            currentBuffer.position(0);
             if (buffer1 == currentBuffer) {
                 buffer2.put(buffer1.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
                 currentBuffer = buffer2;
@@ -132,10 +132,8 @@ public class TileMatcher {
                 buffer1.put(buffer2.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
                 currentBuffer = buffer1;
             }
-            // Set position to the size of the overlap window.
-            currentBuffer.position(overlapWindow);
-            currentBuffer.mark();
             hasLeadingContext = true;
+            currentBuffer.position(overlapWindow);
             return currentBuffer;
         }
     }
