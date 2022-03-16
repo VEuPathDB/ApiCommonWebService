@@ -47,7 +47,7 @@ public class PocPerf {
                 }
                 System.out.println("Reading input.");
                 List<MatchWithContext> matches = new ArrayList<>();
-                TileMatcher.match(input.get(), Pattern.compile(pattern), 20, stats::nextMatch);
+                TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch);
                 if (matches.isEmpty()) {
                     System.out.println("Mo match found for pattern: " + pattern);
                 }
