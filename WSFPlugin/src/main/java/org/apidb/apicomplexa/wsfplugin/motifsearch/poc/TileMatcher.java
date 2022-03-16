@@ -53,7 +53,8 @@ public class TileMatcher {
 
                 final Matcher matcher = pattern.matcher(subsequence);
                 while (matcher.find()) {
-                    if (matcher.start() <= BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && bytesRead != -1) {
+                    boolean atEnd = bytesRead == -1 || reachedNewline;
+                    if (matcher.start() > BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && !atEnd) {
                         break;
                     }
                     if (matcher.group().length() > MAX_MATCH_LENGTH) {
