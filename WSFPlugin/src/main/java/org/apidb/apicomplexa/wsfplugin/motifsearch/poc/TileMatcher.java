@@ -52,7 +52,8 @@ public class TileMatcher {
                 }
 
                 final Matcher matcher = pattern.matcher(subsequence);
-                if (matcher.find() && matcher.start() <= BUFFER_SIZE + sequenceBuffer.getOverlapWindow()) {
+                if (matcher.find()
+                        && (matcher.start() <= BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && bytesRead != -1)) {
                     if (matcher.group().length() > MAX_MATCH_LENGTH) {
                         throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
                     }
