@@ -11,37 +11,60 @@ public class SequenceFileStreamer implements AutoCloseable {
 
     private FastaReader currentStream;
     private FileReader fileReader;
-    private BufferedReader bufferedReader;
+    private char[] buffer = new char[BUFFER_SIZE];
+    private int currentPos = BUFFER_SIZE;
+    private int limit = BUFFER_SIZE;
 
     public SequenceFileStreamer(File input) throws FileNotFoundException {
         this.fileReader = new FileReader(input);
-        this.bufferedReader = new BufferedReader(fileReader);
     }
 
     public Optional<FastaReader> nextSequence() throws IOException {
-        final String defLine = bufferedReader.readLine();
+        final String defLine = readUntilNewLine();
         if (defLine == null) {
             return Optional.empty();
         }
-        currentStream = new FastaReader(bufferedReader, defLine);
+        currentStream = new FastaReader(defLine);
         return Optional.of(currentStream);
+    }
+
+    public void fill() throws IOException {
+        if (currentPos >= buffer.length) {
+            limit = fileReader.read(buffer);
+            currentPos = 0;
+        }
+    }
+
+    public String readUntilNewLine() throws IOException {
+        StringBuilder defLine = new StringBuilder();
+        while (true) {
+            if (currentPos > limit) {
+                return null;
+            }
+            if (currentPos >= buffer.length) {
+                fill();
+            }
+            if (buffer[currentPos] == '\n') {
+                currentPos++;
+                return defLine.toString();
+            }
+            defLine.append(buffer[currentPos]);
+            currentPos++;
+        }
     }
 
     @Override
     public void close() throws Exception {
         fileReader.close();
-        bufferedReader.close();
     }
 
     public class FastaReader extends Reader {
         private String currentSequenceId;
         private String currentStrand;
         private String currentOrganism;
-        private BufferedReader bufferedReader;
-        private int currentByte;
+        private boolean endReached;
 
-        public FastaReader(BufferedReader bufferedReader, String defLine) {
-            this.bufferedReader = bufferedReader;
+        public FastaReader(String defLine) {
             final Matcher defLineMatcher = DEF_LINE_PATTERN.matcher(defLine);
             if (!defLineMatcher.find()) {
                 throw new RuntimeException("Cannot read definition line " + defLine);
@@ -49,6 +72,7 @@ public class SequenceFileStreamer implements AutoCloseable {
             this.currentSequenceId = defLineMatcher.group(1);
             this.currentStrand = defLineMatcher.group(2);
             this.currentOrganism = defLineMatcher.group(3);
+            endReached = false;
         }
 
         public String getCurrentSequenceId() {
@@ -68,18 +92,27 @@ public class SequenceFileStreamer implements AutoCloseable {
             if (off + len > cbuf.length) {
                 throw new IllegalArgumentException("Offset + Length cannot exceed size of buffer");
             }
-            int charsRead = 0;
-            if (currentByte == -1) {
+            if (endReached) {
                 return -1;
             }
+            if (currentPos >= buffer.length) {
+                fill();
+            }
+            int charsRead = 0;
             for (int i = off; i < off + len; i++) {
-                currentByte = bufferedReader.read();
-                if (currentByte == '\n') {
-                    currentByte = -1;
-                    return charsRead;
+                if (currentPos >= buffer.length) {
+                    fill();
                 }
-                cbuf[i] = (char) currentByte;
-                charsRead++;
+                if (buffer[currentPos] == '\n' || currentPos > limit) {
+                    endReached = true;
+                    charsRead++;
+                    currentPos++;
+                    return charsRead;
+                } else {
+                    cbuf[i] = buffer[currentPos];
+                    charsRead++;
+                }
+                currentPos++;
             }
             return charsRead;
         }

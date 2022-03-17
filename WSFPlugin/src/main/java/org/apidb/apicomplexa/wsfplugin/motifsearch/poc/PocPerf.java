@@ -48,7 +48,6 @@ public class PocPerf {
                     System.out.println("No more inputs.");
                     break;
                 }
-                System.out.println("Reading input.");
                 TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch, bufferSize);
             } while (true);
         }
