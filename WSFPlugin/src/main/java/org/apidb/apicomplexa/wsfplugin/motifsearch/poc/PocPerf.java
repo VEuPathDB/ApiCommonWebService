@@ -33,7 +33,7 @@ public class PocPerf {
             System.err.println(file.getAbsolutePath() + " is not a readable file.");
             System.exit(2);
         }
-        int bufferSize = Integer.parseInt(args[3]);
+        int bufferSize = Integer.parseInt(args[2]);
 
         if (!file.getPath().endsWith(".motif")) {
             final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
