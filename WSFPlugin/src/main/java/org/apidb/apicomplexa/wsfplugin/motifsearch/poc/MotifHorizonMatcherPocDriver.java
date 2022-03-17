@@ -17,16 +17,16 @@ public class MotifHorizonMatcherPocDriver {
 
 
     private static void attemptTileMatch(Pattern pattern, int contextLength) throws Exception {
-        try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(new File("tst/data-files/GenomeDoubleStrandCollapsed"))) {
+        try (final SequenceReaderProvider sequenceFileStreamer = new SequenceReaderProvider(new File("tst/data-files/GenomeDoubleStrandCollapsed"))) {
             do {
-                final Optional<SequenceFileStreamer.FastaReader> input = sequenceFileStreamer.nextSequence();
+                final Optional<SequenceReaderProvider.FastaReader> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
                     System.out.println("No more inputs.");
                     return;
                 }
                 System.out.println("Reading input.");
                 List<MatchWithContext> matches = new ArrayList<>();
-                TileMatcher.match(input.get(), pattern, contextLength, matches::add, 8192);
+                BufferedDnaMotifFinder.match(input.get(), pattern, contextLength, matches::add, 8192);
                 matches.forEach(motifMatch -> System.out.println("Found match:" +
                         " trailing=" + motifMatch.getTrailingContext() +
                         " leading=" + motifMatch.getLeadingContext() +

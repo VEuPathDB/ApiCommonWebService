@@ -8,11 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 import static org.gusdb.fgputil.FormatUtil.NL;
 
@@ -41,14 +37,14 @@ public class PocPerf {
             file = new File(collapsedFilePath);
         }
 
-        try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(file)) {
+        try (final SequenceReaderProvider sequenceFileStreamer = new SequenceReaderProvider(file)) {
             do {
-                final Optional<SequenceFileStreamer.FastaReader> input = sequenceFileStreamer.nextSequence();
+                final Optional<SequenceReaderProvider.FastaReader> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
                     System.out.println("No more inputs.");
                     break;
                 }
-                TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch, bufferSize);
+                BufferedDnaMotifFinder.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch, bufferSize);
             } while (true);
         }
         stats.report();

@@ -10,52 +10,67 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TileMatcher {
+/**
+ * Finds bounded-length motifs in a DNA sequence. This bounds the amount of memory used for scalability, as practically
+ * we do not need to support large motifs.
+ */
+public class BufferedDnaMotifFinder {
     private static int MAX_MATCH_LENGTH = 1024;
 
-    public static List<MatchWithContext> match(SequenceFileStreamer.FastaReader sequenceInput,
+    /**
+     * Match
+     *
+     * @param sequenceInput A FastaReader containing exclusively sequence data.
+     * @param pattern Pattern to match against the sequenceInput.
+     * @param contextLength The amount of context returned on either end of the match.
+     * @param matchConsumer The consumer to accept each match found in the input.
+     * @param bufferSize The total size that will be buffered into memory at once.
+     * @return List of matches, none of which should exceed {@link MAX_MATCH_LENGTH} characters.
+     * @throws MotifTooLongException If the motif match exceeds {@link MAX_MATCH_LENGTH} characters in length.
+     */
+    public static List<MatchWithContext> match(SequenceReaderProvider.FastaReader sequenceInput,
                                                Pattern pattern,
                                                int contextLength,
                                                Consumer<MatchWithContext> matchConsumer,
-                                               int bufferSize) throws Exception {
+                                               int bufferSize) throws MotifTooLongException, IOException {
         boolean first = true;
         boolean reachedNewline = false;
         final List<MatchWithContext> matches = new ArrayList<>();
         final Set<Integer> startPositions = new HashSet<>();
         final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength, bufferSize);
         int bytesRead;
-            do {
-                if (first) {
-                    first = false;
-                } else {
-                    // Shift the buffer backward to make space for a bufferSize and an overlap window worth of new data
-                    sequenceBuffer.shiftBuffers();
+        do {
+            if (first) {
+                first = false;
+            } else {
+                // Shift the buffer backward to make space for a bufferSize and an overlap window worth of new data
+                sequenceBuffer.shiftBuffers();
+            }
+            bytesRead = sequenceBuffer.read(sequenceInput);
+            String subsequence = sequenceBuffer.readCurrentSubsequence();
+            final Matcher matcher = pattern.matcher(subsequence);
+            while (matcher.find()) {
+                boolean atEnd = bytesRead == -1 || reachedNewline;
+                if (matcher.start() > bufferSize + sequenceBuffer.getOverlapWindow() && !atEnd) {
+                    break;
                 }
-                bytesRead = sequenceBuffer.read(sequenceInput);
-                String subsequence = sequenceBuffer.readCurrentSubsequence();
-                final Matcher matcher = pattern.matcher(subsequence);
-                while (matcher.find()) {
-                    boolean atEnd = bytesRead == -1 || reachedNewline;
-                    if (matcher.start() > bufferSize + sequenceBuffer.getOverlapWindow() && !atEnd) {
-                        break;
-                    }
-                    if (startPositions.contains(matcher.start() + sequenceBuffer.getSequencePosition())) {
-                        continue;
-                    }
-                    if (matcher.group().length() > MAX_MATCH_LENGTH) {
-                        throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
-                    }
-                    final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
-                    final String leadingContext = matcher.start() > contextLength
-                            ? subsequence.substring(matcher.start() - contextLength, matcher.start())
-                            : sequenceBuffer.getLeadingContext(matcher, contextLength);
-                    startPositions.add(matcher.start() + sequenceBuffer.getSequencePosition());
-                    matchConsumer.accept(new MatchWithContext(
-                            leadingContext, matcher.group(), trailingContext, sequenceInput.getCurrentSequenceId(),
-                            matcher.start() + sequenceBuffer.getSequencePosition(),
-                            matcher.end() + sequenceBuffer.getSequencePosition()));
+                if (startPositions.contains(matcher.start() + sequenceBuffer.getSequencePosition())) {
+                    continue;
                 }
-            } while (bytesRead != -1 && !reachedNewline);
+                if (matcher.group().length() > MAX_MATCH_LENGTH) {
+                    throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
+                }
+                final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
+                final String leadingContext = matcher.start() > contextLength
+                        ? subsequence.substring(matcher.start() - contextLength, matcher.start())
+                        : sequenceBuffer.getLeadingContext(matcher, contextLength);
+                startPositions.add(matcher.start() + sequenceBuffer.getSequencePosition());
+                matchConsumer.accept(new MatchWithContext(
+                        leadingContext, matcher.group(), trailingContext, sequenceInput.getCurrentSequenceId(),
+                        matcher.start() + sequenceBuffer.getSequencePosition(),
+                        matcher.end() + sequenceBuffer.getSequencePosition()));
+            }
+        } while (bytesRead != -1 && !reachedNewline);
         return matches;
     }
 
@@ -78,9 +93,9 @@ public class TileMatcher {
         private int sequencePosition = 0;
 
         public SequenceBuffer(int maxLength, int contextLength, int bufferSize) {
-            this.bufferSize = bufferSize;
             this.overlapWindow =  2 * maxLength; // The leading overlap window only may only need to be equal to contextLength.
             this.contextLength = contextLength;
+            this.bufferSize = bufferSize;
             this.totalBufferSize = 2 * overlapWindow + bufferSize;
             buffer1 = CharBuffer.allocate(totalBufferSize);
             buffer2 = CharBuffer.allocate(totalBufferSize);
@@ -118,10 +133,6 @@ public class TileMatcher {
 
         public int getOverlapWindow() {
             return overlapWindow;
-        }
-
-        public int getTotalBufferSize() {
-            return totalBufferSize;
         }
 
         public CharBuffer shiftBuffers() {
