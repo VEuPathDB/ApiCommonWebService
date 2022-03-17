@@ -19,7 +19,7 @@ public class MotifHorizonMatcherPocDriver {
     private static void attemptTileMatch(Pattern pattern, int contextLength) throws Exception {
         try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(new File("tst/data-files/GenomeDoubleStrandCollapsed"))) {
             do {
-                final Optional<SequenceFileStreamer.FastaInputStream> input = sequenceFileStreamer.nextSequence();
+                final Optional<SequenceFileStreamer.FastaReader> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
                     System.out.println("No more inputs.");
                     return;

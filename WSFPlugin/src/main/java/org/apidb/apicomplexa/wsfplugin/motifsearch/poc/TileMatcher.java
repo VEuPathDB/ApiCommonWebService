@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class TileMatcher {
     private static int MAX_MATCH_LENGTH = 1024;
 
-    public static List<MatchWithContext> match(SequenceFileStreamer.FastaInputStream sequenceInput,
+    public static List<MatchWithContext> match(SequenceFileStreamer.FastaReader sequenceInput,
                                                Pattern pattern,
                                                int contextLength,
                                                Consumer<MatchWithContext> matchConsumer,
@@ -24,8 +24,6 @@ public class TileMatcher {
         final Set<Integer> startPositions = new HashSet<>();
         final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength, bufferSize);
         int bytesRead;
-        try (final Reader streamReader = new InputStreamReader(sequenceInput);
-             final BufferedReader bufferedReader = new BufferedReader(streamReader, sequenceBuffer.getTotalBufferSize())) {
             do {
                 if (first) {
                     first = false;
@@ -33,7 +31,7 @@ public class TileMatcher {
                     // Shift the buffer backward to make space for a bufferSize and an overlap window worth of new data
                     sequenceBuffer.shiftBuffers();
                 }
-                bytesRead = sequenceBuffer.read(bufferedReader);
+                bytesRead = sequenceBuffer.read(sequenceInput);
                 String subsequence = sequenceBuffer.readCurrentSubsequence();
                 final Matcher matcher = pattern.matcher(subsequence);
                 while (matcher.find()) {
@@ -58,7 +56,6 @@ public class TileMatcher {
                             matcher.end() + sequenceBuffer.getSequencePosition()));
                 }
             } while (bytesRead != -1 && !reachedNewline);
-        }
         return matches;
     }
 
@@ -91,7 +88,7 @@ public class TileMatcher {
             currentBuffer = buffer1;
         }
 
-        public int read(BufferedReader reader) throws IOException {
+        public int read(Reader reader) throws IOException {
             int bytesRead;
             do {
                 bytesRead = reader.read(currentBuffer);

@@ -43,7 +43,7 @@ public class PocPerf {
 
         try (final SequenceFileStreamer sequenceFileStreamer = new SequenceFileStreamer(file)) {
             do {
-                final Optional<SequenceFileStreamer.FastaInputStream> input = sequenceFileStreamer.nextSequence();
+                final Optional<SequenceFileStreamer.FastaReader> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
                     System.out.println("No more inputs.");
                     break;

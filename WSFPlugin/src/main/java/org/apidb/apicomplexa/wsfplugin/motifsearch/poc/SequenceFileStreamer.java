@@ -6,9 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SequenceFileStreamer implements AutoCloseable {
+    private static int BUFFER_SIZE = 8192;
     private static final Pattern DEF_LINE_PATTERN = Pattern.compile("\\>([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
 
-    private FastaInputStream currentStream;
+    private FastaReader currentStream;
     private FileReader fileReader;
     private BufferedReader bufferedReader;
 
@@ -17,12 +18,12 @@ public class SequenceFileStreamer implements AutoCloseable {
         this.bufferedReader = new BufferedReader(fileReader);
     }
 
-    public Optional<FastaInputStream> nextSequence() throws IOException {
+    public Optional<FastaReader> nextSequence() throws IOException {
         final String defLine = bufferedReader.readLine();
         if (defLine == null) {
             return Optional.empty();
         }
-        currentStream = new FastaInputStream(bufferedReader, defLine);
+        currentStream = new FastaReader(bufferedReader, defLine);
         return Optional.of(currentStream);
     }
 
@@ -32,14 +33,14 @@ public class SequenceFileStreamer implements AutoCloseable {
         bufferedReader.close();
     }
 
-    public static class FastaInputStream extends InputStream {
+    public class FastaReader extends Reader {
         private String currentSequenceId;
         private String currentStrand;
         private String currentOrganism;
         private BufferedReader bufferedReader;
         private int currentByte;
 
-        public FastaInputStream(BufferedReader bufferedReader, String defLine) {
+        public FastaReader(BufferedReader bufferedReader, String defLine) {
             this.bufferedReader = bufferedReader;
             final Matcher defLineMatcher = DEF_LINE_PATTERN.matcher(defLine);
             if (!defLineMatcher.find()) {
@@ -62,28 +63,30 @@ public class SequenceFileStreamer implements AutoCloseable {
             return currentOrganism;
         }
 
-        /**
-         * Ideally, all read methods would be functions of this method. This is challenging with all sequences
-         * in the same file since we don't want to accidentally buffer a new line.
-         */
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            return super.read(b, off, len);
-        }
-
-        @Override
-        public int read() throws IOException {
+        public int read(char[] cbuf, int off, int len) throws IOException {
+            if (off + len > cbuf.length) {
+                throw new IllegalArgumentException("Offset + Length cannot exceed size of buffer");
+            }
+            int charsRead = 0;
             if (currentByte == -1) {
                 return -1;
             }
-            currentByte = bufferedReader.read();
-            if (currentByte == '\n') {
-                currentByte = -1;
-                System.out.println("Finished sequence id " + currentSequenceId);
-                close();
-                return currentByte;
+            for (int i = off; i < off + len; i++) {
+                currentByte = bufferedReader.read();
+                if (currentByte == '\n') {
+                    currentByte = -1;
+                    return charsRead;
+                }
+                cbuf[i] = (char) currentByte;
+                charsRead++;
             }
-            return currentByte;
+            return charsRead;
+        }
+
+        @Override
+        public void close() throws IOException {
+
         }
     }
 }
