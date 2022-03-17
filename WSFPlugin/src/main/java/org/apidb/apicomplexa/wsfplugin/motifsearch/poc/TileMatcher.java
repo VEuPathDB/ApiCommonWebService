@@ -11,18 +11,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TileMatcher {
-    private static int BUFFER_SIZE = 8192;
     private static int MAX_MATCH_LENGTH = 1024;
 
     public static List<MatchWithContext> match(SequenceFileStreamer.FastaInputStream sequenceInput,
                                                Pattern pattern,
                                                int contextLength,
-                                               Consumer<MatchWithContext> matchConsumer) throws Exception {
+                                               Consumer<MatchWithContext> matchConsumer,
+                                               int bufferSize) throws Exception {
         boolean first = true;
         boolean reachedNewline = false;
         final List<MatchWithContext> matches = new ArrayList<>();
         final Set<Integer> startPositions = new HashSet<>();
-        final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength);
+        final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength, bufferSize);
         int bytesRead;
         try (final Reader streamReader = new InputStreamReader(sequenceInput);
              final BufferedReader bufferedReader = new BufferedReader(streamReader, sequenceBuffer.getTotalBufferSize())) {
@@ -30,19 +30,15 @@ public class TileMatcher {
                 if (first) {
                     first = false;
                 } else {
-                    // Shift the buffer backward to make space for a BUFFER_SIZE and an overlap window worth of new data
+                    // Shift the buffer backward to make space for a bufferSize and an overlap window worth of new data
                     sequenceBuffer.shiftBuffers();
                 }
                 bytesRead = sequenceBuffer.read(bufferedReader);
                 String subsequence = sequenceBuffer.readCurrentSubsequence();
-//                if (subsequence.contains(System.lineSeparator())) {
-//                    subsequence = subsequence.split(System.lineSeparator())[0];
-//                    reachedNewline = true;
-//                }
                 final Matcher matcher = pattern.matcher(subsequence);
                 while (matcher.find()) {
                     boolean atEnd = bytesRead == -1 || reachedNewline;
-                    if (matcher.start() > BUFFER_SIZE + sequenceBuffer.getOverlapWindow() && !atEnd) {
+                    if (matcher.start() > bufferSize + sequenceBuffer.getOverlapWindow() && !atEnd) {
                         break;
                     }
                     if (startPositions.contains(matcher.start() + sequenceBuffer.getSequencePosition())) {
@@ -79,14 +75,16 @@ public class TileMatcher {
         private final int overlapWindow;
         private final int totalBufferSize;
         private final int contextLength;
+        private final int bufferSize;
 
         private boolean hasLeadingContext;
         private int sequencePosition = 0;
 
-        public SequenceBuffer(int maxLength, int contextLength) {
+        public SequenceBuffer(int maxLength, int contextLength, int bufferSize) {
+            this.bufferSize = bufferSize;
             this.overlapWindow =  2 * maxLength; // The leading overlap window only may only need to be equal to contextLength.
             this.contextLength = contextLength;
-            this.totalBufferSize = 2 * overlapWindow + BUFFER_SIZE;
+            this.totalBufferSize = 2 * overlapWindow + bufferSize;
             buffer1 = CharBuffer.allocate(totalBufferSize);
             buffer2 = CharBuffer.allocate(totalBufferSize);
             contextBuffer = CharBuffer.allocate(contextLength);
@@ -132,18 +130,18 @@ public class TileMatcher {
         public CharBuffer shiftBuffers() {
             if (buffer1 == currentBuffer) {
                 contextBuffer.position(0);
-                buffer2.put(buffer1.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
+                buffer2.put(buffer1.array(), bufferSize + overlapWindow, overlapWindow);
                 contextBuffer.position(0);
                 contextBuffer.put(buffer1.array(), totalBufferSize - contextLength, contextLength);
                 currentBuffer = buffer2;
             } else {
                 contextBuffer.position(0);
-                buffer1.put(buffer2.array(), BUFFER_SIZE + overlapWindow, overlapWindow);
+                buffer1.put(buffer2.array(), bufferSize + overlapWindow, overlapWindow);
                 contextBuffer.position(0);
                 contextBuffer.put(buffer2.array(), totalBufferSize - contextLength, contextLength);
                 currentBuffer = buffer1;
             }
-            sequencePosition += BUFFER_SIZE + overlapWindow;
+            sequencePosition += bufferSize + overlapWindow;
             hasLeadingContext = true;
             currentBuffer.position(overlapWindow);
             return currentBuffer;

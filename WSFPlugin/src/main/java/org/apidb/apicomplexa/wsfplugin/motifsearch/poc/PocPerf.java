@@ -24,7 +24,7 @@ public class PocPerf {
 
         // parse args; some minimal validation
         System.err.println("Args: " + FormatUtil.arrayToString(args, ", "));
-        if (args.length != 2) usageAndExit();
+        if (args.length != 3) usageAndExit();
         String pattern = args[0].trim();
         if (pattern.isEmpty()) usageAndExit();
         File file = new File(args[1]);
@@ -33,6 +33,7 @@ public class PocPerf {
             System.err.println(file.getAbsolutePath() + " is not a readable file.");
             System.exit(2);
         }
+        int bufferSize = Integer.parseInt(args[3]);
 
         if (!file.getPath().endsWith(".motif")) {
             final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
@@ -48,7 +49,7 @@ public class PocPerf {
                     break;
                 }
                 System.out.println("Reading input.");
-                TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch);
+                TileMatcher.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch, bufferSize);
             } while (true);
         }
         stats.report();
