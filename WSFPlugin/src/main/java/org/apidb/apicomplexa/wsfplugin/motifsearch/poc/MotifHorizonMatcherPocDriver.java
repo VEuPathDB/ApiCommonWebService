@@ -26,7 +26,7 @@ public class MotifHorizonMatcherPocDriver {
                 }
                 System.out.println("Reading input.");
                 List<MatchWithContext> matches = new ArrayList<>();
-                TileMatcher.match(input.get(), pattern, contextLength, matches::add);
+                TileMatcher.match(input.get(), pattern, contextLength, matches::add, 8192);
                 matches.forEach(motifMatch -> System.out.println("Found match:" +
                         " trailing=" + motifMatch.getTrailingContext() +
                         " leading=" + motifMatch.getLeadingContext() +
