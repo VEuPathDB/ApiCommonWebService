@@ -8,17 +8,19 @@ import java.util.regex.Pattern;
 /**
  * Takes a .fasta file as input and serially returns FastaReader objects that contain sequence metadata parsed from def
  * lines and return raw sequence data when read.
+ *
+ * Note that this can also take a file with alternating lines of sequence data and def lines.
  */
 public class SequenceReaderProvider implements AutoCloseable {
-    private static int BUFFER_SIZE = 8192;
-    private static final Pattern DEF_LINE_PATTERN = Pattern.compile("\\>([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
+    private static final int BUFFER_SIZE = 8192;
+    private static final Pattern DEF_LINE_PATTERN = Pattern.compile(">([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
     private static final char DEF_LINE_START_INDICATOR = '>';
 
-    private FastaReader currentStream = null;
-    private char[] buffer = new char[BUFFER_SIZE];
+    private final FastaReader currentStream = null;
+    private final char[] buffer = new char[BUFFER_SIZE];
+    private final FileReader fileReader;
     private int currentPos = BUFFER_SIZE;
     private int limit = BUFFER_SIZE;
-    private FileReader fileReader;
 
     public SequenceReaderProvider(File input) throws FileNotFoundException {
         this.fileReader = new FileReader(input);

@@ -12,11 +12,14 @@ import java.util.Optional;
 
 import static org.gusdb.fgputil.FormatUtil.NL;
 
-public class PocPerf {
+/**
+ * CLI tool for testing the motif match proof-of-concept.
+ */
+public class PocPerfCli {
 
     public static void main(String[] args) throws Exception {
         // report statistics gathered
-        PocPerf stats = new PocPerf();
+        PocPerfCli stats = new PocPerfCli();
 
         // parse args; some minimal validation
         System.err.println("Args: " + FormatUtil.arrayToString(args, ", "));
@@ -31,17 +34,10 @@ public class PocPerf {
         }
         int bufferSize = Integer.parseInt(args[2]);
 
-        if (!file.getPath().endsWith(".motif")) {
-            final String collapsedFilePath = Paths.get(System.getProperty("java.io.tmpdir"), Path.of(args[1]).getFileName().toString() + ".motif").toString();
-            SequencesToSingleLine.toSingleLine(reader, collapsedFilePath);
-            file = new File(collapsedFilePath);
-        }
-
         try (final SequenceReaderProvider sequenceFileStreamer = new SequenceReaderProvider(file)) {
             do {
                 final Optional<SequenceReaderProvider.FastaReader> input = sequenceFileStreamer.nextSequence();
                 if (input.isEmpty()) {
-                    System.out.println("No more inputs.");
                     break;
                 }
                 BufferedDnaMotifFinder.match(input.get(), AbstractMotifPlugin.translateExpression(pattern, DnaMotifPlugin.SYMBOL_MAP), 20, stats::nextMatch, bufferSize);
@@ -51,7 +47,7 @@ public class PocPerf {
     }
 
     private static void usageAndExit() {
-        System.err.println("USAGE: fgpJava " + org.apidb.apicomplexa.wsfplugin.motifsearch.MotifSearchPerfCli.class.getName() + " <pattern> <fasta_file>");
+        System.err.println("USAGE: fgpJava " + org.apidb.apicomplexa.wsfplugin.motifsearch.MotifSearchPerfCli.class.getName() + " <pattern> <fasta_file> <buffer_size>");
         System.exit(1);
     }
 

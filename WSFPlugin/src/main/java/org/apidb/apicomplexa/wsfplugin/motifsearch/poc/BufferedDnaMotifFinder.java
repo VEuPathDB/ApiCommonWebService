@@ -54,6 +54,7 @@ public class BufferedDnaMotifFinder {
                 if (matcher.start() > bufferSize + sequenceBuffer.getOverlapWindow() && !atEnd) {
                     break;
                 }
+                // With the overlapping buffers, it's possible for us to come across the same match twice.
                 if (startPositions.contains(matcher.start() + sequenceBuffer.getSequencePosition())) {
                     continue;
                 }
@@ -65,10 +66,14 @@ public class BufferedDnaMotifFinder {
                         ? subsequence.substring(matcher.start() - contextLength, matcher.start())
                         : sequenceBuffer.getLeadingContext(matcher, contextLength);
                 startPositions.add(matcher.start() + sequenceBuffer.getSequencePosition());
-                matchConsumer.accept(new MatchWithContext(
-                        leadingContext, matcher.group(), trailingContext, sequenceInput.getCurrentSequenceId(),
-                        matcher.start() + sequenceBuffer.getSequencePosition(),
-                        matcher.end() + sequenceBuffer.getSequencePosition()));
+                matchConsumer.accept(new MatchWithContext.Builder()
+                        .match(matcher.group())
+                        .startPos(matcher.start() + sequenceBuffer.getSequencePosition())
+                        .endPos(matcher.end() + sequenceBuffer.getSequencePosition())
+                        .leadingContext(leadingContext)
+                        .trailingContext(trailingContext)
+                        .sequenceId(sequenceInput.getCurrentSequenceId())
+                        .build());
             }
         } while (bytesRead != -1 && !reachedNewline);
         return matches;
@@ -97,10 +102,10 @@ public class BufferedDnaMotifFinder {
             this.contextLength = contextLength;
             this.bufferSize = bufferSize;
             this.totalBufferSize = 2 * overlapWindow + bufferSize;
-            buffer1 = CharBuffer.allocate(totalBufferSize);
-            buffer2 = CharBuffer.allocate(totalBufferSize);
-            contextBuffer = CharBuffer.allocate(contextLength);
-            currentBuffer = buffer1;
+            this.buffer1 = CharBuffer.allocate(totalBufferSize);
+            this.buffer2 = CharBuffer.allocate(totalBufferSize);
+            this.contextBuffer = CharBuffer.allocate(contextLength);
+            this.currentBuffer = buffer1;
         }
 
         public int read(Reader reader) throws IOException {
@@ -120,7 +125,6 @@ public class BufferedDnaMotifFinder {
         }
 
         public String readCurrentSubsequence() {
-            // Reset to mark to only read starting from the end of the first overlap window.
             int limit = totalBufferSize - currentBuffer.remaining();
             currentBuffer.position(0);
             currentBuffer.limit(limit);
