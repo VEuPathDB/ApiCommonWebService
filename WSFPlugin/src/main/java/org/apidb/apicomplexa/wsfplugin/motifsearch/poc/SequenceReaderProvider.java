@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * Note that this can also take a file with alternating lines of sequence data and def lines.
  */
 public class SequenceReaderProvider implements AutoCloseable {
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 65536;
     private static final Pattern DEF_LINE_PATTERN = Pattern.compile(">([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
     private static final char DEF_LINE_START_INDICATOR = '>';
 
