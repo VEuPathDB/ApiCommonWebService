@@ -16,9 +16,9 @@ public class SequenceReaderProvider implements AutoCloseable {
     private static final Pattern DEF_LINE_PATTERN = Pattern.compile(">([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
     private static final char DEF_LINE_START_INDICATOR = '>';
 
-    private final FastaReader currentStream = null;
     private final char[] buffer = new char[BUFFER_SIZE];
     private final FileReader fileReader;
+    private FastaReader currentStream = null;
     private int currentPos = BUFFER_SIZE;
     private int limit = BUFFER_SIZE;
 
