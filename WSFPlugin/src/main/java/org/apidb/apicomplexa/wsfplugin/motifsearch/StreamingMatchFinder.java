@@ -11,6 +11,9 @@ import java.io.Reader;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ *
+ */
 public abstract class StreamingMatchFinder implements MatchFinder {
 
     protected final MotifConfig _config;

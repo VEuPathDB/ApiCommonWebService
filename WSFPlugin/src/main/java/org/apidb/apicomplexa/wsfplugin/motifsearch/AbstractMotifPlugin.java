@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apidb.apicomplexa.wsfplugin.motifsearch.exception.MotifTooLongException;
 import org.eupathdb.common.model.ProjectMapper;
+import org.eupathdb.common.service.PostValidationUserException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 import org.gusdb.fgputil.runtime.InstanceManager;
@@ -175,7 +176,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       return 0;
     }
     catch (MotifTooLongException e) {
-      throw new PluginUserException(e.getMessage(), e);
+      throw new PostValidationUserException(e.getMessage());
     }
     catch (PluginModelException e) {
       throw e;

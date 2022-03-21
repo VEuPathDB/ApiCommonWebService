@@ -1,7 +1,6 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
 
 import org.apidb.apicomplexa.wsfplugin.motifsearch.exception.MotifTooLongException;
-import org.gusdb.wsf.plugin.PluginUserException;
 
 import java.io.*;
 import java.nio.CharBuffer;
@@ -112,6 +111,9 @@ public class BufferedDnaMotifFinder {
             return  bytesRead;
         }
 
+        /**
+         * Returns leading context from a dedicated buffer that keeps track of previously seen characters.
+         */
         public String getLeadingContext(Matcher matcher, int contextLength) {
             if (!hasLeadingContext) {
                 return "";
