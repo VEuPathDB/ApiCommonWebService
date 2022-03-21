@@ -1,4 +1,4 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.poc;
+package org.apidb.apicomplexa.wsfplugin.motifsearch.exception;
 
 /**
  * Exception indicating that a motif match exceeds the maximum length.

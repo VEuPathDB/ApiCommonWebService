@@ -1,33 +1,29 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.poc;
+package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
 
 
-public class MatchWithContext {
+public class MotifMatch {
     private String leadingContext;
     private String match;
     private String trailingContext;
-    private String sequenceId;
     private int startPos;
     private int endPos;
 
-    public MatchWithContext(String leadingContext,
-                            String match,
-                            String trailingContext,
-                            String sequenceId,
-                            int startPos,
-                            int endPos) {
+    public MotifMatch(String leadingContext,
+                      String match,
+                      String trailingContext,
+                      int startPos,
+                      int endPos) {
         this.leadingContext = leadingContext;
         this.match = match;
         this.trailingContext = trailingContext;
-        this.sequenceId = sequenceId;
         this.startPos = startPos;
         this.endPos = endPos;
     }
 
-    private MatchWithContext(Builder builder) {
+    private MotifMatch(Builder builder) {
         leadingContext = builder.leadingContext;
         match = builder.match;
         trailingContext = builder.trailingContext;
-        sequenceId = builder.sequenceId;
         startPos = builder.startPos;
         endPos = builder.endPos;
     }
@@ -42,10 +38,6 @@ public class MatchWithContext {
 
     public String getTrailingContext() {
         return trailingContext;
-    }
-
-    public String getSequenceId() {
-        return sequenceId;
     }
 
     public int getStartPos() {
@@ -97,8 +89,8 @@ public class MatchWithContext {
             return this;
         }
 
-        public MatchWithContext build() {
-            return new MatchWithContext(this);
+        public MotifMatch build() {
+            return new MotifMatch(this);
         }
     }
 }

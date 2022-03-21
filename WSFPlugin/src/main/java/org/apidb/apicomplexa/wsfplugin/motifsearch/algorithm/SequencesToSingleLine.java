@@ -1,4 +1,4 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.poc;
+package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
 
 import java.io.*;
 

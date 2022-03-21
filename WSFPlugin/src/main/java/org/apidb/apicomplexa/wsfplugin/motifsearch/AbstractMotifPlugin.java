@@ -31,7 +31,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     /**
      * Finds matches of the passed pattern in the given file and submits them to the consumer
      *
-     * @param datasetFile file to read
+     * @param fastaFile file to read
      * @param searchPattern pattern to search for
      * @param consumer consumes the matches, writing them to the plugin response
      * @param orgToProjectId function that looks up projectId by organism
@@ -39,7 +39,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     void findMatches(
         File fastaFile,
         Pattern searchPattern,
-        ConsumerWithException<Match> consumer,
+        ConsumerWithException<PluginMatch> consumer,
         FunctionWithException<String, String> orgToProjectId) throws Exception;
   }
 
@@ -216,8 +216,8 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
     return Pattern.compile(builder.toString(), option);
   }
 
-  protected void addMatch(Match match, PluginResponse response,
-      Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
+  protected void addMatch(PluginMatch match, PluginResponse response,
+                          Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
     String[] result = new String[columnOrders.size()];
     result[columnOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[columnOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;

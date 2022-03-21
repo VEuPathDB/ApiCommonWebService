@@ -1,4 +1,6 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.poc;
+package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
+
+import org.apidb.apicomplexa.wsfplugin.motifsearch.exception.MotifTooLongException;
 
 import java.io.*;
 import java.nio.CharBuffer;
@@ -6,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,29 +16,24 @@ import java.util.regex.Pattern;
  * we do not need to support large motifs.
  */
 public class BufferedDnaMotifFinder {
-    private static int MAX_MATCH_LENGTH = 1024;
-
     /**
-     * Match
      *
      * @param sequenceInput A FastaReader containing exclusively sequence data.
      * @param pattern Pattern to match against the sequenceInput.
      * @param contextLength The amount of context returned on either end of the match.
-     * @param matchConsumer The consumer to accept each match found in the input.
      * @param bufferSize The total size that will be buffered into memory at once.
-     * @return List of matches, none of which should exceed {@link MAX_MATCH_LENGTH} characters.
-     * @throws MotifTooLongException If the motif match exceeds {@link MAX_MATCH_LENGTH} characters in length.
+     * @throws MotifTooLongException If the motif match exceeds {@param maxMatchLength} characters in length.
      */
-    public static List<MatchWithContext> match(SequenceReaderProvider.FastaReader sequenceInput,
-                                               Pattern pattern,
-                                               int contextLength,
-                                               Consumer<MatchWithContext> matchConsumer,
-                                               int bufferSize) throws MotifTooLongException, IOException {
+    public static List<MotifMatch> match(Reader sequenceInput,
+                                         Pattern pattern,
+                                         int contextLength,
+                                         int bufferSize,
+                                         int maxMatchLength) throws MotifTooLongException, IOException {
         boolean first = true;
         boolean reachedNewline = false;
-        final List<MatchWithContext> matches = new ArrayList<>();
+        final List<MotifMatch> motifMatches = new ArrayList<>();
         final Set<Integer> startPositions = new HashSet<>();
-        final SequenceBuffer sequenceBuffer = new SequenceBuffer(MAX_MATCH_LENGTH, contextLength, bufferSize);
+        final SequenceBuffer sequenceBuffer = new SequenceBuffer(maxMatchLength, contextLength, bufferSize);
         int bytesRead;
         do {
             if (first) {
@@ -58,25 +54,24 @@ public class BufferedDnaMotifFinder {
                 if (startPositions.contains(matcher.start() + sequenceBuffer.getSequencePosition())) {
                     continue;
                 }
-                if (matcher.group().length() > MAX_MATCH_LENGTH) {
-                    throw new MotifTooLongException("Motif match cannot exceed " + MAX_MATCH_LENGTH + " chars.");
+                if (matcher.group().length() > maxMatchLength) {
+                    throw new MotifTooLongException("Motif match cannot exceed " + maxMatchLength + " chars.");
                 }
                 final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
                 final String leadingContext = matcher.start() > contextLength
                         ? subsequence.substring(matcher.start() - contextLength, matcher.start())
                         : sequenceBuffer.getLeadingContext(matcher, contextLength);
                 startPositions.add(matcher.start() + sequenceBuffer.getSequencePosition());
-                matchConsumer.accept(new MatchWithContext.Builder()
+                motifMatches.add(new MotifMatch.Builder()
                         .match(matcher.group())
                         .startPos(matcher.start() + sequenceBuffer.getSequencePosition())
                         .endPos(matcher.end() + sequenceBuffer.getSequencePosition())
                         .leadingContext(leadingContext)
                         .trailingContext(trailingContext)
-                        .sequenceId(sequenceInput.getCurrentSequenceId())
                         .build());
             }
         } while (bytesRead != -1 && !reachedNewline);
-        return matches;
+        return motifMatches;
     }
 
 

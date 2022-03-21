@@ -36,8 +36,8 @@ public class ProteinMotifPlugin extends AAMotifPlugin {
   }
 
   @Override
-  protected void addMatch(Match match, PluginResponse response,
-      Map<String, Integer> pluginOrders) throws PluginModelException, PluginUserException  {
+  protected void addMatch(PluginMatch match, PluginResponse response,
+                          Map<String, Integer> pluginOrders) throws PluginModelException, PluginUserException  {
     String[] result = new String[pluginOrders.size()];
     result[pluginOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
     result[pluginOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;

@@ -1,4 +1,4 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.poc;
+package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
 
 import java.io.*;
 import java.util.Optional;
@@ -76,34 +76,22 @@ public class SequenceReaderProvider implements AutoCloseable {
     }
 
     public class FastaReader extends Reader {
-        private String currentSequenceId;
-        private String currentStrand;
-        private String currentOrganism;
+        private String defline;
         private boolean closed;
         private boolean endReached;
 
-        public FastaReader(String defLine) {
-            final Matcher defLineMatcher = DEF_LINE_PATTERN.matcher(defLine);
+        public FastaReader(String defline) {
+            final Matcher defLineMatcher = DEF_LINE_PATTERN.matcher(defline);
             if (!defLineMatcher.find()) {
-                throw new RuntimeException("Cannot read definition line " + defLine);
+                throw new RuntimeException("Cannot read definition line " + defline);
             }
-            this.currentSequenceId = defLineMatcher.group(1);
-            this.currentStrand = defLineMatcher.group(2);
-            this.currentOrganism = defLineMatcher.group(3);
+            this.defline = defline;
             this.endReached = false;
             this.closed = false;
         }
 
-        public String getCurrentSequenceId() {
-            return currentSequenceId;
-        }
-
-        public String getCurrentStrand() {
-            return currentStrand;
-        }
-
-        public String getCurrentOrganism() {
-            return currentOrganism;
+        public String getDefline() {
+            return defline;
         }
 
         @Override

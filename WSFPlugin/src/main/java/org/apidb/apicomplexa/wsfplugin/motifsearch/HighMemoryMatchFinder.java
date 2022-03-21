@@ -12,7 +12,7 @@ import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 public abstract class HighMemoryMatchFinder implements MatchFinder {
 
   protected abstract void findMatchesInSequence(String defLine, Pattern searchPattern, String sequence,
-      ConsumerWithException<Match> consumer, FunctionWithException<String, String> orgToProjectId) throws Exception;
+                                                ConsumerWithException<PluginMatch> consumer, FunctionWithException<String, String> orgToProjectId) throws Exception;
 
   protected final MotifConfig _config;
 
@@ -24,7 +24,7 @@ public abstract class HighMemoryMatchFinder implements MatchFinder {
   public void findMatches(
       File datasetFile,
       Pattern searchPattern,
-      ConsumerWithException<Match> consumer,
+      ConsumerWithException<PluginMatch> consumer,
       FunctionWithException<String, String> orgToProjectId) throws Exception {
 
     BufferedReader in = new BufferedReader(new FileReader(datasetFile));
