@@ -29,7 +29,6 @@ public class DnaStreamingMatchFinder extends StreamingMatchFinder {
       Reader sequence,
       ConsumerWithException<PluginMatch> consumer,
       FunctionWithException<String, String> orgToProjectId) throws Exception {
-
     Matcher deflineMatcher = _config.getDeflinePattern().matcher(defLine);
     if (!deflineMatcher.find()) {
       LOG.warn("Invalid defline: " + defLine);
