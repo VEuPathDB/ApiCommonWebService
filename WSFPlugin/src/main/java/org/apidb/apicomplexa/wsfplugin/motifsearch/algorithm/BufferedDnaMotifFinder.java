@@ -29,7 +29,7 @@ public class BufferedDnaMotifFinder {
                                          Pattern pattern,
                                          int contextLength,
                                          int bufferSize,
-                                         int maxMatchLength) throws PluginUserException, IOException {
+                                         int maxMatchLength) throws MotifTooLongException, IOException {
         boolean first = true;
         boolean reachedNewline = false;
         final List<MotifMatch> motifMatches = new ArrayList<>();
@@ -56,7 +56,7 @@ public class BufferedDnaMotifFinder {
                     continue;
                 }
                 if (matcher.group().length() > maxMatchLength) {
-                    throw new PluginUserException("Motif match cannot exceed " + maxMatchLength + " chars.");
+                    throw new MotifTooLongException("Motif match cannot exceed " + maxMatchLength + " chars.");
                 }
                 final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
                 final String leadingContext = matcher.start() > contextLength

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.apidb.apicomplexa.wsfplugin.motifsearch.exception.MotifTooLongException;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
@@ -173,14 +174,15 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
       }
       return 0;
     }
-    catch (PluginUserException e) {
+    catch (MotifTooLongException e) {
+      throw new PluginUserException(e.getMessage(), e);
+    }
+    catch (PluginModelException e) {
       throw e;
     }
     catch (Exception e) {
       // wrap with PluginModelException only if needed
-      throw e instanceof PluginModelException
-        ? (PluginModelException)e
-        : new PluginModelException(e);
+      throw new PluginModelException(e);
     }
   }
 
