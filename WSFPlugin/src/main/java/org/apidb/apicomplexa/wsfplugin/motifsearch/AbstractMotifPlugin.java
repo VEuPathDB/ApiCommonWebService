@@ -136,7 +136,7 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
 
   @Override
   public int execute(PluginRequest request, PluginResponse response)
-      throws PluginModelException {
+      throws PluginModelException, PluginUserException {
     LOG.info("Invoking MotifSearchPlugin...");
 
     Map<String, String> params = request.getParams();
@@ -172,6 +172,9 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
             _projectMapper::getProjectByOrganism);
       }
       return 0;
+    }
+    catch (PluginUserException e) {
+      throw e;
     }
     catch (Exception e) {
       // wrap with PluginModelException only if needed
