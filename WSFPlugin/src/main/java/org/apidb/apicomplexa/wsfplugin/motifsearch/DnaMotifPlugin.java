@@ -38,6 +38,6 @@ public class DnaMotifPlugin extends AbstractMotifPlugin {
 
   @Override
   protected MatchFinder getMatchFinder(MotifConfig config) {
-    return new DnaStreamingMatchFinder(config);
+    return new DnaMatchFinder(config);
   }
 }

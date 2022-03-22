@@ -1,13 +1,20 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.log4j.Logger;
+import org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm.BufferedDnaMotifFinder;
+import org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm.MotifMatch;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 
-public class DnaMatchFinder extends HighMemoryMatchFinder {
+import java.io.Reader;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+public class DnaMatchFinder extends StreamingMatchFinder {
+  private static final int BUFFER_SIZE = 65536;
+  private static final int MAX_MATCH_LENGTH = 1024;
 
   private static final Logger LOG = Logger.getLogger(DnaMatchFinder.class);
 
@@ -19,10 +26,9 @@ public class DnaMatchFinder extends HighMemoryMatchFinder {
   protected void findMatchesInSequence(
       String defLine,
       Pattern searchPattern,
-      String sequence,
+      Reader sequence,
       ConsumerWithException<PluginMatch> consumer,
       FunctionWithException<String, String> orgToProjectId) throws Exception {
-
     Matcher deflineMatcher = _config.getDeflinePattern().matcher(defLine);
     if (!deflineMatcher.find()) {
       LOG.warn("Invalid defline: " + defLine);
@@ -32,55 +38,25 @@ public class DnaMatchFinder extends HighMemoryMatchFinder {
     // strand info has to be in group(2)
     // organism has to be in group(3),
     String sequenceId = deflineMatcher.group(1).intern();
-    String strand = deflineMatcher.group(2).intern();
+    String strand = deflineMatcher.group(2).intern().equals("-") ? "r" : "f";
     String organism = deflineMatcher.group(3).replace('_', ' ').intern();
     String projectId = orgToProjectId.apply(organism).intern();
 
-    int length = sequence.length();
-    strand = strand.equals("-") ? "r" : "f";
-    boolean reversed = (strand.equals("r"));
-    int contextLength = _config.getContextLength();
-
-    Matcher matcher = searchPattern.matcher(sequence);
-    while (matcher.find()) {
-      int start = matcher.start();
-      int stop = matcher.end();
-      PluginMatch match = new PluginMatch();
-      match.projectId = projectId;
-      match.matchCount = 1;
-      if (strand.equals("r")) {
-        match.locations = AbstractMotifPlugin.formatLocation(length, start+1, stop, reversed);
-      }
-      else {
-        match.locations = AbstractMotifPlugin.formatLocation(length, start, stop-1, reversed);
-      }
-      match.sequenceId = sequenceId;
-      match.sourceId = sequenceId + ":" + match.locations + ":" + strand;
-
-      // create matching context
-      StringBuilder context = new StringBuilder();
-      int begin = Math.max(0, start - contextLength);
-      if (begin > 0)
-        context.append("...");
-      if (begin < start){
-        context.append(sequence.substring(begin, start));
-      }
-
-      String motif = sequence.substring(matcher.start(), matcher.end());
-      match.matchSequences.add(motif);
-
-      context.append("<span class=\"" + AbstractMotifPlugin.MOTIF_STYLE_CLASS + "\">");
-      context.append(motif);
-      context.append("</span>");
-      int end = Math.min(sequence.length(), stop + contextLength);
-      if (end > stop)
-        context.append(sequence.substring(stop, end));
-      if (end < sequence.length())
-        context.append("...");
-
-      match.sequence = context.toString();
-      consumer.accept(match);
+    final List<MotifMatch> matches = BufferedDnaMotifFinder.match(sequence, searchPattern, _config.getContextLength(), BUFFER_SIZE, MAX_MATCH_LENGTH);
+    final List<PluginMatch> pluginMatches = matches.stream()
+            .map(match -> new PluginMatch(
+                    match.getStartPos(),
+                    match.getEndPos(),
+                    projectId,
+                    sequenceId,
+                    1,
+                    strand,
+                    match.getLeadingContext(),
+                    match.getTrailingContext(),
+                    match.getMatch()))
+            .collect(Collectors.toList());
+    for (PluginMatch pluginMatch : pluginMatches) {
+      consumer.accept(pluginMatch);
     }
   }
-
 }
