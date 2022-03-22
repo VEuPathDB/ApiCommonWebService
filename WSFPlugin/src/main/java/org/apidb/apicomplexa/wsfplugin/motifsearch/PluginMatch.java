@@ -1,7 +1,5 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class PluginMatch {
 
     // create matching context
     StringBuilder context = new StringBuilder();
-    if (!StringUtils.isBlank(beforeContext)) {
+    if (beforeContext == null || beforeContext.isBlank()) {
       context.append("...");
       context.append(beforeContext);
     }
@@ -71,7 +69,7 @@ public class PluginMatch {
     context.append(motif);
     context.append("</span>");
 
-    if (!StringUtils.isBlank(afterContext)) {
+    if (beforeContext == null || beforeContext.isBlank()) {
       context.append(afterContext);
       context.append("...");
     }
