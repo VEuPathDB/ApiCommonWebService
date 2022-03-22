@@ -1,4 +1,4 @@
-package org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm;
+package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import java.io.*;
 import java.util.Optional;
@@ -13,17 +13,18 @@ import java.util.regex.Pattern;
  */
 public class SequenceReaderProvider implements AutoCloseable {
     private static final int BUFFER_SIZE = 65536;
-    private static final Pattern DEF_LINE_PATTERN = Pattern.compile(">([A-Za-z0-9_-]+) \\| strand=(.*) \\| organism=(.+) \\| version=(.+) \\| length=(\\d+) \\| SO=(.+)");
     private static final char DEF_LINE_START_INDICATOR = '>';
 
     private final char[] buffer = new char[BUFFER_SIZE];
     private final FileReader fileReader;
+    private final Pattern deflinePattern;
     private FastaReader currentStream = null;
     private int currentPos = BUFFER_SIZE;
     private int limit = BUFFER_SIZE;
 
-    public SequenceReaderProvider(File input) throws FileNotFoundException {
+    public SequenceReaderProvider(File input, Pattern defLinePattern) throws FileNotFoundException {
         this.fileReader = new FileReader(input);
+        this.deflinePattern = defLinePattern;
     }
 
     /**
@@ -82,7 +83,7 @@ public class SequenceReaderProvider implements AutoCloseable {
         private boolean endReached;
 
         public FastaReader(String defline) {
-            final Matcher defLineMatcher = DEF_LINE_PATTERN.matcher(defline);
+            final Matcher defLineMatcher = deflinePattern.matcher(defline);
             if (!defLineMatcher.find()) {
                 throw new RuntimeException("Cannot read definition line " + defline);
             }

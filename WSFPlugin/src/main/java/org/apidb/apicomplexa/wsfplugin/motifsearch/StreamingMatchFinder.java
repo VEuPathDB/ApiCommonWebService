@@ -1,8 +1,7 @@
 package org.apidb.apicomplexa.wsfplugin.motifsearch;
 
 import org.apidb.apicomplexa.wsfplugin.motifsearch.AbstractMotifPlugin.MatchFinder;
-import org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm.SequenceReaderProvider;
-import org.apidb.apicomplexa.wsfplugin.motifsearch.algorithm.SequenceReaderProvider.FastaReader;
+import org.apidb.apicomplexa.wsfplugin.motifsearch.SequenceReaderProvider.FastaReader;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.ConsumerWithException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 
@@ -31,7 +30,7 @@ public abstract class StreamingMatchFinder implements MatchFinder {
                             Pattern searchPattern,
                             ConsumerWithException<PluginMatch> consumer,
                             FunctionWithException<String, String> orgToProjectId) throws Exception {
-        try (SequenceReaderProvider sequenceProvider = new SequenceReaderProvider(fastaFile)) {
+        try (SequenceReaderProvider sequenceProvider = new SequenceReaderProvider(fastaFile, _config.getDeflinePattern())) {
             Optional<FastaReader> fastaReader = sequenceProvider.nextSequence();
             while (!fastaReader.isEmpty()) {
                 final FastaReader reader = fastaReader.get();
