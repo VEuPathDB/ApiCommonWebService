@@ -55,8 +55,9 @@ public class BufferedDnaMotifFinder {
                     continue;
                 }
                 if (matcher.group().length() > maxMatchLength) {
-                    throw new MotifTooLongException("Motif matches cannot exceed " + maxMatchLength + " chars. " +
-                            "Try adjusting your expression to result in shorter matches.");
+                    throw new MotifTooLongException(String.format("The motif pattern you provided, '%s', produced at " +
+                            "least one match that is greater than %d base pairs. " +
+                            "Please adjust the motif pattern to avoid matches this long.", pattern, maxMatchLength));
                 }
                 final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
                 final String leadingContext = matcher.start() > contextLength
