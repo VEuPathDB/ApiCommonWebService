@@ -59,7 +59,7 @@ public class PluginMatch {
 
     // create matching context
     StringBuilder context = new StringBuilder();
-    if (beforeContext == null || beforeContext.isBlank()) {
+    if (beforeContext != null && !beforeContext.isBlank()) {
       context.append("...");
       context.append(beforeContext);
     }
@@ -69,7 +69,7 @@ public class PluginMatch {
     context.append(motif);
     context.append("</span>");
 
-    if (beforeContext == null || beforeContext.isBlank()) {
+    if (beforeContext != null && !beforeContext.isBlank()) {
       context.append(afterContext);
       context.append("...");
     }
