@@ -20,6 +20,10 @@ public class SequenceReaderProvider implements AutoCloseable {
     private final Pattern deflinePattern;
     private FastaReader currentStream = null;
     private int currentPos = BUFFER_SIZE;
+
+    /**
+     * The current limit of the buffer. The maximum of buffer size or the number of chars left to the end of the file.
+     */
     private int limit = BUFFER_SIZE;
 
     public SequenceReaderProvider(File input, Pattern defLinePattern) throws FileNotFoundException {
