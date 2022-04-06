@@ -27,12 +27,12 @@ public abstract class StreamingMatchFinder implements MatchFinder {
                                                 FunctionWithException<String, String> orgToProjectId) throws Exception;
 
   /**
-   * Streams each
+   * Delegates to {@link SequenceReaderProvider} to break the file into sequence Readers that are processed individually
+   * in serial by the abstract method findMatchesInSequence. Finds and consumes matches across all sequences.
    * @param fastaFile file to read
    * @param searchPattern pattern to search for
    * @param consumer consumes the matches, writing them to the plugin response
    * @param orgToProjectId function that looks up projectId by organism
-   * @throws Exception
    */
   @Override
   public void findMatches(File fastaFile,
