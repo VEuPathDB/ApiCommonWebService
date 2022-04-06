@@ -31,7 +31,7 @@ public class ApiFedPlugin extends AbstractPlugin {
   public static final String PARAM_PROCESSNAME = "ProcessName";
   public static final String PARAM_PARAMETERS = "Parameters";
   public static final String PARAM_COLUMNS = "Columns";
-  public static final String[] PARAM_ORGANISMS = { "organism","organismSinglePick" };
+  public static final String[] PARAM_ORGANISMS = { "organism","organismSinglePick","organism_select_all" };
   public static final String PARAM_QUERY = "Query";
 
   // Member Variable
