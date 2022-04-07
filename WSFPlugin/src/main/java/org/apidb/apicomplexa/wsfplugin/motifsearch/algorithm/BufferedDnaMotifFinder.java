@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
  * we do not need to support large motifs.
  */
 public class BufferedDnaMotifFinder {
+
   /**
    * @param sequenceInput A FastaReader containing exclusively sequence data.
    * @param pattern       Pattern to match against the sequenceInput.
@@ -72,7 +73,6 @@ public class BufferedDnaMotifFinder {
       }
     } while (bytesRead != -1 && !reachedNewline);
   }
-
 
   /**
    * Utility class used for "Shifting" a CharBuffer without re-creating it for memory efficiency.

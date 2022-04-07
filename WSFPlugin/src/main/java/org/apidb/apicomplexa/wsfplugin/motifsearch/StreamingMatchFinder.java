@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+
 /**
  * Component responsible for finding all matches in a given fasta file. Exposes an abstract interface to stream
  * characters from a sequence reader as opposed to reading the entire sequence into memory.
