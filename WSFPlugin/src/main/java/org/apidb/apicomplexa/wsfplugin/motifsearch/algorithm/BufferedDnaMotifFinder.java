@@ -62,7 +62,7 @@ public class BufferedDnaMotifFinder {
                 final String trailingContext = subsequence.substring(matcher.end(), Math.min(subsequence.length(), matcher.end() + contextLength));
                 final String leadingContext = matcher.start() > contextLength
                         ? subsequence.substring(matcher.start() - contextLength, matcher.start())
-                        : sequenceBuffer.getLeadingContext(matcher, contextLength);
+                        : sequenceBuffer.getLeadingContext(matcher);
                 startPositions.add(matcher.start() + sequenceBuffer.getSequencePosition());
                 motifMatches.add(new MotifMatch.Builder()
                         .match(matcher.group())
@@ -119,7 +119,7 @@ public class BufferedDnaMotifFinder {
         /**
          * Returns leading context from a dedicated buffer that keeps track of previously seen characters.
          */
-        public String getLeadingContext(Matcher matcher, int contextLength) {
+        public String getLeadingContext(Matcher matcher) {
             if (!hasLeadingContext) {
                 return "";
             }

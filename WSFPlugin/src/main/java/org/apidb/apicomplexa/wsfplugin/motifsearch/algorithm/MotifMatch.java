@@ -52,7 +52,6 @@ public class MotifMatch {
         private String leadingContext;
         private String match;
         private String trailingContext;
-        private String sequenceId;
         private int startPos;
         private int endPos;
 
@@ -71,11 +70,6 @@ public class MotifMatch {
 
         public Builder trailingContext(String val) {
             trailingContext = val;
-            return this;
-        }
-
-        public Builder sequenceId(String val) {
-            sequenceId = val;
             return this;
         }
 
