@@ -169,7 +169,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
       try {
-        request.setContextTimeout(Duration.ofSeconds(60L));
+        request.setContextTimeout(Duration.ofSeconds(projectMapper.getTimeout()));
         String url = projectMapper.getWebServiceUrl(projectId);
         ComponentQuery query = new ComponentQuery(projectId, url, request, result);
         queries.add(query);

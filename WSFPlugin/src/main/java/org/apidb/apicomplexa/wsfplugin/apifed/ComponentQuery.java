@@ -1,8 +1,10 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
 import java.net.URI;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apidb.apicomplexa.wsfplugin.wdkquery.WdkQueryPlugin;
 import org.gusdb.wdk.model.ServiceResolver;
 import org.gusdb.wsf.client.ClientModelException;
@@ -64,7 +66,9 @@ public class ComponentQuery extends Thread implements WsfResponseListener {
     String errorMessage = "Thread ran and exited Correctly";
     logger.info("The Thread is running for project " + projectId + ", querying URL " + url);
 
-    try {
+    try (CloseableThreadContext.Instance componentQueryContext = CloseableThreadContext
+        .put("ProjectId", projectId)
+        .put("QueryId", UUID.randomUUID().toString())) {
       long start = System.currentTimeMillis();
 
       WsfClient client = _wsfClientFactory.newClient(this, new URI(url));
