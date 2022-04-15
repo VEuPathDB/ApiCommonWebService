@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.eupathdb.common.model.ProjectMapper;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.wdk.model.Utilities;
