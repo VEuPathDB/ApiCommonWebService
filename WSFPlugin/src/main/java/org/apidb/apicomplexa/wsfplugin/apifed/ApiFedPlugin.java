@@ -1,5 +1,6 @@
 package org.apidb.apicomplexa.wsfplugin.apifed;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -168,6 +169,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
       try {
+        request.setContextTimeout(Duration.ofSeconds(projectMapper.getTimeout()));
         String url = projectMapper.getWebServiceUrl(projectId);
         ComponentQuery query = new ComponentQuery(projectId, url, request, result);
         queries.add(query);
