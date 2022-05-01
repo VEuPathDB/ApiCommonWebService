@@ -12,7 +12,6 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ApiCommonWebService-Installation" depends="ApiCommonWebsite-Installation,
-                                                           ApiCommonWebService-MavenInstallation,
                                                            ApiCommonWebService/WSFPlugin-Installation,
                                                            ApiCommonWebService/HighSpeedSnpSearch-Installation">
 
@@ -22,75 +21,33 @@
 
   </target>
 
-  <target name="ApiCommonWebService-MavenInstallation">
-    <ant target="mavenBuildProject">
-      <property name="project" value="ApiCommonWebService" />
-    </ant>
-    <property name="alreadyBuilt" value="true" />
-  </target>
-
-
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
   <target name="ApiCommonWebService/WSFPlugin-Installation">
-
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService" />
       <property name="component" value="WSFPlugin" />
     </ant>
-
   </target>
 
   <target name="ApiCommonWebService/HighSpeedSnpSearch-Installation">
-
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService" />
       <property name="component" value="HighSpeedSnpSearch" />
     </ant>
-
   </target>
 
   <target name="ApiCommonWebService/Test-Installation">
-
     <ant target="defaultComponentInstall">
       <property name="project" value="ApiCommonWebService" />
       <property name="component" value="Test" />
     </ant>
-
   </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooo  Web Installation  oooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ApiCommonWebService-WebInstallation"
-          depends="ApiCommonWebService-Installation">
-
-  </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ApiCommonWebService-Release">
-
-    <ant target="defaultProjectRelease">
-      <property name="cvsroot" value=":ext:cvs.sanger.ac.uk:/cvsroot/GUS" />
-    </ant>
-  </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ApiCommonWebService-Distributable">
-
-    <copy todir="${targetDir}">
-      <fileset dir="${projectsDir}">
-        <exclude name="**/CVS/*" />
-      </fileset>
-    </copy>
-  </target>
+  <target name="ApiCommonWebService-WebInstallation" depends="ApiCommonWebService-Installation"/>
 
 </project>
-
