@@ -1,11 +1,10 @@
-<project name="Installation" default="Installation" basedir=".">
+<project name="Installation" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <import file="${projectsDir}/ApiCommonWebsite/build.xml" />
-
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
@@ -14,11 +13,9 @@
   <target name="ApiCommonWebService-Installation" depends="ApiCommonWebsite-Installation,
                                                            ApiCommonWebService/WSFPlugin-Installation,
                                                            ApiCommonWebService/HighSpeedSnpSearch-Installation">
-
     <ant target="defaultProjectInstall">
       <property name="project" value="ApiCommonWebService" />
     </ant>
-
   </target>
 
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
