@@ -62,6 +62,8 @@ while(<STDIN>) {
     }
 
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
+      $idPrefix =  $idPrefix=~/^NULL$/ ? '' : $idPrefix;
+      $idSuffix = $idSuffix =~/^NULL$/ ? '' : $idSuffix;
       print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
     }
   }
