@@ -209,10 +209,10 @@ sub transformByOrtholog {
 #    print STDERR "idsql is $idSql and ortho_organism is $OrgToTransTo\n";
     my $sql = <<EOSQL;
     
-    select distinct og.ortho_source_id from 
-	apidbTuning.OrthologousGenes og,
+    select distinct ot.ortho_gene_source_id from 
+	apidbTuning.OrthologousTranscripts ot,
 	($idSql) idsql  
-	where idsql.gene_source_id = og.source_id 
+	where idsql.gene_source_id = ot.source_id 
 	and ortho_organism = '$OrgToTransTo'
 EOSQL
 my $sth = $dbh->prepare($sql);
