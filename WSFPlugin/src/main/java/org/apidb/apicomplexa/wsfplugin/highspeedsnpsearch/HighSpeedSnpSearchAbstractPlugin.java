@@ -40,7 +40,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
 
   private static final String PROPERTY_FILE = "highSpeedSnpSearch-config.xml";
 
-  public static final String PARAM_ORGANISM = "organismSinglePick";
+  public static final String PARAM_ORGANISM = "ngs_snps_organism";
   public static final String PARAM_WEBSVCPATH = "WebServicesPath";
 
   public static final String COLUMN_PROJECT_ID = "ProjectId";
