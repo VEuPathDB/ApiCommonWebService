@@ -49,11 +49,12 @@ public class PluginMatch {
     this.matchCount = matchCount;
     final boolean reversed = strand.equals("r");
     if (reversed) {
-      this.locations = AbstractMotifPlugin.formatLocation(motif.length(), start+1, stop, reversed);
+      // NOT include the reverse strand hits	
+      matchCount=  matchCount -1;
+      // this.locations = AbstractMotifPlugin.formatLocation(motif.length(), start+1, stop, reversed);
     }
     else {
       this.locations = AbstractMotifPlugin.formatLocation(motif.length(), start, stop-1, reversed);
-    }
     this.sequenceId = sequenceId;
     this.sourceId = sequenceId + ":" + this.locations + ":" + strand;
 
@@ -62,8 +63,6 @@ public class PluginMatch {
     if (beforeContext != null && !beforeContext.isBlank()) {
       context.append("...");
       context.append(beforeContext);
-    }
-
     this.matchSequences.add(motif);
     context.append("<span class=\"" + AbstractMotifPlugin.MOTIF_STYLE_CLASS + "\">");
     context.append(motif);
@@ -73,7 +72,10 @@ public class PluginMatch {
       context.append(afterContext);
       context.append("...");
     }
-
+    this.matchCount = matchCount;
     this.sequence = context.toString();
+    }
+    }
   }
+
 }

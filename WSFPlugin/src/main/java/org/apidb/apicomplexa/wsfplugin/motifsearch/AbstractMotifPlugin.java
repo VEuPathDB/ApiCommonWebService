@@ -230,14 +230,16 @@ public abstract class AbstractMotifPlugin extends AbstractPlugin {
   protected void addMatch(PluginMatch match, PluginResponse response,
                           Map<String, Integer> columnOrders) throws PluginModelException, PluginUserException  {
     String[] result = new String[columnOrders.size()];
-    result[columnOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
-    result[columnOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;
-    result[columnOrders.get(COLUMN_LOCATIONS)] = match.locations;
-    result[columnOrders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
-    result[columnOrders.get(COLUMN_SEQUENCE)] = match.sequence;
-    result[columnOrders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
-    // logger.debug("result " + resultToString(result) + "\n");
-    response.addRow(result);
+    if (match.sourceId != null){
+      result[columnOrders.get(COLUMN_PROJECT_ID)] = match.projectId;
+      result[columnOrders.get(COLUMN_SOURCE_ID)] = match.sourceId;
+      result[columnOrders.get(COLUMN_LOCATIONS)] = match.locations;
+      result[columnOrders.get(COLUMN_MATCH_COUNT)] = Integer.toString(match.matchCount);
+      result[columnOrders.get(COLUMN_SEQUENCE)] = match.sequence;
+      result[columnOrders.get(COLUMN_MATCH_SEQUENCES)] = String.join(", ", match.matchSequences);
+      // logger.debug("result " + resultToString(result) + "\n");
+      response.addRow(result);
+    }
   }
 
   public static String formatLocation(int length, int start, int stop, boolean reversed) {
