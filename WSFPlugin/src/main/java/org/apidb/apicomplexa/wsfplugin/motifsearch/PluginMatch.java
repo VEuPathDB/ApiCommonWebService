@@ -55,26 +55,23 @@ public class PluginMatch {
     }
     else {
       this.locations = AbstractMotifPlugin.formatLocation(motif.length(), start, stop-1, reversed);
-    this.sequenceId = sequenceId;
-    this.sourceId = sequenceId + ":" + this.locations + ":" + strand;
+      this.sequenceId = sequenceId;
+      this.sourceId = sequenceId + ":" + this.locations + ":" + strand;
 
-    // create matching context
-    StringBuilder context = new StringBuilder();
-    if (beforeContext != null && !beforeContext.isBlank()) {
-      context.append("...");
-      context.append(beforeContext);
-    this.matchSequences.add(motif);
-    context.append("<span class=\"" + AbstractMotifPlugin.MOTIF_STYLE_CLASS + "\">");
-    context.append(motif);
-    context.append("</span>");
-
-    if (beforeContext != null && !beforeContext.isBlank()) {
-      context.append(afterContext);
-      context.append("...");
-    }
-    this.matchCount = matchCount;
-    this.sequence = context.toString();
-    }
+      // create matching context
+      if (beforeContext != null && !beforeContext.isBlank()) {
+        this.matchSequences.add(motif);
+        this.matchCount = matchCount;
+        this.sequence = new StringBuilder()
+            .append("...")
+            .append(beforeContext)
+            .append("<span class=\"" + AbstractMotifPlugin.MOTIF_STYLE_CLASS + "\">")
+            .append(motif)
+            .append("</span>")
+            .append(afterContext)
+            .append("...")
+            .toString();
+      }
     }
   }
 
