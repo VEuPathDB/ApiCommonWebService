@@ -55,7 +55,6 @@ public class ApiFedPlugin extends AbstractPlugin {
 
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
-    LOG.info("ApiFedPlugin Version : " + ApiFedPlugin.VERSION);
 
     String projectId = request.getProjectId();
     try {
@@ -70,7 +69,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     Map<String, String> context = request.getContext();
     String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
     String paramName = context.get(Utilities.QUERY_CTX_PARAM);
-    LOG.debug("question: " + questionName + ", param: " + paramName);
+    LOG.info("ApiFedPlugin: question: " + questionName + ", param: " + paramName);
 
     Map<String, String> params = request.getParams();
 
