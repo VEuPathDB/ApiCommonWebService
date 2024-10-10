@@ -131,7 +131,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // logger.info("Parameters were processed");
 
     try {
-      logger.debug("context question: '" + questionFullName + "', param: '" + paramName + "', query: '" +
+      logger.info("context question: '" + questionFullName + "', param: '" + paramName + "', query: '" +
           queryName + "', SiteModel=" + request.getProjectId());
 
       // Variable to maintain the order of columns in the result... maintains
