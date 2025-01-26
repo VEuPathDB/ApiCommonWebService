@@ -19,6 +19,44 @@ public class GeneEdaDatasetPlugin extends AbstractPlugin {
 
   private static final Logger LOG = Logger.getLogger(GeneEdaDatasetPlugin.class);
 
+  /** Expect to see JSON similar to the following:
+{
+  "displayName":"Unnamed Analysis",
+  "description":"",
+  "studyId":"DS_b044a3a170",
+  "studyVersion":"",
+  "apiVersion":"",
+  "isPublic":false,
+  "analysisId":"eMqpWrK",
+  "creationTime":"2025-01-24T12:42:07",
+  "modificationTime":"2025-01-24T12:59:40",
+  "numFilters":3,
+  "numComputations":0,
+  "numVisualizations":0,
+  "descriptor":{
+    "subset":{
+      "descriptor":[
+        {"variableId":"VAR_ccdd8654","entityId":"genePhenotypeData","type":"numberRange","min":-8.536320000000002,"max":-4.8442200000000035},
+        {"variableId":"VAR_e105c28b","entityId":"genePhenotypeData","type":"numberRange","min":1190.286,"max":1587.048},
+        {"variableId":"VAR_c33fe1b0","entityId":"genePhenotypeData","type":"numberRange","min":-6,"max":3.9164499999999998}
+      ],
+      "uiSettings":{
+        "genePhenotypeData/VAR_bdc8e679":{
+          "sort":{"columnKey":"value","direction":"asc","groupBySelected":false},
+          "searchTerm":"",
+          "currentPage":1,
+          "rowsPerPage":50
+        }
+      }
+    },
+    "computations":[],
+    "starredVariables":[],
+    "dataTableConfig":{},
+    "derivedVariables":[]
+  }
+}
+   */
+
   private static final String EDA_ANALYSIS_SPEC_PARAM_NAME = "eda_analysis_spec";
 
   @Override
@@ -37,15 +75,16 @@ public class GeneEdaDatasetPlugin extends AbstractPlugin {
   }
 
   private JSONObject getAnalysisSpec(PluginRequest request) throws PluginUserException {
+    String value = request.getParams().get(EDA_ANALYSIS_SPEC_PARAM_NAME);
     try {
-      String value = request.getParams().get(EDA_ANALYSIS_SPEC_PARAM_NAME);
       if (value == null || value.isBlank()) {
         throw new PluginUserException("Request does not include required parameter: " + EDA_ANALYSIS_SPEC_PARAM_NAME);
       }
       return new JSONObject(value);
     }
     catch (JSONException e) {
-      throw new PluginUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME + " must contain a EDA analysis JSON object.");
+      LOG.error("Bad request: " + value);
+      throw new PluginUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME + " must contain a EDA analysis JSON object.", e);
     }
   }
 
