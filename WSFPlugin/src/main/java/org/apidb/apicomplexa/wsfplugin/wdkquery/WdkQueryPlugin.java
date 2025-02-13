@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.fgputil.validation.ValidationLevel;
+import org.gusdb.oauth2.client.ValidatedToken;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -32,6 +33,7 @@ import org.gusdb.wdk.model.query.spec.QueryInstanceSpec;
 import org.gusdb.wdk.model.question.Question;
 import org.gusdb.wdk.model.user.StepContainer;
 import org.gusdb.wdk.model.user.User;
+import org.gusdb.wdk.model.user.UserFactory;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -119,9 +121,9 @@ public class WdkQueryPlugin extends AbstractPlugin {
     // when running a id search, the question holds the name of the search,
     // the param should be empty, and the query holds the name of the id
     // query.
-    String questionFullName = context.get(Utilities.QUERY_CTX_QUESTION);
-    String paramName = context.get(Utilities.QUERY_CTX_PARAM);
-    String queryName = context.get(Utilities.QUERY_CTX_QUERY);
+    String questionFullName = context.get(Utilities.CONTEXT_KEY_QUESTION_FULL_NAME);
+    String paramName = context.get(Utilities.CONTEXT_KEY_PARAM_NAME);
+    String queryName = context.get(Utilities.CONTEXT_KEY_QUERY_FULL_NAME);
 
     if (paramValues.containsKey("Query"))
       paramValues.remove("Query");
@@ -165,10 +167,11 @@ public class WdkQueryPlugin extends AbstractPlugin {
         Thread.currentThread().interrupt();
       }
 
-      // get the user
-      String userId = context.get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
-          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
+      // FIXME: should not go to OAuth to find user again; find a way to avoid this
+      String bearerToken = request.getContext().get(Utilities.CONTEXT_KEY_VALIDATED_TOKEN_OBJECT);
+      UserFactory factory = wdkModel.getUserFactory();
+      ValidatedToken token = factory.validateBearerToken(bearerToken);
+      User user = factory.convertToUser(token);
 
       // web service call to get param values
       if (paramName != null) {

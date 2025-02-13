@@ -40,9 +40,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class GeneEdaDatasetPlugin extends AbstractPlugin {
+public class GeneEdaSubsetPlugin extends AbstractPlugin {
 
-  private static final Logger LOG = Logger.getLogger(GeneEdaDatasetPlugin.class);
+  private static final Logger LOG = Logger.getLogger(GeneEdaSubsetPlugin.class);
 
   /** Expect to see JSON similar to the following:
 {
@@ -95,7 +95,7 @@ public class GeneEdaDatasetPlugin extends AbstractPlugin {
     PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
     // PK column order is: gene_source_id, source_id, project_id
     String[] columns = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" });
-    LOG.info(GeneEdaDatasetPlugin.class.getName() + " instance will return the following columns: " + FormatUtil.join(columns, ", "));
+    LOG.info(GeneEdaSubsetPlugin.class.getName() + " instance will return the following columns: " + FormatUtil.join(columns, ", "));
     return columns;
   }
 
@@ -129,7 +129,7 @@ public class GeneEdaDatasetPlugin extends AbstractPlugin {
 
     // get auth header to pass with EDA requests
     Map<String,String> authHeader = Map.of(HttpHeaders.AUTHORIZATION, "Bearer " +
-        Optional.ofNullable(request.getContext().get(Utilities.QUERY_CTX_USER_TOKEN))
+        Optional.ofNullable(request.getContext().get(Utilities.CONTEXT_KEY_BEARER_TOKEN_STRING))
             .orElseThrow(() -> new PluginUserException("No user bearer token supplied to plugin.")));
 
     WdkModel wdkModel = PluginUtilities.getWdkModel(request);
