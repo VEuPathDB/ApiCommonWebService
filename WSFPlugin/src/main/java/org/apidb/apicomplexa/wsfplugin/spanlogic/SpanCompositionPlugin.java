@@ -19,6 +19,7 @@ import org.gusdb.fgputil.db.SqlUtils;
 import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.runtime.InstanceManager;
 import org.gusdb.fgputil.validation.ValidationLevel;
+import org.gusdb.oauth2.client.ValidatedToken;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.WdkModelException;
@@ -26,7 +27,9 @@ import org.gusdb.wdk.model.WdkUserException;
 import org.gusdb.wdk.model.answer.AnswerValue;
 import org.gusdb.wdk.model.answer.factory.AnswerValueFactory;
 import org.gusdb.wdk.model.user.Step;
+import org.gusdb.wdk.model.user.StepFactory;
 import org.gusdb.wdk.model.user.User;
+import org.gusdb.wdk.model.user.UserFactory;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.gusdb.wsf.plugin.PluginRequest;
@@ -257,10 +260,12 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     String tempA = null, tempB = null;
     try {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
-      // get the answerValue from the step id
-      String userId = request.getContext().get(Utilities.QUERY_CTX_USER);
-      User user = wdkModel.getUserFactory().getUserById(Long.valueOf(userId))
-          .orElseThrow(() -> new PluginModelException("Cannot find user with passed context ID " + userId));
+
+      // FIXME: should not go to OAuth to find user again; find a way to avoid this
+      String bearerToken = request.getContext().get(Utilities.CONTEXT_KEY_VALIDATED_TOKEN_OBJECT);
+      UserFactory factory = wdkModel.getUserFactory();
+      ValidatedToken token = factory.validateBearerToken(bearerToken);
+      User user = factory.convertToUser(token);
 
       // create temp tables from caches
       Flag flag = new Flag();
@@ -411,17 +416,18 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
     WdkUserException e = new WdkUserException("No step with ID " + stepId + " exists for user " + user.getUserId());
-    Step step = wdkModel.getStepFactory().getStepByIdAndUserId(stepId, user.getUserId(),
+    Step step = new StepFactory(user).getStepByIdAndUserId(stepId, user.getUserId(),
         ValidationLevel.RUNNABLE).orElseThrow(() -> e);
-    AnswerValue answerValue = AnswerValueFactory.makeAnswer(step.getRunnable()
+    AnswerValue answerValue = AnswerValueFactory.makeAnswer(Step.getRunnableAnswerSpec(step.getRunnable()
         .getOrThrow(validatedStep -> new WdkModelException(
-            "Step " + stepId + " is not runnable. Validation: " + validatedStep.getValidationBundle().toString())));
+            "Step " + stepId + " is not runnable. Validation: " +
+                validatedStep.getValidationBundle().toString()))));
 
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
 
     // get the table or sql that returns the location information
-    String rcName = answerValue.getAnswerSpec().getQuestion().getRecordClass().getFullName();
+    String rcName = answerValue.getQuestion().getRecordClass().getFullName();
     String locTable;
     if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
       locTable = "(SELECT source_id AS feature_source_id, project_id, " +

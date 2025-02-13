@@ -67,8 +67,8 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     // Splitting the QueryName up for Mapping
     Map<String, String> context = request.getContext();
-    String questionName = context.get(Utilities.QUERY_CTX_QUESTION);
-    String paramName = context.get(Utilities.QUERY_CTX_PARAM);
+    String questionName = context.get(Utilities.CONTEXT_KEY_QUESTION_FULL_NAME);
+    String paramName = context.get(Utilities.CONTEXT_KEY_PARAM_NAME);
     LOG.info("ApiFedPlugin: question: " + questionName + ", param: " + paramName);
 
     Map<String, String> params = request.getParams();
