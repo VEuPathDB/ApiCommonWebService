@@ -82,6 +82,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
 }
    */
 
+  private static final String EDA_DATASET_ID_PARAM_NAME = "eda_dataset_id";
   private static final String EDA_ANALYSIS_SPEC_PARAM_NAME = "eda_analysis_spec";
 
   @Override
@@ -126,6 +127,14 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     JSONObject analysisSpec = getAnalysisSpec(request);
     String datasetId = analysisSpec.getString("studyId"); // misnamed; still need to look up study ID
     JSONArray filters = analysisSpec.getJSONObject("descriptor").getJSONObject("subset").getJSONArray("descriptor");
+
+    // check to make sure dataset ID param matches dataset declared in the analysis spec
+    String datasetParamValue = request.getParams().get(EDA_DATASET_ID_PARAM_NAME);
+    if (!datasetId.equals(datasetParamValue)) {
+      throw new PluginUserException("Value of dataset parameter '" + EDA_DATASET_ID_PARAM_NAME +
+          "' must match 'studyId' property declared in the passed analysis spec ('" + datasetId +
+          "').  Note both values should be dataset IDs, not study IDs (old API).");
+    }
 
     // get auth header to pass with EDA requests
     Map<String,String> authHeader = Map.of(HttpHeaders.AUTHORIZATION, "Bearer " +
