@@ -14,6 +14,7 @@ import java.util.Optional;
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.log4j.Logger;
+import org.eupathdb.common.service.PostValidationUserException;
 import org.eupathdb.websvccommon.wsfplugin.PluginUtilities;
 import org.gusdb.fgputil.ArrayUtil;
 import org.gusdb.fgputil.FormatUtil;
@@ -100,17 +101,17 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     return columns;
   }
 
-  private JSONObject getAnalysisSpec(PluginRequest request) throws PluginUserException {
+  private JSONObject getAnalysisSpec(PluginRequest request) {
     String value = request.getParams().get(EDA_ANALYSIS_SPEC_PARAM_NAME);
     try {
       if (value == null || value.isBlank()) {
-        throw new PluginUserException("Request does not include required parameter: " + EDA_ANALYSIS_SPEC_PARAM_NAME);
+        throw new PostValidationUserException("Request does not include required parameter: " + EDA_ANALYSIS_SPEC_PARAM_NAME);
       }
       return new JSONObject(value);
     }
     catch (JSONException e) {
       LOG.error("Bad request: " + value);
-      throw new PluginUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME + " must contain a EDA analysis JSON object.", e);
+      throw new PostValidationUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME + " must contain a EDA analysis JSON object. " + e.getMessage());
     }
   }
 
@@ -131,7 +132,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     // check to make sure dataset ID param matches dataset declared in the analysis spec
     String datasetParamValue = request.getParams().get(EDA_DATASET_ID_PARAM_NAME);
     if (!datasetId.equals(datasetParamValue)) {
-      throw new PluginUserException("Value of dataset parameter '" + EDA_DATASET_ID_PARAM_NAME +
+      throw new PostValidationUserException("Value of dataset parameter '" + EDA_DATASET_ID_PARAM_NAME +
           "' must match 'studyId' property declared in the passed analysis spec ('" + datasetId +
           "').  Note both values should be dataset IDs, not study IDs (old API).");
     }
@@ -139,18 +140,18 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     // get auth header to pass with EDA requests
     Map<String,String> authHeader = Map.of(HttpHeaders.AUTHORIZATION, "Bearer " +
         Optional.ofNullable(request.getContext().get(Utilities.CONTEXT_KEY_BEARER_TOKEN_STRING))
-            .orElseThrow(() -> new PluginUserException("No user bearer token supplied to plugin.")));
+            .orElseThrow(() -> new PluginModelException("No user bearer token supplied to plugin.")));
 
     WdkModel wdkModel = PluginUtilities.getWdkModel(request);
     String edaBaseUrl = wdkModel.getProperties().get("LOCALHOST") + "/eda";
 
     // validate dataset ID and convert to study ID for call to EDA
     String studyId = findStudyId(edaBaseUrl, datasetId, authHeader)
-        .orElseThrow(() -> new PluginUserException("Dataset with ID '" + datasetId + "' could not be found for this user."));
+        .orElseThrow(() -> new PostValidationUserException("Dataset with ID '" + datasetId + "' could not be found for this user."));
 
     // look up study to find entity containing gene variable (tuple is <entityId,variableId>
     TwoTuple<String,String> entityIdVariableId = findGeneColumnLocation(edaBaseUrl, studyId, authHeader)
-        .orElseThrow(() -> new PluginUserException("Study '" + studyId + "' does not have a variable designated 'gene'."));
+        .orElseThrow(() -> new PostValidationUserException("Study '" + studyId + "' does not have a variable designated 'gene'."));
 
     try (
         // create temporary cache table to hold our gene result
