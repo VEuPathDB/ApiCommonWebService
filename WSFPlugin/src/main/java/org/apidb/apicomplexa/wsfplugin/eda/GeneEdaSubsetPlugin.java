@@ -133,8 +133,8 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     String datasetParamValue = request.getParams().get(EDA_DATASET_ID_PARAM_NAME);
     if (!datasetId.equals(datasetParamValue)) {
       throw new PostValidationUserException("Value of dataset parameter '" + EDA_DATASET_ID_PARAM_NAME +
-          "' must match 'studyId' property declared in the passed analysis spec ('" + datasetId +
-          "').  Note both values should be dataset IDs, not study IDs (old API).");
+          "' ('" + datasetParamValue + "') must match 'studyId' property declared in the passed analysis spec ('" +
+          datasetId + "').  Note both values should be dataset IDs, not study IDs (old API).");
     }
 
     // get auth header to pass with EDA requests
