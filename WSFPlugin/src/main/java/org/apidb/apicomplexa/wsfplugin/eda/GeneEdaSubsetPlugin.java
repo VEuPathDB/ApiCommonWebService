@@ -152,10 +152,10 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     ) {
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(tabularStream));
-      if (reader.ready()) reader.readLine(); // get rid of header
+      if (reader.ready()) reader.readLine(); // skip header line
 
       // insert gene rows into temporary table
-      String insertSql = "INSERT INTO " + tmpTable.getTableName() + "( ? )";
+      String insertSql = "INSERT INTO " + tmpTable.getTableName() + " values ( ? )";
       new SQLRunner(wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(new ArgumentBatch() {
 
         @Override
@@ -169,7 +169,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
 
             @Override
             public Object[] next() {
-              return new Object[] { wrapException(() -> reader.readLine()) };
+              return new Object[] { wrapException(() -> reader.readLine().split("\t")[1]) };
             }
           };
         }
