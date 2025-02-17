@@ -223,7 +223,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
   }
 
   protected InputStream getEdaGeneResult(String edaBaseUrl, String studyId, String entityId, String variableId, JSONArray filters, Map<String, String> authHeader) throws Exception {
-    String url = edaBaseUrl + "/eda/studies/" + studyId + "/entities/" + entityId + "/tabular";
+    String url = edaBaseUrl + "/studies/" + studyId + "/entities/" + entityId + "/tabular";
     JSONObject body = new JSONObject()
         .put("outputVariableIds", new JSONArray().put(variableId))
         .put("filters", filters);
