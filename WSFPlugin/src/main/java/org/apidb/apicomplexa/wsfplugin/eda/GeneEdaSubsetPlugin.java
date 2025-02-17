@@ -218,7 +218,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
       return 0;
     }
     catch (Exception e) {
-      throw new PluginModelException("Could not insert filtered genes into temporaray table", e);
+      throw new PluginModelException("Could not insert filtered genes into temporary table", e);
     }
   }
 
