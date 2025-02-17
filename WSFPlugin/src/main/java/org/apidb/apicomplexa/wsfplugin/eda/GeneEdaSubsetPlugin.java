@@ -224,11 +224,11 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
 
   protected InputStream getEdaGeneResult(String edaBaseUrl, String studyId, String entityId, String variableId, JSONArray filters, Map<String, String> authHeader) throws Exception {
     String url = edaBaseUrl + "/eda/studies/" + studyId + "/entities/" + entityId + "/tabular";
-    String body = new JSONObject()
+    JSONObject body = new JSONObject()
         .put("outputVariableIds", new JSONArray().put(variableId))
-        .put("filters", filters)
-        .toString();
-    return ClientUtil.makeAsyncPostRequest(url, body, "text/tab-separated-values", authHeader).getInputStream();
+        .put("filters", filters);
+    LOG.info("Will make request to EDA at URL: " + url + " with auth header value " + authHeader.get(HttpHeaders.AUTHORIZATION) + " and body: " + body.toString(2));
+    return ClientUtil.makeAsyncPostRequest(url, body.toString(), "text/tab-separated-values", authHeader).getInputStream();
   }
 
   private <T> T readGetRequest(String url, Map<String,String> authHeader, FunctionWithException<JSONObject, T> mapper) throws PluginModelException {
