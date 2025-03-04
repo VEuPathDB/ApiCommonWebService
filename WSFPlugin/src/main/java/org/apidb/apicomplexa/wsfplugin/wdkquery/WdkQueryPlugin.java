@@ -168,7 +168,7 @@ public class WdkQueryPlugin extends AbstractPlugin {
       }
 
       // FIXME: should not go to OAuth to find user again; find a way to avoid this
-      String bearerToken = request.getContext().get(Utilities.CONTEXT_KEY_VALIDATED_TOKEN_OBJECT);
+      String bearerToken = request.getContext().get(Utilities.CONTEXT_KEY_BEARER_TOKEN_STRING);
       UserFactory factory = wdkModel.getUserFactory();
       ValidatedToken token = factory.validateBearerToken(bearerToken);
       User user = factory.convertToUser(token);
