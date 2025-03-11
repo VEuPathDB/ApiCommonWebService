@@ -35,9 +35,6 @@ public class ApiFedPlugin extends AbstractPlugin {
   public static final String[] PARAM_ORGANISMS = { "organism","organismSinglePick","organism_select_all" };
   public static final String PARAM_QUERY = "Query";
 
-  // Member Variable
-  private ProjectMapper projectMapper;
-
   @Override
   public String[] getRequiredParameterNames() {
     return new String[] {};
@@ -56,6 +53,7 @@ public class ApiFedPlugin extends AbstractPlugin {
   @Override
   public int execute(PluginRequest request, PluginResponse response) throws PluginModelException {
 
+    ProjectMapper projectMapper;
     String projectId = request.getProjectId();
     try {
       WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
@@ -84,8 +82,8 @@ public class ApiFedPlugin extends AbstractPlugin {
 
     // determine components that we will call
     try {
-      Set<String> projects = getProjects(params, (paramName != null));
-      List<ComponentQuery> queries = getComponents(request, projects, componentResult);
+      Set<String> projects = getProjects(projectMapper, params, (paramName != null));
+      List<ComponentQuery> queries = getComponents(request, projects, projectMapper, componentResult);
       for (ComponentQuery query : queries) {
         query.start();
       }
@@ -134,7 +132,7 @@ public class ApiFedPlugin extends AbstractPlugin {
     return true;
   }
 
-  private Set<String> getProjects(Map<String, String> params, boolean all) throws WdkModelException {
+  private Set<String> getProjects(ProjectMapper projectMapper, Map<String, String> params, boolean all) throws WdkModelException {
     Set<String> projects = new LinkedHashSet<>();
     if (all) {
       projects.addAll(projectMapper.getFederatedProjects());
@@ -164,7 +162,7 @@ public class ApiFedPlugin extends AbstractPlugin {
   }
 
   private List<ComponentQuery> getComponents(PluginRequest request, Set<String> projects,
-      ComponentResult result) throws PluginModelException {
+      ProjectMapper projectMapper, ComponentResult result) throws PluginModelException {
     List<ComponentQuery> queries = new ArrayList<>();
     for (String projectId : projects) {
       try {
