@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -86,6 +87,9 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
   private static final String EDA_DATASET_ID_PARAM_NAME = "eda_dataset_id";
   private static final String EDA_ANALYSIS_SPEC_PARAM_NAME = "eda_analysis_spec";
 
+  // Hard-coded variable ID which is expected to contain gene IDs
+  private static final String GENE_ID_VARIABLE_ID = "VAR_bdc8e679";
+
   @Override
   public String[] getRequiredParameterNames() {
     return new String[] { EDA_ANALYSIS_SPEC_PARAM_NAME };
@@ -150,8 +154,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
         .orElseThrow(() -> new PostValidationUserException("Dataset with ID '" + datasetId + "' could not be found for this user."));
 
     // look up study to find entity containing gene variable (tuple is <entityId,variableId>
-    TwoTuple<String,String> entityIdVariableId = findGeneColumnLocation(edaBaseUrl, studyId, authHeader)
-        .orElseThrow(() -> new PostValidationUserException("Study '" + studyId + "' does not have a variable designated 'gene'."));
+    TwoTuple<String,String> entityIdVariableId = findGeneColumnLocation(edaBaseUrl, studyId, authHeader);
 
     try (
         // create temporary cache table to hold our gene result
@@ -260,47 +263,43 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
     });
   }
 
-  private Optional<TwoTuple<String, String>> findGeneColumnLocation(String edaBaseUrl, String studyId, Map<String,String> authHeader) throws PluginModelException {
-    return readGetRequest(edaBaseUrl + "/studies/" + studyId, authHeader, responseJson -> {
-      JSONObject rootEntity = responseJson.getJSONObject("study").getJSONObject("rootEntity");
-      return findGeneColumnLocation(rootEntity);
-    });
+  // convenience type
+  private static class VariableList extends ArrayList<TwoTuple<String, String>> {}
+
+  private TwoTuple<String, String> findGeneColumnLocation(String edaBaseUrl, String studyId, Map<String,String> authHeader) throws PluginModelException {
+    JSONObject rootEntity = readGetRequest(edaBaseUrl + "/studies/" + studyId, authHeader,
+        responseJson -> responseJson.getJSONObject("study").getJSONObject("rootEntity"));
+
+    // find gene ID variable and ensure there is only one in this study
+    VariableList foundVars = new VariableList();
+    findGeneColumnLocation(rootEntity, foundVars);
+    if (foundVars.size() != 1) {
+      throw new PostValidationUserException("Study " + studyId + " has " + (foundVars.isEmpty() ? "0" : ">1") +
+          "variables identified as gene IDs (variable ID = " + GENE_ID_VARIABLE_ID + ")");
+    }
+    return foundVars.get(0);
   }
 
-  // if finds variable with provider label "gene", returns tuple of [entityId, variableId]
-  private Optional<TwoTuple<String, String>> findGeneColumnLocation(JSONObject entity) {
+  // finds variables with hard-coded gene variable name; fills foundVars with tuples of [entityId, variableId]
+  private void findGeneColumnLocation(JSONObject entity, VariableList foundVars) {
 
     // try to find gene variable on this entity
     String entityId = entity.getString("id");
     JSONArray vars = entity.getJSONArray("variables");
     for (int i = 0; i < vars.length(); i++) {
       JSONObject var = vars.getJSONObject(i);
-      String variableId = var.getString("id");
-      if (var.has("providerLabel")) {
-        String labelArrayStr = var.getString("providerLabel");
-        JSONArray labels = new JSONArray(labelArrayStr);
-        for (int j = 0; j < labels.length(); j++) {
-          if (labels.getString(j).equals("gene")) {
-            // found it on this entity
-            return Optional.of(new TwoTuple<>(entityId, variableId));
-          }
-        }
+      if (GENE_ID_VARIABLE_ID.equals(var.getString("id"))) {
+        // found the var on this entity
+        foundVars.add(new TwoTuple<>(entityId, GENE_ID_VARIABLE_ID));
       }
     }
 
-    // no luck; now check child entities recursively through the tree
+    // now check child entities recursively through the tree
     JSONArray children = entity.getJSONArray("children");
     for (int i = 0; i < children.length(); i++) {
       JSONObject child = children.getJSONObject(i);
-      Optional<TwoTuple<String, String>> result = findGeneColumnLocation(child);
-      if (result.isPresent()) {
-        // found it in the entity tree
-        return result;
-      }
+      findGeneColumnLocation(child, foundVars);
     }
-
-    // could not find anywhere
-    return Optional.empty();
   }
 
 }
