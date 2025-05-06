@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -106,10 +107,38 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
   }
 
   private JSONObject getAnalysisSpec(PluginRequest request) {
+    String datasetParamValue = request.getParams().get(EDA_DATASET_ID_PARAM_NAME);
+    if (datasetParamValue == null || datasetParamValue.isBlank()) {
+      throw new PostValidationUserException("Parameter '" + EDA_DATASET_ID_PARAM_NAME + "' is required.");
+    }
     String value = request.getParams().get(EDA_ANALYSIS_SPEC_PARAM_NAME);
     try {
       if (value == null || value.isBlank()) {
-        throw new PostValidationUserException("Request does not include required parameter: " + EDA_ANALYSIS_SPEC_PARAM_NAME);
+        // This can happen if the user has not interacted with the EDA UI at all (i.e. no filters have been applied)
+        // Thus, generate an "empty" descriptor for use
+        String creationDate = FormatUtil.formatDateTime(new Date());
+        return new JSONObject()
+          .put("studyId", datasetParamValue)
+          .put("displayName", "Unnamed Analysis")
+          .put("description", "")
+          .put("studyVersion", "")
+          .put("apiVersion", "")
+          .put("isPublic", false)
+          .put("analysisId", "abcdefg")
+          .put("creationTime", creationDate)
+          .put("modificationTime", creationDate)
+          .put("numFilters", 0)
+          .put("numComputations", 0)
+          .put("numVisualizations", 0)
+          .put("descriptor", new JSONObject()
+            .put("subset", new JSONObject()
+              .put("descriptor", new JSONArray())
+              .put("uiSettings", new JSONObject()))
+            .put("computations", new JSONArray())
+            .put("starredVariables", new JSONArray())
+            .put("dataTableConfig", new JSONObject())
+            .put("derivedVariables", new JSONArray()));
+
       }
       return new JSONObject(value);
     }
