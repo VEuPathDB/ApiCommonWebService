@@ -97,7 +97,7 @@ public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
         // can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
         String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + newline +
-            "from webready.GeneAttributes g " + newline + "where g.source_id is not null" + newline +
+            "from apidbtuning.geneattributes g " + newline + "where g.source_id is not null" + newline +
             " and g.organism = '" + organism + "'";
 
         ResultSet rs = null;

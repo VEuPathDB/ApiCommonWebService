@@ -47,10 +47,10 @@ my $userGeneListQuery;
 
 
 if (lc($useOrthology) eq "yes"){
-    $userGeneListQuery = "select distinct ga.orthomcl_name, \'all\' as organism  from webready.GeneAttributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+    $userGeneListQuery = "select distinct ga.orthomcl_name, \'all\' as organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
     
 }else {
-    $userGeneListQuery = "select distinct ga.source_id, ga. organism  from webready.GeneAttributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
+    $userGeneListQuery = "select distinct ga.source_id, ga. organism  from apidbtuning.geneattributes  ga, (" . $idSql . ")id where id.gene_source_id = ga.source_id";
     
 }
 
