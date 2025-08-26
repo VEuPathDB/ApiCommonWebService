@@ -70,7 +70,7 @@ public class FindChipSnpsByGeneIdsPlugin extends FindChipPolymorphismsPlugin {
       else {
         DataSource dataSource = wdkModel.getAppDb().getDataSource();
         String sql = "select g.sequence_id, g.start_min, g.end_max" + NL +
-            "from apidbtuning.geneattributes g, " + NL + "(" + gene_list_dataset + ") user_genes" +
+            "from webready.GeneAttributes g, " + NL + "(" + gene_list_dataset + ") user_genes" +
             NL + "where g.source_id = user_genes.gene_source_id" + NL +
             "order by g.sequence_id, g.start_min, g.end_max";
 
