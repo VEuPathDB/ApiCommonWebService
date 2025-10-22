@@ -267,7 +267,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
     try {
       String sql =
           "select attrs.source_id \n" +
-          "from webready.GeneId alias, webready.GeneAttributes attrs \n" +
+          "from webready.GeneId_p alias, webready.GeneAttributes_p attrs \n" +
           "where alias.Id = ? \n" +
           "  and alias.gene = attrs.source_id \n" +
           "  and alias.unique_mapping = 1 \n" +

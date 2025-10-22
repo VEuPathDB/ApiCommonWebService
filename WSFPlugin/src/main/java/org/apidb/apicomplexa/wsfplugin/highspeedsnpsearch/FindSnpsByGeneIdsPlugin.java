@@ -67,7 +67,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
         DataSource dataSource = wdkModel.getAppDb().getDataSource();
         String newline = System.lineSeparator();
         String sql = "select g.sequence_id, g.start_min, g.end_max" + newline +
-            "from webready.GeneAttributes g, " + newline + "(" + gene_list_dataset + ") user_genes" +
+            "from webready.GeneAttributes_p g, " + newline + "(" + gene_list_dataset + ") user_genes" +
             newline + "where g.source_id = user_genes.gene_source_id" + newline +
             "order by g.sequence_id, g.start_min, g.end_max";
         ResultSet rs = null;

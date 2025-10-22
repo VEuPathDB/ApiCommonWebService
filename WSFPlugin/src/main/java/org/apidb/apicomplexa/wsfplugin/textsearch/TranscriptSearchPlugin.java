@@ -231,7 +231,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         "select source_id, gene_source_id, '" + projectId + "' as project_id, 'Y' as matched_result, count(*) as max_score,  \n"
             + "       apidb.tab_to_string(set(cast(collect(table_name) AS apidb.varchartab)), ', ')  fields_matched \n"
             + "from (  SELECT distinct min(trans.source_id) as source_id, b.gene_source_id, replace(external_database_name, '_RSRC', '') as table_name \n"
-            + "        FROM ApidbTuning.Blastp b, webready.TranscriptAttributes trans  \n"
+            + "        FROM ApidbTuning.Blastp b, webready.TranscriptAttributes_p trans  \n"
             + "        WHERE ((CONTAINS(b.description, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
              + "          AND 'Blastp' in (" + fields + ") \n"
             + "          AND b.pvalue_exp < ? \n"
@@ -240,7 +240,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
             + "          GROUP BY b.gene_source_id, external_database_name \n"
             + "      UNION ALL  \n"
             + "        SELECT min(trans.source_id) as source_id, gd.source_id as gene_source_id, gd.field_name as table_name \n"
-            + "        FROM Apidb.GeneDetail gd, webready.TranscriptAttributes trans\n"
+            + "        FROM Apidb.GeneDetail gd, webready.TranscriptAttributes_p trans\n"
             + "        WHERE ((CONTAINS(gd.content, ?, 1) > 0) OR (" + wildcardExpr + ") )  \n"
             + "         AND gd.field_name in (" + fields + ") \n"
             + "         AND trans.taxon_id in (" + organisms + ") \n"
@@ -267,7 +267,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
     try {
       String sql = new String(
           "select attrs.source_id as gene_source_id\n"
-              + "from webready.GeneId alias, webready.GeneAttributes attrs \n"
+              + "from webready.GeneId_p alias, webready.GeneAttributes_p attrs \n"
               + "where alias.Id = ? \n"
               + "  and alias.gene = attrs.source_id \n"
               + "  and alias.unique_mapping = 1 \n"
