@@ -89,7 +89,7 @@ public class FindGenesWithChipSnpCharsPlugin extends FindChipPolymorphismsPlugin
 
         // can interpolate organism into sql w/o fear of injection because it came from a vocabulary param
         String sql = "select g.sequence_id, g.start_min, g.end_max, g.source_id" + NL +
-            "from webready.GeneAttributes g " + NL + "where g.source_id is not null" + NL +
+            "from webready.GeneAttributes_p g " + NL + "where g.source_id is not null" + NL +
             " and g.organism = '" + organism + "'";
 
         ResultSet rs = null;
