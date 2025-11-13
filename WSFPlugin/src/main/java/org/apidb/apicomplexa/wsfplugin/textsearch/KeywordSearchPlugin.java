@@ -110,7 +110,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
             pureWildcard);
 
         CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
-        ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
+        ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql, SqlUtils.Autocommit.OFF);
         if (!pureWildcard) {
           ps.setString(1, oracleTextExpression);
         }
@@ -144,7 +144,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         // }
 
         WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-        ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
+        ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql, SqlUtils.Autocommit.OFF);
         if (!pureWildcard) {
           ps.setString(1, oracleTextExpression);
           ps.setString(2, oracleTextExpression);
@@ -279,7 +279,7 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
         DatabaseInstance platform = wdkModel.getAppDb();
         DataSource dataSource = platform.getDataSource();
 
-        validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
+        validationQuery = SqlUtils.getPreparedStatement(dataSource, sql, SqlUtils.Autocommit.OFF);
 
         for (String sourceId : commentResults.keySet()) {
           logger.debug("validating sourceId \"" + sourceId + "\"");

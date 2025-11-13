@@ -106,7 +106,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 	  sql = getCommentQuery(projectId, commentRecords, communityAnnotationRecords, oracleTextExpression);
 	    
 	    CommentFactory commentFactory = InstanceManager.getInstance(CommentFactory.class, projectId);
-	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql);
+	    ps = SqlUtils.getPreparedStatement(commentFactory.getCommentDataSource(), sql, SqlUtils.Autocommit.OFF);
 	    ps.setString(1, oracleTextExpression);
 	    BufferedResultContainer commentContainer = new BufferedResultContainer();
 	    textSearch(commentContainer, ps, "gene_source_id", sql, "commentTextSearch");
@@ -133,7 +133,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
 		maxPvalue = "0";
 	    }
 	    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, projectId);
-	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql);
+	    ps = SqlUtils.getPreparedStatement(wdkModel.getAppDb().getDataSource(), sql, SqlUtils.Autocommit.OFF);
 	    ps.setString(1, oracleTextExpression);
 	    ps.setFloat(2, Float.valueOf(maxPvalue));
 	    ps.setString(3, oracleTextExpression);
@@ -280,7 +280,7 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
         DatabaseInstance platform = wdkModel.getAppDb();
         DataSource dataSource = platform.getDataSource();
 
-        validationQuery = SqlUtils.getPreparedStatement(dataSource, sql);
+        validationQuery = SqlUtils.getPreparedStatement(dataSource, sql, SqlUtils.Autocommit.OFF);
 
         for (String geneSourceId : commentResults.keySet()) {
           logger.debug("validating sourceId \"" + geneSourceId + "\"");
