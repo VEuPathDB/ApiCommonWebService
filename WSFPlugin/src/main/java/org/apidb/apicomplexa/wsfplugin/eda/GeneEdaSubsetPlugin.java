@@ -187,7 +187,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
 
     try (
         // create temporary cache table to hold our gene result
-        TemporaryTable tmpTable = new TemporaryTable(wdkModel, tableName -> "CREATE TABLE " + tableName + " ( gene_source_id VARCHAR(20) )");
+        TemporaryTable tmpTable = new TemporaryTable(wdkModel, (schema, tableName) -> "CREATE TABLE " + schema + tableName + " ( gene_source_id VARCHAR(20) )");
 
         // make request to EDA; if fails, then don't need to be inside SQLRunner
         InputStream tabularStream = getEdaGeneResult(edaBaseUrl, studyId, entityIdVariableId.getFirst(), entityIdVariableId.getSecond(), filters, authHeader)
