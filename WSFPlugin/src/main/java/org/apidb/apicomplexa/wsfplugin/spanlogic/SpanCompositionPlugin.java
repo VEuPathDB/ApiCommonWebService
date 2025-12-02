@@ -412,12 +412,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return builder.toString();
   }
 
-  private String getSpanSql(WdkModel wdkModel, User user, Map<String, String> params, String[] region,
+  private String getSpanSql(WdkModel wdkModel, User requestingUser, Map<String, String> params, String[] region,
       String suffix, Flag flag) throws WdkModelException, WdkUserException {
     int stepId = Integer.parseInt(params.get(PARAM_SPAN_PREFIX + suffix));
-    WdkUserException e = new WdkUserException("No step with ID " + stepId + " exists for user " + user.getUserId());
-    Step step = new StepFactory(user).getStepByIdAndUserId(stepId, user.getUserId(),
-        ValidationLevel.RUNNABLE).orElseThrow(() -> e);
+    Step step = new StepFactory(requestingUser).getStepById(stepId,
+        ValidationLevel.RUNNABLE).orElseThrow(() -> new WdkUserException("No step with ID " + stepId + " exists"));
     AnswerValue answerValue = AnswerValueFactory.makeAnswer(Step.getRunnableAnswerSpec(step.getRunnable()
         .getOrThrow(validatedStep -> new WdkModelException(
             "Step " + stepId + " is not runnable. Validation: " +
