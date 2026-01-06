@@ -342,7 +342,7 @@ sub get_neighbors_perl {
 
     # get expression profiles of the profile set
     my $sql = <<EOSQL;
-      select source_id || '\t' || max(profile_as_string)
+      select concat(source_id, '\t', max(profile_as_string))
       from apidbTuning.profile
       where profile_set_name like '$profileset'
         and profile_type = 'values'
