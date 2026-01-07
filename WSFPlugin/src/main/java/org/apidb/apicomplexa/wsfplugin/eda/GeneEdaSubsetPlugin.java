@@ -24,7 +24,7 @@ import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.Tuples.TwoTuple;
 import org.gusdb.fgputil.client.ClientUtil;
 import org.gusdb.fgputil.db.runner.SQLRunner;
-import org.gusdb.fgputil.db.runner.SQLRunner.ArgumentBatch;
+import org.gusdb.fgputil.db.runner.ArgumentBatch;
 import org.gusdb.fgputil.db.runner.SQLRunnerException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 import org.gusdb.wdk.model.Utilities;
