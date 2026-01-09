@@ -10,18 +10,6 @@ import org.apache.log4j.Logger;
 import org.eupathdb.common.service.PostValidationUserException;
 import org.gusdb.fgputil.Tuples.TwoTuple;
 import org.gusdb.fgputil.client.ClientUtil;
-import org.gusdb.fgputil.db.runner.SQLRunner;
-import org.gusdb.fgputil.db.runner.ArgumentBatch;
-import org.gusdb.fgputil.db.runner.SQLRunnerException;
-import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
-import org.gusdb.wdk.model.Utilities;
-import org.gusdb.wdk.model.WdkModel;
-import org.gusdb.wdk.model.dbms.TemporaryTable;
-import org.gusdb.wdk.model.query.SqlQuery;
-import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
-import org.gusdb.wdk.model.record.RecordClass;
-import org.gusdb.wsf.plugin.AbstractPlugin;
-import org.gusdb.wsf.plugin.DelayedResultException;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -95,7 +83,7 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
   }
 
   @Override
-  protected Boolean filterRow(String[] edaRow) {
+  protected Boolean isRetainedRow(String[] edaRow) {
     return true;
   }
 

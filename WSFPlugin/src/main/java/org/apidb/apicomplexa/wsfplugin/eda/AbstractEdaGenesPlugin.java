@@ -99,6 +99,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
   private static final String[] EMPTY_ARRAY = new String[0];
 
+  protected WdkModel _wdkModel;
   protected String[] _responseColumnNames;
   protected String _datasetId;
   protected JSONObject _analysisSpec;
@@ -123,7 +124,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
   protected abstract InputStream getEdaTabularDataStream(String edaBaseUrl, Map<String, String> authHeader) throws Exception;
 
-  protected abstract Boolean filterRow(String[] edaRow);
+  protected abstract Boolean isRetainedRow(String[] edaRow);
 
   protected abstract Object[] convertToTmpTableRow(String[] edaRow);
 
@@ -210,8 +211,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         Optional.ofNullable(request.getContext().get(Utilities.CONTEXT_KEY_BEARER_TOKEN_STRING))
             .orElseThrow(() -> new PluginModelException("No user bearer token supplied to plugin.")));
 
-    WdkModel wdkModel = PluginUtilities.getWdkModel(request);
-    Map<String,String> props = wdkModel.getProperties();
+    _wdkModel = PluginUtilities.getWdkModel(request);
+    Map<String,String> props = _wdkModel.getProperties();
     String edaBaseUrl = props.get("LOCALHOST") + props.get("EDA_SERVICE_URL");
 
     // validate dataset ID and convert to study ID for calls to EDA
@@ -229,7 +230,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
     try (
         // create temporary cache table to hold our gene result
-        TemporaryTable tmpTable = new TemporaryTable(wdkModel, (schema, tableName) -> String.format(createTmpTableSql, schema, tableName));
+        TemporaryTable tmpTable = new TemporaryTable(_wdkModel, (schema, tableName) -> String.format(createTmpTableSql, schema, tableName));
         // make request to EDA and do any conversion to get a tabular stream
         InputStream tabularStream = getEdaTabularDataStream(edaBaseUrl, authHeader)
     ) {
@@ -245,11 +246,11 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       // insert gene rows into temporary table
       String placeholders = tmpTableColumns.stream().map(c -> "?").collect(Collectors.joining(", "));
       String insertSql = "INSERT INTO " + tmpTable.getTableName() + " values ( " + placeholders + " )";
-      new SQLRunner(wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(
-          new FilteredArgumentBatch(reader, this::filterRow, this::convertToTmpTableRow, tmpTableColumns.size()));
+      new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(
+          new FilteredArgumentBatch(reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size()));
 
       // once temporary table is written, join with transcripts to create transcript result
-      String rawSql = ((SqlQuery)wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
+      String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
       String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, rownum as dataset_value_order from " + tmpTable.getTableName()));
 
       // join back to temp table to pick up dynamic cols, but only if necessary
@@ -260,7 +261,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
             " where gt.gene_source_id = tmp.gene_source_id";
       }
 
-      new SQLRunner(wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
+      new SQLRunner(_wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
         /*
           SQL query will return:
             <column name="source_id"/>
