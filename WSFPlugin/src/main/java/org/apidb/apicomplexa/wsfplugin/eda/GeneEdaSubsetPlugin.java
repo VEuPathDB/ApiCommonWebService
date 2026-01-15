@@ -69,7 +69,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
         {"variableId":"VAR_c33fe1b0","entityId":"genePhenotypeData","type":"numberRange","min":-6,"max":3.9164499999999998}
       ],
       "uiSettings":{
-        "genePhenotypeData/VAR_bdc8e679":{
+        "genePhenotypeData/VEUPATHDB_GENE_ID":{
           "sort":{"columnKey":"value","direction":"asc","groupBySelected":false},
           "searchTerm":"",
           "currentPage":1,
@@ -89,7 +89,7 @@ public class GeneEdaSubsetPlugin extends AbstractPlugin {
   private static final String EDA_ANALYSIS_SPEC_PARAM_NAME = "eda_analysis_spec";
 
   // Hard-coded variable ID which is expected to contain gene IDs
-  private static final String GENE_ID_VARIABLE_ID = "VAR_bdc8e679";
+  private static final String GENE_ID_VARIABLE_ID = "VEUPATHDB_GENE_ID";
 
   @Override
   public String[] getRequiredParameterNames() {
