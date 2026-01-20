@@ -19,7 +19,7 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
   private static final Logger LOG = Logger.getLogger(GeneEdaSubsetPlugin.class);
 
   // Hard-coded variable ID which is expected to contain gene IDs
-  private static final String GENE_ID_VARIABLE_ID = "VAR_bdc8e679";
+  private static final String GENE_ID_VARIABLE_ID = "VEUPATHDB_GENE_ID";
 
   @Override
   protected InputStream getEdaTabularDataStream(String edaBaseUrl, Map<String, String> authHeader) throws Exception {
