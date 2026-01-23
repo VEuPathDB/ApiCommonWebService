@@ -245,19 +245,19 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
       // insert gene rows into temporary table
       String placeholders = tmpTableColumns.stream().map(c -> "?").collect(Collectors.joining(", "));
-      String insertSql = "INSERT INTO " + tmpTable.getTableName() + " values ( " + placeholders + " )";
+      String insertSql = "INSERT INTO " + tmpTable.getTableNameWithSchema() + " values ( " + placeholders + " )";
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(
           new FilteredArgumentBatch(reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size()));
 
       // once temporary table is written, join with transcripts to create transcript result
       String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
-      String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, rownum as dataset_value_order from " + tmpTable.getTableName()));
+      String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, rownum as dataset_value_order from " + tmpTable.getTableNameWithSchema()));
 
       // join back to temp table to pick up dynamic cols, but only if necessary
       if (!dynAttrs.isEmpty()) {
         geneTranscriptsSql = "select gt.*, " +
             dynAttrs.stream().map(col -> "tmp." + col).collect(Collectors.joining(", ")) +
-            " from (" + geneTranscriptsSql + ") gt, " + tmpTable.getTableName() + " tmp" +
+            " from (" + geneTranscriptsSql + ") gt, " + tmpTable.getTableNameWithSchema() + " tmp" +
             " where gt.gene_source_id = tmp.gene_source_id";
       }
 
