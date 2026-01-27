@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,8 +30,8 @@ import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.ListBuilder;
 import org.gusdb.fgputil.client.ClientUtil;
-import org.gusdb.fgputil.db.runner.SQLRunner;
 import org.gusdb.fgputil.db.runner.ArgumentBatch;
+import org.gusdb.fgputil.db.runner.SQLRunner;
 import org.gusdb.fgputil.db.runner.SQLRunnerException;
 import org.gusdb.fgputil.functional.FunctionalInterfaces.FunctionWithException;
 import org.gusdb.fgputil.functional.Functions;
@@ -132,7 +131,12 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
   public String[] getColumns(PluginRequest request) throws PluginModelException {
     RecordClass recordClass = PluginUtilities.getRecordClass(request);
     PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
-    Set<String> dynAttrs = PluginUtilities.getContextQuestion(request).getDynamicAttributeFieldMap().keySet();
+    List<String> dynAttrs = PluginUtilities
+        .getContextQuestion(request)
+        .getDynamicAttributeFieldMap()
+        .keySet().stream()
+        .filter(s -> s.equalsIgnoreCase("wdk_weight"))
+        .collect(Collectors.toList());
     // PK column order is: gene_source_id, source_id, project_id
     _responseColumnNames = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" }, dynAttrs.toArray(new String[0]));
     LOG.info(GeneEdaSubsetPlugin.class.getName() + " instance will return the following columns: " + FormatUtil.join(_responseColumnNames, ", "));
