@@ -254,7 +254,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
       // once temporary table is written, join with transcripts to create transcript result
       String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
-      String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, rownum as dataset_value_order from " + tmpTable.getTableNameWithSchema()));
+      String rownumCol = _wdkModel.getAppDb().getPlatform().getRowNumberColumn();
+      String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, " + rownumCol + " as dataset_value_order from " + tmpTable.getTableNameWithSchema()));
 
       // join back to temp table to pick up dynamic cols, but only if necessary
       if (!_filteredDynamicAttributeNames.isEmpty()) {
