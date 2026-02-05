@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -100,6 +99,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
   protected WdkModel _wdkModel;
   protected String[] _responseColumnNames;
+  protected List<String> _filteredDynamicAttributeNames; // dyn attrs not including wdk_weight
   protected String _datasetId;
   protected JSONObject _analysisSpec;
   protected Map<String,String> _additionalParamValues;
@@ -131,14 +131,14 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
   public String[] getColumns(PluginRequest request) throws PluginModelException {
     RecordClass recordClass = PluginUtilities.getRecordClass(request);
     PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
-    List<String> dynAttrs = PluginUtilities
+    _filteredDynamicAttributeNames = PluginUtilities
         .getContextQuestion(request)
         .getDynamicAttributeFieldMap()
         .keySet().stream()
         .filter(s -> !s.equals(Utilities.COLUMN_WEIGHT))
         .collect(Collectors.toList());
     // PK column order is: gene_source_id, source_id, project_id
-    _responseColumnNames = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" }, dynAttrs.toArray(new String[0]));
+    _responseColumnNames = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" }, _filteredDynamicAttributeNames.toArray(new String[0]));
     LOG.info(GeneEdaSubsetPlugin.class.getName() + " instance will return the following columns: " + FormatUtil.join(_responseColumnNames, ", "));
     return _responseColumnNames;
   }
@@ -224,8 +224,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         .orElseThrow(() -> new PostValidationUserException("Dataset with ID '" + _datasetId + "' could not be found for this user."));
 
     // gather columns for temporary table
-    List<String> dynAttrs = new ArrayList<>(PluginUtilities.getContextQuestion(request).getDynamicAttributeFieldMap().keySet());
-    List<String> tmpTableColumns = new ListBuilder<String>("gene_source_id").addAll(dynAttrs).toList();
+    List<String> tmpTableColumns = new ListBuilder<String>("gene_source_id").addAll(_filteredDynamicAttributeNames).toList();
 
     // create SQL for table to store temporary gene IDs and dynamic columns
     String createTmpTableSql = tmpTableColumns.stream()
@@ -258,9 +257,9 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, rownum as dataset_value_order from " + tmpTable.getTableNameWithSchema()));
 
       // join back to temp table to pick up dynamic cols, but only if necessary
-      if (!dynAttrs.isEmpty()) {
+      if (!_filteredDynamicAttributeNames.isEmpty()) {
         geneTranscriptsSql = "select gt.*, " +
-            dynAttrs.stream().map(col -> "tmp." + col).collect(Collectors.joining(", ")) +
+            _filteredDynamicAttributeNames.stream().map(col -> "tmp." + col).collect(Collectors.joining(", ")) +
             " from (" + geneTranscriptsSql + ") gt, " + tmpTable.getTableNameWithSchema() + " tmp" +
             " where gt.gene_source_id = tmp.gene_source_id";
       }
