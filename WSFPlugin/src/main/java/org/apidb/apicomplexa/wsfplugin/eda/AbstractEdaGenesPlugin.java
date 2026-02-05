@@ -135,7 +135,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         .getContextQuestion(request)
         .getDynamicAttributeFieldMap()
         .keySet().stream()
-        .filter(s -> s.equalsIgnoreCase("wdk_weight"))
+        .filter(s -> !s.equals(Utilities.COLUMN_WEIGHT))
         .collect(Collectors.toList());
     // PK column order is: gene_source_id, source_id, project_id
     _responseColumnNames = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" }, dynAttrs.toArray(new String[0]));
