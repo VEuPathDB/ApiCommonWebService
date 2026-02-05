@@ -368,6 +368,7 @@ EOSQL
 
         if (!($eltId =~ /\S/)) {
             print STDERR "queryByExpressionProfile.pl: ERROR - missing element_id at line '$line'\n";
+	    next;  # postgres sometimes returns bogus empty rows.  skip them.
         }
 
         # Determine whether this expression profile should be included in the result set
