@@ -231,6 +231,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         .map(col -> col +" VARCHAR(30)")
         .collect(Collectors.joining(", ", "CREATE TABLE %s%s ( ", " )"));
 
+    LOG.info("Creating temporary table with SQL: " + createTmpTableSql);
+
     try (
         // create temporary cache table to hold our gene result
         TemporaryTable tmpTable = new TemporaryTable(_wdkModel, (schema, tableName) -> String.format(createTmpTableSql, schema, tableName));
@@ -249,8 +251,13 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       // insert gene rows into temporary table
       String placeholders = tmpTableColumns.stream().map(c -> "?").collect(Collectors.joining(", "));
       String insertSql = "INSERT INTO " + tmpTable.getTableNameWithSchema() + " values ( " + placeholders + " )";
+
+      LOG.info("Will insert rows into temporary table with SQL: " + insertSql);
+
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(
           new FilteredArgumentBatch(reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size()));
+
+      LOG.info("All rows successfully written to temporary table.");
 
       // once temporary table is written, join with transcripts to create transcript result
       String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
@@ -368,7 +375,11 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
     @Override
     public Integer[] getParameterTypes() {
-      return new Integer[] { Types.VARCHAR };
+      Integer[] types = new Integer[_expectedDbRowLength];
+      for (int i = 0; i < _expectedDbRowLength; i++) {
+        types[i] = Types.VARCHAR;
+      }
+      return types;
     }
   }
 

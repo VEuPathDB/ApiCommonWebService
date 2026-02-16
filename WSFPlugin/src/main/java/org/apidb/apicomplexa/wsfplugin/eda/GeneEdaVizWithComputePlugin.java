@@ -12,6 +12,8 @@ import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.log4j.Logger;
+import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.client.ClientUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,6 +24,8 @@ import com.fasterxml.jackson.core.JsonToken;
 
 public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
+  private static final Logger LOG = Logger.getLogger(GeneEdaVizWithComputePlugin.class);
+
   private static class Point {
 
     String pointId;
@@ -31,6 +35,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     @Override
     public String toString() {
       // column order must match dynamic column order defined in the model XML
+      //LOG.info("Returning converted row [" + pointId + ", " + effectSize + ", " + pValue + "]");
       return pointId + "\t" + effectSize + "\t" + pValue;
     }
   }
@@ -160,6 +165,8 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
         .put("config", new JSONObject());
 
     _tmpFile = Files.createTempFile(_wdkModel.getModelConfig().getWdkTempDir(), "eda-" + computeName + "-" + vizName, ".tab");
+    IoUtil.openPosixPermissions(_tmpFile);
+    LOG.info("Wrote temp file to contain EDA output as tabular: " + _tmpFile);
 
     // make request to EDA for volcano plot data, convert JSON response to tabular, and write to temporary file
     try (InputStream in = ClientUtil
@@ -317,13 +324,21 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
   @Override
   protected Boolean isRetainedRow(String[] edaRow) {
-    double effectSize = Math.abs(Double.valueOf(edaRow[1]));
-    double pValue = Math.abs(Double.valueOf(edaRow[2]));
-    return pValue <= _significanceThreshold && effectSize >= _effectSizeThreshold;
+    try {
+      //LOG.info("Checking if edaRow of size " + edaRow.length + " should be retained, array = [ " + String.join(", ", edaRow) + " ]");
+      double effectSize = Math.abs(Double.valueOf(edaRow[1]));
+      double pValue = Math.abs(Double.valueOf(edaRow[2]));
+      return pValue <= _significanceThreshold && effectSize >= _effectSizeThreshold;
+    }
+    catch (NumberFormatException e) {
+      LOG.warn("Skipping EDA output row in which effectSize or pValue property is not a valid double value. Row = [ " + String.join(", ", edaRow) + " ]", e);
+      return false;
+    }
   }
 
   @Override
   protected Object[] convertToTmpTableRow(String[] edaRow) {
+    //LOG.info("Converting edaRow of size " + edaRow.length + " from temporary file (tabular), array = [ " + String.join(", ", edaRow) + " ]");
     return new Object[] { edaRow[0], edaRow[1], edaRow[2] };
   }
 
