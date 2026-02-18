@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.client.ClientUtil;
+import org.gusdb.wsf.plugin.PluginModelException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -110,9 +111,8 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
         .getJSONObject("descriptor")
         .getJSONObject("subset")
         .getJSONArray("descriptor");
-    JSONObject computeJson = _analysisSpec
-        .getJSONObject("descriptor")
-        .getJSONArray("computations").getJSONObject(0);
+    JSONObject computeJson = findVolcanoComputation(
+        _analysisSpec.getJSONObject("descriptor").getJSONArray("computations"));
     JSONObject computeDescriptor = computeJson.getJSONObject("descriptor");
     String computeName = computeDescriptor.getString("type");
     JSONObject computeConfig = computeDescriptor.getJSONObject("configuration");
@@ -125,7 +125,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
     // values to be used later to filter returned rows
     _effectSizeThreshold = vizConfig.getDouble("effectSizeThreshold");
-    _significanceThreshold = vizConfig.getDouble("effectSizeThreshold");
+    _significanceThreshold = vizConfig.getDouble("significanceThreshold");
 
     // make request with JSON like
     /**
@@ -340,6 +340,31 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
   protected Object[] convertToTmpTableRow(String[] edaRow) {
     //LOG.info("Converting edaRow of size " + edaRow.length + " from temporary file (tabular), array = [ " + String.join(", ", edaRow) + " ]");
     return new Object[] { edaRow[0], edaRow[1], edaRow[2] };
+  }
+
+  /**
+   * Find the computation containing a volcano plot visualization with
+   * the threshold configuration this plugin requires.
+   */
+  private static JSONObject findVolcanoComputation(JSONArray computations) throws PluginModelException {
+    for (int i = 0; i < computations.length(); i++) {
+      JSONObject comp = computations.getJSONObject(i);
+      JSONArray vizs = comp.optJSONArray("visualizations");
+      if (vizs == null) continue;
+      for (int j = 0; j < vizs.length(); j++) {
+        JSONObject vizDesc = vizs.getJSONObject(j).optJSONObject("descriptor");
+        if (vizDesc == null) continue;
+        if (!"volcanoplot".equals(vizDesc.optString("type"))) continue;
+        JSONObject vizConfig = vizDesc.optJSONObject("configuration");
+        if (vizConfig == null) continue;
+        if (vizConfig.has("effectSizeThreshold") && vizConfig.has("significanceThreshold")) {
+          return comp;
+        }
+      }
+    }
+    throw new PluginModelException(
+      "Analysis spec does not contain a computation with a volcano plot visualization " +
+      "configured with effectSizeThreshold and significanceThreshold.");
   }
 
 }
