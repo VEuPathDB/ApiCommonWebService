@@ -186,7 +186,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
     }
     catch (JSONException e) {
       LOG.error("Bad request: " + value);
-      throw new PostValidationUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME + " must contain a EDA analysis JSON object. " + e.getMessage());
+      throw new PostValidationUserException("Parameter " + EDA_ANALYSIS_SPEC_PARAM_NAME +
+          " must contain a EDA analysis JSON object. " + e.getMessage());
     }
   }
 
@@ -302,6 +303,9 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       });
 
       return 0;
+    }
+    catch (DelayedResultException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new PluginModelException("Could not insert filtered genes into temporary table", e);

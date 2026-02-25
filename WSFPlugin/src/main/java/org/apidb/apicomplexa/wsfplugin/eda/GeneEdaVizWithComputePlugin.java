@@ -4,19 +4,27 @@ import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.MapBuilder;
 import org.gusdb.fgputil.client.ClientUtil;
+import org.gusdb.fgputil.client.CloseableResponse;
+import org.gusdb.fgputil.web.HttpMethod;
+import org.gusdb.wsf.plugin.DelayedResultException;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -163,6 +171,9 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
         .put("computeConfig", computeConfig)
         // assume viz settings are client-side only
         .put("config", new JSONObject());
+
+    // first make sure the compute has complete results for us to import; if not, throw delayed result
+    handleComputeStatus(edaBaseUrl, _studyId, filters, computeName, computeConfig, authHeader);
 
     _tmpFile = Files.createTempFile(_wdkModel.getModelConfig().getWdkTempDir(), "eda-" + computeName + "-" + vizName, ".tab");
     IoUtil.openPosixPermissions(_tmpFile);
@@ -320,6 +331,51 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     ]
 }
      */
+  }
+
+  // status values returned by EDA compute service
+  private static final List<String> STATUS_ERROR = List.of("no-such-job", "failed", "expired");
+  private static final List<String> STATUS_RUNNING = List.of("queued", "in-progress");
+  private static final String STATUS_COMPLETE = "complete";
+
+  private void handleComputeStatus(String edaBaseUrl, String studyId, JSONArray filters,
+      String computeName, JSONObject computeConfig, Map<String, String> authHeader) throws DelayedResultException, PluginModelException {
+    String url = edaBaseUrl + "/computes/" + computeName + "?autostart=true";
+    Map<String,String> headers = new MapBuilder<String,String>()
+        .put("Content-Type", "application/json")
+        .put("Accept", "*/*")
+        .putAll(authHeader)
+        .toMap();
+    JSONObject body = new JSONObject()
+        .put("studyId", studyId)
+        .put("config", computeConfig)
+        .put("filters", filters)
+        .put("derivedVariables", new JSONArray());
+    LOG.info("Checking on compute status at URL: " + url + "\n" + body.toString(2));
+    try (CloseableResponse response = ClientUtil.makeRequest(url, HttpMethod.POST, Optional.of(body), headers)) {
+      if (response.getStatus() == 200) {
+        JSONObject json = new JSONObject(ClientUtil.readSmallResponseBody((InputStream)response.getEntity()));
+        String status = json.getString("status");
+        if (status.equals(STATUS_COMPLETE)) {
+          // compute complete; proceed with data fetch
+          return;
+        }
+        if (STATUS_RUNNING.contains(status)) {
+          throw new DelayedResultException();
+        }
+        if (STATUS_ERROR.contains(status)) {
+          throw new PluginModelException("Compute job required to fetch this data has errored with status: " + status);
+        }
+        throw new PluginModelException("Encountered unexpected value for compute job status: " + status);
+      }
+      else {
+        throw new PluginModelException("Unable to fetch compute job status from EDA.  HTTP response code " +
+            response.getStatus() + ", response body:\n" + ClientUtil.readSmallResponseBody((InputStream)response.getEntity()));
+      }
+    }
+    catch (IOException | JSONException e) {
+      throw new PluginModelException("Unable to fetch compute job status from EDA.", e);
+    }
   }
 
   @Override
