@@ -255,10 +255,13 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
       LOG.info("Will insert rows into temporary table with SQL: " + insertSql);
 
-      new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals").executeStatementBatch(
-          new FilteredArgumentBatch(reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size()));
+      FilteredArgumentBatch rowsProvider = new FilteredArgumentBatch(
+          reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size());
 
-      LOG.info("All rows successfully written to temporary table.");
+      new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals")
+          .executeStatementBatch(rowsProvider);
+
+      LOG.info(rowsProvider.getNumRowsProvided() + " rows successfully written to temporary table (" + rowsProvider.getNumRowsSkipped() + " rows skipped).");
 
       // once temporary table is written, join with transcripts to create transcript result
       String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
@@ -273,6 +276,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
             " where gt.gene_source_id = tmp.gene_source_id";
       }
 
+      LOG.info("Joining EDA genes to transcripts to deliver transcript rows to WDK with this SQL: " + geneTranscriptsSql);
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
         /*
           SQL query will return:
@@ -287,14 +291,17 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
             gene_source_id, source_id, project_id, matched_result, then dynamic columns
         */
         try {
+          int numTranscriptsDelivered = 0;
           while (rs.next()) {
             // loop over claimed response columns and pull directly off the result set to write WSF response row
+            numTranscriptsDelivered++;
             response.addRow(
               Arrays.stream(_responseColumnNames)
                 .map(Functions.fSwallow(name -> rs.getString(name)))
                 .collect(Collectors.toList())
                 .toArray(new String[_responseColumnNames.length]));
           }
+          LOG.info("Wrote " + numTranscriptsDelivered + " to WSF response.");
           return null;
         }
         catch (PluginUserException | PluginModelException e) {
@@ -318,6 +325,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
     private final Predicate<String[]> _rowFilter;
     private final Function<String[],Object[]> _rowConverter;
     private final int _expectedDbRowLength;
+    private int _numRowsProvided = 0;
+    private int _numRowsSkipped = 0;
     private String[] _nextRow;
 
     public FilteredArgumentBatch(
@@ -339,6 +348,9 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
           String[] tokens = _reader.readLine().split(TAB);
           if (_rowFilter.test(tokens)) {
             _nextRow = tokens;
+          }
+          else {
+            _numRowsSkipped++;
           }
         }
       }
@@ -367,9 +379,18 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
                 Arrays.stream(dbRow).map(String::valueOf).collect(Collectors.joining(", ")) +
                 "] must have length " + _expectedDbRowLength);
           }
+          _numRowsProvided++;
           return dbRow;
         }
       };
+    }
+
+    public int getNumRowsProvided() {
+      return _numRowsProvided;
+    }
+
+    public int getNumRowsSkipped() {
+      return _numRowsSkipped;
     }
 
     @Override
