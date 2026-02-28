@@ -263,6 +263,10 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
       LOG.info(rowsProvider.getNumRowsProvided() + " rows successfully written to temporary table (" + rowsProvider.getNumRowsSkipped() + " rows skipped).");
 
+      // RRD: leaving test code here but commented; uncommenting allows us to view the temporary table after the fact (real temporary table is deleted)
+      //String copySql = "create table " + tmpTable.getTableNameWithSchema() + "a as (select * from " + tmpTable.getTableNameWithSchema() + ")";
+      //new SQLRunner(_wdkModel.getAppDb().getDataSource(), copySql).executeStatement();
+
       // once temporary table is written, join with transcripts to create transcript result
       String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
       String rownumCol = _wdkModel.getAppDb().getPlatform().getRowNumberColumn();

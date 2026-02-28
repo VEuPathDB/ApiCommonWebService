@@ -89,8 +89,8 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
 
   @Override
   protected Object[] convertToTmpTableRow(String[] edaRow) {
-    // this plugin's EDA response contains only the gene ID in a single column
-    return new Object[] { edaRow[0] };
+    // this plugin's EDA response contains two columns: [ stable ID, gene ID ]
+    return new Object[] { edaRow[1] };
   }
 
 }
