@@ -37,7 +37,6 @@ import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.dbms.TemporaryTable;
-import org.gusdb.wdk.model.query.SqlQuery;
 import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
 import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.AbstractPlugin;
@@ -250,8 +249,9 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       reader.readLine();
 
       // insert gene rows into temporary table
+      String tmpTableRef = tmpTable.getTableNameWithSchema();
       String placeholders = tmpTableColumns.stream().map(c -> "?").collect(Collectors.joining(", "));
-      String insertSql = "INSERT INTO " + tmpTable.getTableNameWithSchema() + " values ( " + placeholders + " )";
+      String insertSql = "INSERT INTO " + tmpTableRef + " values ( " + placeholders + " )";
 
       LOG.info("Will insert rows into temporary table with SQL: " + insertSql);
 
@@ -264,33 +264,20 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       LOG.info(rowsProvider.getNumRowsProvided() + " rows successfully written to temporary table (" + rowsProvider.getNumRowsSkipped() + " rows skipped).");
 
       // RRD: leaving test code here but commented; uncommenting allows us to view the temporary table after the fact (real temporary table is deleted)
-      //String copySql = "create table " + tmpTable.getTableNameWithSchema() + "a as (select * from " + tmpTable.getTableNameWithSchema() + ")";
+      //String copySql = "create table " + tmpTableRef + "a as (select * from " + tmpTableRef + ")";
       //new SQLRunner(_wdkModel.getAppDb().getDataSource(), copySql).executeStatement();
 
       // once temporary table is written, join with transcripts to create transcript result
-      String rawSql = ((SqlQuery)_wdkModel.getQuerySet("GeneId").getQuery("GeneByLocusTag")).getSql();
       String rownumCol = _wdkModel.getAppDb().getPlatform().getRowNumberColumn();
-      String geneTranscriptsSql = Utilities.replaceMacros(rawSql, Map.of("ds_gene_ids", "select gene_source_id, " + rownumCol + " as dataset_value_order from " + tmpTable.getTableNameWithSchema()));
-
-      // join back to temp table to pick up dynamic cols, but only if necessary
-      if (!_filteredDynamicAttributeNames.isEmpty()) {
-        geneTranscriptsSql = "select gt.*, " +
-            _filteredDynamicAttributeNames.stream().map(col -> "tmp." + col).collect(Collectors.joining(", ")) +
-            " from (" + geneTranscriptsSql + ") gt, " + tmpTable.getTableNameWithSchema() + " tmp" +
-            " where gt.gene_source_id = tmp.gene_source_id";
-      }
+      String dynamicAttributes = _filteredDynamicAttributeNames.stream().map(col -> ", tmp." + col).collect(Collectors.joining());
+      String geneTranscriptsSql =
+          "select ta.source_id, ta.gene_source_id, ta.project_id, 'Y' as matched_result, "+ rownumCol + " as dataset_value_order" + dynamicAttributes +
+          " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
+          " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
 
       LOG.info("Joining EDA genes to transcripts to deliver transcript rows to WDK with this SQL: " + geneTranscriptsSql);
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
         /*
-          SQL query will return:
-            <column name="source_id"/>
-            <column name="matched_result"/>
-            <column name="gene_source_id"/>
-            <column name="project_id"/>
-            <column name="input_id"/>
-            <column name="dataset_order"/>
-            + any dynamic columns
           Need to supply columns in this order:
             gene_source_id, source_id, project_id, matched_result, then dynamic columns
         */
