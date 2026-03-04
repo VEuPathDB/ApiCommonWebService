@@ -37,8 +37,6 @@ import org.gusdb.fgputil.functional.Functions;
 import org.gusdb.wdk.model.Utilities;
 import org.gusdb.wdk.model.WdkModel;
 import org.gusdb.wdk.model.dbms.TemporaryTable;
-import org.gusdb.wdk.model.record.PrimaryKeyDefinition;
-import org.gusdb.wdk.model.record.RecordClass;
 import org.gusdb.wsf.plugin.AbstractPlugin;
 import org.gusdb.wsf.plugin.DelayedResultException;
 import org.gusdb.wsf.plugin.PluginModelException;
@@ -97,6 +95,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
   private static final String[] EMPTY_ARRAY = new String[0];
 
   protected WdkModel _wdkModel;
+  protected String[] _pkColumnNames;
   protected String[] _responseColumnNames;
   protected List<String> _filteredDynamicAttributeNames; // dyn attrs not including wdk_weight
   protected String _datasetId;
@@ -128,17 +127,17 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
   @Override
   public String[] getColumns(PluginRequest request) throws PluginModelException {
-    RecordClass recordClass = PluginUtilities.getRecordClass(request);
-    PrimaryKeyDefinition pkDef = recordClass.getPrimaryKeyDefinition();
     _filteredDynamicAttributeNames = PluginUtilities
         .getContextQuestion(request)
         .getDynamicAttributeFieldMap()
         .keySet().stream()
+        // weight column is automatically added to cache table by WDK
         .filter(s -> !s.equals(Utilities.COLUMN_WEIGHT))
         .collect(Collectors.toList());
-    // PK column order is: gene_source_id, source_id, project_id
-    _responseColumnNames = ArrayUtil.concatenate(pkDef.getColumnRefs(), new String[] { "matched_result" }, _filteredDynamicAttributeNames.toArray(new String[0]));
-    LOG.info(GeneEdaSubsetPlugin.class.getName() + " instance will return the following columns: " + FormatUtil.join(_responseColumnNames, ", "));
+    // column order is: gene_source_id, source_id, project_id, matched_transcript
+    _pkColumnNames = new String[]{ "gene_source_id", "source_id", "project_id" };
+    _responseColumnNames = ArrayUtil.concatenate(_pkColumnNames, new String[] { "matched_result" }, _filteredDynamicAttributeNames.toArray(new String[0]));
+    LOG.info(getClass().getName() + " instance will return the following columns: " + FormatUtil.join(_responseColumnNames, ", "));
     return _responseColumnNames;
   }
 
@@ -268,10 +267,10 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       //new SQLRunner(_wdkModel.getAppDb().getDataSource(), copySql).executeStatement();
 
       // once temporary table is written, join with transcripts to create transcript result
-      String rownumCol = _wdkModel.getAppDb().getPlatform().getRowNumberColumn();
+      String pkColsString = Arrays.stream(_pkColumnNames).map(col -> "ta." + col).collect(Collectors.joining(", "));
       String dynamicAttributes = _filteredDynamicAttributeNames.stream().map(col -> ", tmp." + col).collect(Collectors.joining());
       String geneTranscriptsSql =
-          "select ta.source_id, ta.gene_source_id, ta.project_id, 'Y' as matched_result, "+ rownumCol + " as dataset_value_order" + dynamicAttributes +
+          "select " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
           " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
           " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
 
@@ -286,8 +285,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
           while (rs.next()) {
             // loop over claimed response columns and pull directly off the result set to write WSF response row
             numTranscriptsDelivered++;
-            response.addRow(
-              Arrays.stream(_responseColumnNames)
+            response.addRow(Arrays.stream(_responseColumnNames)
                 .map(Functions.fSwallow(name -> rs.getString(name)))
                 .collect(Collectors.toList())
                 .toArray(new String[_responseColumnNames.length]));
@@ -306,7 +304,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       throw e;
     }
     catch (Exception e) {
-      throw new PluginModelException("Could not insert filtered genes into temporary table", e);
+      throw new PluginModelException("Could not deliver EDA process query result to WDK", e);
     }
   }
 
