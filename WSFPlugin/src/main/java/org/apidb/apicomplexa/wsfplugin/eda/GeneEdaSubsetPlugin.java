@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.eda;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -88,9 +89,21 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
   }
 
   @Override
-  protected Object[] convertToTmpTableRow(String[] edaRow) {
-    // this plugin's EDA response contains two columns: [ stable ID, gene ID ]
-    return new Object[] { edaRow[1] };
+  protected List<Object[]> convertToTmpTableRows(String[] edaRow) {
+    // this plugin's EDA response contains two columns: [ stable ID, gene ID(s) ]
+    // the gene ID column may contain a JSON array of IDs; expand each into its own row
+    List<Object[]> rows = new ArrayList<>();
+    String geneIdValue = edaRow[1].trim();
+    if (geneIdValue.startsWith("[")) {
+      JSONArray ids = new JSONArray(geneIdValue);
+      for (int i = 0; i < ids.length(); i++) {
+        rows.add(new Object[] { ids.getString(i) });
+      }
+    }
+    else {
+      rows.add(new Object[] { geneIdValue });
+    }
+    return rows;
   }
 
 }

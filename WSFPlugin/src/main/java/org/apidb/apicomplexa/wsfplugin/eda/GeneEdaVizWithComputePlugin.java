@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -393,9 +394,11 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
   }
 
   @Override
-  protected Object[] convertToTmpTableRow(String[] edaRow) {
+  protected List<Object[]> convertToTmpTableRows(String[] edaRow) {
     //LOG.info("Converting edaRow of size " + edaRow.length + " from temporary file (tabular), array = [ " + String.join(", ", edaRow) + " ]");
-    return new Object[] { edaRow[0], edaRow[1], edaRow[2] };
+    List<Object[]> rows = new ArrayList<>();
+    rows.add(new Object[] { edaRow[0], edaRow[1], edaRow[2] });
+    return rows;
   }
 
   /**
