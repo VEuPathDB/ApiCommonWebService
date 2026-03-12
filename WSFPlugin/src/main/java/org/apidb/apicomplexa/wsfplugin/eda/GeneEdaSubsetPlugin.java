@@ -94,15 +94,19 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
     // the gene ID column may contain a JSON array of IDs; expand each into its own row
     List<Object[]> rows = new ArrayList<>();
     String geneIdValue = edaRow[1].trim();
-    if (geneIdValue.startsWith("[")) {
-      JSONArray ids = new JSONArray(geneIdValue);
-      for (int i = 0; i < ids.length(); i++) {
-        rows.add(new Object[] { ids.getString(i) });
+    try {
+      if (geneIdValue.startsWith("[")) {
+        JSONArray ids = new JSONArray(geneIdValue);
+        for (int i = 0; i < ids.length(); i++) {
+          rows.add(new Object[] { ids.getString(i) });
+        }
+        return rows;
       }
     }
-    else {
-      rows.add(new Object[] { geneIdValue });
+    catch (JSONException e) {
+      LOG.warn("Failed to parse gene ID as JSON array, treating as plain ID: " + geneIdValue);
     }
+    rows.add(new Object[] { geneIdValue });
     return rows;
   }
 
