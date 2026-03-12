@@ -2,8 +2,10 @@ package org.apidb.apicomplexa.wsfplugin.eda;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.core.HttpHeaders;
 
@@ -21,6 +23,8 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
 
   // Hard-coded variable ID which is expected to contain gene IDs
   private static final String GENE_ID_VARIABLE_ID = "VEUPATHDB_GENE_ID";
+
+  private final Set<String> _seenGeneIds = new HashSet<>();
 
   @Override
   protected InputStream getEdaTabularDataStream(String edaBaseUrl, Map<String, String> authHeader) throws Exception {
@@ -97,11 +101,16 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
     if (geneIdValue.startsWith("[")) {
       JSONArray ids = new JSONArray(geneIdValue);
       for (int i = 0; i < ids.length(); i++) {
-        rows.add(new Object[] { ids.getString(i) });
+        String id = ids.getString(i);
+        if (_seenGeneIds.add(id.toLowerCase())) {
+          rows.add(new Object[] { id });
+        }
       }
     }
     else {
-      rows.add(new Object[] { geneIdValue });
+      if (_seenGeneIds.add(geneIdValue.toLowerCase())) {
+        rows.add(new Object[] { geneIdValue });
+      }
     }
     return rows;
   }

@@ -271,7 +271,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       String pkColsString = Arrays.stream(_pkColumnNames).map(col -> "ta." + col).collect(Collectors.joining(", "));
       String dynamicAttributes = _filteredDynamicAttributeNames.stream().map(col -> ", tmp." + col).collect(Collectors.joining());
       String geneTranscriptsSql =
-          "select " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
+          "select distinct " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
           " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
           " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
 
