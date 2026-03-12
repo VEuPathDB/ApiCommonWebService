@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -123,7 +124,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
   protected abstract Boolean isRetainedRow(String[] edaRow);
 
-  protected abstract Object[] convertToTmpTableRow(String[] edaRow);
+  protected abstract List<Object[]> convertToTmpTableRows(String[] edaRow);
 
   @Override
   public String[] getColumns(PluginRequest request) throws PluginModelException {
@@ -255,7 +256,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       LOG.info("Will insert rows into temporary table with SQL: " + insertSql);
 
       FilteredArgumentBatch rowsProvider = new FilteredArgumentBatch(
-          reader, this::isRetainedRow, this::convertToTmpTableRow, tmpTableColumns.size());
+          reader, this::isRetainedRow, this::convertToTmpTableRows, tmpTableColumns.size());
 
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), insertSql, "insert-tmp-gene-vals")
           .executeStatementBatch(rowsProvider);
@@ -270,7 +271,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       String pkColsString = Arrays.stream(_pkColumnNames).map(col -> "ta." + col).collect(Collectors.joining(", "));
       String dynamicAttributes = _filteredDynamicAttributeNames.stream().map(col -> ", tmp." + col).collect(Collectors.joining());
       String geneTranscriptsSql =
-          "select " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
+          "select distinct " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
           " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
           " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
 
@@ -312,31 +313,31 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
     private final BufferedReader _reader;
     private final Predicate<String[]> _rowFilter;
-    private final Function<String[],Object[]> _rowConverter;
+    private final Function<String[],List<Object[]>> _rowConverter;
     private final int _expectedDbRowLength;
     private int _numRowsProvided = 0;
     private int _numRowsSkipped = 0;
-    private String[] _nextRow;
+    // pending rows expanded from a single EDA row (e.g. JSON array gene IDs)
+    private final List<Object[]> _pendingRows = new ArrayList<>();
 
     public FilteredArgumentBatch(
         BufferedReader reader,
         Predicate<String[]> rowFilter,
-        Function<String[],Object[]> rowConverter,
+        Function<String[],List<Object[]>> rowConverter,
         int expectedDbRowLength) {
       _reader = reader;
       _rowFilter = rowFilter;
       _rowConverter = rowConverter;
       _expectedDbRowLength = expectedDbRowLength;
-      setNextRow();
+      fillPending();
     }
 
-    private void setNextRow() {
+    private void fillPending() {
       try {
-        _nextRow = null;
-        while(_reader.ready() && _nextRow == null) {
+        while (_pendingRows.isEmpty() && _reader.ready()) {
           String[] tokens = _reader.readLine().split(TAB);
           if (_rowFilter.test(tokens)) {
-            _nextRow = tokens;
+            _pendingRows.addAll(_rowConverter.apply(tokens));
           }
           else {
             _numRowsSkipped++;
@@ -354,15 +355,16 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
 
         @Override
         public boolean hasNext() {
-          return _nextRow != null;
+          return !_pendingRows.isEmpty();
         }
 
         @Override
         public Object[] next() {
           if (!hasNext()) throw new NoSuchElementException();
-          String[] oldNextRow = _nextRow;
-          setNextRow();
-          Object[] dbRow = _rowConverter.apply(oldNextRow);
+          Object[] dbRow = _pendingRows.remove(0);
+          if (_pendingRows.isEmpty()) {
+            fillPending();
+          }
           if (dbRow.length != _expectedDbRowLength) {
             throw new RuntimeException("DB row returned by rowConverter [" +
                 Arrays.stream(dbRow).map(String::valueOf).collect(Collectors.joining(", ")) +

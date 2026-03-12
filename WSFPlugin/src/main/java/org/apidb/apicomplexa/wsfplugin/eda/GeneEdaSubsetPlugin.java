@@ -2,6 +2,7 @@ package org.apidb.apicomplexa.wsfplugin.eda;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -12,6 +13,7 @@ import org.gusdb.fgputil.Tuples.TwoTuple;
 import org.gusdb.fgputil.client.ClientUtil;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
@@ -88,9 +90,25 @@ public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
   }
 
   @Override
-  protected Object[] convertToTmpTableRow(String[] edaRow) {
-    // this plugin's EDA response contains two columns: [ stable ID, gene ID ]
-    return new Object[] { edaRow[1] };
+  protected List<Object[]> convertToTmpTableRows(String[] edaRow) {
+    // this plugin's EDA response contains two columns: [ stable ID, gene ID(s) ]
+    // the gene ID column may contain a JSON array of IDs; expand each into its own row
+    List<Object[]> rows = new ArrayList<>();
+    String geneIdValue = edaRow[1].trim();
+    try {
+      if (geneIdValue.startsWith("[")) {
+        JSONArray ids = new JSONArray(geneIdValue);
+        for (int i = 0; i < ids.length(); i++) {
+          rows.add(new Object[] { ids.getString(i) });
+        }
+        return rows;
+      }
+    }
+    catch (JSONException e) {
+      LOG.warn("Failed to parse gene ID as JSON array, treating as plain ID: " + geneIdValue);
+    }
+    rows.add(new Object[] { geneIdValue });
+    return rows;
   }
 
 }
