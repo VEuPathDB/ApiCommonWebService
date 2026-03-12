@@ -13,6 +13,7 @@ import org.gusdb.fgputil.Tuples.TwoTuple;
 import org.gusdb.fgputil.client.ClientUtil;
 import org.gusdb.wsf.plugin.PluginModelException;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class GeneEdaSubsetPlugin extends AbstractEdaGenesPlugin {
