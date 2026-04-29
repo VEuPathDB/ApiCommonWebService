@@ -90,7 +90,7 @@ public class FindSnpsByGeneIdsPlugin extends FindPolymorphismsPlugin {
           throw new PluginModelException(ex);
         }
         finally {
-          SqlUtils.closeResultSetAndStatement(rs, null);
+          SqlUtils.closeResultSetAndStatement(rs);
         }
       }
     }

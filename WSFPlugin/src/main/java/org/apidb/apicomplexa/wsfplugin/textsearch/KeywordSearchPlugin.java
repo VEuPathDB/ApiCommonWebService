@@ -285,49 +285,43 @@ public class KeywordSearchPlugin extends AbstractOracleTextSearchPlugin {
           logger.debug("validating sourceId \"" + sourceId + "\"");
           rs = null;
           validationQuery.setString(1, sourceId);
-          rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
-          if (!rs.next()) {
-            // no match; drop result
-            logger.trace("dropping unrecognized ID \"" + sourceId + "\" (organisms \"" + organisms +
-                "\") from comment-search result set.");
-            newCommentResults.remove(sourceId);
-          }
-          else {
-            String returnedSourceId = rs.getString("source_id");
-            // logger.debug("validation query returned \"" + returnedSourceId
-            // + "\"");
-            if (!returnedSourceId.equals(sourceId)) {
-              // ID changed; substitute returned value
-              logger.trace("Substituting valid ID \"" + returnedSourceId + "\" for ID \"" + sourceId +
-                  "\" returned from comment-search result set.");
-              SearchResult result = newCommentResults.get(sourceId);
-              result.setSourceId(returnedSourceId);
-              result.setProjectId(projectId);
+          try {
+            rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
+            if (!rs.next()) {
+              // no match; drop result
+              logger.trace("dropping unrecognized ID \"" + sourceId + "\" (organisms \"" + organisms +
+                  "\") from comment-search result set.");
               newCommentResults.remove(sourceId);
-              newCommentResults.put(returnedSourceId, result);
+            }
+            else {
+              String returnedSourceId = rs.getString("source_id");
+              // logger.debug("validation query returned \"" + returnedSourceId
+              // + "\"");
+              if (!returnedSourceId.equals(sourceId)) {
+                // ID changed; substitute returned value
+                logger.trace("Substituting valid ID \"" + returnedSourceId + "\" for ID \"" + sourceId +
+                    "\" returned from comment-search result set.");
+                SearchResult result = newCommentResults.get(sourceId);
+                result.setSourceId(returnedSourceId);
+                result.setProjectId(projectId);
+                newCommentResults.remove(sourceId);
+                newCommentResults.put(returnedSourceId, result);
+              }
             }
           }
-          SqlUtils.closeResultSetOnly(rs);
+          finally {
+            SqlUtils.closeResultSetOnly(rs);
+          }
         }
       }
       catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
         throw new PluginModelException(ex);
       }
-      finally {
-        // try {
-        // rs.close();
-        // } catch (SQLException ex) {
-        // logger.info("caught SQLException " + ex.getMessage());
-        // throw new WsfServiceException(ex);
-        // }
-      }
     }
     finally {
       SqlUtils.closeStatement(validationQuery);
     }
-    // Map<String, SearchResult> otherCommentMatches = new HashMap<String,
-    // SearchResult>();
     return newCommentResults;
   }
 }

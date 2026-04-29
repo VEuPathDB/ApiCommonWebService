@@ -536,31 +536,31 @@ public class SpanCompositionPlugin extends AbstractPlugin {
         if (feature == null) {
           // reading the first line
           feature = new Feature();
-	  readFeature(resultSet, feature, output);
+          readFeature(resultSet, feature, output);
         }
         else if (!feature.sourceId.equals(sourceId)) {
           // start on a new record, output the previous feature
           writeFeature(response, columnOrders, feature);
           feature = new Feature();
-	  readFeature(resultSet, feature, output);
+          readFeature(resultSet, feature, output);
         }
 
         // read the reference
         Feature reference = new Feature();
         readFeature(resultSet, reference, ref);
-	
-	// if refs are genes, only add one match per gene.  (non-gene refs have dontcare as gene_source_id)
-	if (feature != prevFeature || reference.geneSourceId.equals("dontcare") || prevReference == null || !reference.geneSourceId.equals(prevReference.geneSourceId))
-	  feature.matched.add(reference);
-	prevFeature = feature;
-	prevReference = reference;
+
+        // if refs are genes, only add one match per gene.  (non-gene refs have dontcare as gene_source_id)
+        if (feature != prevFeature || reference.geneSourceId.equals("dontcare") || prevReference == null || !reference.geneSourceId.equals(prevReference.geneSourceId))
+          feature.matched.add(reference);
+        prevFeature = feature;
+        prevReference = reference;
       }
       if (feature != null) { // write the last feature
         writeFeature(response, columnOrders, feature);
       }
     }
     finally {
-      SqlUtils.closeResultSetAndStatement(resultSet, null);
+      SqlUtils.closeResultSetAndStatement(resultSet);
     }
   }
 

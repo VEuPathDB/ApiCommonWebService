@@ -286,15 +286,19 @@ public class TranscriptSearchPlugin extends AbstractOracleTextSearchPlugin {
           logger.debug("validating sourceId \"" + geneSourceId + "\"");
           rs = null;
           validationQuery.setString(1, geneSourceId);
-          rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
-          SearchResult result = commentResults.get(geneSourceId);
-          // commentResults.remove(sourceId);
-          while (rs.next()) {
-            String returnedGene = rs.getString("gene_source_id");
-            TranscriptSearchResult newResult = new TranscriptSearchResult(returnedGene, result.getSourceId(), result.getMaxScore(), result.getFieldsMatched(), result.getProjectId());
-            newCommentResults.put(returnedGene, newResult);
+          try {
+            rs = SqlUtils.executePreparedQuery(validationQuery, sql, "ApicommValidateQuery");
+            SearchResult result = commentResults.get(geneSourceId);
+            // commentResults.remove(sourceId);
+            while (rs.next()) {
+              String returnedGene = rs.getString("gene_source_id");
+              TranscriptSearchResult newResult = new TranscriptSearchResult(returnedGene, result.getSourceId(), result.getMaxScore(), result.getFieldsMatched(), result.getProjectId());
+              newCommentResults.put(returnedGene, newResult);
+            }
           }
-          SqlUtils.closeResultSetOnly(rs);
+          finally {
+            SqlUtils.closeResultSetOnly(rs);
+          }
         }
       } catch (SQLException ex) {
         logger.error("caught SQLException " + ex.getMessage());
