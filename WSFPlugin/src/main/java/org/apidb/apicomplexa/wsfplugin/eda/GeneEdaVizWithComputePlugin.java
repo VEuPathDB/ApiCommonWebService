@@ -36,6 +36,18 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
   private static final Logger LOG = Logger.getLogger(GeneEdaVizWithComputePlugin.class);
 
+  private enum EffectDirection {
+    UP_AND_DOWN, UP_ONLY, DOWN_ONLY;
+
+    static EffectDirection fromString(String s) {
+      return switch (s == null ? "" : s) {
+        case "upOnly"   -> UP_ONLY;
+        case "downOnly" -> DOWN_ONLY;
+        default         -> UP_AND_DOWN;
+      };
+    }
+  }
+
   private static class Point {
 
     String pointId;
@@ -52,6 +64,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
   private double _effectSizeThreshold;
   private double _significanceThreshold;
+  private EffectDirection _effectDirection;
   private Path _tmpFile;
 
   @Override
@@ -135,6 +148,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     // values to be used later to filter returned rows
     _effectSizeThreshold = vizConfig.getDouble("effectSizeThreshold");
     _significanceThreshold = vizConfig.getDouble("significanceThreshold");
+    _effectDirection = EffectDirection.fromString(vizConfig.optString("effectDirection", "upAndDown"));
 
     // make request with JSON like
     /**
@@ -383,9 +397,15 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
   protected Boolean isRetainedRow(String[] edaRow) {
     try {
       //LOG.info("Checking if edaRow of size " + edaRow.length + " should be retained, array = [ " + String.join(", ", edaRow) + " ]");
-      double effectSize = Math.abs(Double.valueOf(edaRow[1]));
+      double rawEffectSize = Double.valueOf(edaRow[1]);
+      double effectSize = Math.abs(rawEffectSize);
       double pValue = Math.abs(Double.valueOf(edaRow[2]));
-      return pValue <= _significanceThreshold && effectSize >= _effectSizeThreshold;
+      if (!(pValue <= _significanceThreshold && effectSize >= _effectSizeThreshold)) return false;
+      return switch (_effectDirection) {
+        case UP_ONLY   -> rawEffectSize > 0;
+        case DOWN_ONLY -> rawEffectSize < 0;
+        default        -> true;
+      };
     }
     catch (NumberFormatException e) {
       LOG.warn("Skipping EDA output row in which effectSize or pValue property is not a valid double value. Row = [ " + String.join(", ", edaRow) + " ]", e);
