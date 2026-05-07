@@ -41,9 +41,9 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
 
     static EffectDirection fromString(String s) {
       return switch (s == null ? "" : s) {
-        case "up only"   -> UP_ONLY;
-        case "down only" -> DOWN_ONLY;
-        default          -> UP_AND_DOWN;
+        case "upOnly"   -> UP_ONLY;
+        case "downOnly" -> DOWN_ONLY;
+        default         -> UP_AND_DOWN;
       };
     }
   }
@@ -148,7 +148,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     // values to be used later to filter returned rows
     _effectSizeThreshold = vizConfig.getDouble("effectSizeThreshold");
     _significanceThreshold = vizConfig.getDouble("significanceThreshold");
-    _effectDirection = EffectDirection.fromString(vizConfig.optString("effectDirection", "up and down"));
+    _effectDirection = EffectDirection.fromString(vizConfig.optString("effectDirection", "upAndDown"));
 
     // make request with JSON like
     /**
