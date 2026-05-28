@@ -137,7 +137,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         .collect(Collectors.toList());
     // column order is: gene_source_id, source_id, project_id, matched_transcript
     _pkColumnNames = new String[]{ "gene_source_id", "source_id", "project_id" };
-    _responseColumnNames = ArrayUtil.concatenate(_pkColumnNames, new String[] { "matched_result" }, _filteredDynamicAttributeNames.toArray(new String[0]));
+    _responseColumnNames = ArrayUtil.concatenate(_pkColumnNames, new String[] { "matched_result", "input_id" }, _filteredDynamicAttributeNames.toArray(new String[0]));
     LOG.info(getClass().getName() + " instance will return the following columns: " + FormatUtil.join(_responseColumnNames, ", "));
     return _responseColumnNames;
   }
@@ -224,7 +224,7 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
         .orElseThrow(() -> new PostValidationUserException("Dataset with ID '" + _datasetId + "' could not be found for this user."));
 
     // gather columns for temporary table
-    List<String> tmpTableColumns = new ListBuilder<String>("gene_source_id").addAll(_filteredDynamicAttributeNames).toList();
+    List<String> tmpTableColumns = new ListBuilder<String>().addAll(_filteredDynamicAttributeNames).toList();
 
     // create SQL for table to store temporary gene IDs and dynamic columns
     String createTmpTableSql = tmpTableColumns.stream()
@@ -270,10 +270,12 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       // once temporary table is written, join with transcripts to create transcript result
       String pkColsString = Arrays.stream(_pkColumnNames).map(col -> "ta." + col).collect(Collectors.joining(", "));
       String dynamicAttributes = _filteredDynamicAttributeNames.stream().map(col -> ", tmp." + col).collect(Collectors.joining());
+      String projectId = _wdkModel.getProjectId();
       String geneTranscriptsSql =
-          "select distinct " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
+          "select distinct " + pkColsString + ", 'Y' as matched_result, tmp.input_id" + dynamicAttributes +
           " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
-          " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
+          " where lower(gi.id) = lower(tmp.input_id) and gi.gene = ta.gene_source_id" +
+	  " and  (ta.project_id = '" + projectId + "' or 'UniDB' = '" + projectId + "')";
 
       LOG.info("Joining EDA genes to transcripts to deliver transcript rows to WDK with this SQL: " + geneTranscriptsSql);
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
