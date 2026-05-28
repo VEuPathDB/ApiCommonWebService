@@ -273,7 +273,8 @@ public abstract class AbstractEdaGenesPlugin extends AbstractPlugin {
       String geneTranscriptsSql =
           "select distinct " + pkColsString + ", 'Y' as matched_result" + dynamicAttributes +
           " from apidbtuning.transcriptattributes ta, apidbtuning.geneid gi, " + tmpTableRef + " tmp" +
-          " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id";
+          " where lower(gi.id) = lower(tmp.gene_source_id) and gi.gene = ta.gene_source_id" +
+	  " and  (ta.project_id = '" + _wdkModel.getProjectId() + "' or 'UniDB' = '" + _wdkModel.getProjectId() + "')";
 
       LOG.info("Joining EDA genes to transcripts to deliver transcript rows to WDK with this SQL: " + geneTranscriptsSql);
       new SQLRunner(_wdkModel.getAppDb().getDataSource(), geneTranscriptsSql, "eda-gene-to-transcript").executeQuery(rs -> {
