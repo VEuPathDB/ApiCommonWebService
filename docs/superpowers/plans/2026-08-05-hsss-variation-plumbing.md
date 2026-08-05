@@ -784,6 +784,82 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
+## Execution outcome (2026-08-05)
+
+Executed subagent-per-task. Production code: **14 files, 17 insertions, 17 deletions**, and
+`grep -rn jbrestel` over `WSFPlugin/src`, `HighSpeedSnpSearch/bin`, `HighSpeedSnpSearch/lib`
+is clean.
+
+| task | commit | repo |
+|---|---|---|
+| 1 — ID separator | `7d1268a27` | `ApiCommonWebService` |
+| 1b — second ID site | `5c80e5f37` | `ApiCommonWebService` |
+| 2 — `/dnaseq` search dir | `141602e54` | `ApiCommonWebService` |
+| 3 — `variation_sample_meta` | `e46356743` | `ApiCommonWebService` |
+| 4 — fixture hygiene | `7f7d970` | `ApiCommonWebService` |
+| 5 — `idPrefix: Variant_` | `1da7c420a` | **`ApiCommonWebsite`** |
+
+### Verified
+
+- **The ID fix, twice.** Source tree and installed copy both emit `Variant_a80_896` where
+  they previously emitted `Variant_a80.896`, from
+  `printf '80\t896\t100\t25\t1\n' | hsssReconstructSnpId .../contigIdToSourceId.dat 1 Variant_ NULL`.
+- **The format is the right one:** `Variant_Pf3D7_01_v3_29514` exists in
+  `apidbtuning.VariationAttributes`.
+- `bld ApiCommonWebService` → `BUILD SUCCESSFUL`, 1m44s.
+- `conifer configure` → `failed=0`; the generated
+  `gus_home/config/highSpeedSnpSearch-config.xml` now reads
+  `<entry key="idPrefix">Variant_</entry>`.
+- `wdkXml -model PlasmoDB` still loads cleanly after Conifer regenerated `model.prop`, and
+  `WEBSERVICEMIRROR`/`PROJECT_ID` are unchanged.
+- Webapp reloaded (`OK - Reloaded application at context path [/plasmo.jbrestel]`); the three
+  error logs were last written days-to-months ago, i.e. nothing was appended by any of this.
+
+### Not verified, and cannot be from this plan
+
+**The search directory (Task 2) and the filter param name (Task 3) were never exercised.**
+Nothing invokes the plugin until a variation search exists. Both are correct by inspection —
+Task 2 against the real `dnaseq/readFreq{20,40,60,80}` listing, Task 3 against
+`FindPolymorphismsAbstractPlugin:41,100` — and both are first tested by
+`VariationsByIsolateGroup`. This change is **not** end-to-end verified.
+
+No automated test suite ran, by design: both HSSS harnesses are broken independently of this
+work (§4).
+
+### What execution changed about the plan
+
+Four errors, three in the plan and one in the spec, all found by executing rather than
+reviewing:
+
+1. **A whole extra task.** Task 1's Step 5 grep asserted no other script composed IDs the
+   dotted way. It found `hsssGenomicLocationsFilter:51,67` — a *live* alternative pipeline
+   tail that `FindSnpsByGeneIdsPlugin:112` routes through, so `VariationsByGeneIds` would have
+   shipped returning **zero results with no error** while the other searches worked. Became
+   Task 1b. The step earned its keep by being wrong.
+2. **A check that could only fail.** Task 1b's Step 4 used `grep -c` without `-F` on a pattern
+   containing `${...}`; BRE treats the braces as interval syntax and matches nothing, so it
+   reported `0` even for already-correct code. The hazard is an implementer "fixing" working
+   code to satisfy it.
+3. **A wrong config path.** `highSpeedSnpSearch-config.xml` lives in `gus_home/config/`, not
+   `gus_home/config/PlasmoDB/`. The original grep would have failed with
+   `No such file or directory`, reading as "Task 5 didn't work."
+4. **An incomplete `conifer` invocation.** It needs `--cohort`, `--project`, `--webapp-ctx`
+   **and** `--tomcat-webapp-ctx`. Missing `--cohort` is refused outright; missing
+   `--tomcat-webapp-ctx` regenerates most files — *including the one being checked* — then
+   fails on `log4j2.json`. A half-success where the verification passes while a config
+   silently goes unregenerated. Read the `PLAY RECAP`.
+
+Also: `conifer install` is unnecessary — `bld ApiCommonWebService` depends on
+`ApiCommonWebsite-Installation`, which installs the Conifer vars.
+
+### Findings deferred rather than acted on
+
+Three second sites were found and consciously left alone; each is recorded with reasoning in
+"Deliberately not in this plan" below: `FindMajorAllelesPlugin`'s `ngsSnp_strain_meta_a`/`_m`
+param family (deferred to the two-isolate-groups spec, **must not be forgotten there**),
+`hsssCopyFilesToWebSvcDir`'s write path, the three-way duplication of the ID format, and the
+unconditional stderr echo in `hsssReconstructSnpId:42`.
+
 ## Deliberately not in this plan
 
 - **Any WDK model XML.** `VariationsByIsolateGroup` is a separate spec in `ApiCommonModel`

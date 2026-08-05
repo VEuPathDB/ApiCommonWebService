@@ -1,7 +1,7 @@
 # HSSS variation plumbing — design
 
 **Date:** 2026-08-05
-**Status:** approved
+**Status:** implemented 2026-08-05 — ID fix verified; the search directory (§3.1) and filter param name (§3.5) await the `VariationsByIsolateGroup` search
 **Scope:** Make the HighSpeedSnpSearch (HSSS) plugins emit **variation** record IDs and
 read the **variation** HSSS directory layout. No WDK model XML, no new searches.
 **Implementation targets:** `ApiCommonWebService` (Java, Perl, test fixtures) **and**
