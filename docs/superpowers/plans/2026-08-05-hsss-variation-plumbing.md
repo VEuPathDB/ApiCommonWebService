@@ -754,6 +754,25 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - **Deleting the dead chip/major-alleles/gene-chars plugins** — spec §7.
 - **Making `idPrefix` per-plugin.** Only needed if a second consumer with a different ID
   convention appears.
+- **Renaming `FindMajorAllelesPlugin`'s param constants.** `:20` and `:24` hardcode
+  `ngsSnp_strain_meta_a` and `ngsSnp_strain_meta_m`, with matching `_wiz` variants in
+  `ApiCommonModel`'s `sharedParams.xml` — a family of four snp-vocabulary names. That plugin
+  extends `HighSpeedSnpSearchAbstractPlugin` directly, so it has no
+  `getStrainFilterParamName()` to override; the constants are its own contract, listed in its
+  `getRequiredParameterNames()` (`:48-49`) and read at `:81` and `:97`. Same failure mode as
+  Task 3: a name mismatch is rejected as a missing required parameter.
+
+  Flagged during Task 3 and **deliberately deferred** to the spec for
+  `VariationsByTwoIsolateGroups`, the search it serves (`NgsSnpsByTwoIsolateGroups` and
+  `...Wiz`). Reasoning: that search needs per-strain data the variation pipeline does not yet
+  have, so it is the furthest out of the four ports, and renaming now would mean choosing a
+  param-family name before designing the search that uses it. Note the asymmetric `_a`/`_m`
+  suffixes — the prompts read "Set A Isolates" / "Set B Isolates", so `_m` appears to be a
+  typo for `_b`, and that should be decided deliberately rather than mirrored.
+
+  > **Whoever writes that spec must include this rename**, or the new variation XML inherits
+  > snp naming permanently.
+
 - **Collapsing the ID-composition sites into one helper.** After Task 1b the separator is
   hardcoded in three places (`hsssReconstructSnpId:42-43` and
   `hsssGenomicLocationsFilter:51,67`), all of them re-deriving a format that
