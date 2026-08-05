@@ -194,7 +194,7 @@ public abstract class HighSpeedSnpSearchAbstractPlugin extends AbstractPlugin {
   }
 
     protected String getSearchDir() {
-        return  "/highSpeedSnpSearch";
+        return  "/dnaseq";
     }
 
   File findOrganismDir(Map<String, String> params, String projectId) throws PluginModelException, PluginUserException {
