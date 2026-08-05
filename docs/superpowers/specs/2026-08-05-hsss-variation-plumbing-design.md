@@ -61,13 +61,14 @@ harmless (the category ontology is not validated against the model) and out of s
 
 ## 3. The changes
 
-Three production edits across two repos, plus the test updates in §4:
+Four production edits across two repos, plus the fixture hygiene in §4:
 
 | # | repo / file | change |
 |---|---|---|
 | 3.1 | `ApiCommonWebService` — `WSFPlugin/.../highspeedsnpsearch/HighSpeedSnpSearchAbstractPlugin.java:196` | `getSearchDir()` → `/dnaseq` |
 | 3.2 | `ApiCommonWebService` — `HighSpeedSnpSearch/bin/hsssReconstructSnpId:42-43` | ID separator `.` → `_`, both joins |
 | 3.3 | `ApiCommonWebsite` — `Model/lib/conifer/roles/conifer/vars/ApiCommon/default.yml:102` | `highspeedsnpsearchconfig_idPrefix` → `Variant_` |
+| 3.5 | `ApiCommonWebService` — `WSFPlugin/.../highspeedsnpsearch/FindPolymorphismsPlugin.java:41-43` | `getStrainFilterParamName()` → `variation_sample_meta` |
 
 ### 3.1 Search directory — `HighSpeedSnpSearchAbstractPlugin.java:196`
 
@@ -167,13 +168,48 @@ touches ten Java files, the installed `gus_home/bin` script names, and every
 `processName` in model XML — and bundling a rename with a behavioural fix makes the diff
 unreviewable. Worth a follow-up issue; not this change.
 
-## 4. Test fixture updates (part of this change)
+### 3.5 Strain filter param name — `FindPolymorphismsPlugin.java:41-43`
 
-`ApiCommonWebService/Test` has a working JUnit harness
-(`FindPolymorphismsSearchTest`, `FindMajorAllelesSearchTest`,
-`FindPolymorphismsWithSeqFilterSearchTest`, extending `HsssTest`) with a testing seam —
-`setOrganismNameForFiles(...)` bypasses the database lookup. **These tests will fail after
-§3 unless updated in the same change.**
+```java
+protected String getStrainFilterParamName() {
+    return "variation_sample_meta";       // was "ngsSnp_strain_meta"
+}
+```
+
+`FindPolymorphismsAbstractPlugin:100` reads the samples selection from the request under
+whatever name this returns, and declares it required (`:41`). So **this string is a
+contract with the model XML**: the consuming search's `filterParam` must be named exactly
+this, or the plugin rejects the request as missing a required parameter.
+
+Left as `ngsSnp_strain_meta`, brand-new variation model XML would be forced to carry snp
+vocabulary forever. Since the plugin is variation-only from here (§2), rename it now while
+there is no consumer to break — the follow-on spec then names its filterParam
+`variation_sample_meta`.
+
+This is the one change in §3 with no runtime symptom in isolation; it only matters once a
+search exists. It belongs here rather than in the search spec because it is a change to
+this repo.
+
+## 4. Test fixtures — hygiene, not verification
+
+**Correction to an earlier draft of this spec, which claimed `ApiCommonWebService/Test`
+was "a working JUnit harness" whose tests "will fail after §3 unless updated". Both HSSS
+test harnesses are already broken, independently of this change.** They rotted when the
+snp searches were retired. Evidence:
+
+| harness | why it cannot run |
+|---|---|
+| `Test/.../FindPolymorphismsSearchTest.java:32` (JUnit) | references `FindPolymorphismsPlugin.PARAM_STRAIN_LIST`, a constant **defined nowhere** in the main sources — the module does not compile. Consistent with `Test-Installation` being absent from `build.xml`'s default `ApiCommonWebService-Installation` depends list. |
+| `HighSpeedSnpSearch/bin/hsssTestSuite:41` (shell) | passes 8 positional args to `hsssGeneratePolymorphismScript`, which consumes 5 standard args (`HsssScriptGenerator.pm:25`) and then expects `polymorphismThreshold, unknownThreshold, strainsListFile, reconstructCmdName, idPrefix, idSuffix` (`HsssPolymorphismScriptGenerator.pm:75`). `reconstructCmdName` and `idPrefix` arrive **undefined**, so the generated command is malformed. |
+
+> **Therefore no green test run gates this change, and the plan must not pretend one does.**
+> Verification is §5, whose first two rungs are real and runnable.
+
+Reviving either harness is **out of scope** — it is a larger job than this change and
+would have to be done against variation data to be worth anything.
+
+What is still worth doing, because it is ~15 lines and keeps the fixtures honest for
+whoever does revive them:
 
 ### 4.1 Rename the fixture directory
 
@@ -233,14 +269,32 @@ WHERE source_id = 'Variant_Pf3D7_01_v3_29514';
 
 One row. This is the check that the whole spec exists to satisfy.
 
-3. **JUnit**, after the §4 updates. Expect the previously-passing HSSS tests to pass
-   again — a fixture or expected-file miss shows up here, not in production.
+3. **The install still builds.** `bld ApiCommonWebService` succeeds and reinstalls both the
+   Java and the Perl into `gus_home` — the §3.2 edit only takes effect in
+   `$GUS_HOME/bin/hsssReconstructSnpId` after an install, so rung 1 must be re-run
+   afterwards to confirm the installed copy carries the fix, not just the source tree.
 
-4. **Integration on cedar.** The plugin resolves the real directory. Requires the
-   `webServiceMirror` override below.
+4. **The prefix actually reaches the config.** After re-running Conifer for the site, the
+   generated file shows the new value:
 
-5. **End-to-end through a real search** — deferred to the `VariationsByIsolateGroup` spec,
-   which is the first thing able to exercise it.
+```bash
+grep idPrefix $GUS_HOME/config/PlasmoDB/highSpeedSnpSearch-config.xml
+```
+
+Expect `<entry key="idPrefix">Variant_</entry>`. This is the only check that §3.3 landed;
+nothing else reads that file until a search runs.
+
+5. **Integration on cedar** — the plugin resolves the real directory. Requires the
+   `webServiceMirror` override below. Note this cannot be exercised without a search to
+   invoke the plugin, so in practice it lands with rung 6.
+
+6. **End-to-end through a real search** — deferred to the `VariationsByIsolateGroup` spec,
+   which is the first thing able to exercise it. §3.1 and §3.5 are **not independently
+   verifiable before that point**; the honest state after this change is "the ID fix is
+   proven, the directory and param-name fixes are correct by inspection."
+
+**No automated test suite gates this change** — see §4 for why both existing harnesses are
+already broken. Do not report a green test run.
 
 ### 5.1 Pointing the plugin at the test files
 
@@ -271,6 +325,10 @@ Verified here so the search spec does not need to re-derive them:
   `eda.attributevalue_s3be28bbe14_sample` are a strict subset of the **538** strain names
   in `strainIdToName.dat`. So a filterParam whose internal values are EDA sample stable
   IDs will only ever name strains HSSS knows. No mapping layer is needed.
+- **The filterParam must be named `variation_sample_meta`** — the exact string
+  `FindPolymorphismsPlugin.getStrainFilterParamName()` returns after §3.5, and a required
+  parameter (`FindPolymorphismsAbstractPlugin:41`). A mismatch is rejected as a missing
+  required param.
 - **The results-file contract is exactly 4 tab-separated columns** —
   `FindPolymorphismsAbstractPlugin:141` throws otherwise. Order:
   `sourceId`, `percentOfKnowns`, `percentOfPolymorphisms`, `phenotype`. `wsColumn`
@@ -291,6 +349,9 @@ Verified here so the search spec does not need to re-derive them:
 - **Removing the dead snp/chip plugins** (`FindChip*`, `FindMajorAlleles*`,
   `FindGenesWithSnpChars*`) and their tests. They are unreferenced, but deleting them is a
   separate decision with its own review.
+- **Reviving either broken test harness** — §4. The JUnit module does not compile and the
+  shell suite passes the wrong argument count; fixing them is a larger job than this
+  change and should be done against variation data.
 - **Deleting the orphaned `GenesByNgsSnps`/`GenesBySnps` ontology rows** — §2.
 - **Populating the production HSSS directories** under
   `/var/www/Common/apiSiteFilesMirror/webServices/<project>/build-<N>/`. This spec is
