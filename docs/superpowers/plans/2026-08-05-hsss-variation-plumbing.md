@@ -771,6 +771,15 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   `/var/www/Common/apiSiteFilesMirror/webServices/<project>/build-<N>/`. This change is
   verified against the test copy in `/home/jbrestel/webserviceTest`; production placement is
   a data-deployment task.
+- **`HighSpeedSnpSearch/bin/hsssCopyFilesToWebSvcDir:36`**, which writes into
+  `<organism>/highSpeedSnpSearch` and so now disagrees with what the plugin reads. Flagged
+  during Task 2. Left alone deliberately: it is a run-once snp-era prototype copier, not a
+  deployment path — it hardcodes a `/eupath/data/htsSnpsPrototype/heterozygosityEnabled/`
+  source, carries a hardcoded project→organism table the author named `$stupidHash`, and
+  `die`s if the target already exists. It is not what produced the `dnaseq` directories and
+  is not part of the variation pipeline. Recorded here so nobody later "fixes" it or mistakes
+  it for how variation data reaches the webserver. **The open question it does raise —
+  what populates production `<organism>/dnaseq` — is the data-deployment item above.**
 - **The `webServiceMirror` override** needed to point the plugin at the test files (spec
   §5.1) — that belongs with the search that invokes the plugin, and the symlink bridging the
   missing `PlasmoDB/build-70` levels has already been created by hand.
