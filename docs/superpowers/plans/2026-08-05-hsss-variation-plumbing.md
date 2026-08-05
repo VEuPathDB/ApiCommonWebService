@@ -261,10 +261,16 @@ written to make.
 
 ```bash
 cd ~/workspaces/plasmodb/ApiCommonWebService/HighSpeedSnpSearch/bin && \
-  grep -c '${contigSourceId}_${location}' hsssGenomicLocationsFilter hsssReconstructSnpId
+  grep -cF '${contigSourceId}_${location}' hsssGenomicLocationsFilter hsssReconstructSnpId
 ```
 
 Expected: `hsssGenomicLocationsFilter:2` and `hsssReconstructSnpId:2`.
+
+> **`-F` is required.** Without it `grep` treats the pattern as a basic regex, where `{`/`}`
+> are interval syntax, and it matches **nothing** — reporting `0` even for correct code. An
+> earlier draft of this step omitted the flag, which made it a check that could only fail;
+> the risk is an implementer "fixing" working code to satisfy it. Use `-F` for any grep of a
+> literal Perl interpolation.
 
 - [ ] **Step 5: Check the script is still syntactically valid**
 
@@ -748,6 +754,19 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - **Deleting the dead chip/major-alleles/gene-chars plugins** — spec §7.
 - **Making `idPrefix` per-plugin.** Only needed if a second consumer with a different ID
   convention appears.
+- **Collapsing the ID-composition sites into one helper.** After Task 1b the separator is
+  hardcoded in three places (`hsssReconstructSnpId:42-43` and
+  `hsssGenomicLocationsFilter:51,67`), all of them re-deriving a format that
+  `VariationRecordClass` owns. That duplication is how the second site got missed in the
+  first place, so a shared helper is genuinely the right long-term shape — but it is a
+  refactor of live pipeline code with no test harness to catch a mistake, which is a worse
+  bet right now than three verified one-liners. Worth a follow-up issue.
+- **The unconditional STDERR echo in `hsssReconstructSnpId:42`.** Every composed ID is
+  printed to stderr as well as stdout, and the stderr copy **bypasses** the stdout branch's
+  sequence/location filter — so it emits rows the search deliberately excluded. Pre-existing
+  and untouched here, but at 4.4M variants it will make remote logs noisy and could mislead
+  anyone reading them during debugging. Flagged during Task 1b; not fixed because changing
+  output streams in untested pipeline code is its own change.
 - **Populating the production HSSS directories** under
   `/var/www/Common/apiSiteFilesMirror/webServices/<project>/build-<N>/`. This change is
   verified against the test copy in `/home/jbrestel/webserviceTest`; production placement is
