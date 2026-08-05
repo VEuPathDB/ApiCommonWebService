@@ -39,8 +39,8 @@ while(<STDIN>) {
   die "Can't map contigIndex '$contigIndex' in stdin" unless $contigSourceId;
   $prefix =  $prefix=~/^NULL$/ ? '' : $prefix;
   $suffix = $suffix =~/^NULL$/ ? '' : $suffix;
-  print STDERR join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n" ;
-  print STDOUT join("\t", $prefix."$contigSourceId.$location".$suffix, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
+  print STDERR join("\t", $prefix."${contigSourceId}_${location}".$suffix, @fields) . "\n" ;
+  print STDOUT join("\t", $prefix."${contigSourceId}_${location}".$suffix, @fields) . "\n"  unless ($seqFilter && ($contigSourceId ne $seqFilter || $location  < $minLoc || $location > $maxLoc));
 }
 
 sub usage {
