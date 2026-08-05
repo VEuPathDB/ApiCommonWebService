@@ -656,26 +656,68 @@ edit — check that mutagen synced the file before Step 1 ran.
 cd ~/workspaces/agentic-veupath-dev && \
   ssh -o LogLevel=ERROR "$(python3 bin/resolve.py --profile profiles/plasmodb.yml --field host)" \
   "bash -lc 'source /var/www/jbrestel.plasmodb.org/etc/setenv && \
-   conifer install && \
-   conifer configure --site-vars /var/www/jbrestel.plasmodb.org/etc/conifer_site_vars.yml'"
+   conifer configure --cohort ApiCommon --project PlasmoDB \
+     --webapp-ctx plasmo.jbrestel --tomcat-webapp-ctx plasmo.jbrestel \
+     --site-vars /var/www/jbrestel.plasmodb.org/etc/conifer_site_vars.yml'"
 ```
 
-`conifer install` copies the edited vars file from `project_home` into `gus_home`;
-`conifer configure` renders the templates. If this invocation is rejected for missing
-arguments, **do not guess** — Step 4 is the real check, and the guaranteed alternative is a
-full `bin/veup-build.sh plasmodb rebuild` (heavy, and it fails early if a `web-monorepo`
-overlay is active). Report which path you used.
+Expected: `PLAY RECAP ... failed=0`, with `highSpeedSnpSearch-config.xml` listed as `changed`
+(or `ok` if already correct — the playbook is idempotent).
+
+**All four flags are required, and two were missing from an earlier draft of this step.**
+`--cohort` is rejected outright (`conifer: error: --cohort is required for configure`).
+Omitting `--tomcat-webapp-ctx` gets *further* — it regenerates most files, including our
+target — and then fails on `log4j2.json` with
+`AnsibleUndefinedVariable: 'tomcat_webapp_ctx' is undefined`, leaving `failed=1`. That is the
+worst kind of half-success: the thing you were checking for *did* land, so a careless reading
+calls it done while one config file silently went unregenerated. Always read the `PLAY RECAP`.
+
+Both `*-ctx` values are the webapp context, `plasmo.jbrestel` — confirmed against
+`/usr/local/tomcat_instances/PlasmoDB/conf/Catalina/localhost/`, which holds one `.xml` per
+context. For a different developer prefix, substitute accordingly.
+
+**`conifer install` is not needed as a separate step.** An earlier draft called for it.
+`bld ApiCommonWebService` depends on `ApiCommonWebsite-Installation`, which already copies the
+edited vars into `gus_home/lib/conifer/roles/conifer/vars/ApiCommon/default.yml` — verify
+with `grep highspeedsnpsearchconfig_idPrefix` on that path if `configure` seems to render a
+stale value.
+
+Conifer regenerates `model.prop` among other files, so confirm the model still loads
+afterwards:
+
+```bash
+cd ~/workspaces/agentic-veupath-dev && \
+  ssh -o LogLevel=ERROR "$(python3 bin/resolve.py --profile profiles/plasmodb.yml --field host)" \
+  "bash -lc 'source /var/www/jbrestel.plasmodb.org/etc/setenv && wdkXml -model PlasmoDB 2>&1 | tail -3'"
+```
+
+Expected: ends with `WDK Model resources released.` (a clean shutdown, i.e. the model loaded).
+
+Then reload so the runtime picks up the new config — WSF plugins read their property file at
+init, so the prefix does not take effect until this:
+
+```bash
+cd ~/workspaces/agentic-veupath-dev && bin/veup-build.sh plasmodb reload
+```
+
+Expected: `OK - Reloaded application at context path [/plasmo.jbrestel]`.
 
 - [ ] **Step 4: Confirm the prefix reached the generated config**
 
 ```bash
 cd ~/workspaces/agentic-veupath-dev && \
   ssh -o LogLevel=ERROR "$(python3 bin/resolve.py --profile profiles/plasmodb.yml --field host)" \
-  'grep idPrefix /var/www/jbrestel.plasmodb.org/gus_home/config/PlasmoDB/highSpeedSnpSearch-config.xml'
+  'grep idPrefix /var/www/jbrestel.plasmodb.org/gus_home/config/highSpeedSnpSearch-config.xml'
 ```
 
 Expected: `<entry key="idPrefix">Variant_</entry>`. This is the **only** check that Task 5
 took effect; nothing else reads that file until a search runs.
+
+> **Note the path.** This file sits directly in `gus_home/config/`, **not** in the
+> per-project `gus_home/config/PlasmoDB/` subdirectory where `model.prop` and
+> `model-config.xml` live. An earlier draft of this step had the `PlasmoDB/` path and would
+> have failed with `No such file or directory` — which reads like "Task 5 didn't work" rather
+> than "the path is wrong."
 
 - [ ] **Step 5: Record what remains unverified**
 
