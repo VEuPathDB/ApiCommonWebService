@@ -166,6 +166,10 @@ Expected: `exit: 1` (no matches) — `hsssReconstructChipSnpId` is for the dead 
 composes IDs differently; if this *does* match something, report it rather than changing it,
 since chip is out of scope (spec §7).
 
+> **This expectation was wrong, and the step earned its keep by catching it.** The grep
+> matches `hsssGenomicLocationsFilter:51` and `:67`, a second ID-composition site on a
+> *live* alternative pipeline tail. Handled by Task 1b — do not change it here.
+
 - [ ] **Step 6: Commit**
 
 ```bash
@@ -181,6 +185,118 @@ and STDERR joins now use '_'.
 Verified against the checked-in fixture: contig 80/location 896 with prefix
 Variant_ now yields Variant_a80_896, and the resulting shape matches a real
 row in apidbtuning.VariationAttributes.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 1b: Fix the separator in the second ID-composition site
+
+**Added during execution.** Task 1's Step 5 was written expecting no other script to compose
+IDs the same way. It does: `hsssGenomicLocationsFilter` builds
+`$idPrefix."$contigSourceId.$location".$idSuffix` at **two** places, and it is not dead code
+on the chip path — it is a live alternative tail of the *same* pipeline.
+
+Why it matters, concretely. `HsssGenomicLocationFilterScriptGenerator.pm:14` returns this
+script from `getFinalCommandString`, so it **substitutes for** `hsssReconstructSnpId` rather
+than running after it. Tracing which planned search reaches which tail:
+
+| plugin | generate script | ID composed by | fixed by |
+|---|---|---|---|
+| `FindPolymorphismsPlugin` → `VariationsByIsolateGroup` | `hsssGeneratePolymorphismScript` (inherited) | `hsssReconstructSnpId` | Task 1 |
+| `FindPolymorphismsWithSeqFilterPlugin` → `VariationsByLocation` | inherited, not overridden | `hsssReconstructSnpId` | Task 1 |
+| **`FindSnpsByGeneIdsPlugin`** → **`VariationsByGeneIds`** | **overrides** (`:112`) to `hsssGenerateGenomicLocationsScript` | **`hsssGenomicLocationsFilter`** | **this task** |
+
+So exactly one of the four searches being ported would still emit
+`Variant_Pf3D7_01_v3.29514` and fail the way this change exists to prevent — silently, with
+zero results. Fixing it now costs the same two lines; deferring it buys a future debugging
+session.
+
+**Files:**
+- Modify: `ApiCommonWebService/HighSpeedSnpSearch/bin/hsssGenomicLocationsFilter:51` and `:67`
+
+- [ ] **Step 1: Confirm both sites and their context**
+
+```bash
+cd ~/workspaces/plasmodb/ApiCommonWebService/HighSpeedSnpSearch/bin && \
+  grep -n 'contigSourceId\.\$location' hsssGenomicLocationsFilter
+```
+
+Expected: two hits, lines 51 and 67. They are the same statement in two branches of the
+filter's control flow — the "within current filter" branch and the "within the next filter"
+branch — so both must change or gene-ID searches would emit inconsistent IDs depending on
+which branch a given variant took.
+
+- [ ] **Step 2: Make the change at both sites**
+
+Replace, at both line 51 and line 67:
+
+```perl
+    print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
+```
+
+with:
+
+```perl
+    print STDOUT join("\t", $idPrefix."${contigSourceId}_${location}".$idSuffix, @fields) . "\n";
+```
+
+Note the indentation differs between the two sites (line 67 sits one level deeper inside the
+`while`/`if`). Preserve each line's existing leading whitespace; change only the
+interpolation. The `${...}` braces are required for the same reason as Task 1 —
+`$contigSourceId_` would be read as an undefined variable name.
+
+- [ ] **Step 3: Verify no dotted composition remains anywhere in `bin/`**
+
+```bash
+cd ~/workspaces/plasmodb/ApiCommonWebService/HighSpeedSnpSearch/bin && \
+  grep -n 'contigSourceId\.\$location\|contigSourceId\.\$loc' * ; echo "exit: $?"
+```
+
+Expected: `exit: 1`, no matches — this is now the assertion Task 1's Step 5 was originally
+written to make.
+
+- [ ] **Step 4: Confirm the underscore form is present twice**
+
+```bash
+cd ~/workspaces/plasmodb/ApiCommonWebService/HighSpeedSnpSearch/bin && \
+  grep -c '${contigSourceId}_${location}' hsssGenomicLocationsFilter hsssReconstructSnpId
+```
+
+Expected: `hsssGenomicLocationsFilter:2` and `hsssReconstructSnpId:2`.
+
+- [ ] **Step 5: Check the script is still syntactically valid**
+
+```bash
+cd ~/workspaces/plasmodb/ApiCommonWebService/HighSpeedSnpSearch/bin && \
+  perl -c hsssGenomicLocationsFilter
+```
+
+Expected: `hsssGenomicLocationsFilter syntax OK`. There is no fixture-driven test for this
+script the way there is for `hsssReconstructSnpId` (`hsssTestSuite`, the only caller with
+fixture data, is broken — spec §4), so a syntax check plus the greps is the available
+verification. Do not claim more.
+
+- [ ] **Step 6: Commit**
+
+```bash
+cd ~/workspaces/plasmodb/ApiCommonWebService
+git add HighSpeedSnpSearch/bin/hsssGenomicLocationsFilter
+git commit -m "Build variation IDs with an underscore in the locations filter too
+
+hsssGenomicLocationsFilter composes source_ids the same dotted way
+hsssReconstructSnpId did, at both of its output branches. It is not dead
+chip code: HsssGenomicLocationFilterScriptGenerator returns it as the final
+command, so it substitutes for the reconstruct script rather than following
+it, and FindSnpsByGeneIdsPlugin overrides getGenerateScriptName to route
+through it.
+
+Without this, VariationsByGeneIds would still emit dotted IDs matching no
+variation record -- zero results, no error -- while the isolate-group and
+location searches worked, since those inherit the reconstruct path.
+
+Found by Task 1's Step 5 grep, which was written expecting no second site.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
