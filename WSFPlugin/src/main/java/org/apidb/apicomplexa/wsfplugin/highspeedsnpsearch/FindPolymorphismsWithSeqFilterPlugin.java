@@ -14,7 +14,7 @@ import org.gusdb.wsf.plugin.PluginUserException;
 public class FindPolymorphismsWithSeqFilterPlugin extends FindPolymorphismsPlugin {
 
   // required parameter definition
-  public static final String PARAM_CHROMOSOME = "chromosomeOptionalForNgsSnps";
+  public static final String PARAM_CHROMOSOME = "chromosomeOptionalForVariations";
   public static final String PARAM_SEQUENCE = "sequenceId";
   public static final String PARAM_START_POINT = "start_point";
   public static final String PARAM_END_POINT = "end_point";
