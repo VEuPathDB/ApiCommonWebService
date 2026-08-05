@@ -48,7 +48,7 @@ while(<STDIN>) {
   elsif ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
     $idPrefix =  $idPrefix=~/^NULL$/ ? '' : $idPrefix;
     $idSuffix = $idSuffix =~/^NULL$/ ? '' : $idSuffix;
-    print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
+    print STDOUT join("\t", $idPrefix."${contigSourceId}_${location}".$idSuffix, @fields) . "\n";
   }
 
   # read next filter if beyond current filter, and print if within that next filter
@@ -64,7 +64,7 @@ while(<STDIN>) {
     if ($contigSourceId eq $filterContigId && $location >= $filterStart && $location <= $filterEnd) {
       $idPrefix =  $idPrefix=~/^NULL$/ ? '' : $idPrefix;
       $idSuffix = $idSuffix =~/^NULL$/ ? '' : $idSuffix;
-      print STDOUT join("\t", $idPrefix."$contigSourceId.$location".$idSuffix, @fields) . "\n";
+      print STDOUT join("\t", $idPrefix."${contigSourceId}_${location}".$idSuffix, @fields) . "\n";
     }
   }
 }
