@@ -77,6 +77,14 @@ rediscover them; each is out of scope for the statistics work.
   repairing it means re-baselining a stage whose output has never been validated, which
   is a larger and separate piece of work.
 
+- **`FindGenesWithChipSnpCharsPlugin` shares the filter and still expects 8 fields.**
+  It returns the same `getGenerateScriptName()` (`hsssGenerateGeneCharsScript`), so it
+  receives the same 9-field output against a `parts.length != 8` assertion. Dormant, not
+  dangerous: its `processQuery` carries `includeProjects="TODO??"` — excluded from every
+  project — and its question in `geneQuestions.xml` is inside a comment block. If anyone
+  revives the chip search it fails loudly with a column-count exception rather than
+  silently producing wrong numbers, which is why it is left alone here.
+
 - **`expected/majorAlleles.txt` also has an off-by-one in its product letters.**
   Reported by the Task 0 agent and not independently confirmed: each product letter in
   the fixture is exactly one higher than the code emits (`J`/`I`, `U`/`T`, `O`/`N` —
@@ -762,7 +770,23 @@ This commit and the previous one must deploy together."
 ### Task 5: Declare the new column in the model
 
 **Files:**
-- Modify: `ApiCommonModel/Model/lib/wdk/model/questions/queries/geneQueries.xml:2944`
+- Modify: `ApiCommonModel/Model/lib/wdk/model/questions/queries/geneQueries.xml` — the
+  `wsColumn` list AND BOTH `postCacheUpdateSql` blocks
+
+**Correction to this task as originally written.** It said "add the wsColumn", which is
+not sufficient. Both `postCacheUpdateSql` blocks (the `excludeProjects="UniDB"` one and
+the `includeProjects="UniDB"` one) enumerate the result columns explicitly in their
+`INSERT` column list and their `SELECT` list. Those blocks backfill the sibling
+transcripts of a matching gene. Omit the new column there and a gene's matched transcript
+carries a span density while its siblings carry NULL, in the same result table — five
+edits, not one. Landed as `c3193504`.
+
+Also note the dependency is tighter than "the perl and Java must ship together": the
+`columns` map is built from `request.getOrderedColumns()`, i.e. the model's `wsColumn`
+list, NOT from the plugin's `getColumns()`. `PluginExecutor.validateColumns` only checks
+that `getColumns()` is a subset. So the Java commit alone throws
+`PluginUserException: The required column is missing: span_snp_density` before
+`makeResultRow` is reached. The atomic set is three commits across two repos.
 
 - [ ] **Step 1: Add the wsColumn**
 
