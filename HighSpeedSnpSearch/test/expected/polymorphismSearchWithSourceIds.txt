@@ -1,8 +1,10 @@
-Variant_a80_896	100	25	y
-Variant_b86_13441	100	50	
-Variant_e99_2011	100	50	
-Variant_f100_23	100	20	
-Variant_g102_4334	100	50	y
-Variant_h103_30021	100	25	y
-Variant_i104_3002	100	50	
-Variant_j201_54	100	20	
+Variant_a80_896	100.0	25.0	non-syn
+Variant_b86_13441	100.0	50.0	syn
+Variant_e99_1500	100.0	50.0	non-coding
+Variant_e99_2011	100.0	50.0	syn
+Variant_f100_23	100.0	20.0	syn
+Variant_g102_4334	100.0	50.0	non-syn
+Variant_h103_30021	100.0	25.0	non-syn
+Variant_h103_30500	100.0	50.0	has stop codon
+Variant_i104_3002	100.0	50.0	syn
+Variant_j201_54	100.0	20.0	syn
