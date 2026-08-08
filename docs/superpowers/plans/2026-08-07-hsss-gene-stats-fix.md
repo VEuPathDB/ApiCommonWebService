@@ -37,7 +37,82 @@ the count. The two repos must ship together. Do not deploy one without the other
 
 ---
 
-### Task 1: Give the geneChars filter a real regression test
+## Known remaining breakage in hsssTestSuite (deliberately NOT fixed here)
+
+Found while repairing the suite for Task 0. Recorded so the next person does not
+rediscover them; each is out of scope for the statistics work.
+
+- **`hsssTestSuite:135` — the majorAlleles stage is dead.** It calls
+  `hsssGenerateMajorAllelesScript` with 12 arguments where the generator requires 14-15,
+  so it dies in `usage()`. Same root cause as the four sites Task 0 fixed: the missing
+  `hsssReconstructSnpId Variant_ NULL` triple. Not fixed because
+  `expected/majorAlleles.txt` holds raw contig indices (`99 2011 C ...`) rather than
+  `Variant_e99_2011` ids, so it predates the reconstruct step being wired in at all —
+  repairing it means re-baselining a stage whose output has never been validated, which
+  is a larger and separate piece of work.
+
+- **`expected/polymorphismSearch.txt` is orphaned and self-contradictory.** Referenced
+  nowhere in the suite, and it disagrees with its sibling
+  `expected/polymorphismSearchWithSourceIds.txt` about which SNPs are non-synonymous (it
+  marks contigs 80/99/102; the sibling marks 80/102/103). Two stale files from different
+  eras. Probably wants deleting, but deleting a fixture is not a statistics fix.
+
+- **`hsssReconstructSnpId:59` documents the wrong encoding.** Its usage text says
+  `product_class(-1=noncoding,0=syn,1=nonsyn,2=nonsense)`; the code immediately above it
+  maps `0` to `non-coding`, `1` to `syn`, `2` to `non-syn`, and negatives to
+  `has stop codon`. The same class of defect as the labels this plan corrects —
+  documentation describing behaviour the code does not have.
+
+---
+
+### Task 0: Repair hsssTestSuite (REPLACES the original Task 1)
+
+**This task was added after the plan was written.** The original Task 1 assumed the suite
+ran the geneChars filter and discarded the result. It does not: `extractArgs` consumes
+five arguments and `getFinalCommandString` unpacks fourteen, but the suite supplied
+eleven, so every argument shifted left by three and the gene locations file was never
+passed — the filter received the literal string `5` in its place. The stage has never
+produced meaningful output, which is why its `diff` was commented out.
+
+Three sub-parts, executed in this order:
+
+- **0a — fix the arguments.** Insert `strainsList.txt hsssReconstructSnpId Variant_ NULL`
+  in the slot after `strains_list_file` at all four call sites
+  (`hsssTestSuite:41,59,76,93`). Sites 41/59/76 genuinely use `idPrefix`/`idSuffix`;
+  geneChars emits gene ids and never reads them, so there they are inert positional
+  filler. Committed as `5dfe387`, touching `hsssTestSuite` only.
+
+- **0b — characterize the stale baselines.** Three expected files diverge from actual
+  output in exactly two classes, both traced and both approved: `%d` -> `%.1f` on the
+  percentage columns (`d3771af`, 2014-07-26) and the product-class column going from a
+  boolean `y`/blank to the four-value label set (`f1ac0d9`, 2014-08-19). Neither commit
+  updated `test/expected/`. Row counts, field counts and column 1 are identical
+  throughout; there are no unexplained differences.
+
+- **0c/0d — extend the fixture, then baseline once.** The fixture produces only `syn` and
+  `non-syn`; it contains no non-coding position and no stop codon, so
+  `nonCodingCount` and `nonsenseCount` are 0 for every gene. Re-baselining before fixing
+  that would produce a green suite that never executes the paths this branch changes.
+  So: add a non-coding position and a stop-codon position to `test/textData/strain*.txt`
+  and `referenceGenome.txt`, with at least one falling inside a gene span in
+  `geneFilters.txt`, THEN regenerate all four expected files together — the three above
+  plus the new `geneCharsFilter.txt`. Uncomment the geneChars assertion. Prove it can
+  fail by corrupting the expected file and confirming a non-zero exit.
+
+  geneChars needs widened arguments to emit anything: the suite's current
+  `coding 2 5 .1 .9 3 1000` yields empty output; use `all 0 -1 0 -1 0 -1`.
+
+  Also convert `test/textData/geneFilters.txt` to unix line endings — `chomp` strips only
+  `\n`, so the trailing `\r` lands on the last field, and Task 2 appends numeric columns
+  after it.
+
+---
+
+### Task 1: (SUPERSEDED — folded into Task 0d)
+
+Kept for numbering. The baseline capture and assertion uncommenting described below now
+happen in Task 0d, against the extended fixture. Read this section for the
+`hsssTestSuite` edit and the fail-proof step, but do not execute it separately.
 
 The suite runs `hsssGeneCharacteristicsFilter` today but asserts nothing — the `diff` is
 commented out and the expected file does not exist. Establish the baseline BEFORE
