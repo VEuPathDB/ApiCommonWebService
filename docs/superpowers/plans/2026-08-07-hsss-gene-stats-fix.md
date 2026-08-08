@@ -37,6 +37,32 @@ the count. The two repos must ship together. Do not deploy one without the other
 
 ---
 
+## hsssTestSuite tests the INSTALLED code, not your working tree
+
+Found the hard way during Task 3, and it will bite again on Task 4.
+
+The suite is invoked by path out of `$PROJECT_HOME`, but every tool it calls resolves off
+`PATH` into `$GUS_HOME/bin` — the installed copy. Editing
+`HighSpeedSnpSearch/bin/hsssGeneCharacteristicsFilter` in the checkout and re-running the
+suite tests the OLD code and can print a completely undeserved `matched`.
+
+Before trusting any suite result after editing a tool, install it:
+
+```bash
+ssh cedar 'source /var/www/jbrestel.plasmodb.org/etc/setenv
+  cp $PROJECT_HOME/ApiCommonWebService/HighSpeedSnpSearch/bin/<tool> $GUS_HOME/bin/
+  chmod +x $GUS_HOME/bin/<tool>'
+```
+
+and confirm with `md5sum` that installed and checkout agree. **A `matched` that arrives
+without an intervening install is meaningless.**
+
+The Java plugin has the same property in a worse form: it is a jar loaded by the plugin
+runner, so `mvn compile` proves only that it builds. Task 4's real verification is Task 9,
+against the live instance, after the jar is rebuilt and deployed.
+
+---
+
 ## Known remaining breakage in hsssTestSuite (deliberately NOT fixed here)
 
 Found while repairing the suite for Task 0. Recorded so the next person does not
