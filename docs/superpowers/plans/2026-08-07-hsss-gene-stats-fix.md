@@ -51,6 +51,12 @@ rediscover them; each is out of scope for the statistics work.
   repairing it means re-baselining a stage whose output has never been validated, which
   is a larger and separate piece of work.
 
+- **`expected/majorAlleles.txt` also has an off-by-one in its product letters.**
+  Reported by the Task 0 agent and not independently confirmed: each product letter in
+  the fixture is exactly one higher than the code emits (`J`/`I`, `U`/`T`, `O`/`N` —
+  74/73, 85/84, 79/78). If that holds it is a second defect layered on the missing-args
+  one, and re-baselining without understanding it would bless an off-by-one.
+
 - **`expected/polymorphismSearch.txt` is orphaned and self-contradictory.** Referenced
   nowhere in the suite, and it disagrees with its sibling
   `expected/polymorphismSearchWithSourceIds.txt` about which SNPs are non-synonymous (it
@@ -469,6 +475,22 @@ Outputs these columns (tab delim): geneId cdsDensity spanDensity dndsRatio synCo
 ```
 
 - [ ] **Step 7: Run the suite to verify it FAILS**
+
+**Correction to this plan, found during Task 0:** the exit code is `1`, NOT `255`.
+`hsssTestSuite` runs under `set -e`, so it dies at the `diff` itself and the
+`diffStat=$?` / `exit -1` blocks after every diff are dead code. Worse, a pre-existing
+failure in the majorAlleles stage (see Known remaining breakage) means the suite exits
+non-zero even on success. **Exit code alone cannot tell you whether geneChars passed.**
+
+The discriminator is WHERE the suite stops and whether it printed `matched` for
+geneChars:
+
+| geneChars | prints | stops at | exit |
+|---|---|---|---|
+| passing | `matched` | majorAlleles | 1 |
+| failing | the diff, no `matched` | geneChars | 1 |
+
+So every check below greps the output rather than testing `$?`.
 
 Run:
 
