@@ -25,8 +25,12 @@ import org.gusdb.wsf.plugin.PluginUserException;
  */
 public class FindGenesWithSnpCharsPlugin extends FindPolymorphismsPlugin {
 
+  // Must stay in step with the enumList of geneParams.snp_class in ApiCommonModel and
+  // with the classes hsssGeneCharacteristicsFilter branches on. An entry missing here
+  // fails at run time, not at build time - which is how "noncoding" was unreachable
+  // despite both the other two layers supporting it.
   private static final Set<String> legalParams = new HashSet<String>(Arrays.asList(new String[] { "coding",
-      "nonsynonymous", "synonymous", "nonsense", "all", "coding" }));
+      "noncoding", "nonsynonymous", "synonymous", "nonsense", "all" }));
 
   private static final String geneLocationsFileName = "geneLocations.txt";
 
