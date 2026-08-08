@@ -1,2 +1,4 @@
-Variant_e99_2011	100	50	
-Variant_h103_30021	100	25	y
+Variant_e99_1500	100.0	50.0	non-coding
+Variant_e99_2011	100.0	50.0	syn
+Variant_h103_30021	100.0	25.0	non-syn
+Variant_h103_30500	100.0	50.0	has stop codon

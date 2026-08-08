@@ -1,1 +1,1 @@
-Variant_f100_23	100	20	
+Variant_f100_23	100.0	20.0	syn
