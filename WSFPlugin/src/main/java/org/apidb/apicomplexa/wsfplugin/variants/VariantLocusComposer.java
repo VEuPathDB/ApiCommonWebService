@@ -1,7 +1,9 @@
 package org.apidb.apicomplexa.wsfplugin.variants;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,5 +42,65 @@ public class VariantLocusComposer {
           String.join(", ", c.aminoAcids())));
     }
     return rows;
+  }
+
+  /**
+   * One row per country, over samples that HAVE a country. Samples without one are
+   * excluded entirely, as is the reference strain, which has no collection site in EDA.
+   *
+   * Frequencies are ploidy-weighted (one unit per chromosome slot, denominator = the
+   * country's own chromosome count) per processSequenceVariations.jl's
+   * aggregate_locus_alleles. They therefore do NOT match the locus-wide
+   * snp_major_allele_frequency in the overview panel; that is deliberate, and the column
+   * help says so.
+   */
+  public List<CountryRow> countryRows(LocusCalls locus, Map<String, String> countryBySample) {
+    Map<String, List<SampleCall>> byCountry = new LinkedHashMap<>();
+    for (SampleCall c : locus.calls()) {
+      if (c.noCall()) continue;
+      String country = countryBySample.get(c.sampleName());
+      if (country == null || country.isEmpty()) continue;
+      byCountry.computeIfAbsent(country, k -> new ArrayList<>()).add(c);
+    }
+
+    List<CountryRow> rows = new ArrayList<>();
+    for (Map.Entry<String, List<SampleCall>> e : byCountry.entrySet()) {
+      List<SampleCall> calls = e.getValue();
+
+      Map<String, Integer> weights = new LinkedHashMap<>();
+      int total = 0;
+      for (SampleCall c : calls) {
+        for (String a : c.chromosomeAlleles()) {
+          weights.merge(a, 1, Integer::sum);
+          total++;
+        }
+      }
+      if (total == 0) continue;
+
+      final int denominator = total;
+      List<String> ranked = new ArrayList<>(weights.keySet());
+      ranked.sort((x, y) -> {
+        int byWeight = Integer.compare(weights.get(y), weights.get(x));
+        return byWeight != 0 ? byWeight : x.compareTo(y);   // deterministic tie-break
+      });
+
+      rows.add(new CountryRow(
+          e.getKey(),
+          calls.size(),
+          formatted(ranked, weights, denominator, 0),
+          formatted(ranked, weights, denominator, 1),
+          formatted(ranked, weights, denominator, 2)));
+    }
+
+    rows.sort((a, b) -> Integer.compare(b.strainCount(), a.strainCount()));
+    return rows;
+  }
+
+  private String formatted(List<String> ranked, Map<String, Integer> weights,
+                           int denominator, int rank) {
+    if (rank >= ranked.size()) return "";
+    String allele = ranked.get(rank);
+    return String.format(Locale.ROOT, "%s (%.4f)",
+        allele, weights.get(allele) / (double) denominator);
   }
 }

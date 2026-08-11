@@ -64,4 +64,62 @@ public class VariantLocusComposerTest {
     assertEquals("", row.depth());
     assertEquals("", row.readFrequency());
   }
+
+  @Test
+  public void countryRowsAreWeightedByChromosomeAndSortedByCount() {
+    LocusCalls l = locus(List.of(
+        call("S1", "1", "C", 1, "80.00", List.of("A")),
+        call("S2", "0", "T", 1, "100.00", List.of("V")),
+        call("S3", "0", "T", 1, "100.00", List.of("V")),
+        call("S4", "1", "C", 1, "90.00", List.of("A"))));
+
+    List<CountryRow> rows = new VariantLocusComposer().countryRows(l,
+        Map.of("S1", "Mali", "S2", "Mali", "S3", "Mali", "S4", "Gambia"));
+
+    assertEquals(2, rows.size());
+    CountryRow mali = rows.get(0);
+    assertEquals("Mali", mali.country());
+    assertEquals(3, mali.strainCount());
+    assertEquals("T (0.6667)", mali.majorAllele());
+    assertEquals("C (0.3333)", mali.minorAllele());
+    assertEquals("", mali.otherAllele());
+  }
+
+  @Test
+  public void countryRowsExcludeSamplesWithNoCountryAndNoCalls() {
+    LocusCalls l = locus(List.of(
+        call("S1", "1", "C", 1, "80.00", List.of("A")),
+        call("S2", "0", "T", 1, "100.00", List.of("V")),
+        noCall("S3")));
+
+    // S2 has no country; S3 is a no-call with one.
+    List<CountryRow> rows = new VariantLocusComposer().countryRows(l,
+        Map.of("S1", "Mali", "S3", "Mali"));
+
+    assertEquals(1, rows.size());
+    assertEquals(1, rows.get(0).strainCount());
+    assertEquals("C (1.0000)", rows.get(0).majorAllele());
+  }
+
+  @Test
+  public void diploidHetContributesOneUnitToEachAllele() {
+    // allele() is the IUPAC display value; chromosomeAlleles() is what aggregation uses.
+    LocusCalls l = locus(List.of(
+        new SampleCall("S1", "0/1", 20, "Y", "50.00", List.of(),
+            List.of("T", "C"), 2, false, false)));
+    List<CountryRow> rows = new VariantLocusComposer()
+        .countryRows(l, Map.of("S1", "Mali"));
+
+    assertEquals(1, rows.size());
+    assertEquals(1, rows.get(0).strainCount());
+    // Two chromosomes, one T and one C -> 0.5 each.
+    assertEquals("C (0.5000)", rows.get(0).majorAllele());
+    assertEquals("T (0.5000)", rows.get(0).minorAllele());
+  }
+
+  @Test
+  public void noCountryAttributeYieldsNoRows() {
+    LocusCalls l = locus(List.of(call("S1", "1", "C", 1, "80.00", List.of("A"))));
+    assertEquals(List.of(), new VariantLocusComposer().countryRows(l, Map.of()));
+  }
 }
