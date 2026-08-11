@@ -92,7 +92,12 @@ public class VariantLocusComposer {
           formatted(ranked, weights, denominator, 2)));
     }
 
-    rows.sort((a, b) -> Integer.compare(b.strainCount(), a.strainCount()));
+    // (-strainCount, country): the count is what a reader scans for, and the name
+    // keeps ties off the VCF's arbitrary sample order.
+    rows.sort((a, b) -> {
+      int byCount = Integer.compare(b.strainCount(), a.strainCount());
+      return byCount != 0 ? byCount : a.country().compareTo(b.country());
+    });
     return rows;
   }
 
