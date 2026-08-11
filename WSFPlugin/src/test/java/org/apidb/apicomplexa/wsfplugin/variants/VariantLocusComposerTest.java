@@ -21,7 +21,7 @@ public class VariantLocusComposerTest {
   }
 
   private static LocusCalls locus(List<SampleCall> calls) {
-    return new LocusCalls("chr1", 100, "T", List.of("C"), CannIndex.parse("."), calls);
+    return new LocusCalls("chr1", 100, "T", List.of("C"), calls);
   }
 
   @Test
@@ -38,7 +38,9 @@ public class VariantLocusComposerTest {
     assertEquals("A", rows.get(0).aaProduct());
 
     assertEquals("No call", rows.get(1).genotype());
-    assertEquals("", rows.get(1).allele());
+    // Genotype is hidden on the page (see variantRecords.xml), so a no-call row
+    // must show "No call" in the Allele column too, or it looks like missing data.
+    assertEquals("No call", rows.get(1).allele());
     assertEquals("", rows.get(1).country());
   }
 

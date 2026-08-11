@@ -23,8 +23,11 @@ public class VariantLocusComposer {
       String country = countryBySample.getOrDefault(c.sampleName(), "");
       if (c.noCall()) {
         // Present, not omitted: the record advertises no_call_strain_count, so a table
-        // that hid these would contradict the overview panel above it.
-        rows.add(new StrainRow(c.sampleName(), country, "No call", "", "", "", ""));
+        // that hid these would contradict the overview panel above it. The genotype
+        // column is hidden on the page (internal="true" on the WDK columnAttribute),
+        // so "No call" must show in the Allele column instead - otherwise a no-call
+        // row is visually indistinguishable from missing data.
+        rows.add(new StrainRow(c.sampleName(), country, "No call", "No call", "", "", ""));
         continue;
       }
       rows.add(new StrainRow(

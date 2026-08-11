@@ -7,6 +7,5 @@ public record LocusCalls(
     int position,
     String refAllele,
     List<String> altAlleles,
-    CannIndex cann,
     List<SampleCall> calls
 ) {}

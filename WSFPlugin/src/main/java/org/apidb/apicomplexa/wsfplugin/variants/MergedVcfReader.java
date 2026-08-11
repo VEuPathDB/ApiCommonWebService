@@ -35,22 +35,168 @@ public class MergedVcfReader implements AutoCloseable {
     _reader = new VCFFileReader(new File(vcfPath.toString()), true);
   }
 
+  /**
+   * The pipeline's write_vcf_entry emits one VCF record per unique ALT, so a locus
+   * routinely has several records at the same CHROM/POS (measured against the real
+   * merged.ann.vcf.gz: 9,384 of 47,189 positions, 19.9%, have more than one record;
+   * one locus had seven). Reading only the first record - the original bug - drops
+   * every sample whose alt lives on a later record: measured, 13.9% of sample-locus
+   * alt calls involve a sample carrying alts on more than one record. This reads
+   * EVERY record at the position and merges them into one LocusCalls; see
+   * {@link #mergeSample} for the per-sample merge rules.
+   */
   public Optional<LocusCalls> read(String sequenceId, int position) {
     Iterator<VariantContext> it = _reader.query(sequenceId, position, position);
-    if (!it.hasNext()) return Optional.empty();
+    List<VariantContext> records = new ArrayList<>();
+    while (it.hasNext()) records.add(it.next());
+    if (records.isEmpty()) return Optional.empty();
 
-    VariantContext vc = it.next();
-    String ref = vc.getReference().getBaseString();
+    String ref = records.get(0).getReference().getBaseString();
+
+    // Union of ALTs across records, in record order - each record's own ALT(s),
+    // de-duplicated (the same ALT should not appear twice even though the pipeline
+    // does not normally repeat one across records at a locus).
     List<String> alts = new ArrayList<>();
-    for (Allele a : vc.getAlternateAlleles()) alts.add(a.getBaseString());
-
-    CannIndex cann = parseCann(vc);
+    List<CannIndex> cannByRecord = new ArrayList<>(records.size());
+    for (VariantContext vc : records) {
+      for (Allele a : vc.getAlternateAlleles()) {
+        String base = a.getBaseString();
+        if (!alts.contains(base)) alts.add(base);
+      }
+      // CANN keys (r0, k0, ...) are scoped to their own record - record 1's k0 and
+      // record 2's k0 are different entries. Build one CannIndex per record and
+      // NEVER merge them into a single map, or a sample's CA would resolve against
+      // the wrong record's key and silently produce the wrong amino acid.
+      cannByRecord.add(parseCann(vc));
+    }
 
     List<SampleCall> calls = new ArrayList<>();
     for (String sample : _reader.getFileHeader().getGenotypeSamples()) {
-      calls.add(toCall(vc, vc.getGenotype(sample), sample, ref, cann));
+      calls.add(mergeSample(records, cannByRecord, sample));
     }
-    return Optional.of(new LocusCalls(sequenceId, position, ref, alts, cann, calls));
+    return Optional.of(new LocusCalls(sequenceId, position, ref, alts, calls));
+  }
+
+  /**
+   * Merges one sample's genotype across every record at the locus.
+   *
+   * - noCall: true only if the genotype is no-call (or absent) on every record.
+   * - a "contributing" record is one where the sample's genotype is present and
+   *   NOT hom-ref - a hom-ref call on a record whose alt the sample doesn't carry
+   *   is the pipeline's per-ALT splitting, not evidence of a reference call, and
+   *   must not drag the merged result toward reference.
+   * - chromosomeAlleles (the aggregation weight):
+   *     no contributing records, but at least one real call -> reference call:
+   *       the genotype alleles from the first record with a real call.
+   *     exactly one contributing record -> that record's genotype alleles as-is.
+   *     more than one contributing record -> the non-reference allele from each
+   *       contributing record (a true multi-allelic site the pipeline split).
+   * - aminoAcids: the union across ALL records where the sample's CA resolves,
+   *   each against its OWN record's CannIndex, de-duplicated, in record order
+   *   then within-record order.
+   * - depth: from a contributing record if there is one, else the first record
+   *   with a real call.
+   * - readFrequency: from the record whose alt the sample carries; with multiple
+   *   contributing records, the first.
+   * - coverageFilled: only if there is no contributing record AND the reference
+   *   call is coverage-filled by the existing rule (hom-ref, no RO/AO).
+   * - genotype: the raw GT when exactly one record contributed (or it is a plain
+   *   reference/no-call); otherwise the slash-joined raw GTs of the contributing
+   *   records. No longer shown on the page, but still goes to downloads.
+   * - ploidy: the max ploidy observed across records where the sample has a real
+   *   call.
+   */
+  private SampleCall mergeSample(List<VariantContext> records, List<CannIndex> cannByRecord,
+                                 String sample) {
+    int n = records.size();
+    List<Genotype> genotypes = new ArrayList<>(n);
+    for (VariantContext vc : records) genotypes.add(vc.getGenotype(sample));
+
+    List<Integer> realCallIdx = new ArrayList<>();
+    List<Integer> contributingIdx = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      Genotype g = genotypes.get(i);
+      if (g == null || g.isNoCall()) continue;
+      realCallIdx.add(i);
+      if (!g.isHomRef()) contributingIdx.add(i);
+    }
+
+    if (realCallIdx.isEmpty()) {
+      return new SampleCall(sample, ".", null, "", null, List.of(), List.of(), 0, true, false);
+    }
+
+    int ploidy = 0;
+    for (int i : realCallIdx) ploidy = Math.max(ploidy, genotypes.get(i).getPloidy());
+
+    List<String> aminoAcids = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      Genotype g = genotypes.get(i);
+      if (g == null) continue;
+      for (String aa : cannByRecord.get(i).aminoAcidsFor(asString(g.getExtendedAttribute("CA")))) {
+        if (!aminoAcids.contains(aa)) aminoAcids.add(aa);
+      }
+    }
+
+    List<String> chromosomeAlleles;
+    String genotypeStr;
+    int depthFreqRecord;
+
+    if (contributingIdx.isEmpty()) {
+      int firstReal = realCallIdx.get(0);
+      chromosomeAlleles = chromosomeAlleles(genotypes.get(firstReal));
+      genotypeStr = genotypeString(records.get(firstReal), genotypes.get(firstReal));
+      depthFreqRecord = firstReal;
+    } else if (contributingIdx.size() == 1) {
+      int only = contributingIdx.get(0);
+      chromosomeAlleles = chromosomeAlleles(genotypes.get(only));
+      genotypeStr = genotypeString(records.get(only), genotypes.get(only));
+      depthFreqRecord = only;
+    } else {
+      chromosomeAlleles = new ArrayList<>();
+      List<String> rawGts = new ArrayList<>();
+      for (int i : contributingIdx) {
+        chromosomeAlleles.add(firstNonRefAllele(genotypes.get(i)));
+        rawGts.add(genotypeString(records.get(i), genotypes.get(i)));
+      }
+      genotypeStr = String.join("/", rawGts);
+      depthFreqRecord = contributingIdx.get(0);
+    }
+
+    VariantContext depthFreqVc = records.get(depthFreqRecord);
+    Genotype depthFreqG = genotypes.get(depthFreqRecord);
+
+    Integer depth = depthFreqG.hasDP() && depthFreqG.getDP() >= 0
+        ? Integer.valueOf(depthFreqG.getDP()) : null;
+
+    // A coverage-filled reference call carries GT and DP only; every other FORMAT
+    // field was written as '.' by fill_missing_coverage_gt. Only possible when
+    // nothing contributed - a contributing record's own alt was actually called.
+    int[] ro = intsOf(depthFreqG.getExtendedAttribute("RO"));
+    int[] ao = intsOf(depthFreqG.getExtendedAttribute("AO"));
+    boolean filled = contributingIdx.isEmpty() && depthFreqG.isHomRef()
+        && ro.length == 0 && ao.length == 0;
+
+    return new SampleCall(
+        sample,
+        genotypeStr,
+        depth,
+        allele(chromosomeAlleles),
+        readFrequency(depthFreqVc, depthFreqG, ro, ao, filled),
+        aminoAcids,
+        chromosomeAlleles,
+        ploidy,
+        false,
+        filled);
+  }
+
+  /** The genotype's non-reference allele, for a record already known to be contributing. */
+  private String firstNonRefAllele(Genotype g) {
+    for (Allele a : g.getAlleles()) {
+      if (!a.isReference() && !a.isNoCall()) return a.getBaseString();
+    }
+    // Contributing means "not hom-ref", so this should be unreachable; fall back
+    // defensively rather than throwing.
+    return g.getAlleles().isEmpty() ? "" : g.getAlleles().get(0).getBaseString();
   }
 
   /**
@@ -90,35 +236,6 @@ public class MergedVcfReader implements AutoCloseable {
     return CannIndex.parse(vc.getAttributeAsString("CANN", null));
   }
 
-  private SampleCall toCall(VariantContext vc, Genotype g, String sample, String ref,
-                            CannIndex cann) {
-    // Null check FIRST: a no-call genotype must not be dereferenced below.
-    if (g == null || g.isNoCall()) {
-      return new SampleCall(sample, ".", null, "", null, List.of(), List.of(), 0, true, false);
-    }
-
-    Integer depth = g.hasDP() && g.getDP() >= 0 ? Integer.valueOf(g.getDP()) : null;
-
-    // A coverage-filled reference call carries GT and DP only; every other FORMAT
-    // field was written as '.' by fill_missing_coverage_gt. It is distinguishable
-    // from a real reference call, which carries real RO/AO.
-    int[] ro = intsOf(g.getExtendedAttribute("RO"));
-    int[] ao = intsOf(g.getExtendedAttribute("AO"));
-    boolean filled = g.isHomRef() && ro.length == 0 && ao.length == 0;
-
-    return new SampleCall(
-        sample,
-        genotypeString(vc, g),
-        depth,
-        allele(g, ref),
-        readFrequency(vc, g, ro, ao, filled),
-        cann.aminoAcidsFor(asString(g.getExtendedAttribute("CA"))),
-        chromosomeAlleles(g),
-        g.getPloidy(),
-        false,
-        filled);
-  }
-
   /** One entry per chromosome slot, duplicates kept — this is the aggregation weight. */
   private List<String> chromosomeAlleles(Genotype g) {
     List<String> out = new ArrayList<>();
@@ -129,26 +246,32 @@ public class MergedVcfReader implements AutoCloseable {
     return out;
   }
 
-  /** IUPAC for a het of two single-base alleles; otherwise the first non-ref allele. */
-  private String allele(Genotype g, String ref) {
-    List<String> bases = new ArrayList<>();
-    for (Allele a : g.getAlleles()) {
-      if (a.isNoCall()) continue;
-      String s = a.getBaseString();
-      if (!bases.contains(s)) bases.add(s);
-    }
-    if (bases.isEmpty()) return "";
-    if (bases.size() == 1) return bases.get(0);
+  /**
+   * Display allele, derived from the sample's distinct chromosome alleles (see
+   * {@link #chromosomeAlleles}, or the merged multi-record equivalent built in
+   * {@link #mergeSample}):
+   *   - 1 distinct -> that allele
+   *   - 2 distinct, both single-character -> IUPAC ambiguity code
+   *   - otherwise -> slash-joined distinct alleles, e.g. "ATT/ATATT"
+   * This unifies the pre-existing within-record het case (a diploid SNP het) with
+   * the new across-record case (a locus the pipeline split into several records,
+   * where a sample carries different alts on different records).
+   */
+  private String allele(List<String> chromosomeAlleles) {
+    List<String> distinct = new ArrayList<>();
+    for (String s : chromosomeAlleles) if (!distinct.contains(s)) distinct.add(s);
 
-    if (bases.size() == 2 && bases.get(0).length() == 1 && bases.get(1).length() == 1) {
-      String key = bases.get(0).compareTo(bases.get(1)) < 0
-          ? bases.get(0) + bases.get(1)
-          : bases.get(1) + bases.get(0);
+    if (distinct.isEmpty()) return "";
+    if (distinct.size() == 1) return distinct.get(0);
+
+    if (distinct.size() == 2 && distinct.get(0).length() == 1 && distinct.get(1).length() == 1) {
+      String key = distinct.get(0).compareTo(distinct.get(1)) < 0
+          ? distinct.get(0) + distinct.get(1)
+          : distinct.get(1) + distinct.get(0);
       String iupac = IUPAC.get(key);
       if (iupac != null) return iupac;
     }
-    for (String b : bases) if (!b.equals(ref)) return b;
-    return bases.get(0);
+    return String.join("/", distinct);
   }
 
   private String readFrequency(VariantContext vc, Genotype g, int[] ro, int[] ao, boolean filled) {

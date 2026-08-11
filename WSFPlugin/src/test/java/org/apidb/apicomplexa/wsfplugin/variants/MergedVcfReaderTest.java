@@ -153,10 +153,12 @@ public class MergedVcfReaderTest {
   }
 
   @Test
-  public void complexHetReturnsFirstNonRefAlleleNotIupac() {
+  public void complexHetSlashJoinsDistinctAllelesNotIupac() {
     // chr1:400 REF A, ALT AG (multi-base) - a het of A/AG isn't two single-base
-    // alleles, so it can't collapse to an IUPAC code; it must return the first
-    // non-ref allele instead.
+    // alleles, so it can't collapse to an IUPAC code; the unified allele-display
+    // rule slash-joins its distinct chromosome alleles instead ("A/AG"), the same
+    // "otherwise" branch a multi-record locus falls into (see
+    // twoContributingRecordsSlashJoinDistinctAlleles).
     Path vcf = Paths.get("src/test/resources/variants/fixture.vcf.gz");
     try (MergedVcfReader reader = new MergedVcfReader(vcf)) {
       LocusCalls locus = reader.read("chr1", 400).orElseThrow();
@@ -164,7 +166,7 @@ public class MergedVcfReaderTest {
           .collect(Collectors.toMap(SampleCall::sampleName, Function.identity()))
           .get("S_ALT");
       assertEquals("0/1", c.genotype());
-      assertEquals("AG", c.allele());
+      assertEquals("A/AG", c.allele());
     }
   }
 
@@ -192,5 +194,84 @@ public class MergedVcfReaderTest {
     try (MergedVcfReader reader = new MergedVcfReader(vcf)) {
       assertTrue(reader.read("chr1", 999).isEmpty());
     }
+  }
+
+  /**
+   * chr1:700 is a multi-record locus - two records, same CHROM/POS/REF (A), different
+   * ALTs (AT, ATT) with their own CANN, mirroring the real merged.ann.vcf.gz shape
+   * (measured: 9,384 of 47,189 positions, 19.9%, have more than one record; one had
+   * seven, all sharing REF=A with different indel ALTs). altAlleles must be the union
+   * across records, in record order.
+   */
+  private Map<String, SampleCall> multiRecordCalls() {
+    Path vcf = Paths.get("src/test/resources/variants/fixture.vcf.gz");
+    try (MergedVcfReader reader = new MergedVcfReader(vcf)) {
+      LocusCalls locus = reader.read("chr1", 700).orElseThrow();
+      assertEquals("A", locus.refAllele());
+      assertEquals(List.of("AT", "ATT"), locus.altAlleles());
+      return locus.calls().stream()
+          .collect(Collectors.toMap(SampleCall::sampleName, Function.identity()));
+    }
+  }
+
+  @Test
+  public void sampleCarryingAltOnSecondRecordRendersThatAltNotReference() {
+    // S_REC2ONLY: hom-ref on record 1 (ALT=AT, non-contributing), hom-alt on
+    // record 2 (ALT=ATT, contributing). Reading only record 1 - the original bug -
+    // would render this sample as reference; it must render ATT instead. This is
+    // the 21-of-43-samples case measured at the real Pf3D7_01_v3:538376 locus.
+    SampleCall c = multiRecordCalls().get("S_REC2ONLY");
+    assertFalse(c.noCall());
+    assertEquals("ATT", c.allele());
+    assertEquals(List.of("ATT", "ATT"), c.chromosomeAlleles());
+    assertEquals("1/1", c.genotype());
+    assertEquals(Integer.valueOf(8), c.depth());
+    assertEquals("100.00", c.readFrequency());
+  }
+
+  @Test
+  public void twoContributingRecordsSlashJoinDistinctAlleles() {
+    // S_TWOREC carries an alt on BOTH record 1 (AT) and record 2 (ATT) - a true
+    // multi-allelic site the pipeline split across records. Both must show, and
+    // chromosomeAlleles (the aggregation weight) must carry both, not the reference.
+    SampleCall c = multiRecordCalls().get("S_TWOREC");
+    assertFalse(c.noCall());
+    assertEquals("AT/ATT", c.allele());
+    assertEquals(List.of("AT", "ATT"), c.chromosomeAlleles());
+    // Slash-joined raw GTs of the contributing records - no longer a real VCF
+    // genotype once merged, but not a lie either.
+    assertEquals("0/1/0/1", c.genotype());
+    // depth/readFrequency come from the FIRST contributing record (record 1).
+    assertEquals(Integer.valueOf(10), c.depth());
+    assertEquals("50.00", c.readFrequency());
+  }
+
+  @Test
+  public void aminoAcidsUnionAcrossRecordsResolvedAgainstOwnCannIndex() {
+    // Record 1's k0 and record 2's k0 are DIFFERENT CANN entries (L and P
+    // respectively) despite sharing the same key string - proof that each is
+    // resolved against its own record's CannIndex rather than a merged map, which
+    // would either collide or silently pick the wrong one.
+    SampleCall c = multiRecordCalls().get("S_TWOREC");
+    assertEquals(List.of("L", "P"), c.aminoAcids());
+  }
+
+  @Test
+  public void homRefOnEveryRecordStillReadsAsReferenceCall() {
+    SampleCall c = multiRecordCalls().get("S_ALLHOMREF");
+    assertFalse(c.noCall());
+    assertEquals("A", c.allele());
+    assertEquals(List.of("A", "A"), c.chromosomeAlleles());
+    assertEquals("0/0", c.genotype());
+  }
+
+  @Test
+  public void noCallOnEveryRecordStillReadsAsNoCall() {
+    SampleCall c = multiRecordCalls().get("S_ALLNOCALL");
+    assertTrue(c.noCall());
+    assertEquals("", c.allele());
+    assertNull(c.depth());
+    assertNull(c.readFrequency());
+    assertEquals(List.of(), c.chromosomeAlleles());
   }
 }
