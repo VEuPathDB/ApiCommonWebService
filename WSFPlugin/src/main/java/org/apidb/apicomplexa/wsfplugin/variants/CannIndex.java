@@ -28,10 +28,33 @@ public class CannIndex {
 
   public static CannIndex parse(String cannValue) {
     if (cannValue == null || cannValue.isEmpty() || ".".equals(cannValue)) return EMPTY;
+    return parse(List.of(cannValue.split(",")));
+  }
+
+  /**
+   * Parses CANN entries already split into one string per entry. This is the shape
+   * htsjdk actually produces for this attribute: CANN is declared Number=. in the
+   * VCF header, so htsjdk parses it as a List<String> rather than a String. Calling
+   * vc.getAttributeAsString("CANN", null) on a List-valued attribute does NOT return
+   * the raw value - it returns the List's toString(), e.g.
+   * "[r0|TGT|C|reference|...|., k0|AGT|S|missense|...]" (square brackets, ", "
+   * separators). Splitting THAT on ',' produces a first key of "[r0" and every
+   * later key with a leading space, so no key ever matches a CA value and
+   * aminoAcidsFor() silently returns empty for every sample (verified against the
+   * real merged.ann.vcf.gz via HtsjdkRealFileSpikeTest#diagnoseCannAttributeShapeAtRealLocus).
+   *
+   * The caller (MergedVcfReader.parseCann) branches on the raw attribute's runtime
+   * type and calls this overload when it is a List. parse(String) remains for
+   * fixtures/tests and for the case where htsjdk hands back a bare String; it
+   * delegates here so there is exactly one parsing implementation, not two that
+   * can drift.
+   */
+  public static CannIndex parse(List<String> entries) {
+    if (entries == null || entries.isEmpty()) return EMPTY;
 
     Map<String, CannEntry> byKey = new LinkedHashMap<>();
-    for (String raw : cannValue.split(",")) {
-      if (raw.isEmpty() || ".".equals(raw)) continue;
+    for (String raw : entries) {
+      if (raw == null || raw.isEmpty() || ".".equals(raw)) continue;
       // -1 keeps trailing empty fields, so a truncated entry is skipped rather than
       // silently shifting every field left.
       String[] f = raw.split("\\|", -1);

@@ -45,6 +45,23 @@ public class MergedVcfReaderTest {
     assertEquals("100.00", c.readFrequency());
   }
 
+  /**
+   * The reader -> CannIndex seam that was missing before this fix: CANN is
+   * Number=. in the header, so htsjdk hands the reader a List<String>, not a
+   * String. This asserts on aminoAcids() coming out of the actual reader (not a
+   * hand-built SampleCall, and not CannIndexTest's direct CannIndex.parse(String)
+   * call), so a regression to round-tripping the attribute through toString()
+   * would fail here even if CannIndexTest still passes.
+   */
+  @Test
+  public void aminoAcidsResolveThroughTheActualReaderNotJustCannIndex() {
+    Map<String, SampleCall> calls = callsAt("chr1", 100);
+    // S_ALT: CA=k0 -> missense entry k0, amino acid A.
+    assertEquals(List.of("A"), calls.get("S_ALT").aminoAcids());
+    // S_FILLED: CA=r0 -> reference entry r0, amino acid V.
+    assertEquals(List.of("V"), calls.get("S_FILLED").aminoAcids());
+  }
+
   @Test
   public void realReferenceCallReportsReferenceSupport() {
     SampleCall c = callsAt("chr1", 100).get("S_REFREAL");

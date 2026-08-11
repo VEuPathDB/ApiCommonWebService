@@ -53,4 +53,45 @@ public class HtsjdkRealFileSpikeTest {
       assertNotNull("CA", g.getExtendedAttribute("CA"));
     }
   }
+
+  /**
+   * Diagnostic for the aa_product-always-empty bug: proves (or disproves) that
+   * CANN, declared Number=. in the header, is parsed by htsjdk as a List<String>
+   * rather than a String, so getAttributeAsString() round-trips it through the
+   * list's toString() (bracketed, ", "-separated) instead of handing back the
+   * raw comma-separated value CannIndex.parse(String) expects.
+   *
+   * Ground truth at Pf3D7_01_v3:100057: sample 5.1 has CA=r0, and CANN's r0 entry
+   * has amino acid C - so a correct parse must resolve "r0" to "C".
+   */
+  @Test
+  public void diagnoseCannAttributeShapeAtRealLocus() {
+    String path = System.getProperty("variants.vcf");
+    Assume.assumeNotNull(path);
+
+    try (VCFFileReader reader = new VCFFileReader(new File(path), true)) {
+      Iterator<VariantContext> it = reader.query("Pf3D7_01_v3", 100057, 100057);
+      assertTrue("locus found", it.hasNext());
+      VariantContext vc = it.next();
+
+      Object rawAttribute = vc.getAttribute("CANN");
+      System.out.println("CANN raw attribute class: " + rawAttribute.getClass().getName());
+
+      String asString = vc.getAttributeAsString("CANN", null);
+      System.out.println("getAttributeAsString(CANN) (first 200 chars): "
+          + asString.substring(0, Math.min(200, asString.length())));
+
+      java.util.List<String> asList = vc.getAttributeAsStringList("CANN", "");
+      System.out.println("getAttributeAsStringList(CANN) size: " + asList.size());
+      System.out.println("getAttributeAsStringList(CANN) first element: "
+          + (asList.isEmpty() ? "<empty>" : asList.get(0)));
+
+      Object ca = vc.getGenotype("5.1").getExtendedAttribute("CA");
+      System.out.println("sample 5.1 CA: " + String.valueOf(ca));
+
+      CannIndex viaString = CannIndex.parse(asString);
+      System.out.println("CannIndex.parse(getAttributeAsString(...)).aminoAcidsFor(\"r0\") = "
+          + viaString.aminoAcidsFor("r0"));
+    }
+  }
 }

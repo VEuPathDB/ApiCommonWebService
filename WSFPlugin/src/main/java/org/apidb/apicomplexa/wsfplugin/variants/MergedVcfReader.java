@@ -44,13 +44,50 @@ public class MergedVcfReader implements AutoCloseable {
     List<String> alts = new ArrayList<>();
     for (Allele a : vc.getAlternateAlleles()) alts.add(a.getBaseString());
 
-    CannIndex cann = CannIndex.parse(vc.getAttributeAsString("CANN", null));
+    CannIndex cann = parseCann(vc);
 
     List<SampleCall> calls = new ArrayList<>();
     for (String sample : _reader.getFileHeader().getGenotypeSamples()) {
       calls.add(toCall(vc, vc.getGenotype(sample), sample, ref, cann));
     }
     return Optional.of(new LocusCalls(sequenceId, position, ref, alts, cann, calls));
+  }
+
+  /**
+   * CANN is declared Number=. in the VCF header, so htsjdk parses it as a
+   * List<String> (one element per comma-separated entry), NOT as a bare String -
+   * verified against the real merged.ann.vcf.gz (see
+   * HtsjdkRealFileSpikeTest#diagnoseCannAttributeShapeAtRealLocus): CANN's raw
+   * attribute class there is java.util.ArrayList.
+   *
+   * Calling vc.getAttributeAsString("CANN", null) on that List-valued attribute
+   * does NOT return the raw value - it returns the List's toString(): bracketed,
+   * ", "-separated, e.g. "[r0|TGT|C|reference|...|., k0|AGT|S|missense|...]".
+   * Splitting THAT on ',' produces a first key of "[r0" and every later key with a
+   * leading space, so no key ever matches a CA value and aminoAcidsFor() silently
+   * returns empty for every sample. That was the bug.
+   *
+   * htsjdk's getAttributeAsStringList(key, default) is NOT the fix by itself: for
+   * a genuine List attribute it returns the list's elements unchanged (correct -
+   * one already-split entry per element), but for a String-valued attribute it
+   * wraps the whole string as a SINGLETON list (CommonInfo.getAttributeAsList,
+   * checked via javap) - it does not split on ',' the way CannIndex.parse(String)
+   * does. So blindly calling it on a String attribute would hand CannIndex one
+   * "entry" that is actually several comma-joined entries glued together, corrupting
+   * the '|'-split fields at the join. Branch on the raw attribute's runtime type
+   * instead of assuming either shape.
+   */
+  private CannIndex parseCann(VariantContext vc) {
+    Object raw = vc.getAttribute("CANN");
+    if (raw instanceof List) {
+      // Elements come from htsjdk's own VCF value parsing and are Strings in
+      // practice, but the field is untyped (List<?> at the getAttribute() level) -
+      // stringify defensively rather than casting straight to List<String>.
+      List<String> entries = new ArrayList<>();
+      for (Object o : (List<?>) raw) entries.add(o == null ? null : String.valueOf(o));
+      return CannIndex.parse(entries);
+    }
+    return CannIndex.parse(vc.getAttributeAsString("CANN", null));
   }
 
   private SampleCall toCall(VariantContext vc, Genotype g, String sample, String ref,

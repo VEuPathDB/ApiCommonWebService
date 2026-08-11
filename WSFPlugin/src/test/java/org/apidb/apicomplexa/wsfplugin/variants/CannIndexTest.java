@@ -62,7 +62,7 @@ public class CannIndexTest {
   @Test
   public void emptyCannParsesToEmptyIndex() {
     assertTrue(CannIndex.parse(".").aminoAcidsFor("k0").isEmpty());
-    assertTrue(CannIndex.parse(null).aminoAcidsFor("k0").isEmpty());
+    assertTrue(CannIndex.parse((String) null).aminoAcidsFor("k0").isEmpty());
   }
 
   @Test
@@ -76,6 +76,22 @@ public class CannIndexTest {
     assertTrue("truncated entry dropped", index.get("k0").isEmpty());
     assertEquals("well-formed neighbour survives", "M", index.get("k1").orElseThrow().aminoAcid());
     assertEquals(List.of("M"), index.aminoAcidsFor("k0/k1"));
+  }
+
+  /**
+   * Documents the bug this fix closes: this is the exact malformed shape produced
+   * by round-tripping a List-valued CANN attribute through
+   * VariantContext.getAttributeAsString() (i.e. List.toString()) before handing it
+   * to CannIndex.parse(String) - bracketed, ", "-separated. It must NOT resolve,
+   * so nobody "fixes" this later by teaching the parser to tolerate brackets
+   * instead of fixing the caller to stop producing this shape (see
+   * MergedVcfReader.parseCann).
+   */
+  @Test
+  public void bracketedListToStringFormIsGarbageNotTolerated() {
+    String malformed =
+        "[r0|GTG|V|reference|T1.1|5|2|.|., k0|GCG|A|missense|T1.1|5|2|c.5T>C|p.Val2Ala]";
+    assertTrue(CannIndex.parse(malformed).aminoAcidsFor("r0").isEmpty());
   }
 
   @Test
