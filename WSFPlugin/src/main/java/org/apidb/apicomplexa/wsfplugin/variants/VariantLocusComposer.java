@@ -7,22 +7,25 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Joins per-sample VCF calls to EDA metadata to produce the rows for the
- * "Strains / Samples" table.
+ * Joins per-sample VCF calls to EDA metadata to produce the rows for both variant
+ * record-page tables: {@link #strainRows} for "Strains / Samples" (one row per sample)
+ * and {@link #countryRows} for "Country Summary" (one row per country, allele
+ * frequencies aggregated over that country's samples).
  *
  * The join and aggregation logic here is the reusable part - it is done in Java, over
- * ~537 rows per locus, and nothing above it may reach into the VCF directly. {@link
- * #strainRows} itself is narrower: it returns presentation-ready table rows (see
- * {@link StrainRow}), not typed data. A future consumer that wants typed values -
- * a REST endpoint, say - should build on {@link LocusCalls} plus the metadata map,
- * or get its own method.
+ * ~537 rows per locus, and nothing above it may reach into the VCF directly. Both
+ * methods are narrower than that, though: they return presentation-ready table rows
+ * (see {@link StrainRow} and {@link CountryRow}), with numbers already formatted into
+ * strings, not typed data. A future consumer that wants typed values - a REST endpoint,
+ * say - should build on {@link LocusCalls} plus the metadata map, or get its own method,
+ * rather than parsing these cells back apart.
  */
 public class VariantLocusComposer {
 
   public List<StrainRow> strainRows(LocusCalls locus, Map<String, String> countryBySample) {
     List<StrainRow> rows = new ArrayList<>();
     for (SampleCall c : locus.calls()) {
-      String country = countryBySample.getOrDefault(c.sampleName(), "");
+      String country = countryOf(c, countryBySample);
       if (c.noCall()) {
         // Present, not omitted: the record advertises no_call_strain_count, so a table
         // that hid these would contradict the overview panel above it. The genotype
@@ -58,8 +61,8 @@ public class VariantLocusComposer {
     Map<String, List<SampleCall>> byCountry = new LinkedHashMap<>();
     for (SampleCall c : locus.calls()) {
       if (c.noCall()) continue;
-      String country = countryBySample.get(c.sampleName());
-      if (country == null || country.isEmpty()) continue;
+      String country = countryOf(c, countryBySample);
+      if (country.isEmpty()) continue;
       byCountry.computeIfAbsent(country, k -> new ArrayList<>()).add(c);
     }
 
@@ -75,21 +78,23 @@ public class VariantLocusComposer {
           total++;
         }
       }
+      // A country whose samples contribute no chromosome slots at all disappears from
+      // the table rather than rendering a row of blank cells. Preferred: a row with a
+      // strain count but no frequencies reads as a data bug to anyone looking at it.
       if (total == 0) continue;
 
-      final int denominator = total;
-      List<String> ranked = new ArrayList<>(weights.keySet());
-      ranked.sort((x, y) -> {
-        int byWeight = Integer.compare(weights.get(y), weights.get(x));
-        return byWeight != 0 ? byWeight : x.compareTo(y);   // deterministic tie-break
-      });
+      List<Map.Entry<String, Integer>> ranked = new ArrayList<>(weights.entrySet());
+      ranked.sort(Map.Entry.<String, Integer>comparingByValue().reversed()
+          .thenComparing(Map.Entry.comparingByKey()));   // name tie-break keeps it deterministic
 
       rows.add(new CountryRow(
           e.getKey(),
           calls.size(),
-          formatted(ranked, weights, denominator, 0),
-          formatted(ranked, weights, denominator, 1),
-          formatted(ranked, weights, denominator, 2)));
+          alleleCell(ranked, 0, total),
+          // Ranks beyond 3 are dropped: the table has three allele columns by design,
+          // and at a biallelic SNP - the overwhelming majority - rank 3 is already "".
+          alleleCell(ranked, 1, total),
+          alleleCell(ranked, 2, total)));
     }
 
     // (-strainCount, country): the count is what a reader scans for, and the name
@@ -101,11 +106,18 @@ public class VariantLocusComposer {
     return rows;
   }
 
-  private String formatted(List<String> ranked, Map<String, Integer> weights,
-                           int denominator, int rank) {
+  /** Trimmed country, or "" when the sample has none. The two row builders must agree. */
+  private static String countryOf(SampleCall c, Map<String, String> countryBySample) {
+    String v = countryBySample.get(c.sampleName());
+    return v == null ? "" : v.trim();
+  }
+
+  /** "{@code <allele> (<freq>)}" for the rank-th allele, or "" when there is no such rank. */
+  private static String alleleCell(List<Map.Entry<String, Integer>> ranked, int rank,
+                                   int denominator) {
     if (rank >= ranked.size()) return "";
-    String allele = ranked.get(rank);
+    Map.Entry<String, Integer> e = ranked.get(rank);
     return String.format(Locale.ROOT, "%s (%.4f)",
-        allele, weights.get(allele) / (double) denominator);
+        e.getKey(), e.getValue() / (double) denominator);
   }
 }
