@@ -44,6 +44,10 @@ public class SampleMetadataLookup {
    * sample_stable_id -&gt; value for one attribute. Returns an empty map when the study
    * has no such attribute at all, which is normal: 14 of the 62 dnaseq studies carry no
    * country attribute (lab lines and reference assemblies).
+   *
+   * Values are trimmed, and a sample whose value is blank after trimming is omitted
+   * from the map entirely, so every value present is non-empty. Callers may therefore
+   * treat "absent from the map" as the single representation of "no value".
    */
   public Map<String, String> valuesBySample(String edaSuffix, String providerLabel)
       throws WdkModelException {
@@ -70,7 +74,18 @@ public class SampleMetadataLookup {
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, providerLabel);
       try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) out.put(rs.getString(1), rs.getString(2));
+        while (rs.next()) {
+          // Normalised at the boundary, not at each consumer: EDA string_values carry
+          // stray whitespace, and an untrimmed "Mali " would aggregate as a second,
+          // distinct country. A value that is blank once trimmed carries no information,
+          // so it is absent from the map rather than present as "" - callers already
+          // treat "missing" as the empty string.
+          String value = rs.getString(2);
+          if (value == null) continue;
+          value = value.trim();
+          if (value.isEmpty()) continue;
+          out.put(rs.getString(1), value);
+        }
       }
     }
     catch (SQLException e) {
