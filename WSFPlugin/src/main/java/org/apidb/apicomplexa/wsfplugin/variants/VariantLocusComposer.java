@@ -48,8 +48,9 @@ public class VariantLocusComposer {
   }
 
   /**
-   * One row per country, over samples that HAVE a country. Samples without one are
-   * excluded entirely, as is the reference strain, which has no collection site in EDA.
+   * One row per country, over non-no-call samples that have a country. Samples without
+   * one are excluded entirely, as is the reference strain, which has no collection site
+   * in EDA.
    *
    * Frequencies are ploidy-weighted (one unit per chromosome slot, denominator = the
    * country's own chromosome count) per processSequenceVariations.jl's
@@ -91,9 +92,9 @@ public class VariantLocusComposer {
           e.getKey(),
           calls.size(),
           alleleCell(ranked, 0, total),
+          alleleCell(ranked, 1, total),
           // Ranks beyond 3 are dropped: the table has three allele columns by design,
           // and at a biallelic SNP - the overwhelming majority - rank 3 is already "".
-          alleleCell(ranked, 1, total),
           alleleCell(ranked, 2, total)));
     }
 
@@ -109,6 +110,11 @@ public class VariantLocusComposer {
   /** Trimmed country, or "" when the sample has none. The two row builders must agree. */
   private static String countryOf(SampleCall c, Map<String, String> countryBySample) {
     String v = countryBySample.get(c.sampleName());
+    // Keep the trim() even though SampleMetadataLookup already trims at the DB boundary.
+    // It is this composer's own contract - the map is just a Map<String,String>, it can
+    // come from anywhere, and the standalone unit tests pass untrimmed values. Removing
+    // it because "the other side does it" would silently reintroduce "Mali " as a second
+    // country for any caller that isn't the lookup.
     return v == null ? "" : v.trim();
   }
 

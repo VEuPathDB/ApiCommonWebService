@@ -13,6 +13,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * EDA sample metadata for one dnaseq study.
@@ -22,11 +23,35 @@ import java.util.Set;
  *
  * Keyed on provider_label rather than stable_id: EDA stable_ids are VAR_&lt;hash&gt; digests
  * of the provider label, stable per label but site-specific.
+ *
+ * Successful lookups are memoized process-wide for the life of the webapp - see
+ * {@link #CACHE}.
  */
 public class SampleMetadataLookup {
 
   /** Verified: covers 536 of 537 Pf samples, against geographic_location's 111. */
   public static final String COUNTRY_LABEL = "[\"country\"]";
+
+  private record CacheKey(String edaSuffix, String providerLabel) {}
+
+  /**
+   * (edaSuffix, providerLabel) -&gt; that study's values, held for the life of the webapp.
+   *
+   * Why caching is safe: the query is keyed on the STUDY and the attribute, not on the
+   * variant, so a variant record page re-runs the identical ~537-row join on every view
+   * - twice per page once both variant tables are present - and record-page tables are
+   * uncached by WDK. There are only ~62 dnaseq studies, and eda.attributevalue_* is
+   * written by a data load rather than by the site, so the values are static between
+   * builds; a build reloads the webapp, which discards this map. That reload is the
+   * invalidation, so no explicit eviction exists.
+   *
+   * ConcurrentHashMap because concurrent page loads hit this. Entries are immutable
+   * copies, so a caller cannot mutate the shared value. A genuinely empty result IS
+   * cached: a study with no country attribute is a stable fact about the study (14 of
+   * the 62), not a failure. The 42P01 path deliberately is NOT cached - see
+   * {@link #valuesBySample}.
+   */
+  private static final Map<CacheKey, Map<String, String>> CACHE = new ConcurrentHashMap<>();
 
   private static final String SQL_TEMPLATE =
       "SELECT av.sample_stable_id, av.string_value " +
@@ -48,6 +73,9 @@ public class SampleMetadataLookup {
    * Values are trimmed, and a sample whose value is blank after trimming is omitted
    * from the map entirely, so every value present is non-empty. Callers may therefore
    * treat "absent from the map" as the single representation of "no value".
+   *
+   * The returned map is immutable, and a successful lookup is memoized in {@link #CACHE}
+   * for the life of the webapp.
    */
   public Map<String, String> valuesBySample(String edaSuffix, String providerLabel)
       throws WdkModelException {
@@ -65,6 +93,10 @@ public class SampleMetadataLookup {
     if (!edaSuffix.matches("[A-Za-z0-9_]+")) {
       throw new WdkModelException("Refusing to use unsafe EDA table suffix: " + edaSuffix);
     }
+
+    CacheKey key = new CacheKey(edaSuffix, providerLabel);
+    Map<String, String> memo = CACHE.get(key);
+    if (memo != null) return memo;
 
     Map<String, String> out = new LinkedHashMap<>();
     DataSource ds = _wdkModel.getAppDb().getDataSource();
@@ -95,12 +127,21 @@ public class SampleMetadataLookup {
         // EDA study - an empty map is the correct answer, not a page error. Any other
         // SQLState (connection refusal, pool exhaustion, timeout, ...) is a real fault
         // and must not be mistaken for that benign case.
+        //
+        // Deliberately NOT memoized, unlike a successful empty result: this is an
+        // environmental fact, not a fact about the study. The eda tables can appear
+        // from a data load without the webapp restarting, and a cached empty would pin
+        // the site in the broken state until someone redeployed it.
         return Map.of();
       }
       throw new WdkModelException(
           "Could not look up sample metadata for EDA suffix " + edaSuffix, e);
     }
-    return out;
+
+    // Immutable copy, so a caller cannot mutate the entry every other page view shares.
+    Map<String, String> immutable = Map.copyOf(out);
+    CACHE.put(key, immutable);
+    return immutable;
   }
 
   /**
