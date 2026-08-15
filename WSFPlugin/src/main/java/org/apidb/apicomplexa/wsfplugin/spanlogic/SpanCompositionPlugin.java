@@ -101,6 +101,42 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     private boolean hasSnp = false;
   }
 
+  /**
+   * Where a record type's genomic coordinates come from. One implementation per record
+   * class that may be an input to colocation.
+   *
+   * Implementations MUST alias their location table "fl" -- makeRegion() hardcodes that
+   * prefix when building the region expressions interpolated into every builder.
+   */
+  interface SpanSource {
+
+    /** Full CREATE TABLE statement producing the per-record span temp table. */
+    String createTableSql(String tableName, String[] region, String cacheSql);
+
+    /**
+     * True for a point feature with no meaningful strand. Suppresses the same-strand /
+     * opposite-strand filter for the whole comparison; without it, "same strand" would
+     * silently match only forward-strand records.
+     */
+    default boolean isStrandless() {
+      return false;
+    }
+  }
+
+  private static final Map<String, SpanSource> SPAN_SOURCES = Map.of(
+      "TranscriptRecordClasses.TranscriptRecordClass", new TranscriptSpanSource(),
+      "DynSpanRecordClasses.DynSpanRecordClass", new DynSpanSource(),
+      "VariantRecordClasses.VariantRecordClass", new VariantSpanSource());
+
+  static SpanSource spanSourceFor(String recordClassName) throws WdkModelException {
+    SpanSource source = SPAN_SOURCES.get(recordClassName);
+    if (source == null) {
+      throw new WdkModelException("Genomic colocation is not configured for record class " +
+          recordClassName + ". Register a SpanSource for it in SpanCompositionPlugin.");
+    }
+    return source;
+  }
+
   public static final String COLUMN_SOURCE_ID = "source_id";
   public static final String COLUMN_PROJECT_ID = "project_id";
   public static final String COLUMN_WDK_WEIGHT = "wdk_weight";
@@ -604,5 +640,31 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     feature.end = resultSet.getInt("end_" + suffix);
     feature.weight = resultSet.getInt("wdk_weight_" + suffix);
     feature.reversed = resultSet.getBoolean("is_reversed_" + suffix);
+  }
+
+  static class TranscriptSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      throw new UnsupportedOperationException("filled in by Task 3");
+    }
+  }
+
+  static class DynSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      throw new UnsupportedOperationException("filled in by Task 4");
+    }
+  }
+
+  static class VariantSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      throw new UnsupportedOperationException("filled in by Task 5");
+    }
+
+    @Override
+    public boolean isStrandless() {
+      return true;
+    }
   }
 }
