@@ -466,7 +466,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
 
-    // get the table or sql that returns the location information
+    // find where this record type's genomic coordinates come from
     String rcName = answerValue.getQuestion().getRecordClass().getFullName();
     SpanSource source = spanSourceFor(rcName);
     if (source.isStrandless())
