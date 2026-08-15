@@ -642,6 +642,25 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     feature.reversed = resultSet.getBoolean("is_reversed_" + suffix);
   }
 
+  /**
+   * Standard span table for a source that yields exactly one row per record. No
+   * is_top_level / feature_type filtering: that exists only to pick one row out of
+   * apidb.FeatureLocation, where a feature has several.
+   */
+  private static String oneRowPerRecordSql(String tableName, String[] region, String locTable,
+      String cacheSql) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("CREATE TABLE " + tableName + " AS ");
+    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, 'dontcare' as gene_source_id, ");
+    builder.append("       fl.sequence_source_id, ");
+    builder.append("       ca.wdk_weight, ca.project_id, ");
+    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
+    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
+    builder.append("WHERE fl.feature_source_id = ca.source_id");
+    return builder.toString();
+  }
+
   static class TranscriptSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
@@ -663,7 +682,13 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   static class DynSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
-      throw new UnsupportedOperationException("filled in by Task 4");
+      String locTable = "(SELECT source_id AS feature_source_id, project_id, " +
+          "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
+          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, " +
+          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, " +
+          "        CASE WHEN regexp_substr(source_id, '[^:]+', 1, 3) = 'r' THEN 1 ELSE 0 END AS is_reversed " +
+          "  FROM " + cacheSql + ")";
+      return oneRowPerRecordSql(tableName, region, locTable, cacheSql);
     }
   }
 

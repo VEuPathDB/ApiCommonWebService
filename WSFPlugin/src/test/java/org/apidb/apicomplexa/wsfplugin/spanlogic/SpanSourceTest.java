@@ -77,4 +77,14 @@ public class SpanSourceTest {
       assertTrue(rc + " must alias its location table fl: " + sql, sql.contains(" fl,") || sql.contains(" fl "));
     }
   }
+
+  @Test
+  public void dynSpanSourceParsesCoordinatesWithoutOracleSyntax() throws WdkModelException {
+    String sql = sqlFor("DynSpanRecordClasses.DynSpanRecordClass");
+    assertTrue(sql, sql.contains("CASE WHEN regexp_substr(source_id, '[^:]+', 1, 3) = 'r' THEN 1 ELSE 0 END AS is_reversed"));
+    assertTrue("coordinates come from the step's own cache table: " + sql, sql.contains(CACHE));
+    assertTrue("one row per record, so no is_top_level: " + sql, !sql.contains("is_top_level"));
+    assertTrue("one row per record, so no feature_type: " + sql, !sql.contains("feature_type"));
+    assertTrue(sql, sql.contains("fl.feature_source_id = ca.source_id"));
+  }
 }
