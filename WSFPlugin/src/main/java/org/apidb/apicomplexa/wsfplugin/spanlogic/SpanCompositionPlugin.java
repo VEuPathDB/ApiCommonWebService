@@ -129,6 +129,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       "VariantRecordClasses.VariantRecordClass", new VariantSpanSource());
 
   static SpanSource spanSourceFor(String recordClassName) throws WdkModelException {
+    if (recordClassName == null) {
+      throw new WdkModelException("Genomic colocation is not configured for record class " +
+          "null. Register a SpanSource for it in SpanCompositionPlugin.");
+    }
     SpanSource source = SPAN_SOURCES.get(recordClassName);
     if (source == null) {
       throw new WdkModelException("Genomic colocation is not configured for record class " +
@@ -682,10 +686,17 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   static class DynSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
+      // regexp_substr returns text on PostgreSQL, but makeRegion does arithmetic
+      // (start_min + n*(m)) on these columns. Oracle coerced text to number
+      // implicitly; PostgreSQL does not, so these must be cast explicitly. Cast
+      // to numeric (not integer) so this source's columns match the numeric
+      // start_min/end_max produced by the other SpanSource implementations,
+      // since composeSql compares begin/end values across temp tables built by
+      // different sources.
       String locTable = "(SELECT source_id AS feature_source_id, project_id, " +
           "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, " +
+          "        CAST(regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) AS numeric) as start_min, " +
+          "        CAST(regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) AS numeric) as end_max, " +
           "        CASE WHEN regexp_substr(source_id, '[^:]+', 1, 3) = 'r' THEN 1 ELSE 0 END AS is_reversed " +
           "  FROM " + cacheSql + ")";
       return oneRowPerRecordSql(tableName, region, locTable, cacheSql);

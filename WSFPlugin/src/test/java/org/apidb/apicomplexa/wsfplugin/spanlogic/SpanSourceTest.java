@@ -72,10 +72,25 @@ public class SpanSourceTest {
                                     "DynSpanRecordClasses.DynSpanRecordClass",
                                     "VariantRecordClasses.VariantRecordClass" }) {
       String sql = sqlFor(rc);
-      assertTrue(rc + " must not use rownum: " + sql, !sql.contains("rownum"));
-      assertTrue(rc + " must not use DECODE: " + sql, !sql.contains("DECODE("));
-      assertTrue(rc + " must alias its location table fl: " + sql, sql.contains(" fl,") || sql.contains(" fl "));
+      String lowerSql = sql.toLowerCase();
+      assertTrue(rc + " must not use rownum: " + sql, !lowerSql.contains("rownum"));
+      assertTrue(rc + " must not use DECODE: " + sql, !lowerSql.contains("decode("));
+      assertTrue(rc + " must alias its location table fl in the FROM clause: " + sql,
+          sql.matches("(?s).*FROM .+ fl, .*"));
     }
+  }
+
+  @Test
+  public void dynSpanCoordinatesAreNumericNotText() {
+    String sql;
+    try {
+      sql = sqlFor("DynSpanRecordClasses.DynSpanRecordClass");
+    }
+    catch (WdkModelException e) {
+      throw new RuntimeException(e);
+    }
+    assertTrue("regexp_substr returns text; makeRegion does arithmetic on these: " + sql,
+        sql.contains("AS numeric) as start_min") && sql.contains("AS numeric) as end_max"));
   }
 
   @Test
