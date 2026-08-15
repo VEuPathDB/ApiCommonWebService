@@ -113,4 +113,19 @@ public class SpanSourceTest {
     assertTrue("one row per record, so no is_top_level: " + sql, !sql.contains("is_top_level"));
     assertTrue(sql, sql.contains("fl.feature_source_id = ca.source_id"));
   }
+
+  /**
+   * Oracle accepts "FROM (table_name) alias"; PostgreSQL raises
+   * 'syntax error at or near ")"'. This broke EVERY colocation, not just the new
+   * record types, because composeSql is shared by all of them.
+   */
+  @Test
+  public void composeSqlNamesTempTablesBare() {
+    String sql = new SpanCompositionPlugin().composeSql("overlap", "spanlogic_a", "spanlogic_b",
+        "either_strand", "a", new SpanCompositionPlugin.Flag());
+    assertTrue("temp tables must not be parenthesized: " + sql,
+        sql.contains("FROM spanlogic_a fa, spanlogic_b fb"));
+    assertTrue("a parenthesized table name is an Oracle-ism: " + sql,
+        !sql.contains("(spanlogic_a)") && !sql.contains("(spanlogic_b)"));
+  }
 }

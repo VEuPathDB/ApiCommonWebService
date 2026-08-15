@@ -97,9 +97,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   }
 
-  private static class Flag {
+  static class Flag {
     /** Set when either input is a point feature with no meaningful strand. */
-    private boolean strandless = false;
+    boolean strandless = false;
   }
 
   /**
@@ -396,7 +396,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return new String[] { start, stop };
   }
 
-  private String composeSql(String operation, String tempTableA, String tempTableB,
+  // package-private so SpanSourceTest can assert the FROM clause names the temp tables
+  // bare. Wrapping a table name in parentheses is legal Oracle and a syntax error in
+  // PostgreSQL, which broke every colocation regardless of record type.
+  String composeSql(String operation, String tempTableA, String tempTableB,
       String strand, String output, Flag flag) {
     StringBuilder builder = new StringBuilder();
 
@@ -413,7 +416,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("       fb.wdk_weight AS wdk_weight_b, ");
     builder.append("       fb.begin AS begin_b, fb.end AS end_b, ");
     builder.append("       fb.is_reversed AS is_reversed_b ");
-    builder.append("FROM (" + tempTableA + ") fa, (" + tempTableB + ") fb ");
+    // Bare table names, NOT "(name)". Oracle accepts a parenthesized table name;
+    // PostgreSQL raises 'syntax error at or near ")"'.
+    builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
     // make sure the regions come from sequence source.
     builder.append("WHERE fa.sequence_source_id = fb.sequence_source_id ");
