@@ -322,12 +322,20 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       // execute the final sql, and fetch the result for the output.
       prepareResult(wdkModel, response, sql, request.getOrderedColumns(), output);
 
-      // drop the cache tables
+      // Drop the cache tables UNQUALIFIED, to match the unqualified CREATE TABLE in
+      // getSpanSql. Do not reach for getDefaultSchema() here: it means different things
+      // per platform. Oracle returns the login user's schema -- which is exactly where an
+      // unqualified CREATE lands, so the two agreed. PostgreSQL hardcodes "public"
+      // (PostgreSQL.getDefaultSchema), while an unqualified CREATE follows search_path,
+      // which is "$user". The tables were therefore created in the login schema and the
+      // drop looked in public, failing with 'table "spanlogic<n>" does not exist' AFTER
+      // the results had been computed -- so a working colocation surfaced as an error and
+      // leaked a table per run. Passing null makes dropTable emit a bare table name,
+      // which resolves the same way the CREATE did on either platform.
       DBPlatform platform = wdkModel.getAppDb().getPlatform();
       DataSource dataSource = wdkModel.getAppDb().getDataSource();
-      String schema = wdkModel.getAppDb().getDefaultSchema();
-      platform.dropTable(dataSource, schema, tempA, true);
-      platform.dropTable(dataSource, schema, tempB, true);
+      platform.dropTable(dataSource, null, tempA, true);
+      platform.dropTable(dataSource, null, tempB, true);
 
       return 0;
     }
