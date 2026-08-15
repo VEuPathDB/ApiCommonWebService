@@ -98,7 +98,8 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   }
 
   private static class Flag {
-    private boolean hasSnp = false;
+    /** Set when either input is a point feature with no meaningful strand. */
+    private boolean strandless = false;
   }
 
   /**
@@ -422,7 +423,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("  AND fb.begin <= fb.end ");
 
     // check the strand choice
-    if (!flag.hasSnp) {
+    if (!flag.strandless) {
       if (strand.equalsIgnoreCase(PARAM_VALUE_SAME_STRAND)) {
         builder.append("  AND fa.is_reversed = fb.is_reversed ");
       }
@@ -467,27 +468,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
     // get the table or sql that returns the location information
     String rcName = answerValue.getQuestion().getRecordClass().getFullName();
-    String locTable;
-    if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
-      locTable = "(SELECT source_id AS feature_source_id, project_id, " +
-          "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, " +
-          "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, " +
-          "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type " + "  FROM " + cacheSql + ")";
-    }
-    else if (rcName.equals("SnpRecordClasses.SnpRecordClass")) {
-      flag.hasSnp = true;
-      String projectId = wdkModel.getProjectId();
-      locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
-          "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
-          "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
-          " FROM Apidb.Snp sn, webready.GenomicSeqAttributes_p sa " +
-          " WHERE sn.na_sequence_id = sa.na_sequence_id)";
-    }
-    else {
-      locTable = "apidb.FeatureLocation";
-    }
+    SpanSource source = spanSourceFor(rcName);
+    if (source.isStrandless())
+      flag.strandless = true;
 
     // get a temp table name
     DBPlatform platform = wdkModel.getAppDb().getPlatform();
@@ -501,9 +484,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           break;
       }
 
-      String sql = rcName.equals("TranscriptRecordClasses.TranscriptRecordClass")
-          ? getTranscriptSpanSql(tableName, region, cacheSql)
-          : getStandardSpanSql(tableName, region, locTable, cacheSql);
+      String sql = source.createTableSql(tableName, region, cacheSql);
       logger.debug("SPAN SQL: " + sql);
 
       // cache the sql
@@ -514,43 +495,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     catch (SQLException ex) {
       throw new WdkModelException(ex);
     }
-  }
-
-  private String getStandardSpanSql(String tableName, String[] region, String locTable, String cacheSql ) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("CREATE TABLE " + tableName + " AS ");
-    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, 'dontcare' as gene_source_id, ");
-    builder.append("       fl.sequence_source_id, fl.feature_type, ");
-    builder.append("       ca.wdk_weight, ca.project_id, ");
-    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
-    builder.append("WHERE fl.feature_source_id = ca.source_id");
-    builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = (");
-    builder.append("    SELECT fl.feature_type ");
-    builder.append("    FROM " + locTable + " fl, " + cacheSql + " ca");
-    builder.append("    WHERE fl.feature_source_id = ca.source_id");
-    builder.append("      AND rownum = 1) ");
-
-    return builder.toString();
-    
-  }
-  
-  private String getTranscriptSpanSql(String tableName, String[] region, String cacheSql ) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("CREATE TABLE " + tableName + " AS ");
-    builder.append("SELECT DISTINCT ca.source_id, ca.gene_source_id, ");
-    builder.append("       fl.sequence_source_id, fl.feature_type, ");
-    builder.append("       ca.wdk_weight, ca.project_id, ");
-    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM apidb.FeatureLocation fl, " + cacheSql + " ca ");
-    builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
-    builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = 'GeneFeature'");
-    return builder.toString();
-    
   }
 
   private void prepareResult(WdkModel wdkModel, PluginResponse response, String sql, String[] orderedColumns,
