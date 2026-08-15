@@ -87,4 +87,15 @@ public class SpanSourceTest {
     assertTrue("one row per record, so no feature_type: " + sql, !sql.contains("feature_type"));
     assertTrue(sql, sql.contains("fl.feature_source_id = ca.source_id"));
   }
+
+  @Test
+  public void variantSourceIsAZeroLengthFeatureFromVariationAttributes() throws WdkModelException {
+    String sql = sqlFor("VariantRecordClasses.VariantRecordClass");
+    assertTrue(sql, sql.contains("FROM ApidbTuning.VariationAttributes va"));
+    assertTrue(sql, sql.contains("va.location AS start_min") && sql.contains("va.location AS end_max"));
+    assertTrue("a point feature has no strand: " + sql, sql.contains("0 AS is_reversed"));
+    assertTrue("project_id comes from the row, not the model: " + sql, sql.contains("va.project_id"));
+    assertTrue("one row per record, so no is_top_level: " + sql, !sql.contains("is_top_level"));
+    assertTrue(sql, sql.contains("fl.feature_source_id = ca.source_id"));
+  }
 }

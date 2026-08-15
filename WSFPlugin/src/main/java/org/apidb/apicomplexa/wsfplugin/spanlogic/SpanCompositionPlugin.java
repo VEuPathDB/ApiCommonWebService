@@ -695,7 +695,12 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   static class VariantSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
-      throw new UnsupportedOperationException("filled in by Task 5");
+      String locTable = "(SELECT va.source_id AS feature_source_id, va.project_id, " +
+          "        va.sequence_source_id, " +
+          "        va.location AS start_min, va.location AS end_max, " +
+          "        0 AS is_reversed " +
+          "  FROM ApidbTuning.VariationAttributes va)";
+      return oneRowPerRecordSql(tableName, region, locTable, cacheSql);
     }
 
     @Override
