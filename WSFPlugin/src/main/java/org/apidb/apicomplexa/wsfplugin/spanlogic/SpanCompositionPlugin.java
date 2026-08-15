@@ -645,7 +645,18 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   static class TranscriptSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
-      throw new UnsupportedOperationException("filled in by Task 3");
+      StringBuilder builder = new StringBuilder();
+      builder.append("CREATE TABLE " + tableName + " AS ");
+      builder.append("SELECT DISTINCT ca.source_id, ca.gene_source_id, ");
+      builder.append("       fl.sequence_source_id, fl.feature_type, ");
+      builder.append("       ca.wdk_weight, ca.project_id, ");
+      builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
+      builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+      builder.append("FROM apidb.FeatureLocation fl, " + cacheSql + " ca ");
+      builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
+      builder.append("  AND fl.is_top_level = 1");
+      builder.append("  AND fl.feature_type = 'GeneFeature'");
+      return builder.toString();
     }
   }
 
