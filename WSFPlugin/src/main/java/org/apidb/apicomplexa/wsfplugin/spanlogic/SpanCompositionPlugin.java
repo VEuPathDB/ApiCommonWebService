@@ -106,8 +106,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
    * Where a record type's genomic coordinates come from. One implementation per record
    * class that may be an input to colocation.
    *
-   * Implementations MUST alias their location table "fl" -- makeRegion() hardcodes that
-   * prefix when building the region expressions interpolated into every builder.
+   * Implementations MUST alias their location table "fl" -- getStartStop() hardcodes that
+   * prefix (String table = "fl.") when building the region[] expressions that every
+   * implementation interpolates into its SQL.
    */
   interface SpanSource {
 
@@ -643,7 +644,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
   static class DynSpanSource implements SpanSource {
     @Override
     public String createTableSql(String tableName, String[] region, String cacheSql) {
-      // regexp_substr returns text on PostgreSQL, but makeRegion does arithmetic
+      // regexp_substr returns text on PostgreSQL, but getStartStop does arithmetic
       // (start_min + n*(m)) on these columns. Oracle coerced text to number
       // implicitly; PostgreSQL does not, so these must be cast explicitly. Cast
       // to numeric (not integer) so this source's columns match the numeric
