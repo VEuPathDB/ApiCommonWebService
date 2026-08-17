@@ -97,8 +97,50 @@ public class SpanCompositionPlugin extends AbstractPlugin {
 
   }
 
-  private static class Flag {
-    private boolean hasSnp = false;
+  static class Flag {
+    /** Set when either input is a point feature with no meaningful strand. */
+    boolean strandless = false;
+  }
+
+  /**
+   * Where a record type's genomic coordinates come from. One implementation per record
+   * class that may be an input to colocation.
+   *
+   * Implementations MUST alias their location table "fl" -- getStartStop() hardcodes that
+   * prefix (String table = "fl.") when building the region[] expressions that every
+   * implementation interpolates into its SQL.
+   */
+  interface SpanSource {
+
+    /** Full CREATE TABLE statement producing the per-record span temp table. */
+    String createTableSql(String tableName, String[] region, String cacheSql);
+
+    /**
+     * True for a point feature with no meaningful strand. Suppresses the same-strand /
+     * opposite-strand filter for the whole comparison; without it, "same strand" would
+     * silently match only forward-strand records.
+     */
+    default boolean isStrandless() {
+      return false;
+    }
+  }
+
+  private static final Map<String, SpanSource> SPAN_SOURCES = Map.of(
+      "TranscriptRecordClasses.TranscriptRecordClass", new TranscriptSpanSource(),
+      "DynSpanRecordClasses.DynSpanRecordClass", new DynSpanSource(),
+      "VariantRecordClasses.VariantRecordClass", new VariantSpanSource());
+
+  static SpanSource spanSourceFor(String recordClassName) throws WdkModelException {
+    if (recordClassName == null) {
+      throw new WdkModelException("Genomic colocation is not configured for record class " +
+          "null. Register a SpanSource for it in SpanCompositionPlugin.");
+    }
+    SpanSource source = SPAN_SOURCES.get(recordClassName);
+    if (source == null) {
+      throw new WdkModelException("Genomic colocation is not configured for record class " +
+          recordClassName + ". Register a SpanSource for it in SpanCompositionPlugin.");
+    }
+    return source;
   }
 
   public static final String COLUMN_SOURCE_ID = "source_id";
@@ -281,12 +323,20 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       // execute the final sql, and fetch the result for the output.
       prepareResult(wdkModel, response, sql, request.getOrderedColumns(), output);
 
-      // drop the cache tables
+      // Drop the cache tables UNQUALIFIED, to match the unqualified CREATE TABLE in
+      // getSpanSql. Do not reach for getDefaultSchema() here: it means different things
+      // per platform. Oracle returns the login user's schema -- which is exactly where an
+      // unqualified CREATE lands, so the two agreed. PostgreSQL hardcodes "public"
+      // (PostgreSQL.getDefaultSchema), while an unqualified CREATE follows search_path,
+      // which is "$user". The tables were therefore created in the login schema and the
+      // drop looked in public, failing with 'table "spanlogic<n>" does not exist' AFTER
+      // the results had been computed -- so a working colocation surfaced as an error and
+      // leaked a table per run. Passing null makes dropTable emit a bare table name,
+      // which resolves the same way the CREATE did on either platform.
       DBPlatform platform = wdkModel.getAppDb().getPlatform();
       DataSource dataSource = wdkModel.getAppDb().getDataSource();
-      String schema = wdkModel.getAppDb().getDefaultSchema();
-      platform.dropTable(dataSource, schema, tempA, true);
-      platform.dropTable(dataSource, schema, tempB, true);
+      platform.dropTable(dataSource, null, tempA, true);
+      platform.dropTable(dataSource, null, tempB, true);
 
       return 0;
     }
@@ -355,7 +405,10 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     return new String[] { start, stop };
   }
 
-  private String composeSql(String operation, String tempTableA, String tempTableB,
+  // package-private so SpanSourceTest can assert the FROM clause names the temp tables
+  // bare. Wrapping a table name in parentheses is legal Oracle and a syntax error in
+  // PostgreSQL, which broke every colocation regardless of record type.
+  String composeSql(String operation, String tempTableA, String tempTableB,
       String strand, String output, Flag flag) {
     StringBuilder builder = new StringBuilder();
 
@@ -372,7 +425,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("       fb.wdk_weight AS wdk_weight_b, ");
     builder.append("       fb.begin AS begin_b, fb.end AS end_b, ");
     builder.append("       fb.is_reversed AS is_reversed_b ");
-    builder.append("FROM (" + tempTableA + ") fa, (" + tempTableB + ") fb ");
+    // Bare table names, NOT "(name)". Oracle accepts a parenthesized table name;
+    // PostgreSQL raises 'syntax error at or near ")"'.
+    builder.append("FROM " + tempTableA + " fa, " + tempTableB + " fb ");
 
     // make sure the regions come from sequence source.
     builder.append("WHERE fa.sequence_source_id = fb.sequence_source_id ");
@@ -382,7 +437,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     builder.append("  AND fb.begin <= fb.end ");
 
     // check the strand choice
-    if (!flag.hasSnp) {
+    if (!flag.strandless) {
       if (strand.equalsIgnoreCase(PARAM_VALUE_SAME_STRAND)) {
         builder.append("  AND fa.is_reversed = fb.is_reversed ");
       }
@@ -425,29 +480,11 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // get the sql to the cache table
     String cacheSql = "(" + answerValue.getIdSql() + ")";
 
-    // get the table or sql that returns the location information
+    // find where this record type's genomic coordinates come from
     String rcName = answerValue.getQuestion().getRecordClass().getFullName();
-    String locTable;
-    if (rcName.equals("DynSpanRecordClasses.DynSpanRecordClass")) {
-      locTable = "(SELECT source_id AS feature_source_id, project_id, " +
-          "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) as start_min, " +
-          "        regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) as end_max, " +
-          "        DECODE(regexp_substr(source_id, '[^:]+', 1, 3), 'r', 1, 0) AS is_reversed, " +
-          "        1 AS is_top_level, 'DynamicSpanFeature' AS feature_type " + "  FROM " + cacheSql + ")";
-    }
-    else if (rcName.equals("SnpRecordClasses.SnpRecordClass")) {
-      flag.hasSnp = true;
-      String projectId = wdkModel.getProjectId();
-      locTable = "(SELECT sn.source_id AS feature_source_id, '" + projectId + "' AS project_id, " +
-          "      sa.source_id AS sequence_source_id, sn.location AS start_min, sn.location AS end_max, " +
-          "      0 AS is_reversed, 1 AS is_top_level, 'SnpFeature' AS feature_type " +
-          " FROM Apidb.Snp sn, webready.GenomicSeqAttributes_p sa " +
-          " WHERE sn.na_sequence_id = sa.na_sequence_id)";
-    }
-    else {
-      locTable = "apidb.FeatureLocation";
-    }
+    SpanSource source = spanSourceFor(rcName);
+    if (source.isStrandless())
+      flag.strandless = true;
 
     // get a temp table name
     DBPlatform platform = wdkModel.getAppDb().getPlatform();
@@ -461,9 +498,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
           break;
       }
 
-      String sql = rcName.equals("TranscriptRecordClasses.TranscriptRecordClass")
-          ? getTranscriptSpanSql(tableName, region, cacheSql)
-          : getStandardSpanSql(tableName, region, locTable, cacheSql);
+      String sql = source.createTableSql(tableName, region, cacheSql);
       logger.debug("SPAN SQL: " + sql);
 
       // cache the sql
@@ -474,43 +509,6 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     catch (SQLException ex) {
       throw new WdkModelException(ex);
     }
-  }
-
-  private String getStandardSpanSql(String tableName, String[] region, String locTable, String cacheSql ) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("CREATE TABLE " + tableName + " AS ");
-    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, 'dontcare' as gene_source_id, ");
-    builder.append("       fl.sequence_source_id, fl.feature_type, ");
-    builder.append("       ca.wdk_weight, ca.project_id, ");
-    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
-    builder.append("WHERE fl.feature_source_id = ca.source_id");
-    builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = (");
-    builder.append("    SELECT fl.feature_type ");
-    builder.append("    FROM " + locTable + " fl, " + cacheSql + " ca");
-    builder.append("    WHERE fl.feature_source_id = ca.source_id");
-    builder.append("      AND rownum = 1) ");
-
-    return builder.toString();
-    
-  }
-  
-  private String getTranscriptSpanSql(String tableName, String[] region, String cacheSql ) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("CREATE TABLE " + tableName + " AS ");
-    builder.append("SELECT DISTINCT ca.source_id, ca.gene_source_id, ");
-    builder.append("       fl.sequence_source_id, fl.feature_type, ");
-    builder.append("       ca.wdk_weight, ca.project_id, ");
-    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
-    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
-    builder.append("FROM apidb.FeatureLocation fl, " + cacheSql + " ca ");
-    builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
-    builder.append("  AND fl.is_top_level = 1");
-    builder.append("  AND fl.feature_type = 'GeneFeature'");
-    return builder.toString();
-    
   }
 
   private void prepareResult(WdkModel wdkModel, PluginResponse response, String sql, String[] orderedColumns,
@@ -604,5 +602,79 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     feature.end = resultSet.getInt("end_" + suffix);
     feature.weight = resultSet.getInt("wdk_weight_" + suffix);
     feature.reversed = resultSet.getBoolean("is_reversed_" + suffix);
+  }
+
+  /**
+   * Standard span table for a source that yields exactly one row per record. No
+   * is_top_level / feature_type filtering: that exists only to pick one row out of
+   * apidb.FeatureLocation, where a feature has several.
+   */
+  private static String oneRowPerRecordSql(String tableName, String[] region, String locTable,
+      String cacheSql) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("CREATE TABLE " + tableName + " AS ");
+    builder.append("SELECT DISTINCT fl.feature_source_id AS source_id, 'dontcare' as gene_source_id, ");
+    builder.append("       fl.sequence_source_id, ");
+    builder.append("       ca.wdk_weight, ca.project_id, ");
+    builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
+    builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+    builder.append("FROM " + locTable + " fl, " + cacheSql + " ca ");
+    builder.append("WHERE fl.feature_source_id = ca.source_id");
+    return builder.toString();
+  }
+
+  static class TranscriptSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("CREATE TABLE " + tableName + " AS ");
+      builder.append("SELECT DISTINCT ca.source_id, ca.gene_source_id, ");
+      builder.append("       fl.sequence_source_id, fl.feature_type, ");
+      builder.append("       ca.wdk_weight, ca.project_id, ");
+      builder.append("       COALESCE(fl.is_reversed, 0) AS is_reversed, ");
+      builder.append("   " + region[0] + " AS begin, " + region[1] + " AS end ");
+      builder.append("FROM apidb.FeatureLocation fl, " + cacheSql + " ca ");
+      builder.append("WHERE fl.feature_source_id = ca.gene_source_id");
+      builder.append("  AND fl.is_top_level = 1");
+      builder.append("  AND fl.feature_type = 'GeneFeature'");
+      return builder.toString();
+    }
+  }
+
+  static class DynSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      // regexp_substr returns text on PostgreSQL, but getStartStop does arithmetic
+      // (start_min + n*(m)) on these columns. Oracle coerced text to number
+      // implicitly; PostgreSQL does not, so these must be cast explicitly. Cast
+      // to numeric (not integer) so this source's columns match the numeric
+      // start_min/end_max produced by the other SpanSource implementations,
+      // since composeSql compares begin/end values across temp tables built by
+      // different sources.
+      String locTable = "(SELECT source_id AS feature_source_id, project_id, " +
+          "        regexp_substr(source_id, '[^:]+', 1, 1) as sequence_source_id, " +
+          "        CAST(regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,1) AS numeric) as start_min, " +
+          "        CAST(regexp_substr(regexp_substr(source_id, '[^:]+', 1, 2), '[^\\-]+', 1,2) AS numeric) as end_max, " +
+          "        CASE WHEN regexp_substr(source_id, '[^:]+', 1, 3) = 'r' THEN 1 ELSE 0 END AS is_reversed " +
+          "  FROM " + cacheSql + ")";
+      return oneRowPerRecordSql(tableName, region, locTable, cacheSql);
+    }
+  }
+
+  static class VariantSpanSource implements SpanSource {
+    @Override
+    public String createTableSql(String tableName, String[] region, String cacheSql) {
+      String locTable = "(SELECT va.source_id AS feature_source_id, va.project_id, " +
+          "        va.sequence_source_id, " +
+          "        va.location AS start_min, va.location AS end_max, " +
+          "        0 AS is_reversed " +
+          "  FROM ApidbTuning.VariationAttributes va)";
+      return oneRowPerRecordSql(tableName, region, locTable, cacheSql);
+    }
+
+    @Override
+    public boolean isStrandless() {
+      return true;
+    }
   }
 }
