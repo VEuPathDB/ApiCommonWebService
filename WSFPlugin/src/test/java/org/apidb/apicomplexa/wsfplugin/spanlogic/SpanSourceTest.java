@@ -128,4 +128,26 @@ public class SpanSourceTest {
     assertTrue("a parenthesized table name is an Oracle-ism: " + sql,
         !sql.contains("(spanlogic_a)") && !sql.contains("(spanlogic_b)"));
   }
+
+  /** A schema-qualified temp table name must survive into the join unchanged. */
+  @Test
+  public void composeSqlKeepsTheCacheSchemaQualifier() {
+    String sql = new SpanCompositionPlugin().composeSql("overlap", "cache.spanlogic_a",
+        "cache.spanlogic_b", "either_strand", "a", new SpanCompositionPlugin.Flag());
+    assertTrue("qualified names must reach the FROM clause intact: " + sql,
+        sql.contains("FROM cache.spanlogic_a fa, cache.spanlogic_b fb"));
+  }
+
+  /** Each source must emit the table name it is given, qualifier included. */
+  @Test
+  public void everySourceCreatesTheTableItIsGiven() throws WdkModelException {
+    for (String rc : new String[] { "TranscriptRecordClasses.TranscriptRecordClass",
+                                    "DynSpanRecordClasses.DynSpanRecordClass",
+                                    "VariantRecordClasses.VariantRecordClass" }) {
+      String sql = SpanCompositionPlugin.spanSourceFor(rc)
+          .createTableSql("cache.spanlogic_1", REGION, CACHE);
+      assertTrue(rc + " must create the schema-qualified table: " + sql,
+          sql.contains("CREATE TABLE cache.spanlogic_1 AS"));
+    }
+  }
 }
