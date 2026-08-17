@@ -323,16 +323,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       // execute the final sql, and fetch the result for the output.
       prepareResult(wdkModel, response, sql, request.getOrderedColumns(), output);
 
-      // Drop the cache tables UNQUALIFIED, to match the unqualified CREATE TABLE in
-      // getSpanSql. Do not reach for getDefaultSchema() here: it means different things
-      // per platform. Oracle returns the login user's schema -- which is exactly where an
-      // unqualified CREATE lands, so the two agreed. PostgreSQL hardcodes "public"
-      // (PostgreSQL.getDefaultSchema), while an unqualified CREATE follows search_path,
-      // which is "$user". The tables were therefore created in the login schema and the
-      // drop looked in public, failing with 'table "spanlogic<n>" does not exist' AFTER
-      // the results had been computed -- so a working colocation surfaced as an error and
-      // leaked a table per run. Passing null makes dropTable emit a bare table name,
-      // which resolves the same way the CREATE did on either platform.
+      // null schema: tempA/tempB already carry the cache schema from getSpanSql.
       DBPlatform platform = wdkModel.getAppDb().getPlatform();
       DataSource dataSource = wdkModel.getAppDb().getDataSource();
       platform.dropTable(dataSource, null, tempA, true);
@@ -489,13 +480,21 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     // get a temp table name
     DBPlatform platform = wdkModel.getAppDb().getPlatform();
     DataSource dataSource = wdkModel.getAppDb().getDataSource();
-    String schema = wdkModel.getAppDb().getDefaultSchema();
+
+    // Scratch tables belong in the WDK cache schema, as with every other temp table WDK
+    // creates. Not getDefaultSchema(): Oracle returns the login schema, PostgreSQL
+    // hardcodes "public", and an unqualified CREATE follows search_path -- that mismatch
+    // created these in one schema and dropped them from another. getCacheSchema() ends in
+    // ".", so tableName is qualified from here through composeSql and the DROP.
+    String cacheSchema = wdkModel.getModelConfig().getAppDB().getCacheSchema();
     try {
       String tableName = null;
       while (true) {
-        tableName = TEMP_TABLE_PREFIX + random.nextInt(Integer.MAX_VALUE);
-        if (!platform.checkTableExists(dataSource, schema, tableName))
+        String bareName = TEMP_TABLE_PREFIX + random.nextInt(Integer.MAX_VALUE);
+        if (!platform.checkTableExists(dataSource, cacheSchema, bareName)) {
+          tableName = cacheSchema + bareName;
           break;
+        }
       }
 
       String sql = source.createTableSql(tableName, region, cacheSql);
