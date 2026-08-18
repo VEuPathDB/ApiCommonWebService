@@ -300,9 +300,9 @@ public class SpanCompositionPlugin extends AbstractPlugin {
     String[] startStopB = getStartStop(params, "b");
 
     String tempA = null, tempB = null;
-    try {
-      WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
+    WdkModel wdkModel = InstanceManager.getInstance(WdkModel.class, request.getProjectId());
 
+    try {
       // FIXME: should not go to OAuth to find user again; find a way to avoid this
       String bearerToken = request.getContext().get(Utilities.CONTEXT_KEY_BEARER_TOKEN_STRING);
       UserFactory factory = wdkModel.getUserFactory();
@@ -314,8 +314,7 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       tempA = getSpanSql(wdkModel, user, params, startStopA, "a", flag);
       tempB = getSpanSql(wdkModel, user, params, startStopB, "b", flag);
 
-      // compose the final sql by comparing two regions with span
-      // operation.
+      // compose the final sql by comparing two regions with span operation.
       String sql = composeSql(operation, tempA, tempB, strand, output, flag);
 
       logger.debug("SPAN LOGIC SQL:\n" + sql);
@@ -323,19 +322,39 @@ public class SpanCompositionPlugin extends AbstractPlugin {
       // execute the final sql, and fetch the result for the output.
       prepareResult(wdkModel, response, sql, request.getOrderedColumns(), output);
 
-      // null schema: tempA/tempB already carry the cache schema from getSpanSql.
-      DBPlatform platform = wdkModel.getAppDb().getPlatform();
-      DataSource dataSource = wdkModel.getAppDb().getDataSource();
-      platform.dropTable(dataSource, null, tempA, true);
-      platform.dropTable(dataSource, null, tempB, true);
-
       return 0;
     }
     catch (Exception ex) {
       throw new PluginModelException(ex);
     }
     finally {
-      // dropTempTables(wdkModel, tempA, tempB);
+      // tempA/tempB are fully qualified names (schema and table name)
+      dropTableQuietly(wdkModel,tempA);
+      dropTableQuietly(wdkModel,tempB);
+    }
+  }
+
+  /**
+   * If tableName is not null, tries to drop table with that name using the
+   * platform and data source of the AppDb.  Exceptions are logged with warn
+   * and ignored.
+   *
+   * @param wdkModel WDK model
+   * @param tableName name of table to drop
+   */
+  private void dropTableQuietly(WdkModel wdkModel, String tableName) {
+
+    if (tableName == null) return;
+
+    DBPlatform platform = wdkModel.getAppDb().getPlatform();
+    DataSource dataSource = wdkModel.getAppDb().getDataSource();
+
+    try {
+      // incoming names should already have schema as prefix
+      platform.dropTable(dataSource, null, tableName, true);
+    }
+    catch (SQLException e) {
+      logger.warn("Unable to drop temporary table: " + tableName, e);
     }
   }
 
