@@ -1,5 +1,9 @@
 #!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+
 use strict;
+use ApiCommonWebService::HighSpeedSnpSearch::HsssScriptGenerator;
 use File::Basename;
 
 my ($jobDir, $strainFilesDirA, $polymorphismThresholdA, $unknownThresholdA, $strainsListFileA, $strainFilesDirB, $polymorphismThresholdB, $unknownThresholdB, $strainsListFileB, $strainsAreNames, $outputScriptFile, $reconstructNameCmd, $idPrefix, $idSuffix, $outputDataFile) = @ARGV;
@@ -9,15 +13,7 @@ usage() unless scalar(@ARGV) == 14 || scalar(@ARGV) == 15;
 #
 # write a perl wrapper because perl has the ninja power to change process group id
 #
-open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
-my $cmdString = $outputScriptFile =~ /^\//? "$outputScriptFile.bash" : "$jobDir/$outputScriptFile.bash";
-print O "#!/usr/bin/perl
-# this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
-setpgrp(0,0);
-\$cmd = \"$cmdString\";
-system(\$cmd) && die \"perl could not run \$cmd \$?\";
-";
-close(O);
+ApiCommonWebService::HighSpeedSnpSearch::HsssScriptGenerator::writePerlWrapperFile($outputScriptFile, $jobDir);
 
 #
 # write main script
@@ -58,20 +54,11 @@ my @mergeQueueB = map { chomp; "$strainFilesDirB/" . getStrainNum($_)} @mergeQue
 my $strainsCountB = scalar(@mergeQueueB);
 
 
-# write making of fifos and a trap to remove them
+# write making of fifos, and traps to kill subprocesses and remove the fifos
 my $fifoCount = $strainsCountA + $strainsCountB + 2;   # add two to hold consensuses for A and B
 my $fifoCursor = 0;
 my $fifoPrefix = "fifo";
-print O "mkfifo ";
-for (my $i = 1; $i <= $fifoCount; $i++) {
-  print O "$fifoPrefix$i ";
-}
-print O "\n";
-print O "trap \"rm ";
-for (my $i = 1; $i <= $fifoCount; $i++) {
-  print O "$fifoPrefix$i ";
-}
-print O "\" EXIT TERM\n";
+print O ApiCommonWebService::HighSpeedSnpSearch::HsssScriptGenerator::getProcessCleanupBash(map { "$fifoPrefix$_" } 1..$fifoCount);
 
 my $consensusFifoA = $fifoPrefix . ($fifoCount-1);
 my $consensusFifoB = $fifoPrefix . $fifoCount;
@@ -80,12 +67,13 @@ printMakeConsensus(\@mergeQueueA, $consensusFifoA, $strainsCountA, $polymorphism
 printMakeConsensus(\@mergeQueueB, $consensusFifoB, $strainsCountB, $polymorphismThresholdB, $unknownThresholdB); # use last fifo
 
 my $output = $outputDataFile? ">$outputDataFile" : "";
-print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | $reconstructNameCmd $strainFilesDirA/contigIdToSourceId.dat 2 $output $idPrefix $idSuffix\n";
+# run in background and wait, so the traps can fire while it runs
+print O "hsssFindMajorAlleles $consensusFifoA $consensusFifoB | $reconstructNameCmd $strainFilesDirA/contigIdToSourceId.dat 2 $output $idPrefix $idSuffix &\n";
+print O "wait \$!\n";
 
 # print final stuff and clean up
 print O "exit\n";
 close(O);
-system("chmod +x $outputScriptFile");
 system("chmod +x $outputScriptFile.bash");
 
 # get strain num from strain name (unity mapping if there were no names on input)
