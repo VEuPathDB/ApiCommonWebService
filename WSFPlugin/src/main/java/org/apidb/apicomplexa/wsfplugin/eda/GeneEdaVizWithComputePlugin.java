@@ -53,17 +53,27 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     String pointId;
     String effectSize;
     String pValue;
+    String adjustedPValue;
 
     @Override
     public String toString() {
       // column order must match dynamic column order defined in the model XML
-      //LOG.info("Returning converted row [" + pointId + ", " + effectSize + ", " + pValue + "]");
-      return pointId + "\t" + effectSize + "\t" + pValue;
+      //LOG.info("Returning converted row [" + pointId + ", " + effectSize + ", " + pValue + ", " + adjustedPValue + "]");
+      return pointId + "\t" + effectSize + "\t" + pValue + "\t" + (adjustedPValue == null ? NO_VALUE : adjustedPValue);
     }
   }
 
+  // placeholder written to the tabular file when EDA supplies no adjusted p-value for a point
+  private static final String NO_VALUE = "NA";
+
+  // column positions in the tabular file (see Point.toString)
+  private static final int EFFECT_SIZE_COL = 1;
+  private static final int P_VALUE_COL = 2;
+  private static final int ADJUSTED_P_VALUE_COL = 3;
+
   private double _effectSizeThreshold;
   private double _significanceThreshold;
+  private boolean _useAdjustedPValue;
   private EffectDirection _effectDirection;
   private Path _tmpFile;
 
@@ -113,6 +123,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
      *           "configuration":{      <- vizConfig
      *             "effectSizeThreshold":1,
      *             "significanceThreshold":0.05,
+     *             "useAdjustedPValue":false,       <- optional; filter on adjustedPValue instead of pValue
      *             "markerBodyOpacity":0.8
      *           },
      *           "thumbnail":"data:image/jpeg;base64,/9j/4AAQS2Q==",
@@ -148,6 +159,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
     // values to be used later to filter returned rows
     _effectSizeThreshold = vizConfig.getDouble("effectSizeThreshold");
     _significanceThreshold = vizConfig.getDouble("significanceThreshold");
+    _useAdjustedPValue = vizConfig.optBoolean("useAdjustedPValue", false);
     _effectDirection = EffectDirection.fromString(vizConfig.optString("effectDirection", "upAndDown"));
 
     // make request with JSON like
@@ -218,6 +230,10 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
                 case "pValue":
                   parser.nextToken();
                   p.pValue = parser.getText();
+                  break;
+                case "adjustedPValue":
+                  parser.nextToken();
+                  p.adjustedPValue = parser.currentToken() == JsonToken.VALUE_NULL ? null : parser.getText();
               }
             }
             out.write(p.toString());
@@ -397,9 +413,11 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
   protected Boolean isRetainedRow(String[] edaRow) {
     try {
       //LOG.info("Checking if edaRow of size " + edaRow.length + " should be retained, array = [ " + String.join(", ", edaRow) + " ]");
-      double rawEffectSize = Double.valueOf(edaRow[1]);
+      double rawEffectSize = Double.valueOf(edaRow[EFFECT_SIZE_COL]);
       double effectSize = Math.abs(rawEffectSize);
-      double pValue = Math.abs(Double.valueOf(edaRow[2]));
+      // a point with no adjusted p-value cannot meet an adjusted p-value threshold
+      if (_useAdjustedPValue && NO_VALUE.equals(edaRow[ADJUSTED_P_VALUE_COL])) return false;
+      double pValue = Math.abs(Double.valueOf(edaRow[_useAdjustedPValue ? ADJUSTED_P_VALUE_COL : P_VALUE_COL]));
       if (!(pValue <= _significanceThreshold && effectSize >= _effectSizeThreshold)) return false;
       return switch (_effectDirection) {
         case UP_ONLY   -> rawEffectSize > 0;
@@ -408,7 +426,7 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
       };
     }
     catch (NumberFormatException e) {
-      LOG.warn("Skipping EDA output row in which effectSize or pValue property is not a valid double value. Row = [ " + String.join(", ", edaRow) + " ]", e);
+      LOG.warn("Skipping EDA output row in which effectSize or the p-value property being thresholded is not a valid double value. Row = [ " + String.join(", ", edaRow) + " ]", e);
       return false;
     }
   }
@@ -417,7 +435,10 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
   protected List<Object[]> convertToTmpTableRows(String[] edaRow) {
     //LOG.info("Converting edaRow of size " + edaRow.length + " from temporary file (tabular), array = [ " + String.join(", ", edaRow) + " ]");
     List<Object[]> rows = new ArrayList<>();
-    rows.add(new Object[] { edaRow[0], edaRow[1], edaRow[2] });
+    rows.add(new Object[] {
+        edaRow[0], edaRow[EFFECT_SIZE_COL], edaRow[P_VALUE_COL],
+        NO_VALUE.equals(edaRow[ADJUSTED_P_VALUE_COL]) ? null : edaRow[ADJUSTED_P_VALUE_COL]
+    });
     return rows;
   }
 
