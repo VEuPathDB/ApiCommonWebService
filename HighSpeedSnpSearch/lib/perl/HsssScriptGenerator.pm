@@ -40,23 +40,74 @@ sub getStandardArgsHelp {
   - output_data_file: where to write the results";
 }
 
-#
-# write a perl wrapper because perl has the ninja power to change process group id
-#
 sub writePerlWrapper {
   my ($self) = @_;
+  writePerlWrapperFile($self->{outputScriptFile}, $self->{jobDir});
+}
 
-  my $outputScriptFile = $self->{outputScriptFile};
+#
+# write a perl wrapper because perl has the ninja power to change process group id.
+# (plain function, also used by hsssGenerateMajorAllelesScript)
+#
+# the wrapper execs the bash script rather than running it as a child, so that signals sent
+# to the wrapper's pid (eg, by java's Process.destroy() on timeout) land on the bash script,
+# whose traps then kill the whole process group.  a perl parent would die alone, orphaning the tree.
+#
+sub writePerlWrapperFile {
+  my ($outputScriptFile, $jobDir) = @_;
+
   open(O, ">$outputScriptFile") || die "Can't open output_file '$outputScriptFile' for writing\n";
-  my $cmdString = $outputScriptFile =~ /^\//? "$outputScriptFile.bash" : "$self->{jobDir}/$outputScriptFile.bash";
+  my $cmdString = $outputScriptFile =~ /^\//? "$outputScriptFile.bash" : "$jobDir/$outputScriptFile.bash";
   print O "#!/usr/bin/perl
 # this wrapper sets the process group id so that all processes can be killed by traps, without killing parents such as tomcat
 setpgrp(0,0);
 \$cmd = \"$cmdString\";
-system(\$cmd) && die \"perl could not run \$cmd \$?\";
+exec('/bin/bash', \$cmd) or die \"perl could not run \$cmd \$!\";
 ";
   close(O);
   system("chmod +x $outputScriptFile");
+}
+
+#
+# return bash code that makes the given fifos, and installs traps and a watchdog that
+# kill every process in the job's process group (and remove the fifos) when the script
+# exits for any reason: normal completion, error (set -e), a TERM/INT/HUP signal, or the
+# death of its parent (eg, tomcat) or of the script itself (eg, kill -9).
+#
+# the process group is only killed if this script is its leader (ie, it was started via the
+# perl wrapper's setpgrp), so that running the .bash file directly can't kill its caller.
+# otherwise only the script's direct background jobs are killed.
+#
+# bash defers traps until the current foreground command finishes, so scripts using this
+# should run long commands in the background and 'wait' for them.
+#
+sub getProcessCleanupBash {
+  my (@fifos) = @_;
+
+  return "mkfifo @fifos
+hsssFifos=\"@fifos\"
+hsssIsGroupLeader=0
+if [ \"\$(ps -o pgid= -p \$\$ | tr -d ' ')\" = \"\$\$\" ]; then hsssIsGroupLeader=1; fi
+hsssCleanup() {
+  hsssExitCode=\$?
+  trap '' TERM INT HUP
+  if [ \$hsssIsGroupLeader = 1 ]; then
+    kill -TERM -- -\$\$ 2>/dev/null || true
+  else
+    kill -TERM \$(jobs -p) 2>/dev/null || true
+  fi
+  rm -f \$hsssFifos
+  exit \$hsssExitCode
+}
+trap hsssCleanup EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+trap 'exit 129' HUP
+# watchdog: kill the process group if this script dies or is orphaned by its parent
+if [ \$hsssIsGroupLeader = 1 ]; then
+  ( while [ \"\$(ps -o ppid= -p \$\$ | tr -d ' ')\" = \"\$PPID\" ]; do sleep 1; done; kill -TERM -- -\$\$ ) >/dev/null 2>&1 &
+fi
+";
 }
 
 sub makeStrainNamesToNumbersMap {
