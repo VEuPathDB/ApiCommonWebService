@@ -199,6 +199,9 @@ public class GeneEdaVizWithComputePlugin extends AbstractEdaGenesPlugin {
            .makeAsyncPostRequest(requestUrl, requestBody, MediaType.APPLICATION_JSON, authHeader)
            .getInputStream();
          BufferedWriter out = new BufferedWriter(new FileWriter(_tmpFile.toFile(), StandardCharsets.UTF_8))) {
+      // header line is required; AbstractEdaGenesPlugin discards the first line of the stream
+      out.write("point_id\teffect_size\tp_value");
+      out.newLine();
       JsonParser parser = new JsonFactory().createParser(in);
       while (parser.nextToken() != JsonToken.END_OBJECT) {
         if ("statistics".equals(parser.currentName())) {
