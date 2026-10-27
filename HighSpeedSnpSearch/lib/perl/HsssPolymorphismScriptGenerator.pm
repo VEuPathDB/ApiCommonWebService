@@ -18,20 +18,11 @@ sub writeMainScriptBody {
   my @mergeQueue = map { chomp; "$self->{strainFilesDir}/" . $self->getStrainNum($_)} @mergeQueueOriginal;
   my $strainsCount = scalar(@mergeQueue);
 
-  # write making of fifos and a trap to remove them
+  # write making of fifos, and traps to kill subprocesses and remove the fifos
   my $fifoCount = $strainsCount;
   my $fifoCursor = 0;
   my $fifoPrefix = "fifo";
-  print $fh "mkfifo ";
-  for (my $i = 1; $i <= scalar(@mergeQueue); $i++) {
-    print $fh "$fifoPrefix$i ";
-  }
-  print $fh "\n";
-  print $fh "trap \"rm ";
-  for (my $i = 1; $i <= $fifoCount; $i++) {
-    print $fh "$fifoPrefix$i ";
-  }
-  print $fh "\" EXIT TERM\n";
+  print $fh ApiCommonWebService::HighSpeedSnpSearch::HsssScriptGenerator::getProcessCleanupBash(map { "$fifoPrefix$_" } 1..$fifoCount);
 
   # print out merge commands and then the find polymorphic command
  my $output = $outputDataFile? ">$outputDataFile" : "";
@@ -63,7 +54,9 @@ sub writeMainScriptBody {
 	$allMerged = "$fifoPrefix$fifoCursor";
       }
 
-      print $fh "hsssFindPolymorphic $allMerged $self->{strainFilesDir}/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $finalCommand $output\n";
+      # run in background and wait, so the traps can fire while it runs
+      print $fh "hsssFindPolymorphic $allMerged $self->{strainFilesDir}/referenceGenome.dat $strainsCount $polymorphismThreshold $unknownThreshold | $finalCommand $output &\n";
+      print $fh "wait \$!\n";
       last;
     }
   }
